@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#f2f1ec"><meta name="robots" content="noindex,nofollow"><meta name="referrer" content="no-referrer">
+<title>Front Desk · Taffeta</title>
+<link rel="icon" href="../icon.png"><link rel="apple-touch-icon" href="../icon.png">
+<link rel="stylesheet" href="../g/base.css">
+<script src="../g/config.js"></script>
+<style>
+main{max-width:640px;gap:20px}
+.head{display:flex;align-items:center;gap:14px}
+.head img{width:56px}
+.head h1{font-size:27px}
+.tabs{display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--brown)}
+.tabs button{all:unset;cursor:pointer;padding:12px;text-align:center;font-size:13px;letter-spacing:.12em;text-transform:uppercase}
+.tabs button.on{background:var(--brown);color:var(--ivory)}
+.tabs button:focus-visible{outline:2px solid var(--gold);outline-offset:-4px}
+.n{display:inline-block;min-width:20px;padding:0 6px;margin-left:6px;background:var(--gold);color:#fff;border-radius:10px;font-size:12px;letter-spacing:0}
+.n:empty{display:none}
+.list{display:flex;flex-direction:column;gap:16px}
+.req{background:#fbfaf7;border:1px solid var(--line);border-left:4px solid var(--gold);padding:16px 16px 14px;display:flex;flex-direction:column;gap:10px}
+.req.doing{border-left-color:var(--brown)}
+.req.done{border-left-color:var(--line);opacity:.55}
+.row{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.who{font-family:var(--display);font-size:22px;overflow-wrap:anywhere}
+.when{font-size:13px;color:var(--soft);white-space:nowrap}
+.lbl{font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--soft)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--brown);padding:4px 10px;font-size:14px}
+.note{font-size:14.5px;font-style:italic}
+.act{display:flex;gap:8px}
+.act button{all:unset;cursor:pointer;flex:1;text-align:center;padding:10px;font-size:13px;letter-spacing:.12em;text-transform:uppercase;border:1px solid var(--brown)}
+.act button.on{background:var(--brown);color:var(--ivory)}
+.act button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.sub{font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--brown);margin-top:6px}
+.badges{display:flex;gap:6px}
+.badge{font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;padding:3px 8px;background:var(--brown);color:var(--ivory)}
+.badge.s{background:var(--gold)}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;font-size:14.5px}
+.kv span:nth-child(odd){color:var(--soft)}
+.kv a{color:var(--ink)}
+.pics{display:flex;gap:8px;flex-wrap:wrap}
+.pics a{border:1px dashed var(--brown);padding:8px 12px;font-size:14px;color:var(--ink);text-decoration:none}
+.story{font-size:14.5px;border-top:1px solid var(--line);padding-top:8px}
+.empty{text-align:center;color:var(--soft);font-size:15px;padding:26px 10px;border:1px dashed var(--line)}
+.status{font-size:12.5px;color:var(--soft);text-align:center}
+details.more summary{cursor:pointer;list-style:none;font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--brown)}
+details.more summary::-webkit-details-marker{display:none}
+details.more[open] summary{margin-bottom:12px}
+.lock{display:flex;flex-direction:column;gap:12px;text-align:center;align-items:center;padding-top:20px}
+</style>
+</head><body><main id="app">
+<div class="head"><img src="../g/logo.png" alt="Taffeta Salon &amp; Spa"><div><span class="eyebrow">Front Desk</span><h1>Today at Taffeta</h1></div></div>
+<div class="tabs" role="tablist">
+  <button role="tab" id="tC" class="on">Concierge<span class="n" id="nC"></span></button>
+  <button role="tab" id="tK">Consultations<span class="n" id="nK"></span></button>
+</div>
+<div id="body" class="list"></div>
+<p class="status" id="st"></p>
+</main>
+<script>
+const $=s=>document.querySelector(s);
+const esc=v=>String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const split=v=>String(v||'').split(',').map(x=>x.trim()).filter(Boolean);
+const DEMO=/[?&]demo\b/.test(location.search);
+const store={get(k){try{return localStorage.getItem(k)||''}catch(e){return ''}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
+const hk=(location.hash.match(/k=([\w-]+)/)||[])[1];
+if(hk){store.set('desk-key',hk);history.replaceState(null,'',location.pathname+location.search)}
+const KEY=hk||store.get('desk-key');
+let tab=store.get('desk-tab')||'C', data={concierge:[],consult:[]}, pending={}, lastOk=0;
+
+function ago(t){const m=Math.round((Date.now()-t)/60000);if(m<1)return'just now';if(m<60)return m+' min ago';
+  const d=new Date(t),today=new Date();const tm=d.toLocaleTimeString([],{hour:'numeric',minute:'2-digit'});
+  return d.toDateString()===today.toDateString()?tm:d.toLocaleDateString([],{weekday:'short',month:'short',day:'numeric'})+', '+tm}
+const isToday=t=>new Date(t).toDateString()===new Date().toDateString();
+const st=r=>pending[r.row+':'+r.at]||r.status||'New';
+
+function concierge(r){
+  const s=st(r), items=[...split(r.sips),...split(r.comforts),...split(r.before)];
+  const cls=s==='Done'?'req done':s==='On it'?'req doing':'req';
+  return `<div class="${cls}"><div class="row"><span class="who">${esc(r.name)}</span><span class="when">${s==='Done'&&r.handledAt?'Done '+esc(new Date(r.handledAt).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})):esc(ago(r.at))}</span></div>
+  ${items.length?`<span class="lbl">Would love</span><div class="chips">${items.map(i=>`<span class="chip">${esc(i)}</span>`).join('')}</div>`:''}
+  ${r.note?`<p class="note">“${esc(r.note)}”</p>`:''}
+  ${s==='Done'?'':`<div class="act"><button data-t="concierge" data-r="${r.row}" data-a="${r.at}" data-s="On it" class="${s==='On it'?'on':''}">On it</button><button data-t="concierge" data-r="${r.row}" data-a="${r.at}" data-s="Done">Done ✓</button></div>`}</div>`}
+
+function consult(r){
+  const s=st(r), hair=split(r.hair), skin=split(r.skin);
+  const tel=String(r.phone||'').replace(/[^\d+]/g,'');
+  const story=String(r.story||'').split(' | ').map(x=>{const m=x.match(/^(Hair|Skin): (.*)$/);return m?`<p class="story"><b>${m[1]}:</b> ${esc(m[2])}</p>`:x?`<p class="story">${esc(x)}</p>`:''}).join('');
+  const budget=[r.budget?'$'+esc(String(r.budget).replace(/^\$/,''))+' per visit':'',r.sameBudget==='Yes'?'same budget every visit':''].filter(Boolean).join(' · ')||'Not given';
+  const pics=[r.photoNow?`<a href="${esc(r.photoNow)}" target="_blank" rel="noopener">View today’s photo</a>`:'',r.photoGoal?`<a href="${esc(r.photoGoal)}" target="_blank" rel="noopener">View inspiration</a>`:''].join('');
+  return `<div class="${s==='Booked'?'req done':s==='Contacted'?'req doing':'req'}"><div class="row"><span class="who">${esc((r.first+' '+(r.last||'')).trim())}</span><span class="when">${esc(ago(r.at))}</span></div>
+  <div class="badges">${hair.length?'<span class="badge">Hair</span>':''}${skin.length?'<span class="badge s">Skin &amp; Spa</span>':''}</div>
+  <span class="lbl">Interested in</span><div class="chips">${[...hair,...skin].map(i=>`<span class="chip">${esc(i)}</span>`).join('')}</div>
+  <div class="kv"><span>Budget</span><span>${budget}</span><span>Reach by</span><span>${esc(r.reach||'Text')} · ${tel?`<a href="tel:${esc(tel)}">${esc(r.phone)}</a>`:''}</span>${r.email?`<span>Email</span><span>${esc(r.email)}</span>`:''}</div>
+  ${pics?`<div class="pics">${pics}</div>`:''}${story}
+  ${s==='Booked'?'':`<div class="act"><button data-t="consult" data-r="${r.row}" data-a="${r.at}" data-s="Contacted" class="${s==='Contacted'?'on':''}">Contacted ✓</button><button data-t="consult" data-r="${r.row}" data-a="${r.at}" data-s="Booked">Booked ✓</button></div>`}</div>`}
+
+function render(){
+  $('#tC').classList.toggle('on',tab==='C');$('#tK').classList.toggle('on',tab==='K');
+  const cToday=data.concierge.filter(r=>isToday(r.at)||st(r)!=='Done');
+  const cOpen=cToday.filter(r=>st(r)!=='Done'), cDone=cToday.filter(r=>st(r)==='Done'&&isToday(r.handledAt||r.at));
+  const kOpen=data.consult.filter(r=>st(r)!=='Booked'), kDone=data.consult.filter(r=>st(r)==='Booked');
+  $('#nC').textContent=cOpen.length||''; $('#nK').textContent=kOpen.filter(r=>st(r)==='New').length||'';
+  let h='';
+  if(tab==='C'){
+    h=cOpen.length?cOpen.map(concierge).join(''):'<p class="empty">No requests right now. Every guest is taken care of.</p>';
+    if(cDone.length)h+=`<p class="sub">Handled today</p>`+cDone.map(concierge).join('');
+  }else{
+    h=kOpen.length?kOpen.map(consult).join(''):'<p class="empty">No new consultations.</p>';
+    if(kDone.length)h+=`<details class="more"><summary>Booked (${kDone.length}) +</summary><div class="list">${kDone.map(consult).join('')}</div></details>`;
+  }
+  $('#body').innerHTML=h;
+}
+
+async function load(){
+  if(DEMO){data=demo();lastOk=Date.now();render();status();return}
+  if(!window.TAFFETA_ENDPOINT){$('#body').innerHTML='';$('#st').textContent='Almost ready: the Google Sheet isn’t connected yet.';return}
+  if(!KEY){lockView();return}
+  try{
+    const r=await fetch(window.TAFFETA_ENDPOINT+'?key='+encodeURIComponent(KEY)+'&t='+Date.now(),{cache:'no-store'});
+    const j=await r.json();
+    if(!j.ok){if(j.error==='key')lockView();return}
+    data={concierge:j.concierge||[],consult:j.consult||[]};lastOk=Date.now();
+    for(const k in pending){const [row,at]=k.split(':');const all=[...data.concierge,...data.consult];const m=all.find(x=>String(x.row)===row&&String(x.at)===at);if(m&&m.status===pending[k])delete pending[k]}
+    render();
+  }catch(e){}
+  status();
+}
+function status(){$('#st').textContent=lastOk?(Date.now()-lastOk>120000?'Can’t reach the Sheet right now. Check the Wi-Fi.':'Updates on its own every 30 seconds'):''}
+function lockView(){$('#body').innerHTML='<div class="lock"><p>This page needs the Front Desk link. Ask Alexandra to send it to you.</p></div>';$('#st').textContent=''}
+
+document.addEventListener('click',e=>{
+  const b=e.target.closest('.act button');
+  if(b){const k=b.dataset.r+':'+b.dataset.a;pending[k]=b.dataset.s;render();
+    if(!DEMO&&window.TAFFETA_ENDPOINT&&KEY)fetch(window.TAFFETA_ENDPOINT,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify({type:'status',key:KEY,tab:b.dataset.t,row:Number(b.dataset.r),at:Number(b.dataset.a),status:b.dataset.s})}).then(()=>setTimeout(load,2500)).catch(()=>{});
+    return}
+  if(e.target.closest('#tC')){tab='C';store.set('desk-tab',tab);render()}
+  if(e.target.closest('#tK')){tab='K';store.set('desk-tab',tab);render()}
+});
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')load()});
+setInterval(load,30000);setInterval(status,15000);
+render();load();
+
+function demo(){const n=Date.now(),m=60000;return{concierge:[
+ {row:5,at:n-0.3*m,name:'Jess',sips:'Hi Pretty Latte',comforts:'Blanket, Quiet visit',before:'',note:'',status:'New'},
+ {row:4,at:n-4*m,name:'Morgan',sips:'Champagne or wine',comforts:'Phone charger',before:'',note:'iPhone charger please!',status:'On it'},
+ {row:3,at:n-9*m,name:'Dana',sips:'',comforts:'',before:'Prebook next visit, Checkout at chair',note:'',status:'New'},
+ {row:2,at:n-40*m,name:'Taylor',sips:'Americano',comforts:'Wi-Fi password',before:'',note:'',status:'Done',handledAt:n-36*m}],
+ consult:[
+ {row:3,at:n-12*m,first:'Sophia',last:'Reyes',phone:'(609) 555-0142',email:'sophia@example.com',hair:'Big color change, Extensions',skin:'',story:"Hair: Box dye about a year ago, want a soft lived-in blonde I don't have to touch up every 6 weeks.",sameBudget:'Yes',budget:'300',reach:'Text',photoNow:'#',photoGoal:'#',status:'New'},
+ {row:2,at:n-62*m,first:'Lauren',last:'Kim',phone:'(609) 555-0198',email:'',hair:'',skin:'Signature facial, Brows',story:'Skin: Dry patches and redness, using retinol at night. Sensitive to fragrance.',sameBudget:'',budget:'',reach:'Call',photoNow:'',photoGoal:'',status:'New'}]}}
+</script>
+</body></html>
