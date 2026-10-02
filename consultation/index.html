@@ -156,8 +156,10 @@ $('#f').addEventListener('submit',async e=>{
     await fetch(window.TAFFETA_ENDPOINT,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(d)});
     const who=h&&s?'Your artists':h?'Your artist':'Your esthetician';
     $('#app').innerHTML=`<div class="done"><img src="../g/logo.png" alt="" style="width:84px"><span class="eyebrow">Complimentary Consultation</span><h1>Thank you, <em>${first.replace(/[<>&"]/g,'')}.</em></h1><p class="lede">${who} will review your goals and ${d.reach==='Call'?'call':'text'} you with a personal plan and estimate. We can't wait to meet you.</p><p class="quote" style="margin-top:12px">${QUOTE}</p></div>`;
-    scrollTo(0,0);
+    scrollTo(0,0); if(window.parent!==window) parent.postMessage({taffetaConsultTop:true},'*');
   }catch(x){b.disabled=false;b.textContent='Send my consultation';err.textContent='That didn’t go through. Please check your signal and try again.'}
 });
+// When shown inside the Taffeta website (Showit embed), tell the page how tall the form is.
+if(window.parent!==window){const tell=()=>parent.postMessage({taffetaConsultHeight:Math.ceil(document.body.getBoundingClientRect().height)},'*');new ResizeObserver(tell).observe(document.body);addEventListener('load',tell)}
 </script>
 </body></html>
