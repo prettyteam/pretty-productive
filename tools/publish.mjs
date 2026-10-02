@@ -1,0 +1,61 @@
+// Pretty Productive site publisher.
+// Encrypts today's data into d/<id>.json, one file per stylist plus one for The Pretty Report.
+// Each file opens only with that person's private link secret + PIN. No secrets are written to the repo.
+//
+// Usage:
+//   node tools/publish.mjs --data data.json --keys keys.json --base https://prettyteam.taffetadesign.com/
+//
+// data.json: { daily: {...}, pages: [ {slug,name,...}, ... ], week: {...} }   (same shapes as The Pretty Report's database)
+// keys.json: { leadership: {id, secret, pin}, stylists: { <slug>: {id, secret, pin} } }   (kept OUTSIDE the repo)
+// Stylists missing from keys.json get new keys; keys.json is rewritten and the new links are printed.
+import { webcrypto as crypto } from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+
+const args = Object.fromEntries(process.argv.slice(2).reduce((a, v, i, arr) => (v.startsWith('--') ? a.concat([[v.slice(2), arr[i + 1]]]) : a), []));
+const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
+const outDir = path.join(root, 'd');
+const base = (args.base || 'https://prettyteam.taffetadesign.com/').replace(/\/?$/, '/');
+const ITER = 150000;
+const enc = new TextEncoder();
+const b64 = (u) => Buffer.from(u).toString('base64');
+const rand = (n) => crypto.getRandomValues(new Uint8Array(n));
+const b64url = (u) => Buffer.from(u).toString('base64url');
+const pinOf = (len) => { let s = ''; const r = rand(len * 2); for (let i = 0; i < len; i++) s += String(r[i] % 10); return s; };
+
+async function seal(obj, secret, pin) {
+  const salt = rand(16), iv = rand(12);
+  const baseKey = await crypto.subtle.importKey('raw', enc.encode(secret + ':' + pin), 'PBKDF2', false, ['deriveKey']);
+  const key = await crypto.subtle.deriveKey({ name: 'PBKDF2', salt, iterations: ITER, hash: 'SHA-256' }, baseKey, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
+  const ct = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, enc.encode(JSON.stringify(obj))));
+  // verify round-trip before writing
+  const back = JSON.parse(new TextDecoder().decode(await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, ct)));
+  if (JSON.stringify(back) !== JSON.stringify(obj)) throw new Error('round-trip mismatch');
+  return { v: 1, iter: ITER, salt: b64(salt), iv: b64(iv), ct: b64(ct) };
+}
+const newKey = (pinLen) => ({ id: b64url(rand(9)), secret: b64url(rand(18)), pin: pinOf(pinLen) });
+const linkFor = (kind, k) => `${base}#${kind}.${k.id}.${k.secret}`;
+
+const data = JSON.parse(fs.readFileSync(args.data, 'utf8'));
+const keys = fs.existsSync(args.keys) ? JSON.parse(fs.readFileSync(args.keys, 'utf8')) : {};
+keys.stylists ||= {};
+const created = [];
+if (!keys.leadership) { keys.leadership = newKey(6); created.push(['The Pretty Report', linkFor('r', keys.leadership), keys.leadership.pin]); }
+const pages = (data.pages || []).filter((p) => p && p.slug);
+for (const p of pages) {
+  if (!keys.stylists[p.slug]) { keys.stylists[p.slug] = newKey(4); created.push([p.name, linkFor('s', keys.stylists[p.slug]), keys.stylists[p.slug].pin]); }
+}
+fs.mkdirSync(outDir, { recursive: true });
+const strip = (p) => { const { link, ...rest } = p; return rest; };
+let n = 0;
+for (const p of pages) {
+  const k = keys.stylists[p.slug];
+  const mine = { ...strip(p), link: linkFor('s', k) };
+  fs.writeFileSync(path.join(outDir, k.id + '.json'), JSON.stringify(await seal({ daily: data.daily || null, mine }, k.secret, k.pin)));
+  n++;
+}
+const board = { daily: data.daily || null, week: data.week || null, pages: pages.map((p) => ({ ...strip(p), link: linkFor('s', keys.stylists[p.slug]) })) };
+fs.writeFileSync(path.join(outDir, keys.leadership.id + '.json'), JSON.stringify(await seal(board, keys.leadership.secret, keys.leadership.pin)));
+fs.writeFileSync(args.keys, JSON.stringify(keys, null, 1));
+console.log(`Sealed ${n} stylist files + The Pretty Report into d/.`);
+if (created.length) { console.log('NEW LINKS (send privately):'); for (const [name, url, pin] of created) console.log(`${name}\t${url}\tPIN ${pin}`); }
