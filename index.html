@@ -240,7 +240,7 @@ function stylistPage(p){
     parts.push(h('div',{class:'empty'},h('h3',{},'Not on the books today'),h('p',{},'Enjoy the day off. Your goals will be here next time you are in.')));
   } else {
     parts.push(h('section',{class:'section'},
-      h('h2',{},'Look at your schedule today'),h('p',{class:'kicker',style:'font-size:22px'},'Get ready to lock in.'),
+      h('h2',{},'Here’s your lineup'),h('p',{class:'kicker',style:'font-size:22px'},'Let’s lock in.'),
       h('div',{class:'chair'},(p.clients||[]).map(c=>h('div',{class:'client'},
         h('div',{class:'who'},h('strong',{},c.client),
           h('span',{class:'muted num',style:'font-size:14px'},money(c.services.reduce((a,s)=>a+s.price,0)))),
@@ -420,7 +420,7 @@ function setHead(name){
   if(EDITION==='team'){$h1.textContent='The Pretty Report';document.title='The Pretty Report';return}
   if(!name){$h1.textContent='Pretty Productive';document.title='Pretty Productive';return}
   const first=name.split(' ')[0];
-  $h1.replaceChildren(first+', you’re Pretty Productive today. ',h('span',{class:'lfg'},'LFG 🤍'));
+  $h1.replaceChildren(first+', you’re Pretty Productive today – ',h('span',{class:'lfg'},'LFG'));
   document.title='Pretty Productive '+name;
 }
 function apply(P){
