@@ -20,8 +20,12 @@
 .sec{display:flex;flex-direction:column;gap:18px;padding-top:4px}
 .sec[hidden],.agree-row[hidden]{display:none}
 .sec>.eyebrow{color:var(--brown);border-bottom:1px solid var(--gold);padding-bottom:6px}
+.home-back{position:absolute;top:max(14px,env(safe-area-inset-top));left:14px;display:inline-flex;align-items:center;gap:6px;padding:8px 6px;color:var(--brown);text-decoration:none;font-size:11px;letter-spacing:.18em;text-transform:uppercase;opacity:.85}
+.home-back:hover{opacity:1}
+.home-back svg{width:18px;height:18px}
 </style>
-</head><body><main id="app">
+</head><body><a class="home-back" href="https://taffetadesign.com/" target="_top" aria-label="Back to taffetadesign.com"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg><span>Home</span></a>
+<main id="app">
 <div class="top">
   <img src="../g/logo.png" alt="Taffeta Salon &amp; Spa">
   <span class="eyebrow">Complimentary Consultation</span>
