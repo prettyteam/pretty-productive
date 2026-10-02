@@ -143,6 +143,7 @@ button:focus-visible,select:focus-visible{outline:2px solid var(--brown);outline
 @media (max-width:600px){.wrapday{grid-template-columns:minmax(0,1fr);gap:18px}}
 .score{display:flex;flex-direction:column;gap:2px;min-width:120px}
 .scorenum{font-family:var(--display);font-size:56px;line-height:1;color:var(--ink)}
+.scorenum small{font-size:20px;color:var(--muted);margin-left:4px}
 .tier{font-family:var(--display);font-style:italic;color:var(--ink);font-size:17px;border-top:1px solid var(--gold);padding-top:6px;margin-top:6px}
 .wrapbody{display:flex;flex-direction:column;gap:14px}
 .wrapbody p{font-size:15.5px;margin-top:4px}
@@ -220,43 +221,41 @@ function score(p){const r=KEYS.map(k=>p.goals[k]).filter(v=>v&&v.actual!=null&&v
 function tier(n){return n>=85?'Standout day':n>=70?'Strong day':n>=50?'Solid foundation':'Building day'}
 function wrapBlock(p){
   const n=score(p), w=p.wrap; if(n==null||!w) return null;
-  return h('section',{class:'wrapday'},
-    h('div',{class:'score'},h('span',{class:'label'},'Your day'),h('span',{class:'scorenum num'},String(n)),h('span',{class:'tier'},tier(n))),
-    h('div',{class:'wrapbody'},
-      h('div',{},h('span',{class:'label'},'Where you shined'),h('p',{},w.shined)),
-      h('div',{},h('span',{class:'label'},'Tomorrow’s focus: '+w.focus),h('p',{},w.fix))));
+  return h('section',{class:'section'},
+    h('h2',{},'How today went'),
+    h('div',{class:'wrapday'},
+      h('div',{class:'score'},h('span',{class:'label'},'Day score'),h('span',{class:'scorenum num'},String(n),h('small',{},'/100')),h('span',{class:'tier'},tier(n)),
+        h('span',{class:'muted',style:'font-size:13px;margin-top:6px'},'How close you got to your goals')),
+      h('div',{class:'wrapbody'},
+        h('div',{},h('span',{class:'label'},'Where you shined'),h('p',{},w.shined)),
+        h('div',{},h('span',{class:'label'},'Tomorrow’s focus: '+w.focus),h('p',{},w.fix)))));
 }
 
 function stylistPage(p){
   const d=S.daily||{}, g=p.goals;
-  const first=p.name.split(' ')[0];
   const parts=[];
   if(EDITION==='team'&&S.isAdmin) parts.push(h('button',{class:'back',onclick:()=>{S.open=null;render()}},'← Back to the team board'));
-  parts.push(h('section',{class:'affirm'},
-    h('span',{class:'label'},'Your pep talk, '+first),
-    h('blockquote',{},d.affirmation||'')));
+  parts.push(h('section',{class:'affirm'},h('blockquote',{},d.affirmation||'')));
   if(!p.onBooks){
     parts.push(h('div',{class:'empty'},h('h3',{},'Not on the books today'),h('p',{},'Enjoy the day off. Your goals will be here next time you are in.')));
   } else {
-    const svcNote=`Booked ${money(g.service.booked)}, plus your add-on goal.`;
+    parts.push(h('section',{class:'section'},
+      h('h2',{},'Look at your schedule today'),h('p',{class:'kicker',style:'font-size:22px'},'Get ready to lock in.'),
+      h('div',{class:'chair'},(p.clients||[]).map(c=>h('div',{class:'client'},
+        h('div',{class:'who'},h('strong',{},c.client),
+          h('span',{class:'muted num',style:'font-size:14px'},money(c.services.reduce((a,s)=>a+s.price,0)))),
+        c.services.length?h('div',{class:'chips'},c.services.map(s=>h('span',{class:'chip'+(s.addon?' add':'')},s.name+(s.addon?' · add-on':'')))):null,
+        c.retail.length?h('p',{class:'muted',style:'font-size:14px'},'Took home: '+c.retail.map(r=>r.name).join(', ')):null,
+        h('p',{class:'try'},h('em',{},'Try: '),c.suggestion),
+        c.services.length?guestChecks(c.client):null)))));
+    parts.push(h('section',{class:'section'},
+      h('h2',{},'Today’s goals'),
+      h('div',{class:'goals'},
+        goalRow('Service sales',g.service.actual,g.service.goal,money,`Booked ${money(g.service.booked)} + add-ons`),
+        goalRow('Retail',g.retail.actual,g.retail.goal,money,`${g.retail.pct||15}% of your service sales`),
+        goalRow('Add-on services',g.addons.actual,g.addons.goal,n=>String(n),'Half your clients'),
+        g.rebook?goalRow('Rebooked before leaving',g.rebook.actual,g.rebook.goal,n=>String(n),'6 in 10 clients'):null)));
     parts.push(wrapBlock(p));
-    parts.push(h('div',{class:'split'},
-      h('section',{class:'section'},
-        h('h2',{},'Today’s goals'),
-        h('div',{class:'goals'},
-          goalRow('Service sales',g.service.actual,g.service.goal,money,svcNote),
-          goalRow('Retail',g.retail.actual,g.retail.goal,money,`${g.retail.pct||15}% of your services this month, building to the 15% industry standard by December.`),
-          goalRow('Add-on services',g.addons.actual,g.addons.goal,n=>String(n),'Half your clients. Glazes, treatments, waxes and finishing touches.'),
-          g.rebook?goalRow('Rebooked before leaving',g.rebook.actual,g.rebook.goal,n=>String(n),g.rebook.actual==null?'6 in 10 clients leave with their next visit booked. Counting starts with the live updates.':'6 in 10 clients leave with their next visit booked.'):null)),
-      h('section',{class:'section'},
-        h('h2',{},'Look at your schedule today'),h('p',{class:'kicker',style:'font-size:22px'},'Get ready to lock in.'),
-        h('div',{class:'chair'},(p.clients||[]).map(c=>h('div',{class:'client'},
-          h('div',{class:'who'},h('strong',{},c.client),
-            h('span',{class:'muted num',style:'font-size:14px'},money(c.services.reduce((a,s)=>a+s.price,0)))),
-          c.services.length?h('div',{class:'chips'},c.services.map(s=>h('span',{class:'chip'+(s.addon?' add':'')},s.name+(s.addon?' · add-on':'')))):null,
-          c.retail.length?h('p',{class:'muted',style:'font-size:14px'},'Took home: '+c.retail.map(r=>r.name).join(', ')):null,
-          h('p',{class:'try'},h('em',{},'Try: '),c.suggestion),
-          c.services.length?guestChecks(c.client):null))))));
     parts.push(guestGuide());
   }
   parts.push(teamBlock(d));
@@ -287,7 +286,7 @@ const GUIDE=[
   ['Consult like you mean it','Sit down with her before you touch anything. Ask about her goals, her last visit and her routine at home, and feel the hair.'],
   ['Write the quote and get a yes','For any color or treatment, write out the full price before you start, and have her approve it.'],
   ['Put homecare in the quote','Include the one or two products she genuinely needs to keep the result. It is part of the plan, not an extra at checkout.'],
-  ['Offer one add-on that fits','A glaze for color, a treatment for damage, a brow sculpt while she processes. One, chosen for her.'],
+  ['Offer one add-on that fits','K18 before balayage or foils, a glaze after color, a brow sculpt while she processes. Say it as the plan: \u201cI\u2019d love to use K18 today. Your hair will feel so good afterwards. Are you okay with that plan?\u201d'],
   ['Teach while you style','Say what you are using and why, then let her hold it.'],
   ['Book the next visit in the chair','Before the cape comes off: \u201cLet\u2019s keep this looking right. Does six weeks from today work?\u201d']
 ];
