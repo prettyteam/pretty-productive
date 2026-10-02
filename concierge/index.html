@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#f2f1ec"><meta name="robots" content="noindex">
+<title>The Taffeta Concierge</title>
+<link rel="icon" href="../icon.png"><link rel="apple-touch-icon" href="../icon.png">
+<link rel="stylesheet" href="../g/base.css">
+<script src="../g/config.js"></script>
+</head><body><main id="app">
+<div class="top">
+  <img src="../g/logo.png" alt="Taffeta Salon &amp; Spa">
+  <span class="eyebrow">The Taffeta Concierge</span>
+  <h1>Anything you need, <em>brought to your chair.</em></h1>
+  <p class="lede">Settle in and stay comfy. Tap what you'd love and we'll bring it over in just a few minutes.</p>
+</div>
+
+<form id="f" novalidate>
+<div style="display:flex;flex-direction:column;gap:26px">
+<div class="field"><label for="name">Your name *</label><input class="input" id="name" name="name" autocomplete="given-name" placeholder="So we know who to bring it to" style="height:44px" required></div>
+
+<section class="group">
+  <h2>Something to sip</h2>
+  <div class="opts">
+    <label class="opt"><input type="checkbox" name="sips" value="Hi Pretty Latte"><span class="box"></span><span class="t"><b>Hi Pretty Latte</b><small>Our house favorite</small></span></label>
+    <label class="opt"><input type="checkbox" name="sips" value="Americano"><span class="box"></span><span class="t"><b>Americano</b></span></label>
+    <label class="opt"><input type="checkbox" name="sips" value="Tea"><span class="box"></span><span class="t"><b>Tea</b></span></label>
+    <label class="opt"><input type="checkbox" name="sips" value="Champagne or wine"><span class="box"></span><span class="t"><b>Champagne or wine</b><small>When available · 21+</small></span></label>
+    <label class="opt"><input type="checkbox" name="sips" value="Sparkling water"><span class="box"></span><span class="t"><b>Sparkling water</b></span></label>
+    <label class="opt"><input type="checkbox" name="sips" value="Still water"><span class="box"></span><span class="t"><b>Still water</b></span></label>
+  </div>
+</section>
+
+<section class="group">
+  <h2>Little comforts</h2>
+  <div class="opts">
+    <label class="opt"><input type="checkbox" name="comforts" value="Blanket"><span class="box"></span><span class="t"><b>A cozy blanket</b></span></label>
+    <label class="opt"><input type="checkbox" name="comforts" value="Phone charger"><span class="box"></span><span class="t"><b>A phone charger</b></span></label>
+    <label class="opt"><input type="checkbox" name="comforts" value="Wi-Fi password"><span class="box"></span><span class="t"><b>The Wi-Fi password</b></span></label>
+    <label class="opt"><input type="checkbox" name="comforts" value="Quiet visit"><span class="box"></span><span class="t"><b>A quiet visit</b><small>Rest and recharge. We'll let your artist know.</small></span></label>
+  </div>
+</section>
+
+<section class="group">
+  <h2>Before you go</h2>
+  <div class="opts">
+    <label class="opt"><input type="checkbox" name="before" value="Prebook next visit"><span class="box"></span><span class="t"><b>Book my next visit</b><small>We'll hold your favorite time</small></span></label>
+    <label class="opt"><input type="checkbox" name="before" value="Checkout at chair"><span class="box"></span><span class="t"><b>Check out at my chair</b><small>No line, no rush</small></span></label>
+  </div>
+</section>
+
+<div class="field"><label for="note">Anything else? <span style="color:var(--soft)">(optional)</span></label><input class="input" id="note" name="note" style="height:44px"></div>
+<input class="hp" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
+<p class="err" id="err" role="alert"></p>
+<button class="btn" id="go" type="submit">Send to the front desk</button>
+<p class="fine">Your request goes straight to our front desk.</p>
+</div>
+</form>
+
+<div class="card">
+  <span class="eyebrow">Pretty Obsessed Membership</span>
+  <h2>Love it here? Make it a ritual.</h2>
+  <p>$75 a month gives you a $50 credit toward any service, plus curated gifts along the way.</p>
+  <a href="https://taffetadesign.com/beauty-membership" style="color:var(--ink);text-underline-offset:3px">Learn more, or ask us today</a>
+</div>
+</main>
+<script>
+const $=s=>document.querySelector(s), vals=n=>[...document.querySelectorAll(`[name="${n}"]:checked`)].map(i=>i.value);
+$('#f').addEventListener('submit',async e=>{
+  e.preventDefault(); const err=$('#err'); err.textContent='';
+  const name=$('#name').value.trim();
+  const d={type:'concierge',name,sips:vals('sips'),comforts:vals('comforts'),before:vals('before'),note:$('#note').value.trim(),website:document.querySelector('[name=website]').value};
+  if(!name){err.textContent='Please add your name so we know who to bring it to.';$('#name').focus();return}
+  if(!d.sips.length&&!d.comforts.length&&!d.before.length&&!d.note){err.textContent='Tap at least one thing you’d love.';return}
+  if(!window.TAFFETA_ENDPOINT){err.textContent='Almost ready! Please let the front desk know what you’d like for now.';return}
+  const b=$('#go'); b.disabled=true; b.textContent='Sending…';
+  try{
+    await fetch(window.TAFFETA_ENDPOINT,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(d)});
+    const first=name.split(' ')[0];
+    $('#app').innerHTML=`<div class="done"><img src="../g/logo.png" alt="" style="width:84px"><span class="eyebrow">The Taffeta Concierge</span><h1>On its way, <em>${first.replace(/[<>&"]/g,'')}.</em></h1><p class="lede">Sit back and relax. We'll be right over.</p><a href="./" style="color:var(--ink);margin-top:10px">Need anything else?</a></div>`;
+    scrollTo(0,0);
+  }catch(x){b.disabled=false;b.textContent='Send to the front desk';err.textContent='That didn’t go through. Check your signal and try again, or wave us over.'}
+});
+</script>
+</body></html>

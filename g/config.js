@@ -1,0 +1,1 @@
+window.TAFFETA_ENDPOINT='';

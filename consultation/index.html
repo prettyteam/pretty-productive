@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#f2f1ec">
+<title>Complimentary Consultation · Taffeta Salon &amp; Spa</title>
+<meta name="description" content="Share your goals and photos, and your Taffeta artist will send a personal estimate before your visit.">
+<link rel="icon" href="../icon.png"><link rel="apple-touch-icon" href="../icon.png">
+<link rel="stylesheet" href="../g/base.css">
+<script src="../g/config.js"></script>
+</head><body><main id="app">
+<div class="top">
+  <img src="../g/logo.png" alt="Taffeta Salon &amp; Spa">
+  <span class="eyebrow">Complimentary Consultation</span>
+  <h1>Your goals, <em>your budget,</em> no surprises.</h1>
+  <div class="rule"></div>
+  <p class="lede">We believe you should know exactly what to expect before you ever sit in our chair. Share your goals and a few photos, and your artist will send you a personal estimate before your visit.</p>
+</div>
+
+<div class="card">
+  <span class="eyebrow">How our color pricing works</span>
+  <h2>Two parts, always clear.</h2>
+  <p><b>Artistry:</b> your artist's time, skill and care to create your color.</p>
+  <p><b>Your color:</b> every bowl is weighed on our salon scale and priced per mix, so you only pay for the color we actually use.</p>
+  <p style="color:var(--soft);font-size:14.5px">Longer or fuller hair may need an extra mix. Your artist will always check with you first.</p>
+</div>
+
+<form id="f" novalidate>
+<div style="display:flex;flex-direction:column;gap:26px">
+<section class="group">
+  <div class="row2">
+    <div class="field"><label for="first">First name *</label><input class="input" id="first" autocomplete="given-name" style="height:44px"></div>
+    <div class="field"><label for="last">Last name</label><input class="input" id="last" autocomplete="family-name" style="height:44px"></div>
+  </div>
+  <div class="field"><label for="phone">Phone *</label><input class="input" id="phone" type="tel" autocomplete="tel" style="height:44px"></div>
+  <div class="field"><label for="email">Email *</label><input class="input" id="email" type="email" autocomplete="email" style="height:44px"></div>
+</section>
+
+<section class="group">
+  <h2>What are you dreaming of?</h2>
+  <span class="eyebrow" style="margin-top:4px">Hair</span>
+  <div class="opts">
+    <label class="opt"><input type="checkbox" name="hair" value="Big color change"><span class="box"></span><span class="t"><b>A big color change</b><small>Balayage, highlights, going lighter or darker, color correction</small></span></label>
+    <label class="opt"><input type="checkbox" name="hair" value="Extensions"><span class="box"></span><span class="t"><b>Extensions</b><small>Tape-in, hand-tied, invisible bead</small></span></label>
+    <label class="opt"><input type="checkbox" name="hair" value="Smoothing"><span class="box"></span><span class="t"><b>Smoothing</b><small>Brazilian Blowout or keratin</small></span></label>
+  </div>
+  <span class="eyebrow" style="margin-top:8px">Skin &amp; spa</span>
+  <div class="opts">
+    <label class="opt"><input type="checkbox" name="skin" value="Signature facial"><span class="box"></span><span class="t"><b>A signature facial</b><small>Taffeta, brightening, anti-aging, acne</small></span></label>
+    <label class="opt"><input type="checkbox" name="skin" value="Biologique Recherche"><span class="box"></span><span class="t"><b>Biologique Recherche</b><small>Our 90-minute luxury facials</small></span></label>
+    <label class="opt"><input type="checkbox" name="skin" value="Treatments"><span class="box"></span><span class="t"><b>Treatments</b><small>Dermaplaning, peels, microdermabrasion, LED</small></span></label>
+    <label class="opt"><input type="checkbox" name="skin" value="Not sure yet"><span class="box"></span><span class="t"><b>Not sure yet</b><small>Tell me what you'd recommend</small></span></label>
+  </div>
+</section>
+
+<div class="field"><label for="story">Your story</label><textarea class="input" id="story" placeholder="Past color or box dye, treatments, what you love, what you'd change. For skin: your concerns, routine and any sensitivities."></textarea></div>
+
+<section class="group">
+  <h2>Show us</h2>
+  <label class="upload" id="u1">↑ <span>A photo of your hair or skin today</span><input type="file" accept="image/*" id="photoNow"></label>
+  <label class="upload" id="u2">↑ <span>Your inspiration <span style="color:var(--soft)">(optional, but we love to see it)</span></span><input type="file" accept="image/*" id="photoGoal"></label>
+</section>
+
+<section class="group">
+  <h2>Your beauty budget</h2>
+  <p style="font-size:15px">Love a set budget? Tell us what feels right per visit and your artist will build a custom plan around it, visit after visit.</p>
+  <div class="opts">
+    <label class="opt"><input type="checkbox" id="sameBudget"><span class="box"></span><span class="t"><b>Keep me on the same budget every visit</b><small>We'll design your color and maintenance to fit it</small></span></label>
+  </div>
+  <div class="field"><label for="budget">My budget per visit <span style="color:var(--soft)">(optional)</span></label><div class="money"><span>$</span><input class="input" id="budget" inputmode="numeric" style="height:44px"></div></div>
+</section>
+
+<section class="group">
+  <h2>How should we reach you?</h2>
+  <div class="opts">
+    <label class="opt radio"><input type="radio" name="reach" value="Text" checked><span class="box"></span><span class="t"><b>Text me</b></span></label>
+    <label class="opt radio"><input type="radio" name="reach" value="Call"><span class="box"></span><span class="t"><b>Call me</b></span></label>
+  </div>
+</section>
+
+<section class="group">
+  <div class="opts">
+    <label class="opt"><input type="checkbox" class="agree"><span class="box"></span><span class="t" style="font-size:14.5px">I understand my first visit is usually my biggest investment. Most color starts around $150, and larger transformations like a full balayage begin around $320+, depending on my starting point and goals.</span></label>
+    <label class="opt"><input type="checkbox" class="agree"><span class="box"></span><span class="t" style="font-size:14.5px">I understand color is priced as artistry plus color per mix, and my artist will walk me through my estimate before we begin.</span></label>
+  </div>
+</section>
+
+<input class="hp" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
+<p class="err" id="err" role="alert"></p>
+<button class="btn" id="go" type="submit">Send my consultation</button>
+</div>
+</form>
+<p class="quote">You over the trend, always.</p>
+</main>
+<script>
+const $=s=>document.querySelector(s), vals=n=>[...document.querySelectorAll(`[name="${n}"]:checked`)].map(i=>i.value);
+function shrink(file){return new Promise(res=>{if(!file)return res('');const img=new Image();img.onload=()=>{const m=1600,s=Math.min(1,m/Math.max(img.width,img.height));const c=document.createElement('canvas');c.width=Math.round(img.width*s);c.height=Math.round(img.height*s);c.getContext('2d').drawImage(img,0,0,c.width,c.height);URL.revokeObjectURL(img.src);res(c.toDataURL('image/jpeg',.82))};img.onerror=()=>res('');img.src=URL.createObjectURL(file)})}
+for(const [inp,lab] of [['#photoNow','#u1'],['#photoGoal','#u2']]){$(inp).addEventListener('change',e=>{const f=e.target.files[0];if(f){$(lab).classList.add('has');$(lab).querySelector('span').textContent='✓ '+f.name}})}
+$('#f').addEventListener('submit',async e=>{
+  e.preventDefault(); const err=$('#err'); err.textContent='';
+  const first=$('#first').value.trim(), phone=$('#phone').value.trim(), email=$('#email').value.trim();
+  if(!first||!phone||!email){err.textContent='Please add your first name, phone and email.';return}
+  if(!/^\S+@\S+\.\S+$/.test(email)){err.textContent='Please double-check your email.';return}
+  if(!vals('hair').length&&!vals('skin').length){err.textContent='Choose at least one thing you’re dreaming of.';return}
+  if([...document.querySelectorAll('.agree')].some(c=>!c.checked)){err.textContent='Please tick both boxes so we’re on the same page about pricing.';return}
+  if(!window.TAFFETA_ENDPOINT){err.textContent='Almost ready! Please call or text us for now.';return}
+  const b=$('#go'); b.disabled=true; b.textContent='Sending…';
+  const d={type:'consult',first,last:$('#last').value.trim(),phone,email,hair:vals('hair'),skin:vals('skin'),story:$('#story').value.trim(),
+    sameBudget:$('#sameBudget').checked,budget:$('#budget').value.trim(),reach:vals('reach')[0]||'Text',agree:true,website:document.querySelector('[name=website]').value,
+    photoNow:await shrink($('#photoNow').files[0]),photoGoal:await shrink($('#photoGoal').files[0])};
+  try{
+    await fetch(window.TAFFETA_ENDPOINT,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(d)});
+    $('#app').innerHTML=`<div class="done"><img src="../g/logo.png" alt="" style="width:84px"><span class="eyebrow">Complimentary Consultation</span><h1>Thank you, <em>${first.replace(/[<>&"]/g,'')}.</em></h1><p class="lede">Your artist will review your goals and ${d.reach==='Call'?'call':'text'} you with a personal estimate. We can't wait to meet you.</p><p class="quote" style="margin-top:12px">You over the trend, always.</p></div>`;
+    scrollTo(0,0);
+  }catch(x){b.disabled=false;b.textContent='Send my consultation';err.textContent='That didn’t go through. Please check your signal and try again.'}
+});
+</script>
+</body></html>
