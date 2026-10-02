@@ -120,11 +120,11 @@
 <button class="btn" id="go" type="submit">Send my consultation</button>
 </div>
 </form>
-<p class="quote">We believe what’s best for you, always over what’s trending.</p>
+<p class="quote">We believe what’s genuinely best for YOU, over what is trending.</p>
 </main>
 <script>
 const $=s=>document.querySelector(s), vals=n=>[...document.querySelectorAll(`[name="${n}"]:checked`)].map(i=>i.value);
-const QUOTE='We believe what’s best for you, always over what’s trending.';
+const QUOTE='We believe what’s genuinely best for YOU, over what is trending.';
 function sync(){
   const h=$('#wantHair').checked, s=$('#wantSkin').checked;
   $('#secHair').hidden=!h; $('#secSkin').hidden=!s;
