@@ -247,7 +247,7 @@ function stylistPage(p){
         c.services.length?h('div',{class:'chips'},c.services.map(s=>h('span',{class:'chip'+(s.addon?' add':'')},s.name+(s.addon?' · add-on':'')))):null,
         c.retail.length?h('p',{class:'muted',style:'font-size:14px'},'Took home: '+c.retail.map(r=>r.name).join(', ')):null,
         h('p',{class:'try'},h('em',{},'Try: '),c.suggestion),
-        c.services.length?guestChecks(c.client):null)))));
+        c.services.length?guestChecks(c,p):null)))));
     parts.push(h('section',{class:'section'},
       h('h2',{},'Today’s goals'),
       h('div',{class:'goals'},
@@ -256,10 +256,10 @@ function stylistPage(p){
         goalRow('Add-on services',g.addons.actual,g.addons.goal,n=>String(n),'Half your clients'),
         g.rebook?goalRow('Rebooked before leaving',g.rebook.actual,g.rebook.goal,n=>String(n),'6 in 10 clients'):null)));
     parts.push(wrapBlock(p));
-    parts.push(guestGuide());
+    parts.push(guestGuide(p));
   }
   parts.push(teamBlock(d));
-  parts.push(tipsBlock(d));
+  parts.push(tipsBlock(d,p));
   return parts;
 }
 function incentiveCard(i){
@@ -291,23 +291,35 @@ const GUIDE=[
   ['Book the next visit in the chair','Before the cape comes off: \u201cLet\u2019s keep this looking right. Does six weeks from today work?\u201d']
 ];
 const CHECKS=['Consult','Quote approved','Homecare in quote','Rebooked'];
-function guestGuide(){
+const GUIDE_ESTI=[
+  ['Consult and check her skin','Ask about her goals, her routine at home, and anything that changes the plan: retinoids or Accutane, recent sun, allergies, sensitivity.'],
+  ['Get the waiver signed first','Any service that needs a waiver gets it signed before you start. No signature, no service.'],
+  ['Take a before photo','Ask if you can snap a quick before for her file and for content. Good light, same angle every time.'],
+  ['Offer one add-on that fits','Dermaplaning with a facial, a tint with a brow wax, a lip or chin wax while she is on the bed. Say it as the plan: \u201cI\u2019d love to add dermaplaning today. Your skin will feel so smooth afterwards. Are you okay with that plan?\u201d'],
+  ['Take the after photo and walk her through aftercare','Same light, same angle. Tell her what to avoid for the next day or two, and hand her the one product that protects the result.'],
+  ['Book the next visit before she leaves','\u201cYour brows will be ready again in about four weeks. Does the 30th work?\u201d']
+];
+const isEsti=p=>p&&p.role==='esthetician';
+function guestGuide(p){
+  const g=isEsti(p)?GUIDE_ESTI:GUIDE;
   return h('section',{class:'section'},
     h('h2',{},'Every guest, every time'),
-    h('p',{class:'muted',style:'font-size:14px'},'Your reference for each client in your chair today.'),
-    h('ol',{class:'guide'},GUIDE.map(([t,x])=>h('li',{},h('strong',{},t),h('span',{},x)))));
+    h('p',{class:'muted',style:'font-size:14px'},'Your reference for each client today.'),
+    h('ol',{class:'guide'},g.map(([t,x])=>h('li',{},h('strong',{},t),h('span',{},x)))));
 }
-function guestChecks(client){
+function guestChecks(c,p){
   const day=(S.daily&&S.daily.date)||'';
-  return h('div',{class:'gchecks'},CHECKS.map((label,i)=>{
-    const key='taffeta-check:'+day+':'+client+':'+i;
+  const labels=isEsti(p)?['Consult',c.needsWaiver?'Waiver signed':null,'Before photo','After photo','Rebooked'].filter(Boolean):CHECKS;
+  return h('div',{class:'gchecks'},labels.map(label=>{
+    const key='taffeta-check:'+day+':'+c.client+':'+label;
     const b=h('button',{class:'gcheck','aria-pressed':String(store.get(key)==='1')},label);
     b.addEventListener('click',()=>{const on=b.getAttribute('aria-pressed')!=='true';b.setAttribute('aria-pressed',String(on));store.set(key,on?'1':'')});
     return b;}));
 }
-function tipsBlock(d){
+function tipsBlock(d,p){
+  const t=(isEsti(p)&&d.esthetician)?d.esthetician:d;
   return h('section',{class:'section'},h('h2',{},'For today'),h('div',{class:'tips'},
-    [['Sell without selling',d.sellTip],['Keep them coming back',d.retentionTip],['Behind the chair',d.chairTip]].map(([t,x])=>h('div',{class:'tip'},h('span',{class:'label'},t),h('p',{},x||'')))));
+    [['Sell without selling',t.sellTip],['Keep them coming back',t.retentionTip],[isEsti(p)?'In the treatment room':'Behind the chair',t.chairTip]].map(([a,x])=>h('div',{class:'tip'},h('span',{class:'label'},a),h('p',{},x||'')))));
 }
 
 function teamBoard(){
