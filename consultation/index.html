@@ -45,7 +45,7 @@
   <h2>What can we create for you?</h2>
   <div class="areas">
     <label class="area"><input type="checkbox" id="wantHair"><b>Hair</b><small>Color, extensions, smoothing</small></label>
-    <label class="area"><input type="checkbox" id="wantSkin"><b>Skin &amp; spa</b><small>Facials, peels, treatments</small></label>
+    <label class="area"><input type="checkbox" id="wantSkin"><b>Skin &amp; Spa</b><small>Facials, brows, treatments</small></label>
   </div>
   <p class="hint">Choose one or both.</p>
 </section>
@@ -68,10 +68,11 @@
 </section>
 
 <section class="sec" id="secSkin" hidden>
-  <span class="eyebrow">Skin &amp; spa</span>
+  <span class="eyebrow">Skin &amp; Spa</span>
   <div class="opts">
     <label class="opt"><input type="checkbox" name="skin" value="Signature facial"><span class="box"></span><span class="t"><b>A signature facial</b><small>Taffeta, brightening, anti-aging, acne</small></span></label>
     <label class="opt"><input type="checkbox" name="skin" value="Biologique Recherche"><span class="box"></span><span class="t"><b>Biologique Recherche</b><small>Our 90-minute luxury facials</small></span></label>
+    <label class="opt"><input type="checkbox" name="skin" value="Brows"><span class="box"></span><span class="t"><b>Brows</b><small>Brow Sculpt, Lift &amp; Tint</small></span></label>
     <label class="opt"><input type="checkbox" name="skin" value="Treatments"><span class="box"></span><span class="t"><b>Treatments</b><small>Dermaplaning, peels, microdermabrasion, LED</small></span></label>
     <label class="opt"><input type="checkbox" name="skin" value="Not sure yet"><span class="box"></span><span class="t"><b>Not sure yet</b><small>Tell me what you'd recommend</small></span></label>
   </div>
@@ -140,7 +141,7 @@ $('#f').addEventListener('submit',async e=>{
   const h=$('#wantHair').checked, s=$('#wantSkin').checked;
   if(!first||!phone||!email){err.textContent='Please add your first name, phone and email.';return}
   if(!/^\S+@\S+\.\S+$/.test(email)){err.textContent='Please double-check your email.';return}
-  if(!h&&!s){err.textContent='Choose Hair, Skin & spa, or both.';return}
+  if(!h&&!s){err.textContent='Choose Hair, Skin & Spa, or both.';return}
   const hair=h?vals('hair'):[], skin=s?vals('skin'):[];
   if(!hair.length&&!skin.length){err.textContent='Choose at least one thing you’d love.';return}
   if([...document.querySelectorAll('.agree-row:not([hidden]) .agree')].some(c=>!c.checked)){err.textContent='Please tick the boxes so we’re on the same page about pricing.';return}
