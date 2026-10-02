@@ -21,7 +21,7 @@ body{margin:0}
   --ivory:#eae6dd;         /* Marshmallow-toned cards */
   --brown:#423327;         /* chocolate: bars, buttons, checks */
   --ink:#000000;           /* body text */
-  --muted:#6f6357;         /* captions */
+  --muted:#2b2b2b;         /* captions */
   --line:#dcd6cb;          /* hairlines, empty bar track */
   --gold:#b4925b;          /* tiny details: goal-hit checks */
   --display:"Fraunces","Iowan Old Style","Georgia",serif;
@@ -172,6 +172,26 @@ table.week tr.tot td{border-bottom:0;font-weight:700}
 .rem input{accent-color:var(--brown);width:16px;height:16px}
 .pinerr{min-height:1.5em;font-size:14px;color:var(--brown)}
 .forget{border:0;background:none;color:var(--muted);font-size:13px;text-decoration:underline;text-underline-offset:3px;padding:0}
+.dateline{font-family:var(--pep);font-style:italic;font-size:19px;color:var(--muted)}
+h2.lineup .lfg{font-size:.95em}
+details.cl{border-top:1px solid var(--line);margin-top:4px}
+details.cl summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;padding:8px 0 2px;font-size:14px;color:var(--ink)}
+details.cl summary::-webkit-details-marker,details.guidebox summary::-webkit-details-marker{display:none}
+details.cl summary span:first-child::after{content:" ▾";color:var(--gold)}
+details.cl[open] summary span:first-child::after{content:" ▴"}
+.ccount{color:var(--muted);font-size:13px}
+details.cl .gchecks{padding:8px 0 4px}
+details.guidebox summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center}
+.chev{font-family:var(--display);font-size:26px;color:var(--gold)}
+details.guidebox[open] .chev{transform:rotate(45deg)}
+details.guidebox .guide{margin-top:14px}
+details.tryd summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:8px;font-size:14px;color:var(--ink);padding:6px 0 2px}
+details.tryd summary::-webkit-details-marker{display:none}
+.tico{display:inline-block;width:18px;height:18px}
+.tplus{margin-left:auto;font-family:var(--display);font-size:22px;line-height:1;color:var(--gold)}
+details.tryd[open] .tplus{transform:rotate(45deg)}
+details.tryd .try{padding:4px 0 6px}
+.tico{background:no-repeat center/contain url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 2l1.9 6.1L20 10l-6.1 1.9L12 18l-1.9-6.1L4 10l6.1-1.9z' fill='%23b4925b'/%3E%3Cpath d='M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z' fill='%23b4925b'/%3E%3C/svg%3E")}
 </style>
 
 <link rel="icon" href="icon.png">
@@ -240,13 +260,13 @@ function stylistPage(p){
     parts.push(h('div',{class:'empty'},h('h3',{},'Not on the books today'),h('p',{},'Enjoy the day off. Your goals will be here next time you are in.')));
   } else {
     parts.push(h('section',{class:'section'},
-      h('h2',{},'Here’s your lineup'),h('p',{class:'kicker',style:'font-size:22px'},'Let’s lock in.'),
+      h('h2',{class:'lineup'},'Today’s lineup ',h('span',{class:'lfg'},'– let’s lock in')),
       h('div',{class:'chair'},(p.clients||[]).map(c=>h('div',{class:'client'},
         h('div',{class:'who'},h('strong',{},c.client),
           h('span',{class:'muted num',style:'font-size:14px'},money(c.services.reduce((a,s)=>a+s.price,0)))),
         c.services.length?h('div',{class:'chips'},c.services.map(s=>h('span',{class:'chip'+(s.addon?' add':'')},s.name+(s.addon?' · add-on':'')))):null,
         c.retail.length?h('p',{class:'muted',style:'font-size:14px'},'Took home: '+c.retail.map(r=>r.name).join(', ')):null,
-        h('p',{class:'try'},h('em',{},'Try: '),c.suggestion),
+        c.suggestion?h('details',{class:'tryd'},h('summary',{},h('span',{class:'tico','aria-hidden':'true'}),h('span',{class:'tlabel'},'Suggestion'),h('span',{class:'tplus','aria-hidden':'true'},'+')),h('p',{class:'try'},c.suggestion)):null,
         c.services.length?guestChecks(c,p):null)))));
     parts.push(h('section',{class:'section'},
       h('h2',{},'Today’s goals'),
@@ -302,19 +322,21 @@ const GUIDE_ESTI=[
 const isEsti=p=>p&&p.role==='esthetician';
 function guestGuide(p){
   const g=isEsti(p)?GUIDE_ESTI:GUIDE;
-  return h('section',{class:'section'},
-    h('h2',{},'Every guest, every time'),
-    h('p',{class:'muted',style:'font-size:14px'},'Your reference for each client today.'),
+  return h('details',{class:'section guidebox'},
+    h('summary',{},h('h2',{},'Every guest, every time'),h('span',{class:'chev','aria-hidden':'true'},'+')),
     h('ol',{class:'guide'},g.map(([t,x])=>h('li',{},h('strong',{},t),h('span',{},x)))));
 }
 function guestChecks(c,p){
   const day=(S.daily&&S.daily.date)||'';
   const labels=isEsti(p)?['Consult',c.needsWaiver?'Waiver signed':null,'Before photo','After photo','Rebooked'].filter(Boolean):CHECKS;
-  return h('div',{class:'gchecks'},labels.map(label=>{
-    const key='taffeta-check:'+day+':'+c.client+':'+label;
-    const b=h('button',{class:'gcheck','aria-pressed':String(store.get(key)==='1')},label);
-    b.addEventListener('click',()=>{const on=b.getAttribute('aria-pressed')!=='true';b.setAttribute('aria-pressed',String(on));store.set(key,on?'1':'')});
+  const keyOf=l=>'taffeta-check:'+day+':'+c.client+':'+l;
+  const count=()=>labels.filter(l=>store.get(keyOf(l))==='1').length;
+  const sum=h('summary',{},h('span',{},'Checklist'),h('span',{class:'ccount'},count()+' of '+labels.length));
+  const box=h('div',{class:'gchecks'},labels.map(label=>{
+    const b=h('button',{class:'gcheck','aria-pressed':String(store.get(keyOf(label))==='1')},label);
+    b.addEventListener('click',()=>{const on=b.getAttribute('aria-pressed')!=='true';b.setAttribute('aria-pressed',String(on));store.set(keyOf(label),on?'1':'');sum.lastChild.textContent=count()+' of '+labels.length});
     return b;}));
+  return h('details',{class:'cl'},sum,box);
 }
 function tipsBlock(d,p){
   const t=(isEsti(p)&&d.esthetician)?d.esthetician:d;
@@ -387,11 +409,9 @@ function pickerView(){
 function renderMast(){
   const d=S.daily; $sub.replaceChildren();
   if(!d) return;
-  $sub.append(h('span',{class:'pill'},d.dateLabel||''));
-  if(d.preview) $sub.append(h('span',{class:'pill'},'Preview'));
-  if(EDITION==='team'&&S.isAdmin){
-    $sub.append(h('div',{class:'tabs',role:'tablist'},
-      h('button',{class:'tab',role:'tab','aria-selected':String(!S.open),onclick:()=>{S.open=null;render()}},'Team board')));
+  $sub.append(h('span',{class:'dateline'},d.dateLabel||''));
+  if(EDITION==='team'&&S.isAdmin&&S.open){
+    $sub.append(h('button',{class:'back',onclick:()=>{S.open=null;render()}},'← Team board'));
   }
 }
 function render(){
