@@ -84,6 +84,7 @@ const docsFor = (slug, leader) => {
 const teamDefaults = JSON.parse(fs.readFileSync(path.join(root, 'tools', 'team.json'), 'utf8'));
 const fullGuideSet = new Set((data.team && data.team.fullGuide) || teamDefaults.fullGuide || []);
 const advMap = { ...(teamDefaults.adv || {}), ...((data.team && data.team.adv) || {}) };
+const growthMap = (data.team && data.team.growth) || {};
 const guideUrl = keys.team && keys.team.guideUrl;
 const guideSet = new Set((data.team && data.team.docsGuide) || teamDefaults.docsGuide || []);
 const socialAll = (data.team && data.team.social) || teamDefaults.social || null;
@@ -100,7 +101,7 @@ const strip = (p) => { const { link, ...rest } = p; return rest; };
 let n = 0;
 for (const p of pages) {
   const k = keys.stylists[p.slug];
-  const mine = { ...strip(p), link: linkFor('s', k), staff: { slug: p.slug, t: teamSign(p.slug), clock: clockSet.has(p.slug) } };
+  const mine = { ...strip(p), ...(!p.growth && growthMap[p.slug] ? { growth: growthMap[p.slug] } : {}), link: linkFor('s', k), staff: { slug: p.slug, t: teamSign(p.slug), clock: clockSet.has(p.slug) } };
   if (guideUrl && fullGuideSet.has(p.slug)) mine.fullGuide = guideUrl;
   if (advMap[p.slug]) mine.adv = advMap[p.slug];
   const dd = docsFor(p.slug, false); if (dd) { mine.docs = dd; if (dd.fg) delete mine.fullGuide; }
