@@ -716,7 +716,8 @@ const ADV=[
   ['Phase 1 · Blowdry',[['bd-basic','Basic blowdry',3],['bd-volume','Volume blowdry',3],['bd-curly','Curly or textured blowdry',1]]],
   ['Phase 2 · Color + smoothing',[['c-single','Single process',1],['c-gray','Gray coverage',3],['c-brunette','Cool brunette',3],['c-red','Red',2],['c-hilite','Traditional highlight',3],['c-bal-brun','Balayage · brunette',3],['c-bal-blonde','Balayage · blonde',3],['c-double','Double process',1],['c-correct','Color correction',2],['c-smooth','Smoothing treatment',1],['c-perm','Perm',1]]],
   ['Phase 3 · Cutting',[['cut-long','Long layers',3],['cut-short','Short layers bob',3],['cut-grad','Graduated bob',3],['cut-pixie','Pixie',1],['cut-razor','Texture / razor cut',1]]],
-  ['Men’s cutting',[['m-fade','Traditional fade',3],['m-soc','Scissor over comb',3]]]];
+  ['Men’s cutting',[['m-fade','Traditional fade',3],['m-soc','Scissor over comb',3]]],
+  ['Formal styling',[['f-style','Formal styling',3]]]];
 function advView(adv){
   const ph=ADV.map(([name,sk])=>{const need=sk.reduce((a,x)=>a+x[2],0),got=sk.reduce((a,x)=>a+Math.min(x[2],adv[x[0]]||0),0);return {name,sk,need,got}});
   let cur=ph.findIndex(x=>x.got<x.need); if(cur<0) cur=ph.length-1;
