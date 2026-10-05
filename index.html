@@ -1051,11 +1051,11 @@ function payrollView(){
 }
 function monthView(){
   const m=S.month;
-  if(!m||!m.rows||!m.rows.length) return [h('section',{class:'section'},h('h2',{},'Month & trends'),h('div',{class:'empty'},h('p',{},'Month-to-date numbers fill in after tonight’s end-of-day update.')))];
+  if(!m||!m.rows||!m.rows.length) return [h('section',{class:'section'},h('h2',{},'Month & Trends'),h('div',{class:'empty'},h('p',{},'Month-to-date numbers fill in after tonight’s end-of-day update.')))];
   const rows=m.rows.filter(r=>r.service||r.retail).sort((a,b)=>b.service-a.service);
   const T=rows.reduce((a,r)=>({s:a.s+r.service,r:a.r+r.retail,ad:a.ad+(r.addons||0),rb:a.rb+(r.rebook||0)}),{s:0,r:0,ad:0,rb:0});
   const max=Math.max(...rows.map(r=>r.service),1), rp=(r,s)=>s>0?Math.round(r/s*1000)/10:0;
-  return [h('section',{class:'section'},h('div',{style:'display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;align-items:baseline'},h('h2',{},'Month & trends'),h('span',{class:'soft'},m.label||'')),
+  return [h('section',{class:'section'},h('div',{style:'display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;align-items:baseline'},h('h2',{},'Month & Trends'),h('span',{class:'soft'},m.label||'')),
     h('div',{class:'tiles'},
       h('div',{class:'tile'},h('span',{class:'lbl'},'Service'),h('b',{class:'num'},money(T.s))),
       h('div',{class:'tile'},h('span',{class:'lbl'},'Retail'),h('b',{class:'num'},money(T.r))),
@@ -1068,7 +1068,7 @@ function monthView(){
         h('td',{class:rp(r.retail,r.service)>=15?'over':'under'},rp(r.retail,r.service)+'%'),h('td',{},r.addons==null?'–':String(r.addons)),h('td',{},r.rebook==null?'–':String(r.rebook))))))))];
 }
 function leaderTabs(){
-  return h('div',{class:'tabs',role:'tablist'},[['today','Today'],['payroll','Payroll'],['month','Month & trends'],['guide','Guide']].map(([k,l])=>
+  return h('div',{class:'tabs',role:'tablist'},[['today','Today'],['payroll','Payroll'],['month','Month & Trends'],['guide','Guide']].map(([k,l])=>
     h('button',{class:'tab',role:'tab','aria-selected':String(S.rtab===k),onclick:()=>{S.rtab=k;S.open=null;render()}},l)));
 }
 
