@@ -44,7 +44,11 @@ const created = [];
 // Team Hub (time clock): each person's app link carries a signed token the Apps Script checks.
 keys.team ||= { secret: b64url(rand(24)), admin: b64url(rand(18)) };
 const teamSign = (slug) => createHmac('sha256', keys.team.secret).update(String(slug)).digest('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '').slice(0, 22);
-const clockSet = new Set((data.team && data.team.clock) || []);
+// Team app defaults live in tools/team.json, so a run that doesn't send 'team' keeps the time clock and extra pages.
+const teamDefaults = JSON.parse(fs.readFileSync(path.join(root, 'tools', 'team.json'), 'utf8'));
+const clockSet = new Set((data.team && data.team.clock) || teamDefaults.clock || []);
+data.pages ||= [];
+for (const x of ((data.team && data.team.extra) || teamDefaults.extra || [])) if (!data.pages.some((p) => p && p.slug === x.slug)) data.pages.push({ ...x });
 if (!keys.leadership) { keys.leadership = newKey(6); created.push(['The Pretty Report', linkFor('r', keys.leadership), keys.leadership.pin]); }
 const pages = (data.pages || []).filter((p) => p && p.slug);
 for (const p of pages) {
