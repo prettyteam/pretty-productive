@@ -60,7 +60,7 @@ function doPost(e) {
   lock.waitLock(20000);
   try {
     const d = JSON.parse(e.postData.contents || '{}');
-    if (['clock', 'timeoff', 'cover', 'take'].indexOf(d.type) >= 0) return teamPost_(d);
+    if (['clock', 'timeoff', 'cover', 'take', 'profile', 'sign'].indexOf(d.type) >= 0) return teamPost_(d);
     if (d.website) return json_({ ok: true });                       // spam trap
     const now = new Date();
     if (d.type === 'status') return setStatus_(d);
@@ -171,7 +171,9 @@ const TT = {
   off:   { name: 'Time Off', headers: ['Requested', 'Name', 'App ID', 'First day', 'Last day', 'Note', 'Status', 'Decided by'] },
   cover: { name: 'Shift Coverage', headers: ['Posted', 'Name', 'App ID', 'Group', 'Shift date', 'Shift time', 'Note', 'Status', 'Covered by', 'Covered at'] },
   ann:   { name: 'Announcements', headers: ['Date', 'Message', 'From'] },
-  shift: { name: 'Shifts', headers: ['Date', 'Name', 'App ID', 'Start', 'End'] }
+  shift: { name: 'Shifts', headers: ['Date', 'Name', 'App ID', 'Start', 'End'] },
+  info:  { name: 'Team Info', headers: ['Name', 'App ID', 'Emergency contact name', 'Emergency contact phone', 'Relationship', 'Home address', 'Email', 'Venmo name', 'Instagram', 'Updated'] },
+  sigs:  { name: 'Handbook Signatures', headers: ['Signed', 'Name', 'App ID', 'Typed signature', 'Document'] }
 };
 
 
@@ -263,7 +265,18 @@ function staffGet_(p) {
     .map(r => ({ from: r[3] instanceof Date ? day_(r[3]) : String(r[3]), to: r[4] instanceof Date ? day_(r[4]) : String(r[4]), status: String(r[6] || 'Waiting') }));
   return json_({ ok: true, now: now.getTime(), me: { name: me.name, group: me.group, clock: me.clock },
     clock: { in: !!open, since: open ? open.getTime() : null, sinceLabel: open ? hhmm_(open) : null, todayMin: Math.round(todayMin), weekMin: Math.round(weekMin) },
-    shifts, ann, openShifts, myCover, myOff });
+    shifts, ann, openShifts, myCover, myOff, info: myInfo_(me.slug), signed: mySigs_(me.slug) });
+}
+
+/** Private: only the person's own row is ever returned. */
+function myInfo_(slug) {
+  const r = tvals_(TT.info).find(r => String(r[1]) === slug);
+  return r ? { ecName: String(r[2]), ecPhone: String(r[3]), ecRel: String(r[4]), address: String(r[5]), email: String(r[6]), venmo: String(r[7]), instagram: String(r[8]) } : null;
+}
+function mySigs_(slug) {
+  const o = {};
+  tvals_(TT.sigs).forEach(r => { if (String(r[2]) === slug) o[String(r[4])] = { name: String(r[3]), at: r[0] instanceof Date ? day_(r[0]) : String(r[0]) }; });
+  return o;
 }
 
 function teamPost_(d) {
@@ -318,6 +331,21 @@ function teamPost_(d) {
     sh.getRange(row, 8, 1, 3).setValues([['Covered', me.name, now]]);
     const date = r[4] instanceof Date ? day_(r[4]) : String(r[4]);
     mail_(OWNER_EMAIL, 'Shift covered: ' + r[1] + ' → ' + me.name, me.name + ' picked up ' + r[1] + "'s shift on " + date + (r[5] ? ' (' + r[5] + ')' : '') + '.');
+    return json_({ ok: true });
+  }
+  if (d.type === 'profile') {
+    const row = [me.name, me.slug, clean_(d.ecName, 80), clean_(d.ecPhone, 30), clean_(d.ecRel, 40), clean_(d.address, 200), clean_(d.email, 120), clean_(d.venmo, 60), clean_(d.instagram, 60), now];
+    const sh = ttab_(TT.info), i = tvals_(TT.info).findIndex(r => String(r[1]) === me.slug);
+    if (i >= 0) sh.getRange(i + 2, 1, 1, row.length).setValues([row]); else sh.appendRow(row);
+    sh.getRange('J2:J').setNumberFormat('ddd mmm d, h:mm am/pm');
+    return json_({ ok: true });
+  }
+  if (d.type === 'sign') {
+    const doc = clean_(d.doc, 80), typed = clean_(d.name, 80);
+    if (!doc || typed.length < 3) return json_({ ok: false, error: 'name' });
+    if (mySigs_(me.slug)[doc]) return json_({ ok: true, already: true });
+    ttab_(TT.sigs).appendRow([now, me.name, me.slug, typed, doc]);
+    mail_(OWNER_EMAIL, 'Handbook signed: ' + me.name, me.name + ' signed "' + doc + '" as "' + typed + '" on ' + day_(now) + '.');
     return json_({ ok: true });
   }
   return json_({ ok: false });

@@ -34,6 +34,15 @@
     "adriana"
   ],
   "adv": {
-    "kat": {}
+    "kat": {},
+    "rose": {
+      "bd-basic": 5,
+      "bd-volume": 1,
+      "c-gray": 5,
+      "c-hilite": 3,
+      "c-red": 1,
+      "c-smooth": 3,
+      "cut-long": 2
+    }
   }
 }
