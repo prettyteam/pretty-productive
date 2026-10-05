@@ -652,15 +652,16 @@ function offView(){
 /* Guide: Taffeta basics for everyone; full Employment Guide link only in the private data of the people who get it */
 const BELIEFS=['Be real, be genuine','Your book is your business','Accommodation is key','Team player','Be direct — never assume','Ask if unsure','Bring solutions, not complaints','Attention to detail','Live up to your price','Be coachable','Everyone is equally important','Mistakes = growth'];
 const OPENING=[['Read last night’s closing notes'],['Count cash · initial the Cash Log'],['Music on','Apple Music · KYGO playlist'],['Coffee, water + lemons'],['Front lights + twinkle lights'],['TV on — put a show on'],['Missed calls + texts → reply'],['Check new online bookings']];
-const CLOSING=[['Count all money 1 hour before close','Over or under? Tell the manager right away'],['Close the drawer · reset to $200'],['100s + 50s to the safe','Sticky note: your name, date, amount'],['Everything else in the petty cash envelopes'],['Initial + date the Cash Log'],['Stylist notes entered · callbacks made'],['Empty the desk trash · new liner'],['Music, lights + twinkle lights off'],['Lock both doors','Top lock + the lock icon on the street door']];
+const CLOSING=[['Midday cleaning list · all 12 items','Tap Midday to see it'],['Count all money 1 hour before close','Over or under? Tell the manager right away'],['Close the drawer · reset to $200'],['100s + 50s to the safe','Sticky note: your name, date, amount'],['Everything else in the petty cash envelopes'],['Initial + date the Cash Log'],['Stylist notes entered · callbacks made'],['Empty the desk trash · new liner'],['Music, lights + twinkle lights off'],['Lock both doors','Top lock + the lock icon on the street door']];
+const MIDDAY=[['Trash bags out'],['Color table, arms, back, base + chairs wiped','When no guest is sitting there'],['Sweep'],['Sink bowls wiped','Inside, back, underneath + the silver bases'],['Back room color sink area'],['Switch the laundry'],['Tidy the back room','Trash + old food'],['Wall behind the trash cans','Wipe if there’s food on it'],['White counter in the back room'],['Coffee bar + bathroom','Tidy + refill'],['Refill water pitchers + bins','Both fridges'],['Bridal room counter + stools']];
 const BUSY=[['Desk','Answer missed calls & texts · tidy desk · no phone at the desk'],['Plants','Water front door, retail shelf, bridal ledge, spa orchids, bathroom'],['Dust','Gold cart · color stand · retail bottles · skincare table'],['Restock','Coffee, Box Water, lemons, creamer, prosecco, paper goods'],['Help out','Unbox deliveries · laundry · dishes · rip foils'],['Content','Film a moment for the salon content album']];
 let GOC=null;
 function ocKey(){return 'pp-ocd:'+ID+':'+GOC+':'+ymd(new Date())}
 function ocDone(){try{return JSON.parse(store.get(ocKey())||'[]')}catch(e){return[]}}
 function gIcon(c){return h('span',{class:'gic'},c)}
 function basicsCards(){
-  if(!GOC) GOC=store.get('pp-oc:'+ID)==='close'?'close':'open';
-  const list=GOC==='close'?CLOSING:OPENING, done=ocDone();
+  if(!GOC) GOC=(['close','mid'].includes(store.get('pp-oc:'+ID))?store.get('pp-oc:'+ID):'open');
+  const list=GOC==='close'?CLOSING:GOC==='mid'?MIDDAY:OPENING, done=ocDone();
   const toggle=i=>{const d=ocDone(),k=d.indexOf(i);k<0?d.push(i):d.splice(k,1);store.set(ocKey(),JSON.stringify(d));render()};
   const seg=(k,l)=>h('button',{'aria-pressed':String(GOC===k),onclick:()=>{GOC=k;store.set('pp-oc:'+ID,k);render()}},l);
   const n=done.filter(i=>i<list.length).length;
@@ -677,7 +678,13 @@ function basicsCards(){
       h('div',{class:'grule'},h('div',{class:'gn'},'3',h('small',{},'pm sat')),h('p',{},'Saturdays, stay until 3:00 PM.')),
       h('div',{class:'grule'},h('div',{class:'gn'},'2',h('small',{},'on floor')),h('p',{},'Leaving early is OK only if 2 artists stay for add-ons — and management says yes first.')),
       h('div',{class:'grule'},h('div',{class:'gn'},'✕'),h('p',{},'Don’t block your book or move anyone else’s appointments without approval.',h('small',{},'No placeholder names.')))),
-    h('div',{class:'gcard'},h('div',{class:'seg'},seg('open','Opening'),seg('close','Closing')),
+    h('div',{class:'gcard'},h('h2',{},gIcon('✧'),'Cleaning and house rules'),
+      h('div',{class:'grule'},h('div',{class:'gn'},'✕'),h('p',{},'No cell phones out for anyone on the clock.')),
+      h('div',{class:'grule'},h('div',{class:'gn'},'✕'),h('p',{},'No hanging out in the back room unless you’re on break for food.')),
+      h('div',{class:'grule'},h('div',{class:'gn'},'✕'),h('p',{},'Tupperware left behind is thrown out every Monday.')),
+      h('span',{class:'lbl'},'Before you leave your shift'),
+      ['Wipe + sanitize your station','Sweep your station','No combs left in the Barbicide'].map(t=>h('div',{class:'grule'},h('div',{class:'gn'},'✓'),h('p',{},t)))),
+    h('div',{class:'gcard'},h('div',{class:'seg'},seg('open','Opening'),seg('mid','Midday'),seg('close','Closing')),
       h('div',{class:'gbar'},h('b',{style:'width:'+Math.round(n/list.length*100)+'%'})),
       h('div',{class:'gprog'},n===list.length?'All done — thank you!':n+' of '+list.length+' done'),
       list.map(([t,sub],i)=>h('button',{class:'gchk'+(done.includes(i)?' ok':''),onclick:()=>toggle(i)},h('i',{},done.includes(i)?'✓':''),h('span',{},t,sub?h('small',{},sub):null)))),
