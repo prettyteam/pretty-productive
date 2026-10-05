@@ -383,9 +383,10 @@ function stylistPage(p){
     parts.push(h('div',{class:'empty'},h('h3',{},'Not on the books today'),h('p',{},'Enjoy the day off. Your goals will be here next time you are in.')));
   } else {
     parts.push(h('section',{class:'section'},
-      h('h2',{class:'lineup'},'Today’s lineup ',h('span',{class:'lfg'},'– let’s lock in')),
+      h('h2',{class:'lineup',style:'text-align:center'},'Today’s lineup ',h('span',{class:'lfg'},'– let’s lock in')),
+      (p.clients||[]).some(c=>c.isNew)?(()=>{const k=(p.clients||[]).filter(c=>c.isNew).length;return h('div',{style:'display:flex;flex-direction:column;align-items:center;gap:0;width:84px;margin:0 auto 12px;padding:7px 6px 6px;border:1px solid var(--line);border-radius:12px;background:#fff'},h('span',{class:'lbl',style:'margin:0;font-size:9.5px;letter-spacing:.12em'},k===1?'New guest':'New guests'),h('span',{class:'num',style:'font-size:26px;line-height:1.1'},String(k)),h('small',{style:'color:var(--muted,#7a7468);font-size:11px'},'today'))})():null,
       h('div',{class:'chair'},(p.clients||[]).map(c=>h('div',{class:'client'},
-        h('div',{class:'who'},h('strong',{},c.client),
+        h('div',{class:'who'},h('strong',{},c.client,c.isNew?h('span',{class:'chip add',style:'margin-left:8px;font-weight:500'},'New guest'):null),
           h('span',{class:'muted num',style:'font-size:14px'},money(c.services.reduce((a,s)=>a+s.price,0)))),
         c.services.length?h('div',{class:'chips'},c.services.map(s=>h('span',{class:'chip'+(s.addon?' add':'')},s.name+(s.addon?' · add-on':'')))):null,
         c.retail.length?h('p',{class:'muted',style:'font-size:14px'},'Took home: '+c.retail.map(r=>r.name).join(', ')):null,
