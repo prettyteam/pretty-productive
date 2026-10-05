@@ -317,6 +317,11 @@ table.mtab th:first-child,table.mtab td:first-child{text-align:left}
 table.mtab td{padding:9px 4px;border-bottom:1px solid var(--line);text-align:right;font-variant-numeric:tabular-nums}
 table.mtab td:first-child{font-family:var(--display)}
 .up{color:var(--choc)}
+.recaps{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
+.recap{background:#fff;border:1px solid var(--line);border-radius:6px;padding:16px 18px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.recap-top{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:baseline}
+.recap .name{font-family:var(--display);font-size:20px;color:var(--ink)}
+.recap ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:5px;font-size:15px}
 /* leadership tabs */
 .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px}
 .tile{background:#fff;border:1px solid var(--line);border-radius:6px;padding:16px 18px;display:flex;flex-direction:column;gap:4px}
@@ -511,6 +516,7 @@ function teamBoard(){
         p.goals.rebook?cell('rebook','Rebooked',p.goals.rebook.actual,p.goals.rebook.goal,String):h('span',{}),
         h('div',{class:'acts'},h('button',{class:'open',onclick:()=>{S.open=p.slug;render();window.scrollTo(0,0)}},'Open page'),p.link?copyBtn(p.link):null)))),
     off.length?h('p',{class:'off'},'Not on the books today: '+off.map(p=>p.name).join(', ')):null));
+  if(on.length) out.push(dailyRecap(on));
   if(S.week&&S.week.rows){
     const rows=S.week.rows.filter(r=>r.service||r.retail);
     const T=rows.reduce((a,r)=>({s:a.s+r.service,r:a.r+r.retail}),{s:0,r:0});
@@ -529,6 +535,38 @@ function teamBoard(){
   return out;
 }
 
+/* leadership: one short bulleted recap per person on the books, built from their page numbers */
+const RECAP_LABEL={service:'service sales',retail:'retail',addons:'add-ons',rebook:'rebooking'};
+const RECAP_FIX={
+  service:'Text two regulars who are due to fill the open spots.',
+  retail:p=>isEsti(p)?'Before she sits up, put the SPF or serum you used in her hands.':'Put the product in her hands before the blow-dry, with one reason it suits her.',
+  addons:p=>isEsti(p)?'Offer the add-on each service needs: dermaplaning with a facial, a tint with brows, a lip or chin wax.':'Offer the add-on each service needs: K18 before balayage or foils, a glaze after color.',
+  rebook:p=>isEsti(p)?'Book the next visit before she leaves the room: about four weeks for brows and waxing.':'Book the next visit before the cape comes off: about six weeks out.'
+};
+function recapLines(p){
+  const g=p.goals, ks=KEYS.filter(k=>g[k]&&g[k].goal>0), lines=[];
+  const guests=(p.clients||[]).length, news=(p.clients||[]).filter(c=>c.isNew).length;
+  lines.push(guests+(guests===1?' guest':' guests')+(news?', '+news+' new':'')+' on the book.');
+  const hit=ks.filter(k=>g[k].actual!=null&&g[k].actual>=g[k].goal);
+  lines.push(hit.length?'Goals hit: '+hit.map(k=>RECAP_LABEL[k]).join(', ')+'.':'No goals hit yet.');
+  const sv=g.service;
+  lines.push('Service '+money(sv.actual||0)+' of '+money(sv.goal)+', retail '+money(g.retail.actual||0)+' of '+money(g.retail.goal)+
+    ', add-ons '+(g.addons.actual||0)+' of '+g.addons.goal+(g.rebook?', rebooked '+(g.rebook.actual||0)+' of '+g.rebook.goal:'')+'.');
+  if(sv.booked&&(sv.actual||0)<sv.booked) lines.push(money(sv.booked-(sv.actual||0))+' of today’s booked services not rung up yet.');
+  if(p.wrap&&p.wrap.fix) lines.push('Tomorrow’s focus, '+p.wrap.focus.toLowerCase()+': '+p.wrap.fix);
+  else { const miss=ks.filter(k=>!((g[k].actual||0)>=g[k].goal));
+    if(miss.length){const low=miss.reduce((a,k)=>((g[k].actual||0)/g[k].goal)<((g[a].actual||0)/g[a].goal)?k:a);
+      const f=RECAP_FIX[low]; lines.push('Biggest opportunity, '+RECAP_LABEL[low]+': '+(typeof f==='function'?f(p):f));} }
+  return lines;
+}
+function dailyRecap(on){
+  return h('section',{class:'section'},
+    h('h2',{},'Daily recap'),
+    h('p',{class:'soft'},'Each person on the books today, in a few lines.'),
+    h('div',{class:'recaps'},on.map(p=>h('div',{class:'recap'},
+      h('div',{class:'recap-top'},h('span',{class:'name'},p.name),score(p)!=null?h('span',{class:'soft num'},'Day score '+score(p)+' · '+tier(score(p))):null),
+      h('ul',{},recapLines(p).map(t=>h('li',{},t)))))));
+}
 function rebookTotal(on){
   const ps=on.filter(p=>p.goals.rebook), g=ps.reduce((a,p)=>a+p.goals.rebook.goal,0);
   const known=ps.some(p=>p.goals.rebook.actual!=null), a=ps.reduce((x,p)=>x+(p.goals.rebook.actual||0),0);
