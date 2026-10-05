@@ -81,7 +81,16 @@
       "m-soc": 1
     },
     "adriana": {
-      "bd-basic": 3
+      "bd-basic": 3,
+      "c-single": 1,
+      "c-gray": 3,
+      "c-brunette": 1,
+      "c-hilite": 1,
+      "cut-long": 3,
+      "cut-short": 3,
+      "cut-grad": 1,
+      "m-fade": 2,
+      "m-soc": 1
     }
   }
 }
