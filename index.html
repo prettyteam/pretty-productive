@@ -242,8 +242,8 @@ body{padding-bottom:110px}
 .seg button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:6px 14px;font-size:13.5px}
 .seg button[aria-pressed="true"]{border-color:var(--ink);background:var(--ink);color:var(--marshmallow)}
 .nav{position:fixed;left:0;right:0;bottom:0;background:var(--marshmallow);border-top:1px solid var(--line);display:flex;justify-content:center;padding:14px 8px calc(16px + env(safe-area-inset-bottom));z-index:5}
-.nav .in{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;max-width:560px;width:100%}
-.nav button{border:0;background:none;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:8px;padding:4px 0}
+.nav .in{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(max-content,1fr);max-width:560px;width:100%;overflow-x:auto;scrollbar-width:none}.nav .in::-webkit-scrollbar{display:none}
+.nav button{white-space:nowrap;padding-left:9px!important;padding-right:9px!important;border:0;background:none;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:8px;padding:4px 0}
 .nav button[aria-current="page"]{color:var(--ink)}
 .nav button[aria-current="page"]::after{content:"";width:18px;height:1.5px;background:var(--ink)}
 .nav button:not([aria-current="page"])::after{content:"";width:18px;height:1.5px}
@@ -264,6 +264,15 @@ body{padding-bottom:110px}
 .gcard h2{font-family:var(--display);font-weight:400;font-size:21px;display:flex;align-items:center;gap:10px;margin:0}
 .gcard h2 .gic{width:30px;height:30px;border:1px solid var(--ink);border-radius:50%;display:grid;place-items:center;font-size:14px;flex:none;font-family:var(--body)}
 .gquote{font-family:var(--display);font-style:italic;font-size:17px;line-height:1.35;text-align:center;padding:4px 6px}
+
+.dtabs{display:flex;gap:8px;overflow-x:auto;padding:2px 0 10px;-webkit-overflow-scrolling:touch}
+.dtabs button{white-space:nowrap;border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:999px;padding:8px 14px;font:inherit;font-size:13.5px}
+.dtabs button[aria-current=true]{background:var(--ink);color:var(--marshmallow);border-color:var(--ink)}
+.dpdf{background:#e9e4da;border-radius:6px;padding:8px;display:flex;flex-direction:column;gap:8px;min-height:120px}
+.dpdf canvas{width:100%;height:auto;display:block;background:#fff;box-shadow:0 1px 5px rgba(0,0,0,.18)}
+.dpdf .dph{background:#fff;width:100%}
+.dmsg{font-size:14px;color:var(--muted);text-align:center;padding:24px 8px}
+.sigbox{display:flex;flex-direction:column;gap:10px}
 .gchips{display:flex;flex-wrap:wrap;gap:7px}
 .gchips span{border:1px solid var(--line);border-radius:999px;padding:5px 12px;font-size:13.5px;background:var(--marshmallow)}
 .gsw{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;text-align:center;font-size:12.5px;letter-spacing:.1em;text-transform:uppercase}
@@ -609,6 +618,7 @@ function clockCard(){
 function homeView(){
   const st=S.mine.staff||{}, d=HUB.data;
   const out=[hello()];
+  const jk=S.daily&&S.daily.joke; if(jk) out.push(h('div',{class:'card2',style:'text-align:center'},h('span',{class:'lbl'},'Today’s giggle'),h('p',{style:'font-family:var(--display);font-style:italic;font-size:19px;margin:6px 0 0'},jk)));
   if(st.clock) out.push(clockCard());
   const shifts=(d&&d.shifts)||[];
   out.push(h('div',{class:'sec2'},h('span',{class:'lbl'},'Next shifts'),
@@ -708,7 +718,8 @@ function guideView(){
 }
 function leaderGuideView(){
   return [h('section',{class:'section'},h('div',{class:'hub'},h('h2',{},'Guide'),
-    S.guideUrl?fullGuideCard(S.guideUrl):null, ...basicsCards()))];
+    S.docs&&S.docs.fg?h('div',{},h('span',{class:'lbl'},'Desk guide'),...docTabs(S.docs.fg,S.docs.fg.k,'lfg')):S.guideUrl?fullGuideCard(S.guideUrl):null,
+    S.docs&&S.docs.hb?h('div',{},h('span',{class:'lbl'},'Handbook'),...docTabs(S.docs.hb,S.docs.hb.k,'lhb')):null, ...basicsCards()))];
 }
 
 /* Associate advancement (from the Employment Guide). adv = {skillId: models done} */
@@ -772,6 +783,98 @@ function growthView(){
   return [h('div',{class:'hub'},out)];
 }
 
+
+/* ---- Encrypted PDF viewer (pdf.js from cdnjs). Files are AES-GCM encrypted; the key rides in the sealed page data. ---- */
+const PDFJS='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/';
+let pdfLibP=null;
+function pdfLib(){
+  if(pdfLibP) return pdfLibP;
+  pdfLibP=new Promise((res,rej)=>{const sc=document.createElement('script');sc.src=PDFJS+'pdf.min.js';sc.onload=()=>{
+    try{const w=URL.createObjectURL(new Blob(["importScripts('"+PDFJS+"pdf.worker.min.js')"],{type:'text/javascript'}));window.pdfjsLib.GlobalWorkerOptions.workerSrc=w}catch(e){}
+    res(window.pdfjsLib)};sc.onerror=()=>{pdfLibP=null;rej(new Error('lib'))};document.head.append(sc)});
+  return pdfLibP;
+}
+const DOCV={};
+async function docBytes(file,keyB64){
+  const raw=new Uint8Array(await (await fetch('docs/'+file+'.enc?_='+Math.floor(Date.now()/36e5))).arrayBuffer());
+  const key=await crypto.subtle.importKey('raw',b64d(keyB64),'AES-GCM',false,['decrypt']);
+  return new Uint8Array(await crypto.subtle.decrypt({name:'AES-GCM',iv:raw.slice(0,12)},key,raw.slice(12)));
+}
+function docViewer(file,keyB64){
+  const id=file+':'+keyB64.slice(0,6);
+  if(DOCV[id]) return DOCV[id];
+  const box=h('div',{class:'dpdf'},h('p',{class:'dmsg'},'Opening…'));
+  DOCV[id]=box;
+  (async()=>{
+    try{
+      const [lib,bytes]=await Promise.all([pdfLib(),docBytes(file,keyB64)]);
+      const pdf=await lib.getDocument({data:bytes}).promise;
+      box.replaceChildren();
+      const dpr=Math.min(window.devicePixelRatio||1,2), W=Math.min(window.innerWidth||390,820)-32;
+      const slots=[];
+      for(let n=1;n<=pdf.numPages;n++){
+        const pg=await pdf.getPage(n), vp0=pg.getViewport({scale:1}), sc=(W/vp0.width), vp=pg.getViewport({scale:sc*dpr});
+        const c=document.createElement('canvas'); c.width=Math.floor(vp.width); c.height=Math.floor(vp.height); c.style.aspectRatio=c.width+'/'+c.height;
+        box.append(c); slots.push([pg,vp,c]);
+      }
+      const draw=([pg,vp,c])=>{if(c.dataset.d)return;c.dataset.d=1;pg.render({canvasContext:c.getContext('2d'),viewport:vp})};
+      if('IntersectionObserver' in window){const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){draw(slots[[...box.children].indexOf(e.target)]);io.unobserve(e.target)}}),{rootMargin:'600px 0px'});slots.forEach(x=>io.observe(x[2]))}
+      else slots.forEach(draw);
+    }catch(e){delete DOCV[id];box.replaceChildren(h('p',{class:'dmsg'},'Couldn’t open this right now. Check your signal and try again.',h('br'),h('button',{class:'obtn sm',style:'margin-top:10px',onclick:()=>render()},'Try again')))}
+  })();
+  return box;
+}
+function docTabs(d,key,setKey){
+  const tabs=d.tabs||[[d.files[0],d.name]];
+  const cur=S['dt_'+setKey]||tabs[0][0];
+  return [tabs.length>1?h('div',{class:'dtabs',role:'tablist'},tabs.map(([f,l])=>h('button',{role:'tab','aria-current':String(cur===f),onclick:()=>{S['dt_'+setKey]=f;render()}},l))):null,
+    docViewer(cur,d.k)];
+}
+function hbView(){
+  const d=(S.mine.docs||{}).hb; if(!d) return [h('div',{class:'hub'},h('p',{class:'dmsg'},'The handbook isn’t on your page yet.'))];
+  const signed=HUB.data&&HUB.data.signed&&HUB.data.signed[d.name];
+  const nm=h('input',{type:'text',placeholder:'Type your full name',autocomplete:'name'}), ag=h('input',{type:'checkbox'});
+  const sign=signed?h('div',{class:'gdress'},h('b',{},'Signed ✓'),signed.name+' · '+niceDate(signed.at)):
+    !(HUB.data)?h('p',{class:'dmsg'},HUB.err?'Can’t reach the signing form right now. Check your signal.':'Loading…'):
+    h('div',{class:'card2 sigbox'},h('span',{class:'lbl'},'Sign to confirm'),
+      h('label',{style:'display:flex;gap:8px;font-size:14px;align-items:flex-start'},ag,'I have read the Taffeta Employee Handbook and I agree to follow it.'),
+      h('label',{class:'fld'},'Type your full name',nm),
+      h('button',{class:'obtn',disabled:HUB.busy?'':null,onclick:()=>{if(!ag.checked){HUB.toast='Tick the box first.';render();return}
+        if(nm.value.trim().length<3){HUB.toast='Type your full name.';render();return}
+        hubPost({type:'sign',doc:d.name,name:nm.value.trim()},'Signed. Thank you!')}},HUB.busy?'One moment…':'Sign'),
+      HUB.toast?h('p',{class:'toast'},HUB.toast):null);
+  return [h('div',{class:'hub'},h('div',{},h('span',{class:'lbl'},'Read, then sign'),h('h1',{style:'font-size:28px'},'Taffeta handbook')),
+    h('p',{class:'soft',style:'font-size:13.5px;margin:0'},d.name+' · please don’t share it'),
+    ...docTabs(d,d.k,'hb'),sign)];
+}
+function fgView(){
+  const d=(S.mine.docs||{}).fg; if(!d) return null;
+  return [h('div',{class:'hub'},h('div',{},h('span',{class:'lbl'},'Pick a topic'),h('h1',{style:'font-size:28px'},'Desk guide')),
+    h('p',{class:'soft',style:'font-size:13.5px;margin:0'},'Pinch to zoom, scroll to read. Please don’t share it.'),...docTabs(d,d.k,'fg'))];
+}
+const niceDate=s=>{const [y,m,dd]=String(s).split('-').map(Number);return y?new Date(y,m-1,dd).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):''};
+
+const SOCIAL_RULES=[['Same you everywhere','Use one clear profile photo, and put “Taffeta Salon & Spa” and your role in your bio.'],['Black, cream, neutral','Keep photos clean and bright, in our colors. Skip heavy filters.'],['Warm, never pushy','Talk like you do at your chair: friendly, helpful and real.'],['Ask before you post a guest','Get a yes first. Estheticians: same light and angle for before and after.'],['Never on the floor','Film between guests or on your own time. Phones stay away while you’re working.'],['Be kind about everyone','No complaints, drama or talking down about guests, coworkers or other salons.'],['Tag the salon','So guests can find us, and so we can share you.']];
+function meView(){
+  const info=(HUB.data&&HUB.data.info)||{};
+  const F=[['ecName','Emergency contact name'],['ecRel','Relationship'],['ecPhone','Emergency contact phone','tel'],['address','Current home address'],['email','Email','email'],['venmo','Venmo account name'],['instagram','Instagram page name']];
+  const ins=F.map(([k,l,ty])=>[k,l,h('input',{type:ty||'text',value:info[k]||'',autocomplete:'off'})]);
+  const soc=S.mine.social, posts=(soc&&soc.posts)||[];
+  const out=[h('div',{},h('span',{class:'lbl'},'Just for you'),h('h1',{style:'font-size:28px'},'Me'))];
+  out.push(h('div',{class:'gcard'},h('h2',{},gIcon('☺'),'My info'),
+    h('p',{class:'soft',style:'font-size:13px;margin:0'},'Only Alexandra and her dad can see this. You only ever see your own.'),
+    !HUB.data?h('p',{class:'dmsg'},HUB.err?'Can’t reach the form right now. Check your signal.':'Loading…'):null,
+    ...(HUB.data?[...ins.map(([k,l,i])=>h('label',{class:'fld'},l,i)),
+     h('button',{class:'obtn',disabled:HUB.busy?'':null,onclick:()=>{const o={type:'profile'};ins.forEach(([k,l,i])=>o[k]=i.value);hubPost(o,'Saved. Thank you!')}},HUB.busy?'One moment…':'Save'),
+     HUB.toast?h('p',{class:'toast'},HUB.toast):null]:[])));
+  out.push(h('div',{class:'gcard'},h('h2',{},gIcon('✧'),'Posting for you'),
+    h('span',{class:'lbl'},'Keep your look cohesive'),
+    SOCIAL_RULES.map(([t,x])=>h('div',{class:'grule'},h('div',{class:'gn'},'✓'),h('p',{},t,h('small',{},x)))),
+    ...(posts.length?[h('span',{class:'lbl'},(soc.week||'This week')+' · 5 posts · new every Sunday'),
+      ...posts.map(([t,x],i)=>h('div',{class:'grule'},h('div',{class:'gn'},String(i+1)),h('p',{},t,h('small',{},x))))]:[])));
+  return [h('div',{class:'hub'},out)];
+}
+
 function staffTabs(){
   const p=S.mine||{}, st=p.staff||{}, t=[];
   if(st.slug) t.push(['home','Home']);
@@ -779,6 +882,8 @@ function staffTabs(){
   if(isGoalsPerson(p)||p.adv) t.push(['growth','Growth']);
   if(st.slug) t.push(['off','Time off']);
   t.push(['guide','Guide']);
+  const dc=p.docs||{}; if(dc.hb) t.push(['hb','Handbook']); if(dc.fg) t.push(['fg','Desk guide']);
+  if(st.slug) t.push(['me','Me']);
   return t;
 }
 function staffNav(){
@@ -793,6 +898,9 @@ function staffRender(){
   if(S.tab==='growth') return growthView();
   if(S.tab==='off') return offView();
   if(S.tab==='guide') return guideView();
+  if(S.tab==='hb') return hbView();
+  if(S.tab==='fg') return fgView();
+  if(S.tab==='me') return meView();
   return null;
 }
 
@@ -902,7 +1010,7 @@ function setHead(name){
 }
 function apply(P){
   S.daily=P.daily||null;
-  if(EDITION==='team'){S.isAdmin=true;S.pages=(P.pages||[]).filter(isGoalsPerson);S.week=P.week||null;S.hubKey=P.hub&&P.hub.admin;S.payroll=P.payroll||[];S.month=P.month||null;S.guideUrl=P.guideUrl||null;S.rtab=S.rtab||'today';setHead()}
+  if(EDITION==='team'){S.isAdmin=true;S.pages=(P.pages||[]).filter(isGoalsPerson);S.week=P.week||null;S.hubKey=P.hub&&P.hub.admin;S.payroll=P.payroll||[];S.month=P.month||null;S.guideUrl=P.guideUrl||null;S.docs=P.docs||null;S.rtab=S.rtab||'today';setHead()}
   else{S.mine=P.mine||null;setHead(S.mine&&S.mine.name);
     if(S.mine&&!S.tab){const st=S.mine.staff||{};S.tab=store.get('pp-tab:'+ID)||(st.clock?'home':isGoalsPerson(S.mine)?'today':'home')}
     if(S.mine&&S.mine.staff&&!HUB.started){HUB.started=true;hubGet();

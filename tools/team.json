@@ -1,5 +1,5 @@
 {
-  "note": "Team app defaults used when a run's data.json has no 'team' section. clock = who sees the time clock. extra = people who need an app page even when they are not on the book. fullGuide = who gets the private Employment Guide button (the doc link itself lives in the keys file, not here). adv = associate advancement progress by person: {skillId: models done}; leave a person out until their progress is known.",
+  "note": "Team app defaults used when a run's data.json has no 'team' section. clock = who sees the time clock. extra = people who need an app page even when they are not on the book. fullGuide = who gets the private Employment Guide button (the doc link itself lives in the keys file, not here). adv = associate advancement progress by person: {skillId: models done}; leave a person out until their progress is known. docsGuide = who gets the Desk guide PDF tabs (the handbook PDF is for everyone). social = this week’s post ideas (hair for stylists/associates, esti for estheticians); the Sunday run replaces it.",
   "clock": [
     "adriana",
     "alyssa",
@@ -92,5 +92,61 @@
       "m-fade": 2,
       "m-soc": 1
     }
+  },
+  "docsGuide": [
+    "adriana",
+    "carolyn",
+    "rose",
+    "ashley-b",
+    "amanda",
+    "kat",
+    "angelina-h"
+  ],
+  "social": {
+    "week": "Week of Oct 5",
+    "hair": [
+      [
+        "Why your blonde turns brassy by week three",
+        "Show your toner or gloss and the one at-home product that keeps it fresh."
+      ],
+      [
+        "Hair snaps every time you go lighter?",
+        "Explain K18 before balayage and why it protects the hair."
+      ],
+      [
+        "Flat by noon?",
+        "Show how the right cut plus one volumizer fixes it."
+      ],
+      [
+        "No time for hair in the morning",
+        "Film a 5-minute routine you’d give any guest."
+      ],
+      [
+        "Haven’t had a trim in six months?",
+        "Show what split ends do and how often to come back."
+      ]
+    ],
+    "esti": [
+      [
+        "Skin dull and tired by Friday?",
+        "Show one facial or dermaplaning result and the SPF that keeps it glowing."
+      ],
+      [
+        "Brows never look even?",
+        "Film a brow sculpt before and after and what to avoid between visits."
+      ],
+      [
+        "Waxing hurts and you dread it?",
+        "Show your gentle prep and aftercare so guests feel at ease."
+      ],
+      [
+        "Makeup melts by dinner?",
+        "Show your prep and the setting spray that keeps it in place."
+      ],
+      [
+        "Breakouts after a new product?",
+        "Explain a simple routine and why you add one thing at a time."
+      ]
+    ]
   }
 }
