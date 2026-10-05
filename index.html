@@ -1033,13 +1033,13 @@ function payrollView(){
         h('p',{class:'soft'},'This week’s totals appear after the Monday payroll report runs.'),
       h('p',{class:'soft',style:'font-size:13px'},'Take-home = each artist’s service rate on services plus '+RR+'% on retail. Hours come from the time clock. '+(pay&&pay.live?'Week to date from Paired Plus. Final numbers come from the Monday payroll report.':'From the Monday payroll report (Paired Plus Comm Sales Analysis).'))),
     h('section',{class:'section'},h('h2',{},'Hours by person'),
-      people?h('div',{},people.map(p=>h('details',{class:'days lrow',style:'display:block'},
+      people?h('div',{},people.filter(p=>p.min>0).map(p=>h('details',{class:'days lrow',style:'display:block'},
         h('summary',{},h('div',{style:'display:flex;justify-content:space-between;gap:10px'},h('b',{},p.name,p.flags.map(f=>h('span',{class:'flag'},f))),h('span',{class:'num'},hrs(p.min)+' h'))),
         h('div',{class:'daysgrid'},[0,1,2,3,4,5,6].map(i=>{const d=new Date(ws.getTime()+i*864e5),k=ymd(d);
           return h('div',{},d.toLocaleDateString('en-US',{weekday:'short'}),h('b',{},p.days[k]?hrs(p.days[k]):'–'))})))),
         h('div',{class:'lrow'},h('b',{},'Total'),h('b',{class:'num'},hrs(totMin)+' h'))):
         h('p',{class:'soft'},ADM.err==='setup'?'The time clock isn’t connected yet.':ADM.err?'Can’t reach the time clock right now.':'Loading hours…'),
-      h('p',{class:'soft',style:'font-size:13px'},'From the time clock in each person’s app. Tap a name for each day. To fix a punch, edit the Time Clock tab in the ',
+      h('p',{class:'soft',style:'font-size:13px'},'Only people who clock in appear here. From the time clock in each person’s app. Tap a name for each day. To fix a punch, edit the Time Clock tab in the ',
         ADM.data&&ADM.data.sheet?h('a',{href:ADM.data.sheet,target:'_blank',rel:'noopener',style:'color:inherit'},'Team Hub sheet'):'Team Hub sheet','.'),
       ADM.data&&ADM.data.cover&&ADM.data.cover.length?h('div',{class:'sec2'},h('span',{class:'lbl'},'Shift coverage this week'),
         ADM.data.cover.map(c=>h('div',{class:'lrow'},h('span',{},niceDay(c.date)+' · '+c.name),h('span',{class:'soft'},c.by?'→ '+c.by:'open')))):null,
