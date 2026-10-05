@@ -80,6 +80,31 @@ const docsFor = (slug, leader) => {
   if (keys.docs.fg && (leader || guideSet.has(slug))) o.fg = { k: keys.docs.fg.key, name: keys.docs.fg.name, tabs: keys.docs.fg.tabs };
   return Object.keys(o).length ? o : null;
 };
+// Weekly commission reports (Weekly CR tab). --cr <dir> holds meta.json {weeks:[{week,label,people:{slug:{service,retail,comm}}}]}
+// and <dir>/<week>/<slug>.pdf. Each person's PDFs are encrypted with their OWN key, which travels only inside their sealed page data.
+// History (newest 12 weeks) is remembered in keys.cr[slug].weeks, so a run without --cr keeps the tab.
+keys.cr ||= {};
+if (args.cr) {
+  const meta = JSON.parse(fs.readFileSync(path.join(args.cr, 'meta.json'), 'utf8'));
+  fs.mkdirSync(path.join(root, 'docs'), { recursive: true });
+  for (const w of meta.weeks || []) {
+    for (const [slug, tot] of Object.entries(w.people || {})) {
+      const src = path.join(args.cr, w.week, slug + '.pdf');
+      if (!fs.existsSync(src)) continue;
+      const c = (keys.cr[slug] ||= { key: Buffer.from(rand(32)).toString('base64'), weeks: [] });
+      const file = 'cr-' + createHash('sha256').update(c.key + w.week).digest('hex').slice(0, 16);
+      const bytes = fs.readFileSync(src);
+      const sha = createHash('sha256').update(bytes).digest('hex');
+      const out = path.join(root, 'docs', file + '.enc');
+      const prev = c.weeks.find((x) => x.week === w.week);
+      if (!prev || prev.sha !== sha || !fs.existsSync(out)) fs.writeFileSync(out, await sealBytes(bytes, c.key));
+      c.weeks = c.weeks.filter((x) => x.week !== w.week).concat([{ week: w.week, label: w.label, file, sha, service: tot.service, retail: tot.retail, comm: tot.comm }]);
+      c.weeks.sort((a, b) => b.week.localeCompare(a.week));
+      for (const old of c.weeks.slice(12)) { try { fs.unlinkSync(path.join(root, 'docs', old.file + '.enc')); } catch (e) {} }
+      c.weeks = c.weeks.slice(0, 12);
+    }
+  }
+}
 // Team app defaults live in tools/team.json, so a run that doesn't send 'team' keeps the time clock and extra pages.
 const teamDefaults = JSON.parse(fs.readFileSync(path.join(root, 'tools', 'team.json'), 'utf8'));
 const fullGuideSet = new Set((data.team && data.team.fullGuide) || teamDefaults.fullGuide || []);
@@ -105,6 +130,7 @@ for (const p of pages) {
   if (guideUrl && fullGuideSet.has(p.slug)) mine.fullGuide = guideUrl;
   if (advMap[p.slug]) mine.adv = advMap[p.slug];
   const dd = docsFor(p.slug, false); if (dd) { mine.docs = dd; if (dd.fg) delete mine.fullGuide; }
+  if (keys.cr[p.slug] && keys.cr[p.slug].weeks.length) mine.cr = { k: keys.cr[p.slug].key, weeks: keys.cr[p.slug].weeks.map(({ week, label, file, service, retail, comm }) => ({ week, label, file, service, retail, comm })) };
   if (socialAll) mine.social = { week: socialAll.week, posts: p.role === 'esthetician' ? socialAll.esti : socialAll.hair };
   fs.writeFileSync(path.join(outDir, k.id + '.json'), JSON.stringify(await seal({ daily: data.daily || null, mine }, k.secret, k.pin)));
   n++;

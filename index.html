@@ -855,6 +855,26 @@ function docTabs(d,key,setKey){
   return [tabs.length>1?h('div',{class:'dtabs',role:'tablist'},tabs.map(([f,l])=>h('button',{role:'tab','aria-current':String(cur===f),onclick:()=>{S['dt_'+setKey]=f;render()}},l))):null,
     docViewer(cur,d.k)];
 }
+function crView(){
+  const c=S.mine.cr; if(!c||!c.weeks||!c.weeks.length) return [h('div',{class:'hub'},h('p',{class:'dmsg'},'Your first weekly report will show up here after the next payroll run.'))];
+  const w=c.weeks.find(x=>x.week===S.crw)||c.weeks[0];
+  const row=(l,v,strong)=>h('div',{style:'display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--line)'+(strong?';font-weight:600':'')},h('span',{},l),h('span',{},v));
+  const openPdf=async()=>{
+    try{const b=await docBytes(w.file,c.k);const u=URL.createObjectURL(new Blob([b],{type:'application/pdf'}));
+      const win=window.open(u,'_blank'); if(!win){const a=document.createElement('a');a.href=u;a.download='Taffeta weekly commission '+w.week+'.pdf';document.body.append(a);a.click();a.remove()}
+    }catch(e){HUB.toast='Couldn’t open the PDF. Check your signal.';render()}
+  };
+  return [h('div',{class:'hub'},
+    h('div',{},h('span',{class:'lbl'},'Just for you'),h('h1',{style:'font-size:28px'},'Weekly CR')),
+    h('p',{class:'soft',style:'font-size:13.5px;margin:0'},'Your commission report for the week. Please don’t share it.'),
+    c.weeks.length>1?h('div',{class:'dtabs',role:'tablist'},c.weeks.map(x=>h('button',{role:'tab','aria-current':String(x.week===w.week),onclick:()=>{S.crw=x.week;render()}},x.label))):null,
+    h('div',{class:'card2'},h('span',{class:'lbl'},w.label),
+      w.service!=null?row('Services',money(w.service)):null,
+      w.retail!=null?row('Retail',money(w.retail)):null,
+      w.comm!=null?row('Commission',money(w.comm),true):null,
+      h('button',{class:'obtn sm',style:'margin-top:12px',onclick:openPdf},'Open or save the PDF')),
+    docViewer(w.file,c.k))];
+}
 function hbView(){
   const d=(S.mine.docs||{}).hb; if(!d) return [h('div',{class:'hub'},h('p',{class:'dmsg'},'The handbook isn’t on your page yet.'))];
   const signed=HUB.data&&HUB.data.signed&&HUB.data.signed[d.name];
@@ -905,6 +925,7 @@ function staffTabs(){
   if(st.slug) t.push(['home','Home']);
   if(isGoalsPerson(p)) t.push(['today','Today']);
   if(isGoalsPerson(p)||p.adv) t.push(['growth','Growth']);
+  if(p.cr&&p.cr.weeks&&p.cr.weeks.length) t.push(['cr','Weekly CR']);
   if(st.slug) t.push(['off','Time off']);
   t.push(['guide','Culture']);
   const dc=p.docs||{}; if(dc.hb) t.push(['hb','Handbook']); if(dc.fg) t.push(['fg','Desk guide']);
@@ -921,6 +942,7 @@ function staffRender(){
   document.querySelector('.mast').hidden=S.tab!=='today';
   if(S.tab==='home') return homeView();
   if(S.tab==='growth') return growthView();
+  if(S.tab==='cr') return crView();
   if(S.tab==='off') return offView();
   if(S.tab==='guide') return guideView();
   if(S.tab==='hb') return hbView();
