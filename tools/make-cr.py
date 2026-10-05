@@ -22,7 +22,7 @@ def short(n):
     return (first+(' '+last[0]+'.' if last else '')).strip()
 def m(x): return '${:,.2f}'.format(float(x or 0))
 def build(st, week, label, runOn, path):
-    rate=float(st.get("rate") or 0); rrate=float(st.get("retailRate") if st.get("retailRate") is not None else rate)
+    rate=float(st.get("rate") or 0); rrate=float(st.get("retailRate") if st.get("retailRate") is not None else 10)
     for r in st.get("services",[]): r["comm"]=round(float(r.get("amount") or 0)*rate/100,2)
     for r in st.get("products",[]): r["comm"]=round(float(r.get("amount") or 0)*rrate/100,2)
     st["commTotal"]=round(sum(r["comm"] for r in st.get("services",[]))+sum(r["comm"] for r in st.get("products",[])),2)
@@ -33,7 +33,7 @@ def build(st, week, label, runOn, path):
     doc=SimpleDocTemplate(path,pagesize=letter,leftMargin=.7*inch,rightMargin=.7*inch,topMargin=.7*inch,bottomMargin=.7*inch,title='Weekly commission report – '+st['name'],author='Taffeta Salon & Spa')
     el=[Paragraph('TAFFETA SALON &amp; SPA',L),Spacer(1,4),Paragraph('Weekly commission report',H),Spacer(1,4),
         Paragraph('%s &nbsp;·&nbsp; %s<br/>Prepared %s'%(st['name'],label,runOn),S),Spacer(1,14)]
-    tot=[['Services',m(st['serviceTotal'])],['Retail',m(st['retailTotal'])],['Combined sales',m(float(st['serviceTotal'] or 0)+float(st['retailTotal'] or 0))],['Your commission rate','%g%%'%rate],['Commission earned (take-home)',m(st['commTotal'])]]
+    tot=[['Services',m(st['serviceTotal'])],['Retail',m(st['retailTotal'])],['Combined sales',m(float(st['serviceTotal'] or 0)+float(st['retailTotal'] or 0))],['Service commission rate','%g%%'%rate],['Retail commission rate','%g%%'%rrate],['Commission earned (take-home)',m(st['commTotal'])]]
     t=Table(tot,colWidths=[3.2*inch,1.6*inch],hAlign='LEFT')
     t.setStyle(TableStyle([('FONT',(0,0),(-1,-1),'Helvetica',11),('FONT',(0,4),(-1,4),'Helvetica-Bold',12),('TEXTCOLOR',(0,0),(-1,-1),BROWN),('ALIGN',(1,0),(1,-1),'RIGHT'),
         ('BACKGROUND',(0,0),(-1,-1),IVORY),('LINEBELOW',(0,0),(-1,-2),.4,colors.HexColor('#d9d2c4')),('LINEABOVE',(0,4),(-1,4),.8,GOLD),('TOPPADDING',(0,0),(-1,-1),6),('BOTTOMPADDING',(0,0),(-1,-1),6),('LEFTPADDING',(0,0),(-1,-1),10),('RIGHTPADDING',(0,0),(-1,-1),10)]))
