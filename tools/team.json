@@ -44,6 +44,21 @@
       "c-smooth": 3,
       "cut-long": 2,
       "c-bal-brun": 1
+    },
+    "amanda": {
+      "bd-basic": 3,
+      "bd-volume": 3,
+      "bd-curly": 1,
+      "c-single": 1,
+      "c-gray": 3,
+      "c-brunette": 3,
+      "c-red": 2,
+      "c-hilite": 3,
+      "c-bal-brun": 3,
+      "c-bal-blonde": 3,
+      "c-correct": 2,
+      "c-smooth": 1,
+      "cut-long": 3
     }
   }
 }
