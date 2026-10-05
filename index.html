@@ -724,7 +724,7 @@ function guideView(){
       h('ol',{class:'guide',style:'margin-top:10px'},g.map(([t,x])=>h('li',{},h('strong',{},t),h('span',{},x))))):null)];
 }
 function leaderGuideView(){
-  return [h('section',{class:'section'},h('div',{class:'hub'},h('h2',{},'Guide'),
+  return [h('section',{class:'section'},h('div',{class:'hub'},h('h2',{},'Culture'),
     S.docs&&S.docs.fg?h('div',{},h('span',{class:'lbl'},'Desk guide'),...docTabs(S.docs.fg,S.docs.fg.k,'lfg')):S.guideUrl?fullGuideCard(S.guideUrl):null,
     S.docs&&S.docs.hb?h('div',{},h('span',{class:'lbl'},'Handbook'),...docTabs(S.docs.hb,S.docs.hb.k,'lhb')):null, ...basicsCards()))];
 }
@@ -906,7 +906,7 @@ function staffTabs(){
   if(isGoalsPerson(p)) t.push(['today','Today']);
   if(isGoalsPerson(p)||p.adv) t.push(['growth','Growth']);
   if(st.slug) t.push(['off','Time off']);
-  t.push(['guide','Guide']);
+  t.push(['guide','Culture']);
   const dc=p.docs||{}; if(dc.hb) t.push(['hb','Handbook']); if(dc.fg) t.push(['fg','Desk guide']);
   if(st.slug) t.push(['me','Me']);
   return t;
