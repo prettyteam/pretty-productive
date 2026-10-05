@@ -1027,14 +1027,14 @@ function payrollView(){
       h('div',{class:'tile'},h('span',{class:'lbl'},'Combined'),h('b',{class:'num'},pay?money(T.s+T.r):'–')),
       h('div',{class:'tile'},h('span',{class:'lbl'},'Team hours'),h('b',{class:'num'},totMin==null?'–':hrs(totMin))))));
   out.push(h('div',{class:'split'},
-    h('section',{class:'section'},h('h2',{},'Commission artists'),
+    h('section',{class:'section'},h('h2',{},'Commission Artists'),
       pay?h('div',{class:'tablewrap'},h('table',{class:'week'},
         h('thead',{},h('tr',{},h('th',{},'Stylist'),h('th',{},'Service'),h('th',{},'Retail'),h('th',{},'Rate'),h('th',{},'Take-home'),h('th',{},'Hours'))),
         h('tbody',{},rows.map(r=>h('tr',{},h('td',{},r.name),h('td',{},money(r.service)),h('td',{},money(r.retail)),h('td',{},r._rate==null?'–':r._rate+'%'),h('td',{},r._comm==null?'–':money(r._comm)),h('td',{},r._min?hrs(r._min):'–'))),
           h('tr',{class:'tot'},h('td',{},'Total'),h('td',{},money(T.s)),h('td',{},money(T.r)),h('td',{},''),h('td',{},money(T.c)),h('td',{},totMin==null?'–':hrs(totMin)))))):
         h('p',{class:'soft'},'This week’s totals appear after the Monday payroll report runs.'),
       h('p',{class:'soft',style:'font-size:13px'},'Take-home = each artist’s service rate on services plus '+RR+'% on retail. Hours come from the time clock. '+(pay&&pay.live?'Week to date from Paired Plus. Final numbers come from the Monday payroll report.':'From the Monday payroll report (Paired Plus Comm Sales Analysis).'))),
-    h('section',{class:'section'},h('h2',{},'Hours by person'),
+    h('section',{class:'section'},h('h2',{},'Clocked In Hours'),
       people?h('div',{},people.map(p=>h('details',{class:'days lrow',style:'display:block'},
         h('summary',{},h('div',{style:'display:flex;justify-content:space-between;gap:10px'},h('b',{},p.name,p.flags.map(f=>h('span',{class:'flag'},f))),h('span',{class:'num'},hrs(p.min)+' h'))),
         h('div',{class:'daysgrid'},[0,1,2,3,4,5,6].map(i=>{const d=new Date(ws.getTime()+i*864e5),k=ymd(d);
