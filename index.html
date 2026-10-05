@@ -259,6 +259,42 @@ body{padding-bottom:110px}
 .worth .wr{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center}
 .worth .ic{width:40px;height:40px;border-radius:50%;border:1px solid var(--ink);display:grid;place-items:center;font-family:var(--display);font-size:14px}
 .worth b{font-family:var(--display);font-weight:400;font-size:22px;color:var(--choc)}
+/* guide basics + advancement */
+.gcard{background:#fff;border:1px solid var(--ink);border-radius:6px;padding:20px;display:flex;flex-direction:column;gap:12px}
+.gcard h2{font-family:var(--display);font-weight:400;font-size:21px;display:flex;align-items:center;gap:10px;margin:0}
+.gcard h2 .gic{width:30px;height:30px;border:1px solid var(--ink);border-radius:50%;display:grid;place-items:center;font-size:14px;flex:none;font-family:var(--body)}
+.gquote{font-family:var(--display);font-style:italic;font-size:17px;line-height:1.35;text-align:center;padding:4px 6px}
+.gchips{display:flex;flex-wrap:wrap;gap:7px}
+.gchips span{border:1px solid var(--line);border-radius:999px;padding:5px 12px;font-size:13.5px;background:var(--marshmallow)}
+.gsw{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;text-align:center;font-size:12.5px;letter-spacing:.1em;text-transform:uppercase}
+.gsw i{display:block;height:58px;border-radius:6px;border:1px solid var(--line);margin-bottom:7px}
+.gdress{text-align:center;font-size:14.5px}
+.gdress b{font-family:var(--display);font-weight:400;font-size:20px;display:block}
+.grule{display:grid;grid-template-columns:64px 1fr;gap:14px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
+.grule:last-child{border-bottom:0}
+.grule .gn{font-family:var(--display);font-size:30px;line-height:1;text-align:center;color:var(--choc)}
+.grule .gn small{display:block;font-family:var(--body);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-top:4px}
+.grule p{font-size:14.5px;line-height:1.35;margin:0}
+.grule p small{display:block;color:var(--muted);font-size:12.5px;margin-top:2px}
+.gbar{height:4px;background:var(--line);border-radius:4px;overflow:hidden}.gbar b{display:block;height:100%;background:var(--choc)}
+.gprog{font-size:12.5px;color:var(--muted);text-align:center}
+.gchk{display:flex;gap:12px;align-items:flex-start;font-size:14.5px;line-height:1.35;padding:8px 0;border:0;border-bottom:1px solid var(--line);background:none;text-align:left;width:100%;color:var(--ink);font-family:inherit}
+.gchk:last-child{border-bottom:0}
+.gchk i{width:20px;height:20px;border:1px solid var(--ink);border-radius:4px;flex:none;margin-top:1px;display:grid;place-items:center;font-style:normal;font-size:13px}
+.gchk.ok i{background:var(--ink);color:var(--marshmallow)}
+.gchk.ok span{color:var(--muted);text-decoration:line-through}
+.gchk small{display:block;color:var(--muted);font-size:12.5px}
+.gtiles{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.gtiles div{border:1px solid var(--line);border-radius:6px;padding:12px;font-size:13.5px;line-height:1.3;background:var(--marshmallow)}
+.gtiles div b{display:block;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:400;margin-bottom:6px}
+.glock{font-size:12.5px;color:var(--muted);text-align:center}
+.gph{border-top:1px solid var(--line);padding-top:12px;margin-top:4px}
+.gph:first-child{border-top:0;padding-top:0;margin-top:0}
+.gph h3{font-family:var(--display);font-weight:400;font-size:17px;margin:0 0 4px;display:flex;justify-content:space-between;align-items:baseline}
+.gph h3 small{font-family:var(--body);font-size:12px;color:var(--muted)}
+.gsk{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;font-size:14px;padding:5px 0}
+.gsk .gst{letter-spacing:2px;white-space:nowrap}
+.gsk.dim{color:var(--muted)}
 table.mtab{width:100%;border-collapse:collapse;font-size:14.5px}
 table.mtab th{font-weight:400;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);text-align:right;padding:4px 4px 6px;border-bottom:1px solid var(--line)}
 table.mtab th:first-child,table.mtab td:first-child{text-align:left}
@@ -512,6 +548,7 @@ function render(){
   else if(!S.isAdmin) parts=[h('div',{class:'empty'},h('h3',{},'This board is for the leadership team'),h('p',{},'Your own goals live on your personal Pretty Productive link.'))];
   else if(S.rtab==='payroll') parts=payrollView();
   else if(S.rtab==='month') parts=monthView();
+  else if(S.rtab==='guide') parts=leaderGuideView();
   else if(!S.open) parts=teamBoard();
   else { const p=S.pages.find(x=>x.slug===S.open); parts=p?stylistPage(p):teamBoard(); }
   const d=S.daily;
@@ -612,16 +649,83 @@ function offView(){
   return [h('div',{class:'hub'},out)];
 }
 
-const DOCS=[
-  ['Salon & Spa employment guide','https://docs.google.com/document/d/1XqsSemnv4pbH-oFWxEOintjjiJv0PXrwDEzT80tRr_w/view'],
-  ['Employee handbook','https://drive.google.com/file/d/1KQfa52qppgrjBubymT4UjeozIf5pul8R/view']
-];
+/* Guide: Taffeta basics for everyone; full Employment Guide link only in the private data of the people who get it */
+const BELIEFS=['Be real, be genuine','Your book is your business','Accommodation is key','Team player','Be direct — never assume','Ask if unsure','Bring solutions, not complaints','Attention to detail','Live up to your price','Be coachable','Everyone is equally important','Mistakes = growth'];
+const OPENING=[['Read last night’s closing notes'],['Count cash · initial the Cash Log'],['Music on','Apple Music · KYGO playlist'],['Coffee, water + lemons'],['Front lights + twinkle lights'],['TV on — put a show on'],['Missed calls + texts → reply'],['Check new online bookings']];
+const CLOSING=[['Count all money 1 hour before close','Over or under? Tell the manager right away'],['Close the drawer · reset to $200'],['100s + 50s to the safe','Sticky note: your name, date, amount'],['Everything else in the petty cash envelopes'],['Initial + date the Cash Log'],['Stylist notes entered · callbacks made'],['Empty the desk trash · new liner'],['Music, lights + twinkle lights off'],['Lock both doors','Top lock + the lock icon on the street door']];
+const BUSY=[['Desk','Answer missed calls & texts · tidy desk · no phone at the desk'],['Plants','Water front door, retail shelf, bridal ledge, spa orchids, bathroom'],['Dust','Gold cart · color stand · retail bottles · skincare table'],['Restock','Coffee, Box Water, lemons, creamer, prosecco, paper goods'],['Help out','Unbox deliveries · laundry · dishes · rip foils'],['Content','Film a moment for the salon content album']];
+let GOC=null;
+function ocKey(){return 'pp-ocd:'+ID+':'+GOC+':'+ymd(new Date())}
+function ocDone(){try{return JSON.parse(store.get(ocKey())||'[]')}catch(e){return[]}}
+function gIcon(c){return h('span',{class:'gic'},c)}
+function basicsCards(){
+  if(!GOC) GOC=store.get('pp-oc:'+ID)==='close'?'close':'open';
+  const list=GOC==='close'?CLOSING:OPENING, done=ocDone();
+  const toggle=i=>{const d=ocDone(),k=d.indexOf(i);k<0?d.push(i):d.splice(k,1);store.set(ocKey(),JSON.stringify(d));render()};
+  const seg=(k,l)=>h('button',{'aria-pressed':String(GOC===k),onclick:()=>{GOC=k;store.set('pp-oc:'+ID,k);render()}},l);
+  const n=done.filter(i=>i<list.length).length;
+  return [
+    h('div',{class:'gcard'},h('h2',{},gIcon('♡'),'Why we’re here'),
+      h('p',{class:'gquote'},'“Every guest feels at home — and leaves refreshed, uplifted, and the most beautiful version of their natural self.”'),
+      h('span',{class:'lbl',style:'text-align:center'},'Alex’s core beliefs'),
+      h('div',{class:'gchips'},BELIEFS.map(b=>h('span',{},b)))),
+    h('div',{class:'gcard'},h('h2',{},gIcon('✦'),'Dress code'),
+      h('div',{class:'gsw'},[['#121212','Black'],['#f2ede1','Cream'],['#cdbfa8','Neutral']].map(([c,l])=>h('div',{},h('i',{style:'background:'+c}),l))),
+      h('div',{class:'gdress'},h('b',{},'Blazer on'),'Professional · polished')),
+    h('div',{class:'gcard'},h('h2',{},gIcon('◷'),'Leaving early'),
+      h('div',{class:'grule'},h('div',{class:'gn'},'8',h('small',{},'hours')),h('p',{},'Stay your full shift — at least 8 hours.',h('small',{},'Use downtime for your own marketing.'))),
+      h('div',{class:'grule'},h('div',{class:'gn'},'3',h('small',{},'pm sat')),h('p',{},'Saturdays, stay until 3:00 PM.')),
+      h('div',{class:'grule'},h('div',{class:'gn'},'2',h('small',{},'on floor')),h('p',{},'Leaving early is OK only if 2 artists stay for add-ons — and management says yes first.')),
+      h('div',{class:'grule'},h('div',{class:'gn'},'✕'),h('p',{},'Don’t block your book or move anyone else’s appointments without approval.',h('small',{},'No placeholder names.')))),
+    h('div',{class:'gcard'},h('div',{class:'seg'},seg('open','Opening'),seg('close','Closing')),
+      h('div',{class:'gbar'},h('b',{style:'width:'+Math.round(n/list.length*100)+'%'})),
+      h('div',{class:'gprog'},n===list.length?'All done — thank you!':n+' of '+list.length+' done'),
+      list.map(([t,sub],i)=>h('button',{class:'gchk'+(done.includes(i)?' ok':''),onclick:()=>toggle(i)},h('i',{},done.includes(i)?'✓':''),h('span',{},t,sub?h('small',{},sub):null)))),
+    h('div',{class:'gcard'},h('h2',{},gIcon('✿'),'Slow moment? Pick one'),
+      h('div',{class:'gtiles'},BUSY.map(([k,t])=>h('div',{},h('b',{},k),t))))];
+}
+function fullGuideCard(url){
+  return h('div',{class:'gcard',style:'align-items:center;text-align:center'},h('h2',{},gIcon('▤'),'Employment Guide'),
+    h('p',{style:'font-size:14px;margin:0'},'Logins, vendor contacts, desk & phone scripts, Paired Plus how-to, service times.'),
+    h('a',{class:'obtn',href:url,target:'_blank',rel:'noopener',style:'display:inline-flex;align-items:center;text-decoration:none'},'Open guide'),
+    h('div',{class:'glock'},'Opens with the Google account it was shared to · please don’t share it'));
+}
 function guideView(){
   const p=S.mine, g=isEsti(p)?GUIDE_ESTI:GUIDE;
-  return [h('div',{class:'hub'},h('h1',{style:'font-size:28px'},'Guide'),
-    h('div',{class:'sec2'},h('span',{class:'lbl'},'Handbook & training'),DOCS.map(([t,u])=>h('a',{class:'lrow',href:u,target:'_blank',rel:'noopener',style:'color:inherit;text-decoration:none'},h('b',{},t),h('span',{},'›')))),
+  return [h('div',{class:'hub'},h('div',{},h('span',{class:'lbl'},'Taffeta basics'),h('h1',{style:'font-size:28px'},'The Taffeta way')),
+    ...basicsCards(),
+    p.fullGuide?fullGuideCard(p.fullGuide):null,
     isGoalsPerson(p)?h('div',{class:'sec2'},h('span',{class:'lbl'},'Every guest, every time'),
       h('ol',{class:'guide',style:'margin-top:10px'},g.map(([t,x])=>h('li',{},h('strong',{},t),h('span',{},x))))):null)];
+}
+function leaderGuideView(){
+  return [h('section',{class:'section'},h('div',{class:'hub'},h('h2',{},'Guide'),
+    S.guideUrl?fullGuideCard(S.guideUrl):null, ...basicsCards()))];
+}
+
+/* Associate advancement (from the Employment Guide). adv = {skillId: models done} */
+const ADV=[
+  ['Phase 1 · Blowdry',[['bd-basic','Basic blowdry',3],['bd-volume','Volume blowdry',3],['bd-curly','Curly or textured blowdry',1]]],
+  ['Phase 2 · Color + smoothing',[['c-single','Single process',1],['c-gray','Gray coverage',3],['c-brunette','Cool brunette',3],['c-red','Red',2],['c-hilite','Traditional highlight',3],['c-bal-brun','Balayage · brunette',3],['c-bal-blonde','Balayage · blonde',3],['c-double','Double process',1],['c-correct','Color correction',2],['c-smooth','Smoothing treatment',1],['c-perm','Perm',1]]],
+  ['Phase 3 · Cutting',[['cut-long','Long layers',3],['cut-short','Short layers bob',3],['cut-grad','Graduated bob',3],['cut-pixie','Pixie',1],['cut-razor','Texture / razor cut',1]]],
+  ['Men’s cutting',[['m-fade','Traditional fade',3],['m-soc','Scissor over comb',3]]]];
+function advView(adv){
+  const ph=ADV.map(([name,sk])=>{const need=sk.reduce((a,x)=>a+x[2],0),got=sk.reduce((a,x)=>a+Math.min(x[2],adv[x[0]]||0),0);return {name,sk,need,got}});
+  let cur=ph.findIndex(x=>x.got<x.need); if(cur<0) cur=ph.length-1;
+  const c=ph[cur], left=c.need-c.got, started=ph.some(x=>x.got>0);
+  const next=c.sk.find(x=>(adv[x[0]]||0)<x[2]);
+  const sub=!started?'Your first step: '+(next?next[1].toLowerCase():'basic blowdry')+'. Ask Alexandra to set up your first model.':
+    left===0?'Every phase complete!':c.got+' of '+c.need+' models done — '+left+' to go'+(cur<ph.length-1?' to unlock '+ph[cur+1].name.replace(/^Phase \d · /,'').replace(/ \+.*/,''):'');
+  const stars=(n,of)=>'★'.repeat(Math.min(n,of))+'☆'.repeat(Math.max(0,of-n));
+  return [h('div',{class:'gcard',style:'align-items:center;text-align:center'},
+      h('span',{class:'lbl'},'Associate advancement'),
+      (()=>{const s=starSvg(pct(c.got,c.need));s.style.width='96px';s.style.height='96px';return s})(),
+      h('div',{style:'font-family:var(--display);font-size:22px'},c.name),
+      h('div',{class:'soft',style:'font-size:13.5px'},sub)),
+    h('div',{class:'gcard',style:'gap:6px'},ph.map((x,i)=>h('div',{class:'gph'},
+      h('h3',{},x.name,h('small',{},i>cur?'locked':x.got+' / '+x.need)),
+      i>cur?h('div',{class:'gsk dim'},h('span',{},x.sk.slice(0,4).map(k=>k[1]).join(' · ')+(x.sk.length>4?' …':'')),h('span',{},x.sk.length+' skills')):
+      x.sk.map(([id,l,n])=>h('div',{class:'gsk'},h('span',{},l),h('span',{class:'gst'},stars(adv[id]||0,n)))))))];
 }
 
 const STAR='M32 4 L40.2 22.6 L60.5 24.7 L45.3 38.3 L49.6 58.3 L32 48 L14.4 58.3 L18.7 38.3 L3.5 24.7 L23.8 22.6 Z';
@@ -636,7 +740,8 @@ function starSvg(p){
 }
 function growthView(){
   const gr=S.mine.growth, out=[h('h1',{style:'font-size:28px'},'Your growth')];
-  if(!gr||!gr.goals||!gr.goals.length){
+  if(S.mine.adv) out.push(...advView(S.mine.adv));
+  if(!isGoalsPerson(S.mine)){} else if(!gr||!gr.goals||!gr.goals.length){
     out.push(h('div',{class:'card2'},h('p',{class:'soft'},'Your quarter goals show up here after your quarterly review with Alexandra. Each one is a star that fills in as you get closer.')));
   } else {
     out.push(h('div',{class:'sec2'},h('span',{class:'lbl'},gr.label||'This quarter'),gr.goals.map(g=>{
@@ -662,7 +767,7 @@ function staffTabs(){
   const p=S.mine||{}, st=p.staff||{}, t=[];
   if(st.slug) t.push(['home','Home']);
   if(isGoalsPerson(p)) t.push(['today','Today']);
-  if(isGoalsPerson(p)) t.push(['growth','Growth']);
+  if(isGoalsPerson(p)||p.adv) t.push(['growth','Growth']);
   if(st.slug) t.push(['off','Time off']);
   t.push(['guide','Guide']);
   return t;
@@ -755,7 +860,7 @@ function monthView(){
         h('td',{class:rp(r.retail,r.service)>=15?'over':'under'},rp(r.retail,r.service)+'%'),h('td',{},r.addons==null?'–':String(r.addons)),h('td',{},r.rebook==null?'–':String(r.rebook))))))))];
 }
 function leaderTabs(){
-  return h('div',{class:'tabs',role:'tablist'},[['today','Today'],['payroll','Payroll'],['month','Month & trends']].map(([k,l])=>
+  return h('div',{class:'tabs',role:'tablist'},[['today','Today'],['payroll','Payroll'],['month','Month & trends'],['guide','Guide']].map(([k,l])=>
     h('button',{class:'tab',role:'tab','aria-selected':String(S.rtab===k),onclick:()=>{S.rtab=k;S.open=null;render()}},l)));
 }
 
@@ -787,7 +892,7 @@ function setHead(name){
 }
 function apply(P){
   S.daily=P.daily||null;
-  if(EDITION==='team'){S.isAdmin=true;S.pages=(P.pages||[]).filter(isGoalsPerson);S.week=P.week||null;S.hubKey=P.hub&&P.hub.admin;S.payroll=P.payroll||[];S.month=P.month||null;S.rtab=S.rtab||'today';setHead()}
+  if(EDITION==='team'){S.isAdmin=true;S.pages=(P.pages||[]).filter(isGoalsPerson);S.week=P.week||null;S.hubKey=P.hub&&P.hub.admin;S.payroll=P.payroll||[];S.month=P.month||null;S.guideUrl=P.guideUrl||null;S.rtab=S.rtab||'today';setHead()}
   else{S.mine=P.mine||null;setHead(S.mine&&S.mine.name);
     if(S.mine&&!S.tab){const st=S.mine.staff||{};S.tab=store.get('pp-tab:'+ID)||(st.clock?'home':isGoalsPerson(S.mine)?'today':'home')}
     if(S.mine&&S.mine.staff&&!HUB.started){HUB.started=true;hubGet();

@@ -1,9 +1,39 @@
 {
-  "note": "Team app defaults used when a run's data.json has no 'team' section. clock = who sees the time clock. extra = people who need an app page even when they are not on the book.",
-  "clock": ["adriana", "alyssa", "amanda", "ashley-b", "carolyn", "kat", "rose"],
+  "note": "Team app defaults used when a run's data.json has no 'team' section. clock = who sees the time clock. extra = people who need an app page even when they are not on the book. fullGuide = who gets the private Employment Guide button (the doc link itself lives in the keys file, not here). adv = associate advancement progress by person: {skillId: models done}; leave a person out until their progress is known.",
+  "clock": [
+    "adriana",
+    "alyssa",
+    "amanda",
+    "ashley-b",
+    "carolyn",
+    "kat",
+    "rose"
+  ],
   "extra": [
-    {"slug": "adriana", "name": "Adriana", "role": "stylist"},
-    {"slug": "rose", "name": "Rose", "role": "associate"},
-    {"slug": "kat", "name": "Kat", "role": "associate"}
-  ]
+    {
+      "slug": "adriana",
+      "name": "Adriana",
+      "role": "stylist"
+    },
+    {
+      "slug": "rose",
+      "name": "Rose",
+      "role": "associate"
+    },
+    {
+      "slug": "kat",
+      "name": "Kat",
+      "role": "associate"
+    }
+  ],
+  "fullGuide": [
+    "rose",
+    "carolyn",
+    "amanda",
+    "ashley-b",
+    "adriana"
+  ],
+  "adv": {
+    "kat": {}
+  }
 }

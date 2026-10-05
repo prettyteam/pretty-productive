@@ -46,6 +46,9 @@ keys.team ||= { secret: b64url(rand(24)), admin: b64url(rand(18)) };
 const teamSign = (slug) => createHmac('sha256', keys.team.secret).update(String(slug)).digest('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '').slice(0, 22);
 // Team app defaults live in tools/team.json, so a run that doesn't send 'team' keeps the time clock and extra pages.
 const teamDefaults = JSON.parse(fs.readFileSync(path.join(root, 'tools', 'team.json'), 'utf8'));
+const fullGuideSet = new Set((data.team && data.team.fullGuide) || teamDefaults.fullGuide || []);
+const advMap = { ...(teamDefaults.adv || {}), ...((data.team && data.team.adv) || {}) };
+const guideUrl = keys.team && keys.team.guideUrl;
 const clockSet = new Set((data.team && data.team.clock) || teamDefaults.clock || []);
 data.pages ||= [];
 for (const x of ((data.team && data.team.extra) || teamDefaults.extra || [])) if (!data.pages.some((p) => p && p.slug === x.slug)) data.pages.push({ ...x });
@@ -60,10 +63,12 @@ let n = 0;
 for (const p of pages) {
   const k = keys.stylists[p.slug];
   const mine = { ...strip(p), link: linkFor('s', k), staff: { slug: p.slug, t: teamSign(p.slug), clock: clockSet.has(p.slug) } };
+  if (guideUrl && fullGuideSet.has(p.slug)) mine.fullGuide = guideUrl;
+  if (advMap[p.slug]) mine.adv = advMap[p.slug];
   fs.writeFileSync(path.join(outDir, k.id + '.json'), JSON.stringify(await seal({ daily: data.daily || null, mine }, k.secret, k.pin)));
   n++;
 }
-const board = { daily: data.daily || null, week: data.week || null, payroll: data.payroll || [], month: data.month || null, hub: { admin: keys.team.admin }, pages: pages.map((p) => ({ ...strip(p), link: linkFor('s', keys.stylists[p.slug]) })) };
+const board = { daily: data.daily || null, week: data.week || null, payroll: data.payroll || [], month: data.month || null, hub: { admin: keys.team.admin }, guideUrl: guideUrl || null, pages: pages.map((p) => ({ ...strip(p), link: linkFor('s', keys.stylists[p.slug]) })) };
 fs.writeFileSync(path.join(outDir, keys.leadership.id + '.json'), JSON.stringify(await seal(board, keys.leadership.secret, keys.leadership.pin)));
 fs.writeFileSync(args.keys, JSON.stringify(keys, null, 1));
 console.log(`Sealed ${n} stylist files + The Pretty Report into d/.`);
