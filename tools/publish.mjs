@@ -135,7 +135,7 @@ for (const p of pages) {
   fs.writeFileSync(path.join(outDir, k.id + '.json'), JSON.stringify(await seal({ daily: data.daily || null, mine }, k.secret, k.pin)));
   n++;
 }
-const board = { daily: data.daily || null, week: data.week || null, payroll: data.payroll || [], month: data.month || null, hub: { admin: keys.team.admin }, guideUrl: guideUrl || null, docs: docsFor('', true), pages: pages.map((p) => ({ ...strip(p), link: linkFor('s', keys.stylists[p.slug]) })) };
+const board = { daily: data.daily || null, week: data.week || null, payroll: data.payroll || [], rates: (data.team && data.team.commission) || {}, retailRate: (data.team && data.team.retailRate) || 10, month: data.month || null, hub: { admin: keys.team.admin }, guideUrl: guideUrl || null, docs: docsFor('', true), pages: pages.map((p) => ({ ...strip(p), link: linkFor('s', keys.stylists[p.slug]) })) };
 fs.writeFileSync(path.join(outDir, keys.leadership.id + '.json'), JSON.stringify(await seal(board, keys.leadership.secret, keys.leadership.pin)));
 fs.writeFileSync(args.keys, JSON.stringify(keys, null, 1));
 console.log(`Sealed ${n} stylist files + The Pretty Report into d/.`);
