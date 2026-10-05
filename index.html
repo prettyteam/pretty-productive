@@ -798,7 +798,8 @@ async function admLoad(){
   ADM.loading=false;render();
 }
 function payrollView(){
-  if(!ADM.week){ADM.week=weekStartOf(new Date());admLoad()}
+  if(!ADM.week){const last=(S.payroll||[]).map(w=>w.week).filter(Boolean).sort().pop();
+    ADM.week=last?(([y,m,d])=>new Date(y,m-1,d))(last.split('-').map(Number)):weekStartOf(new Date());admLoad()}
   const ws=ADM.week, we=new Date(ws.getTime()+6*864e5), lab=d=>d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
   const isThis=ymd(ws)===ymd(weekStartOf(new Date()));
   const wkStartOf=w=>{if(!w)return null;if(w.weekStart)return w.weekStart;const m=/([A-Z][a-z]{2}) (\d+)/.exec(w.weekLabel||'');if(!m)return null;const d=new Date(m[1]+' '+m[2]+' '+new Date().getFullYear());return isNaN(d)?null:ymd(weekStartOf(d))};
