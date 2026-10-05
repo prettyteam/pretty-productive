@@ -79,6 +79,9 @@
       "cut-grad": 1,
       "m-fade": 1,
       "m-soc": 1
+    },
+    "adriana": {
+      "bd-basic": 3
     }
   }
 }
