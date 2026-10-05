@@ -254,6 +254,13 @@ body{padding-bottom:110px}
 .qrow b{font-family:var(--display);font-weight:400;font-size:17px}
 .qrow small{display:block;font-size:13px;color:var(--muted)}
 .qrow .hit{color:var(--choc);font-weight:700}
+.dtarget{border:1px solid var(--ink);border-radius:6px;background:#fff;padding:18px;display:flex;flex-direction:column;gap:4px}
+.dtarget .dt{display:grid;grid-template-columns:34px 1fr auto;gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
+.dtarget .dt:last-of-type{border-bottom:0}
+.dtarget .dt svg{width:30px;height:30px}
+.dtarget .dt span{font-size:15px}
+.dtarget .dt b{font-family:var(--display);font-weight:400;font-size:26px;color:var(--ink)}
+.stnote{font-size:15px;line-height:1.45;padding:2px 0 6px}
 .pct{font-size:12px;border:1px solid var(--ink);border-radius:999px;padding:0 7px;margin-left:6px;vertical-align:middle;font-family:var(--body)}
 .worth{border:1px solid var(--ink);border-radius:6px;background:#fff;padding:18px;display:flex;flex-direction:column;gap:12px}
 .worth .wr{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center}
@@ -761,6 +768,24 @@ function starSvg(p){
 function growthView(){
   const gr=S.mine.growth, out=[h('h1',{style:'font-size:28px'},'Your growth')];
   if(S.mine.adv) out.push(...advView(S.mine.adv));
+  if(isGoalsPerson(S.mine)){
+    const est=S.mine.role==='esthetician', val=est?450:800;
+    out.push(h('p',{class:'stnote'},'★ A guest who keeps coming back is worth about '+money(val)+' a year.'));
+    if(gr&&gr.goals&&gr.goals.length){
+      const qe=new Date(2026,11,31,23,59), now=new Date(), dpw=gr.daysPerWeek||4;
+      const left=Math.max(1,Math.round((qe-now)/864e5/7*dpw));
+      const g=k=>(gr.goals.find(x=>x.label===k)||{});
+      const sv=g('Services'), rp=g('Retail % of service'), at=g('Average ticket');
+      const need=sv.goal?Math.max(0,sv.goal-(sv.actual||0))/left:0;
+      const rows=[];
+      if(sv.goal) rows.push([money(Math.ceil(need/5)*5),'in services']);
+      if(sv.goal&&rp.goal) rows.push([money(Math.ceil(need*rp.goal/100/5)*5),'in retail']);
+      if(at.goal) rows.push([money(at.goal),'average ticket']);
+      if(rows.length) out.push(h('div',{class:'dtarget'},h('span',{class:'lbl'},'Bring in each day you work'),
+        rows.map(r=>h('div',{class:'dt'},starSvg(0),h('span',{},r[1]),h('b',{},r[0]))),
+        h('small',{class:'soft',style:'font-size:12px;padding-top:6px'},'About '+left+' working days left this quarter')));
+    }
+  }
   if(!isGoalsPerson(S.mine)){} else if(!gr||!gr.goals||!gr.goals.length){
     out.push(h('div',{class:'card2'},h('p',{class:'soft'},'Your quarter goals show up here after your quarterly review with Alexandra. Each one is a star that fills in as you get closer.')));
   } else {
