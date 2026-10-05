@@ -1008,8 +1008,10 @@ function payrollView(){
   const fin=(S.payroll||[]).find(w=>w.week===ymd(ws));
   const pay=fin||(S.week&&S.week.rows&&wkStartOf(S.week)===ymd(ws)?{label:'So far',rows:S.week.rows,live:true}:null);
   const rows=pay?pay.rows.filter(r=>r.service||r.retail):[];
-  const people=(ADM.data&&ADM.data.week===ymd(ws))?ADM.data.people:null;
-  const slugOf=n=>String(n||'').toLowerCase().trim().replace(/[^a-z0-9]+/g,'-'),RT=S.rates||{},RR=S.retailRate==null?10:S.retailRate;
+  const slugOf=n=>String(n||'').toLowerCase().trim().replace(/[^a-z0-9]+/g,'-');
+  const people0=(ADM.data&&ADM.data.week===ymd(ws))?ADM.data.people:null;
+  const people=people0&&(S.hoursList&&S.hoursList.length?people0.filter(p=>S.hoursList.indexOf(slugOf(p.name))>=0):people0);
+  const RT=S.rates||{},RR=S.retailRate==null?10:S.retailRate;
   const hrsOf=n=>{const q=people&&people.find(p=>String(p.name).toLowerCase().trim()===String(n).toLowerCase().trim());return q?q.min:null};
   rows.forEach(r=>{r._rate=r.rate!=null?r.rate:RT[slugOf(r.name)];r._comm=r.comm!=null?r.comm:(r._rate==null?null:Math.round((r.service*r._rate/100+r.retail*RR/100)*100)/100);r._min=hrsOf(r.name)});
   const T=rows.reduce((a,r)=>({s:a.s+r.service,r:a.r+r.retail,c:a.c+(r._comm||0)}),{s:0,r:0,c:0});
@@ -1033,7 +1035,7 @@ function payrollView(){
         h('p',{class:'soft'},'This week’s totals appear after the Monday payroll report runs.'),
       h('p',{class:'soft',style:'font-size:13px'},'Take-home = each artist’s service rate on services plus '+RR+'% on retail. Hours come from the time clock. '+(pay&&pay.live?'Week to date from Paired Plus. Final numbers come from the Monday payroll report.':'From the Monday payroll report (Paired Plus Comm Sales Analysis).'))),
     h('section',{class:'section'},h('h2',{},'Hours by person'),
-      people?h('div',{},people.filter(p=>p.min>0).map(p=>h('details',{class:'days lrow',style:'display:block'},
+      people?h('div',{},people.map(p=>h('details',{class:'days lrow',style:'display:block'},
         h('summary',{},h('div',{style:'display:flex;justify-content:space-between;gap:10px'},h('b',{},p.name,p.flags.map(f=>h('span',{class:'flag'},f))),h('span',{class:'num'},hrs(p.min)+' h'))),
         h('div',{class:'daysgrid'},[0,1,2,3,4,5,6].map(i=>{const d=new Date(ws.getTime()+i*864e5),k=ymd(d);
           return h('div',{},d.toLocaleDateString('en-US',{weekday:'short'}),h('b',{},p.days[k]?hrs(p.days[k]):'–'))})))),
@@ -1098,7 +1100,7 @@ function setHead(name){
 }
 function apply(P){
   S.daily=P.daily||null;
-  if(EDITION==='team'){S.isAdmin=true;S.pages=(P.pages||[]).filter(isGoalsPerson);S.week=P.week||null;S.hubKey=P.hub&&P.hub.admin;S.payroll=P.payroll||[];S.rates=P.rates||{};S.retailRate=P.retailRate==null?10:P.retailRate;S.month=P.month||null;S.guideUrl=P.guideUrl||null;S.docs=P.docs||null;S.rtab=S.rtab||'today';setHead()}
+  if(EDITION==='team'){S.isAdmin=true;S.pages=(P.pages||[]).filter(isGoalsPerson);S.week=P.week||null;S.hubKey=P.hub&&P.hub.admin;S.payroll=P.payroll||[];S.rates=P.rates||{};S.hoursList=P.hoursList||[];S.retailRate=P.retailRate==null?10:P.retailRate;S.month=P.month||null;S.guideUrl=P.guideUrl||null;S.docs=P.docs||null;S.rtab=S.rtab||'today';setHead()}
   else{S.mine=P.mine||null;setHead(S.mine&&S.mine.name);
     if(S.mine&&!S.tab){const st=S.mine.staff||{};S.tab=store.get('pp-tab:'+ID)||(st.clock?'home':isGoalsPerson(S.mine)?'today':'home')}
     if(S.mine&&S.mine.staff&&!HUB.started){HUB.started=true;hubGet();
