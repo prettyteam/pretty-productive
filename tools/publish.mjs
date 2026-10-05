@@ -11,6 +11,7 @@
 import { webcrypto as crypto } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
+import { createHmac } from 'node:crypto';
 
 const args = Object.fromEntries(process.argv.slice(2).reduce((a, v, i, arr) => (v.startsWith('--') ? a.concat([[v.slice(2), arr[i + 1]]]) : a), []));
 const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
@@ -40,6 +41,10 @@ const data = JSON.parse(fs.readFileSync(args.data, 'utf8'));
 const keys = fs.existsSync(args.keys) ? JSON.parse(fs.readFileSync(args.keys, 'utf8')) : {};
 keys.stylists ||= {};
 const created = [];
+// Team Hub (time clock): each person's app link carries a signed token the Apps Script checks.
+keys.team ||= { secret: b64url(rand(24)), admin: b64url(rand(18)) };
+const teamSign = (slug) => createHmac('sha256', keys.team.secret).update(String(slug)).digest('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '').slice(0, 22);
+const clockSet = new Set((data.team && data.team.clock) || []);
 if (!keys.leadership) { keys.leadership = newKey(6); created.push(['The Pretty Report', linkFor('r', keys.leadership), keys.leadership.pin]); }
 const pages = (data.pages || []).filter((p) => p && p.slug);
 for (const p of pages) {
@@ -50,11 +55,11 @@ const strip = (p) => { const { link, ...rest } = p; return rest; };
 let n = 0;
 for (const p of pages) {
   const k = keys.stylists[p.slug];
-  const mine = { ...strip(p), link: linkFor('s', k) };
+  const mine = { ...strip(p), link: linkFor('s', k), staff: { slug: p.slug, t: teamSign(p.slug), clock: clockSet.has(p.slug) } };
   fs.writeFileSync(path.join(outDir, k.id + '.json'), JSON.stringify(await seal({ daily: data.daily || null, mine }, k.secret, k.pin)));
   n++;
 }
-const board = { daily: data.daily || null, week: data.week || null, pages: pages.map((p) => ({ ...strip(p), link: linkFor('s', keys.stylists[p.slug]) })) };
+const board = { daily: data.daily || null, week: data.week || null, payroll: data.payroll || [], month: data.month || null, hub: { admin: keys.team.admin }, pages: pages.map((p) => ({ ...strip(p), link: linkFor('s', keys.stylists[p.slug]) })) };
 fs.writeFileSync(path.join(outDir, keys.leadership.id + '.json'), JSON.stringify(await seal(board, keys.leadership.secret, keys.leadership.pin)));
 fs.writeFileSync(args.keys, JSON.stringify(keys, null, 1));
 console.log(`Sealed ${n} stylist files + The Pretty Report into d/.`);

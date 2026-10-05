@@ -193,8 +193,93 @@ details.tryd summary::-webkit-details-marker{display:none}
 details.tryd[open] .tplus{transform:rotate(45deg)}
 details.tryd .try{padding:4px 0 6px}
 .tico{background:no-repeat center/contain url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 2l1.9 6.1L20 10l-6.1 1.9L12 18l-1.9-6.1L4 10l6.1-1.9z' fill='%23b4925b'/%3E%3Cpath d='M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z' fill='%23b4925b'/%3E%3C/svg%3E")}
+/* ---- Team app look (Oct 2026): light cream, black outlines, small chocolate touches ---- */
+:root{--marshmallow:#f8f6f0;--ivory:#ffffff;--brown:#121212;--ink:#121212;--muted:#5f5b55;--line:#e2ded5;--gold:#4a3426;--choc:#4a3426;--card:#ffffff}
+body{padding-bottom:110px}
+#main{width:100%}
+.tip{border:1px solid var(--line)}
+.pill,.chip{background:#fff}
+.unlock{background:transparent;color:var(--ink);border:1px solid var(--ink);padding:9px 30px;font-size:13px;letter-spacing:.2em;text-transform:uppercase}
+.lock .pin{background:#fff}
+.incent.won,.wrapday{background:#fff;border:1px solid var(--line)}
+.tab{background:#fff}
+.tab[aria-selected="true"]{background:var(--ink);color:var(--marshmallow);border-color:var(--ink)}
+.mast[hidden]{display:none}
+/* staff app */
+.hub{display:flex;flex-direction:column;gap:26px;max-width:560px;width:100%;margin:0 auto}
+.hello{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.hello h1{font-size:28px}
+.hello img{width:44px;height:auto}
+.date{font-size:12.5px;color:var(--muted);letter-spacing:.04em}
+.clock{border:1px solid var(--ink);background:#fff;border-radius:6px;padding:24px 20px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:12px}
+.clock .status{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--muted)}
+.clock .dot{width:7px;height:7px;border-radius:50%;background:var(--line)}
+.clock.on .dot{background:var(--choc)}
+.clock .big{font-family:var(--display);font-size:34px;line-height:1.05}
+.clock .wk{font-size:13.5px;color:var(--muted)}
+.obtn{border:1px solid var(--ink);background:transparent;color:var(--ink);border-radius:999px;height:42px;padding:0 30px;font-size:12.5px;letter-spacing:.2em;text-transform:uppercase;align-self:center}
+.obtn:disabled{opacity:.5}
+.obtn.sm{height:32px;padding:0 16px;font-size:11px;letter-spacing:.16em}
+.lbl{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+.sec2{display:flex;flex-direction:column;gap:2px}
+.lrow{display:flex;justify-content:space-between;align-items:center;gap:12px;font-size:15px;padding:11px 0;border-bottom:1px solid var(--line)}
+.lrow:last-child{border-bottom:0}
+.lrow b{font-family:var(--display);font-weight:400}
+.lrow small{display:block;font-size:12.5px;color:var(--muted)}
+.ann{border-left:2px solid var(--choc);padding:2px 0 2px 14px;display:flex;flex-direction:column;gap:4px;margin-top:8px}
+.ann p{font-size:15px}
+.ann small{font-size:12px;color:var(--muted)}
+.soft{font-size:14px;color:var(--muted)}
+.card2{background:#fff;border:1px solid var(--line);border-radius:6px;padding:18px;display:flex;flex-direction:column;gap:12px}
+.card2.out{border-color:var(--ink)}
+.fld{display:flex;flex-direction:column;gap:5px;font-size:14px}
+.fld input,.fld select{font:inherit;font-size:16px;height:44px;border:1px solid var(--line);border-radius:4px;background:#fbfaf7;padding:0 10px;color:var(--ink);width:100%;min-width:0;-webkit-appearance:none;appearance:none}
+.fld2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}.hub,.card2,.fld{min-width:0}
+.stat{font-size:12px;border:1px solid var(--line);border-radius:999px;padding:1px 10px;white-space:nowrap}
+.stat.ok{border-color:var(--choc);color:var(--choc)}
+.toast{font-size:14px;color:var(--choc);min-height:1.4em;text-align:center}
+.seg{display:flex;gap:8px;flex-wrap:wrap}
+.seg button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:6px 14px;font-size:13.5px}
+.seg button[aria-pressed="true"]{border-color:var(--ink);background:var(--ink);color:var(--marshmallow)}
+.nav{position:fixed;left:0;right:0;bottom:0;background:var(--marshmallow);border-top:1px solid var(--line);display:flex;justify-content:center;padding:14px 8px calc(16px + env(safe-area-inset-bottom));z-index:5}
+.nav .in{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;max-width:560px;width:100%}
+.nav button{border:0;background:none;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:8px;padding:4px 0}
+.nav button[aria-current="page"]{color:var(--ink)}
+.nav button[aria-current="page"]::after{content:"";width:18px;height:1.5px;background:var(--ink)}
+.nav button:not([aria-current="page"])::after{content:"";width:18px;height:1.5px}
+/* growth stars */
+.qrow{display:grid;grid-template-columns:60px 1fr;gap:16px;align-items:center;padding:12px 0;border-bottom:1px solid var(--line)}
+.qrow:last-child{border-bottom:0}
+.qrow svg{width:60px;height:60px}
+.qrow b{font-family:var(--display);font-weight:400;font-size:17px}
+.qrow small{display:block;font-size:13px;color:var(--muted)}
+.qrow .hit{color:var(--choc);font-weight:700}
+.pct{font-size:12px;border:1px solid var(--ink);border-radius:999px;padding:0 7px;margin-left:6px;vertical-align:middle;font-family:var(--body)}
+.worth{border:1px solid var(--ink);border-radius:6px;background:#fff;padding:18px;display:flex;flex-direction:column;gap:12px}
+.worth .wr{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center}
+.worth .ic{width:40px;height:40px;border-radius:50%;border:1px solid var(--ink);display:grid;place-items:center;font-family:var(--display);font-size:14px}
+.worth b{font-family:var(--display);font-weight:400;font-size:22px;color:var(--choc)}
+table.mtab{width:100%;border-collapse:collapse;font-size:14.5px}
+table.mtab th{font-weight:400;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);text-align:right;padding:4px 4px 6px;border-bottom:1px solid var(--line)}
+table.mtab th:first-child,table.mtab td:first-child{text-align:left}
+table.mtab td{padding:9px 4px;border-bottom:1px solid var(--line);text-align:right;font-variant-numeric:tabular-nums}
+table.mtab td:first-child{font-family:var(--display)}
+.up{color:var(--choc)}
+/* leadership tabs */
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px}
+.tile{background:#fff;border:1px solid var(--line);border-radius:6px;padding:16px 18px;display:flex;flex-direction:column;gap:4px}
+.tile b{font-family:var(--display);font-weight:400;font-size:28px;line-height:1.1}
+.wknav{display:flex;gap:10px;align-items:center;font-size:15px}
+.wknav button{border:1px solid var(--line);background:#fff;border-radius:999px;width:32px;height:32px}
+.flag{display:inline-block;font-size:12px;border:1px solid var(--choc);color:var(--choc);border-radius:999px;padding:0 8px;margin-left:6px;font-family:var(--body);white-space:nowrap}
+details.days summary{cursor:pointer;list-style:none}
+details.days summary::-webkit-details-marker{display:none}
+.daysgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;font-size:12px;color:var(--muted);text-align:center;padding:6px 0 4px}
+.daysgrid b{display:block;font-family:var(--body);font-weight:400;color:var(--ink);font-size:13px}
+
 </style>
 
+<script src="g/config.js?v=2"></script>
 <link rel="icon" href="icon.png">
 <link rel="apple-touch-icon" href="icon.png">
 </head>
@@ -253,6 +338,7 @@ function wrapBlock(p){
 }
 
 function stylistPage(p){
+  if(!p.goals) return [h('div',{class:'empty'},h('h3',{},'No goals today'),h('p',{},'Your time clock and schedule are on the Home tab.'))];
   const d=S.daily||{}, g=p.goals;
   const parts=[];
   if(EDITION==='team'&&S.isAdmin) parts.push(h('button',{class:'back',onclick:()=>{S.open=null;render()}},'← Back to the team board'));
@@ -411,23 +497,263 @@ function renderMast(){
   const d=S.daily; $sub.replaceChildren();
   if(!d) return;
   $sub.append(h('span',{class:'dateline'},d.dateLabel||''));
+  if(EDITION==='team'&&S.isAdmin) $sub.append(leaderTabs());
   if(EDITION==='team'&&S.isAdmin&&S.open){
     $sub.append(h('button',{class:'back',onclick:()=>{S.open=null;render()}},'← Team board'));
   }
 }
 function render(){
+  if(EDITION==='stylist'&&S.mine) document.querySelector('.mast').hidden=S.tab!=='today';
   renderMast();
   let parts;
-  if(!S.daily){parts=[h('div',{class:'empty'},h('h3',{},'Today’s hub isn’t ready yet'),h('p',{},'Goals go up every morning the salon is open. Check back after 8 AM.'))];}
+  if(!S.daily&&!(EDITION==='stylist'&&S.mine&&S.tab!=='today')){parts=[h('div',{class:'empty'},h('h3',{},'Today’s hub isn’t ready yet'),h('p',{},'Goals go up every morning the salon is open. Check back after 8 AM.'))];}
+  else if(EDITION==='stylist'&&S.mine&&S.tab!=='today') parts=staffRender();
   else if(EDITION==='stylist') parts=S.mine?stylistPage(S.mine):[h('div',{class:'empty'},h('h3',{},'Your page is being set up'),h('p',{},'Your goals will appear here the next morning the salon is open.'))];
   else if(!S.isAdmin) parts=[h('div',{class:'empty'},h('h3',{},'This board is for the leadership team'),h('p',{},'Your own goals live on your personal Pretty Productive link.'))];
+  else if(S.rtab==='payroll') parts=payrollView();
+  else if(S.rtab==='month') parts=monthView();
   else if(!S.open) parts=teamBoard();
   else { const p=S.pages.find(x=>x.slug===S.open); parts=p?stylistPage(p):teamBoard(); }
   const d=S.daily;
-  if(d&&d.checkins) parts.push(h('footer',{class:'schedule'},h('span',{class:'muted'},'Numbers update at'),
+  if(d&&d.checkins&&(EDITION==='team'?S.rtab==='today':S.tab==='today')) parts.push(h('footer',{class:'schedule'},h('span',{class:'muted'},'Numbers update at'),
     d.checkins.map(c=>h('span',{class:'pill'+(c.done?' done':'')},c.time)),
     d.lastUpdated?h('span',{class:'muted'},'· last updated '+d.lastUpdated):null));
-  $main.replaceChildren(...parts);
+  $main.replaceChildren(...parts.filter(Boolean));
+  const old=document.querySelector('nav.nav'); if(old) old.remove();
+  if(EDITION==='stylist'&&S.mine){const n=staffNav(); if(n) document.body.append(n);}
+}
+
+/* ---- Team app: Home (time clock), Growth, Time off, Guide; leadership Payroll + Month tabs ---- */
+const API=()=>window.TAFFETA_ENDPOINT||'';
+const firstName=n=>(n||'').split(' ')[0];
+const ymd=d=>{const z=new Date(d.getTime()-d.getTimezoneOffset()*6e4);return z.toISOString().slice(0,10)};
+const niceDay=s=>{const [y,m,d]=s.split('-').map(Number);const dt=new Date(y,m-1,d),t=new Date();t.setHours(0,0,0,0);
+  const diff=Math.round((dt-t)/864e5);if(diff===0)return'Today';if(diff===1)return'Tomorrow';
+  return dt.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'})};
+const hm=min=>{min=Math.max(0,Math.round(min||0));return Math.floor(min/60)+'h '+(min%60)+'m'};
+const hrs=min=>(Math.round((min||0)/6)/10).toFixed(1).replace(/\.0$/,'');
+let HUB={data:null,err:null,busy:false,toast:'',tick:null};
+
+async function hubGet(){
+  const st=S.mine&&S.mine.staff; if(!st||!API()) return;
+  try{const r=await fetch(API()+'?staff='+encodeURIComponent(st.slug)+'&t='+encodeURIComponent(st.t)+'&_='+Date.now());
+    const j=await r.json(); if(!j.ok) throw new Error(j.error||'x'); HUB.data=j; HUB.err=null; HUB.at=Date.now();}
+  catch(e){HUB.err=e.message==='link'?'link':'offline'}
+  if(EDITION==='stylist') render();
+}
+async function hubPost(body,ok){
+  const st=S.mine.staff; HUB.busy=true; render();
+  try{const r=await fetch(API(),{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({...body,slug:st.slug,t:st.t})});
+    const j=await r.json(); HUB.toast=j.ok?(ok||'Saved'):(j.error==='taken'?'Someone already picked that one up.':'That didn’t go through. Try again.');}
+  catch(e){HUB.toast='Can’t connect right now. Check your signal and try again.'}
+  HUB.busy=false; await hubGet(); setTimeout(()=>{HUB.toast='';render()},4000);
+}
+function liveClock(){const c=HUB.data&&HUB.data.clock; if(!c) return null;
+  const extra=c.in?(Date.now()-HUB.at)/6e4:0; return {...c,todayMin:c.todayMin+extra,weekMin:c.weekMin+extra}}
+
+function hello(){
+  const logo=document.querySelector('.wreath');
+  const today=new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
+  return h('div',{class:'hello'},h('div',{},h('div',{class:'date'},today),h('h1',{},'Hi, ',h('em',{},firstName(S.mine.name)))),
+    logo?h('img',{src:logo.src,alt:''}):null);
+}
+function clockCard(){
+  const c=liveClock();
+  if(!c) return h('div',{class:'clock'},h('p',{class:'soft'},HUB.err==='offline'?'Can’t reach the time clock right now. Check your signal.':HUB.err==='link'?'Your time clock isn’t set up yet. Ask Alexandra.':'Loading your time clock…'));
+  return h('div',{class:'clock'+(c.in?' on':'')},
+    h('div',{class:'status'},h('span',{class:'dot'}),c.in?'Clocked in at '+c.sinceLabel:'Not clocked in'),
+    h('div',{class:'big num'},hm(c.todayMin)+' today'),
+    h('button',{class:'obtn',disabled:HUB.busy?'':null,onclick:()=>hubPost({type:'clock',action:c.in?'out':'in'},c.in?'Clocked out. Have a good one!':'Clocked in. Have a great shift!')},HUB.busy?'One moment…':c.in?'Clock out':'Clock in'),
+    h('div',{class:'wk'},'This week · '+hrs(c.weekMin)+' hours'),
+    HUB.toast?h('p',{class:'toast'},HUB.toast):null);
+}
+function homeView(){
+  const st=S.mine.staff||{}, d=HUB.data;
+  const out=[hello()];
+  if(st.clock) out.push(clockCard());
+  const shifts=(d&&d.shifts)||[];
+  out.push(h('div',{class:'sec2'},h('span',{class:'lbl'},'Next shifts'),
+    shifts.length?shifts.map(s=>h('div',{class:'lrow'},h('b',{},niceDay(s.date)),h('span',{},s.start+' – '+s.end))):h('p',{class:'soft',style:'padding-top:8px'},'Your shifts will show here soon.')));
+  const open=(d&&d.openShifts)||[];
+  if(open.length) out.push(h('div',{class:'sec2'},h('span',{class:'lbl'},'Shifts you can pick up'),
+    open.map(s=>h('div',{class:'lrow'},h('div',{},h('b',{},niceDay(s.date)+(s.time?' · '+s.time:'')),h('small',{},s.name+(s.note?' · '+s.note:''))),
+      h('button',{class:'obtn sm',disabled:HUB.busy?'':null,onclick:()=>hubPost({type:'take',row:s.row},'It’s yours. Thank you for covering!')},'I’ll take it')))));
+  const ann=(d&&d.ann)||[];
+  if(ann.length) out.push(h('div',{class:'sec2'},h('span',{class:'lbl'},'From Alexandra'),
+    ann.slice(0,3).map(a=>h('div',{class:'ann'},h('p',{},a.text),h('small',{},a.date?niceDay(a.date):'')))));
+  if(!st.clock&&HUB.toast) out.push(h('p',{class:'toast'},HUB.toast));
+  return [h('div',{class:'hub'},out)];
+}
+
+function offView(){
+  const d=HUB.data||{}, out=[h('h1',{style:'font-size:28px'},'Time off & coverage')];
+  // need a shift covered
+  const cd=h('input',{type:'date',value:ymd(new Date())}), ct=h('input',{type:'text',placeholder:'9 AM – 5 PM'}), by=h('input',{type:'text',placeholder:'Leave blank to ask the team'});
+  out.push(h('div',{class:'card2 out'},h('span',{class:'lbl'},'Need a shift covered?'),
+    h('div',{class:'fld2'},h('label',{class:'fld'},'Day',cd),h('label',{class:'fld'},'Time',ct)),
+    h('label',{class:'fld'},'Already covered by',by),
+    h('button',{class:'obtn',disabled:HUB.busy?'':null,onclick:()=>{if(!cd.value)return;
+      hubPost({type:'cover',date:cd.value,time:ct.value,by:by.value},by.value?'Saved. Alexandra will get a heads-up.':'Posted. Your teammates can pick it up in their app.')}},by.value?'Save':'Save')));
+  const mc=d.myCover||[];
+  if(mc.length) out.push(h('div',{class:'sec2'},h('span',{class:'lbl'},'Your coverage'),mc.map(c=>h('div',{class:'lrow'},
+    h('div',{},h('b',{},niceDay(c.date)+(c.time?' · '+c.time:'')),h('small',{},c.by?(c.by===S.mine.name?'You’re covering '+c.name:'Covered by '+c.by):'Waiting for a teammate')),
+    h('span',{class:'stat'+(c.status==='Covered'?' ok':'')},c.status==='Covered'?'Covered':'Open')))));
+  // time off
+  const f=h('input',{type:'date'}), t=h('input',{type:'date'}), n=h('input',{type:'text',placeholder:'Optional'});
+  out.push(h('div',{class:'card2'},h('span',{class:'lbl'},'Request days off'),
+    h('div',{class:'fld2'},h('label',{class:'fld'},'First day',f),h('label',{class:'fld'},'Last day',t)),
+    h('label',{class:'fld'},'Note',n),
+    h('button',{class:'obtn',disabled:HUB.busy?'':null,onclick:()=>{if(!f.value)return;hubPost({type:'timeoff',from:f.value,to:t.value||f.value,note:n.value},'Sent. You’ll see the answer here.')}},'Send request')));
+  const mo=d.myOff||[];
+  if(mo.length) out.push(h('div',{class:'sec2'},h('span',{class:'lbl'},'Your requests'),mo.map(o=>h('div',{class:'lrow'},
+    h('b',{},o.from===o.to?niceDay(o.from):niceDay(o.from)+' – '+niceDay(o.to)),h('span',{class:'stat'+(/approv/i.test(o.status)?' ok':'')},o.status)))));
+  if(HUB.toast) out.push(h('p',{class:'toast'},HUB.toast));
+  return [h('div',{class:'hub'},out)];
+}
+
+const DOCS=[
+  ['Salon & Spa employment guide','https://docs.google.com/document/d/1XqsSemnv4pbH-oFWxEOintjjiJv0PXrwDEzT80tRr_w/view'],
+  ['Employee handbook','https://drive.google.com/file/d/1KQfa52qppgrjBubymT4UjeozIf5pul8R/view']
+];
+function guideView(){
+  const p=S.mine, g=isEsti(p)?GUIDE_ESTI:GUIDE;
+  return [h('div',{class:'hub'},h('h1',{style:'font-size:28px'},'Guide'),
+    h('div',{class:'sec2'},h('span',{class:'lbl'},'Handbook & training'),DOCS.map(([t,u])=>h('a',{class:'lrow',href:u,target:'_blank',rel:'noopener',style:'color:inherit;text-decoration:none'},h('b',{},t),h('span',{},'›')))),
+    (p.goals||p.role==='esthetician')?h('div',{class:'sec2'},h('span',{class:'lbl'},'Every guest, every time'),
+      h('ol',{class:'guide',style:'margin-top:10px'},g.map(([t,x])=>h('li',{},h('strong',{},t),h('span',{},x))))):null)];
+}
+
+const STAR='M32 4 L40.2 22.6 L60.5 24.7 L45.3 38.3 L49.6 58.3 L32 48 L14.4 58.3 L18.7 38.3 L3.5 24.7 L23.8 22.6 Z';
+let starN=0;
+function starSvg(p){
+  const id='st'+(starN++), y=64-64*Math.max(0,Math.min(100,p))/100, col=p>=90?'var(--choc)':'var(--ink)';
+  const ns='http://www.w3.org/2000/svg', svg=document.createElementNS(ns,'svg'); svg.setAttribute('viewBox','0 0 64 64');
+  svg.innerHTML=`<defs><clipPath id="${id}"><rect x="0" y="${y.toFixed(1)}" width="64" height="64"/></clipPath></defs>`+
+    `<path d="${STAR}" fill="#fff"/><path d="${STAR}" style="fill:${col}" clip-path="url(#${id})"/>`+
+    `<path d="${STAR}" fill="none" stroke="#121212" stroke-width="2" stroke-linejoin="round"/>`;
+  return svg;
+}
+function growthView(){
+  const gr=S.mine.growth, out=[h('h1',{style:'font-size:28px'},'Your growth')];
+  if(!gr||!gr.goals||!gr.goals.length){
+    out.push(h('div',{class:'card2'},h('p',{class:'soft'},'Your quarter goals show up here after your quarterly review with Alexandra. Each one is a star that fills in as you get closer.')));
+  } else {
+    out.push(h('div',{class:'sec2'},h('span',{class:'lbl'},gr.label||'This quarter'),gr.goals.map(g=>{
+      const p=pct(g.actual||0,g.goal), f=g.money?money:g.pctFmt?(v=>v+'%'):String;
+      return h('div',{class:'qrow'},starSvg(p),h('div',{},h('b',{},g.label+' '+f(g.goal),h('span',{class:'pct'},p+'%')),
+        h('small',{class:p>=90?'hit':''},(g.actual==null?'Starts with tonight’s update':f(g.actual)+' so far')+(p>=100?' · goal hit!':p>=90?' · almost there':g.note?' · '+g.note:''))))})));
+    if(gr.worth&&gr.worth.length) out.push(h('div',{class:'worth'},h('span',{class:'lbl'},'What your goals are worth'),
+      gr.worth.map(w=>h('div',{class:'wr'},h('span',{class:'ic'},w.icon),h('span',{},w.label),h('b',{},'+'+money(w.monthly)))),
+      h('small',{class:'soft',style:'font-size:12px'},'Extra pay a month, at your commission rate')));
+  }
+  if(gr&&gr.history&&gr.history.length>=1){
+    const H=gr.history.slice(-2), cols=H.map(x=>x.q);
+    const rows=[['Service','service',money],['Retail %','retailPct',v=>v+'%'],['Avg ticket','avgTicket',money],['Guests','guests',String],['New guests','newGuests',String],['Retention','retention',v=>v+'%']];
+    out.push(h('div',{class:'sec2'},h('span',{class:'lbl'},'Past reviews'),h('table',{class:'mtab'},
+      h('thead',{},h('tr',{},h('th',{}),cols.map(c=>h('th',{},c)))),
+      h('tbody',{},rows.filter(r=>H.some(x=>x[r[1]]!=null)).map(([l,k,f])=>h('tr',{},h('td',{},l),H.map(x=>h('td',{},x[k]==null?'–':f(x[k])))))))));
+    if(gr.notes) out.push(h('div',{class:'card2'},h('span',{class:'lbl'},'Review notes'),h('p',{style:'font-size:15px'},gr.notes)));
+  }
+  return [h('div',{class:'hub'},out)];
+}
+
+function staffTabs(){
+  const p=S.mine||{}, st=p.staff||{}, t=[];
+  if(st.slug) t.push(['home','Home']);
+  if(p.goals) t.push(['today','Today']);
+  if(p.goals) t.push(['growth','Growth']);
+  if(st.slug) t.push(['off','Time off']);
+  t.push(['guide','Guide']);
+  return t;
+}
+function staffNav(){
+  const tabs=staffTabs(); if(tabs.length<2) return null;
+  return h('nav',{class:'nav','aria-label':'Sections'},h('div',{class:'in'},tabs.map(([k,l])=>h('button',{'aria-current':S.tab===k?'page':null,onclick:()=>{S.tab=k;store.set('pp-tab:'+ID,k);render();window.scrollTo(0,0);if(k==='home'||k==='off')hubGet()}},l))));
+}
+function staffRender(){
+  const tabs=staffTabs().map(x=>x[0]);
+  if(!tabs.includes(S.tab)) S.tab=tabs[0];
+  document.querySelector('.mast').hidden=S.tab!=='today';
+  if(S.tab==='home') return homeView();
+  if(S.tab==='growth') return growthView();
+  if(S.tab==='off') return offView();
+  if(S.tab==='guide') return guideView();
+  return null;
+}
+
+/* leadership: Payroll + Month */
+let ADM={week:null,data:null,err:null,loading:false};
+function weekStartOf(d){const x=new Date(d);x.setHours(0,0,0,0);x.setDate(x.getDate()-((x.getDay()+6)%7));return x}
+async function admLoad(){
+  if(!S.hubKey||!API()){ADM.err='setup';render();return}
+  ADM.loading=true;
+  try{const r=await fetch(API()+'?admin='+encodeURIComponent(S.hubKey)+'&week='+ymd(ADM.week)+'&_='+Date.now());const j=await r.json();if(!j.ok)throw 0;ADM.data=j;ADM.err=null}
+  catch(e){ADM.err='offline'}
+  ADM.loading=false;render();
+}
+function payrollView(){
+  if(!ADM.week){ADM.week=weekStartOf(new Date());admLoad()}
+  const ws=ADM.week, we=new Date(ws.getTime()+6*864e5), lab=d=>d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
+  const isThis=ymd(ws)===ymd(weekStartOf(new Date()));
+  const pay=isThis?(S.week&&S.week.rows?{label:'This week so far',rows:S.week.rows}:null):(S.payroll||[]).find(w=>w.week===ymd(ws))||null;
+  const rows=pay?pay.rows.filter(r=>r.service||r.retail):[];
+  const T=rows.reduce((a,r)=>({s:a.s+r.service,r:a.r+r.retail}),{s:0,r:0});
+  const people=(ADM.data&&ADM.data.week===ymd(ws))?ADM.data.people:null;
+  const totMin=people?people.reduce((a,p)=>a+p.min,0):null;
+  const shift=n=>{ADM.week=new Date(ws.getTime()+n*7*864e5);ADM.data=null;admLoad()};
+  const out=[];
+  out.push(h('section',{class:'section'},
+    h('div',{style:'display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px;align-items:center'},h('h2',{},'Payroll week'),
+      h('div',{class:'wknav'},h('button',{onclick:()=>shift(-1),'aria-label':'Previous week'},'‹'),h('span',{},lab(ws)+' – '+lab(we)),h('button',{onclick:()=>shift(1),'aria-label':'Next week',disabled:isThis?'':null},'›'))),
+    h('div',{class:'tiles'},
+      h('div',{class:'tile'},h('span',{class:'lbl'},'Stylist service'),h('b',{class:'num'},pay?money(T.s):'–')),
+      h('div',{class:'tile'},h('span',{class:'lbl'},'Stylist retail'),h('b',{class:'num'},pay?money(T.r):'–')),
+      h('div',{class:'tile'},h('span',{class:'lbl'},'Combined'),h('b',{class:'num'},pay?money(T.s+T.r):'–')),
+      h('div',{class:'tile'},h('span',{class:'lbl'},'Hourly team hours'),h('b',{class:'num'},totMin==null?'–':hrs(totMin))))));
+  out.push(h('div',{class:'split'},
+    h('section',{class:'section'},h('h2',{},'Commission artists'),
+      pay?h('div',{class:'tablewrap'},h('table',{class:'week'},
+        h('thead',{},h('tr',{},h('th',{},'Stylist'),h('th',{},'Service'),h('th',{},'Retail'),h('th',{},'Combined'))),
+        h('tbody',{},rows.map(r=>h('tr',{},h('td',{},r.name),h('td',{},money(r.service)),h('td',{},money(r.retail)),h('td',{},money(r.service+r.retail)))),
+          h('tr',{class:'tot'},h('td',{},'Total'),h('td',{},money(T.s)),h('td',{},money(T.r)),h('td',{},money(T.s+T.r)))))):
+        h('p',{class:'soft'},'This week’s totals appear after the Monday payroll report runs.'),
+      h('p',{class:'soft',style:'font-size:13px'},isThis?'Week to date from Paired Plus. Final numbers come from the Monday payroll report.':'From the Monday payroll report (Paired Plus Comm Sales Analysis).')),
+    h('section',{class:'section'},h('h2',{},'Hourly team'),
+      people?h('div',{},people.map(p=>h('details',{class:'days lrow',style:'display:block'},
+        h('summary',{},h('div',{style:'display:flex;justify-content:space-between;gap:10px'},h('b',{},p.name,p.flags.map(f=>h('span',{class:'flag'},f))),h('span',{class:'num'},hrs(p.min)+' h'))),
+        h('div',{class:'daysgrid'},[0,1,2,3,4,5,6].map(i=>{const d=new Date(ws.getTime()+i*864e5),k=ymd(d);
+          return h('div',{},d.toLocaleDateString('en-US',{weekday:'short'}),h('b',{},p.days[k]?hrs(p.days[k]):'–'))})))),
+        h('div',{class:'lrow'},h('b',{},'Total'),h('b',{class:'num'},hrs(totMin)+' h'))):
+        h('p',{class:'soft'},ADM.err==='setup'?'The time clock isn’t connected yet.':ADM.err?'Can’t reach the time clock right now.':'Loading hours…'),
+      h('p',{class:'soft',style:'font-size:13px'},'From the time clock in each person’s app. Tap a name for each day. To fix a punch, edit the Time Clock tab in the ',
+        ADM.data&&ADM.data.sheet?h('a',{href:ADM.data.sheet,target:'_blank',rel:'noopener',style:'color:inherit'},'Team Hub sheet'):'Team Hub sheet','.'),
+      ADM.data&&ADM.data.cover&&ADM.data.cover.length?h('div',{class:'sec2'},h('span',{class:'lbl'},'Shift coverage this week'),
+        ADM.data.cover.map(c=>h('div',{class:'lrow'},h('span',{},niceDay(c.date)+' · '+c.name),h('span',{class:'soft'},c.by?'→ '+c.by:'open')))):null,
+      ADM.data&&ADM.data.pendingOff&&ADM.data.pendingOff.length?h('div',{class:'sec2'},h('span',{class:'lbl'},'Time off waiting for a yes'),
+        ADM.data.pendingOff.map(o=>h('div',{class:'lrow'},h('span',{},o.name),h('span',{class:'soft'},o.from===o.to?niceDay(o.from):niceDay(o.from)+' – '+niceDay(o.to))))):null)));
+  return out;
+}
+function monthView(){
+  const m=S.month;
+  if(!m||!m.rows||!m.rows.length) return [h('section',{class:'section'},h('h2',{},'Month & trends'),h('div',{class:'empty'},h('p',{},'Month-to-date numbers fill in after tonight’s end-of-day update.')))];
+  const rows=m.rows.filter(r=>r.service||r.retail).sort((a,b)=>b.service-a.service);
+  const T=rows.reduce((a,r)=>({s:a.s+r.service,r:a.r+r.retail,ad:a.ad+(r.addons||0),rb:a.rb+(r.rebook||0)}),{s:0,r:0,ad:0,rb:0});
+  const max=Math.max(...rows.map(r=>r.service),1), rp=(r,s)=>s>0?Math.round(r/s*1000)/10:0;
+  return [h('section',{class:'section'},h('div',{style:'display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;align-items:baseline'},h('h2',{},'Month & trends'),h('span',{class:'soft'},m.label||'')),
+    h('div',{class:'tiles'},
+      h('div',{class:'tile'},h('span',{class:'lbl'},'Service'),h('b',{class:'num'},money(T.s))),
+      h('div',{class:'tile'},h('span',{class:'lbl'},'Retail'),h('b',{class:'num'},money(T.r))),
+      h('div',{class:'tile'},h('span',{class:'lbl'},'Retail %'),h('b',{class:'num'},rp(T.r,T.s)+'%')),
+      h('div',{class:'tile'},h('span',{class:'lbl'},'Add-ons'),h('b',{class:'num'},String(T.ad))))),
+    h('section',{class:'section'},h('div',{class:'tablewrap'},h('table',{class:'week'},
+      h('thead',{},h('tr',{},h('th',{},'Stylist'),h('th',{style:'text-align:left'},'Service'),h('th',{},'Retail %'),h('th',{},'Add-ons'),h('th',{},'Rebooked'))),
+      h('tbody',{},rows.map(r=>h('tr',{},h('td',{},r.name),
+        h('td',{style:'text-align:left;min-width:160px'},h('div',{style:'display:flex;align-items:center;gap:8px'},h('div',{class:'bar',style:'flex:1;height:6px'},h('i',{style:`width:${Math.round(r.service/max*100)}%`})),h('span',{class:'num',style:'min-width:84px;text-align:right'},money(r.service)))),
+        h('td',{class:rp(r.retail,r.service)>=15?'over':'under'},rp(r.retail,r.service)+'%'),h('td',{},r.addons==null?'–':String(r.addons)),h('td',{},r.rebook==null?'–':String(r.rebook))))))))];
+}
+function leaderTabs(){
+  return h('div',{class:'tabs',role:'tablist'},[['today','Today'],['payroll','Payroll'],['month','Month & trends']].map(([k,l])=>
+    h('button',{class:'tab',role:'tab','aria-selected':String(S.rtab===k),onclick:()=>{S.rtab=k;S.open=null;render()}},l)));
 }
 
 /* ---- Private-link + PIN loader (GitHub Pages edition) ---- */
@@ -458,8 +784,12 @@ function setHead(name){
 }
 function apply(P){
   S.daily=P.daily||null;
-  if(EDITION==='team'){S.isAdmin=true;S.pages=P.pages||[];S.week=P.week||null;setHead()}
-  else{S.mine=P.mine||null;setHead(S.mine&&S.mine.name)}
+  if(EDITION==='team'){S.isAdmin=true;S.pages=(P.pages||[]).filter(p=>p.goals);S.week=P.week||null;S.hubKey=P.hub&&P.hub.admin;S.payroll=P.payroll||[];S.month=P.month||null;S.rtab=S.rtab||'today';setHead()}
+  else{S.mine=P.mine||null;setHead(S.mine&&S.mine.name);
+    if(S.mine&&!S.tab){const st=S.mine.staff||{};S.tab=store.get('pp-tab:'+ID)||(st.clock?'home':S.mine.goals?'today':'home')}
+    if(S.mine&&S.mine.staff&&!HUB.started){HUB.started=true;hubGet();
+      setInterval(()=>{if(document.visibilityState==='visible'&&(S.tab==='home'||S.tab==='off'))hubGet()},90*1000);
+      setInterval(()=>{if(S.tab==='home'&&HUB.data&&HUB.data.clock&&HUB.data.clock.in&&!HUB.busy)render()},30*1000);}}
   render();
   $main.append(h('p',{style:'text-align:center'},h('button',{class:'forget',onclick:()=>{store.set(PINKEY,'');location.reload()}},'Lock this page and forget my PIN on this phone')));
 }
