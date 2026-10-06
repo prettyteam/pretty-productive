@@ -649,7 +649,7 @@ function hello(){
   const logo=document.querySelector('.wreath');
   const today=new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
   return h('div',{class:'hello'},h('div',{},h('div',{class:'date'},today),h('h1',{},'Hi, ',h('em',{},firstName(S.mine.name)))),
-    logo?h('img',{src:logo.src,alt:''}):null);
+    myPhoto()?avatarEl(52):(logo?h('img',{src:logo.src,alt:''}):null));
 }
 function clockCard(){
   const c=liveClock();
@@ -939,12 +939,37 @@ function fgView(){
 const niceDate=s=>{const [y,m,dd]=String(s).split('-').map(Number);return y?new Date(y,m-1,dd).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):''};
 
 const SOCIAL_RULES=[['Same you everywhere','Use one clear profile photo, and put “Taffeta Salon & Spa” and your role in your bio.'],['Black, cream, neutral','Keep photos clean and bright, in our colors. Skip heavy filters.'],['Warm, never pushy','Talk like you do at your chair: friendly, helpful and real.'],['Ask before you post a guest','Get a yes first. Estheticians: same light and angle for before and after.'],['Never on the floor','Film between guests or on your own time. Phones stay away while you’re working.'],['Be kind about everyone','No complaints, drama or talking down about guests, coworkers or other salons.'],['Tag the salon','So guests can find us, and so we can share you.']];
+const PHOTOKEY=()=> 'pp-photo:'+ID;
+function myPhoto(){return store.get(PHOTOKEY())||''}
+function pickPhoto(file){
+  if(!file) return;
+  const rd=new FileReader();
+  rd.onload=()=>{const im=new Image();im.onload=()=>{
+    const N=256,c=document.createElement('canvas');c.width=c.height=N;const x=c.getContext('2d');
+    const m=Math.min(im.width,im.height),sx=(im.width-m)/2,sy=(im.height-m)/2;
+    x.fillStyle='#fff';x.fillRect(0,0,N,N);x.drawImage(im,sx,sy,m,m,0,0,N,N);
+    store.set(PHOTOKEY(),c.toDataURL('image/jpeg',0.82));render()};
+    im.onerror=()=>{HUB.toast='That photo didn’t open. Try a different one.';render()};im.src=rd.result};
+  rd.readAsDataURL(file);
+}
+function avatarEl(size,tap){
+  const src=myPhoto();
+  const el=src?h('img',{src,alt:'Your profile photo',style:`width:${size}px;height:${size}px;border-radius:50%;object-fit:cover;display:block`}):
+    h('span',{style:`width:${size}px;height:${size}px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--card,#fff);border:1px solid var(--line,#ddd);font-size:${Math.round(size*.45)}px`},'☺');
+  return el;
+}
 function meView(){
   const info=(HUB.data&&HUB.data.info)||{};
   const F=[['ecName','Emergency contact name'],['ecRel','Relationship'],['ecPhone','Emergency contact phone','tel'],['address','Current home address'],['email','Email','email'],['venmo','Venmo account name'],['instagram','Instagram page name']];
   const ins=F.map(([k,l,ty])=>[k,l,h('input',{type:ty||'text',value:info[k]||'',autocomplete:'off'})]);
   const soc=S.mine.social, posts=(soc&&soc.posts)||[];
-  const out=[h('div',{},h('span',{class:'lbl'},'Just for you'),h('h1',{style:'font-size:28px'},'Me'))];
+  const fileIn=h('input',{type:'file',accept:'image/*',style:'display:none',onchange:e=>pickPhoto(e.target.files[0])});
+  const out=[h('div',{style:'display:flex;align-items:center;gap:16px'},
+    h('button',{type:'button','aria-label':'Choose a profile photo',style:'border:0;background:none;padding:0;cursor:pointer;position:relative',onclick:()=>fileIn.click()},avatarEl(88),
+      h('span',{style:'position:absolute;right:-2px;bottom:-2px;width:28px;height:28px;border-radius:50%;background:#121212;color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px'},'+')),
+    h('div',{},h('span',{class:'lbl'},'Just for you'),h('h1',{style:'font-size:28px'},'Me'),
+      h('button',{type:'button',class:'soft',style:'border:0;background:none;padding:0;font-size:13px;text-decoration:underline;cursor:pointer;color:inherit',onclick:()=>myPhoto()?(store.set(PHOTOKEY(),''),render()):fileIn.click()},myPhoto()?'Remove photo':'Add a profile photo')),fileIn)];
+  if(HUB.toast&&!HUB.data) out.push(h('p',{class:'toast'},HUB.toast));
   out.push(h('div',{class:'gcard'},h('h2',{},gIcon('☺'),'My info'),
     h('p',{class:'soft',style:'font-size:13px;margin:0'},'Only Alexandra and her dad can see this. You only ever see your own.'),
     !HUB.data?h('p',{class:'dmsg'},HUB.err?'Can’t reach the form right now. Check your signal.':'Loading…'):null,
