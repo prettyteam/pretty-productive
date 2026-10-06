@@ -3,7 +3,8 @@
 // Each file opens only with that person's private link secret + PIN. No secrets are written to the repo.
 //
 // Usage:
-//   node tools/publish.mjs --data data.json --keys keys.json --base https://prettyteam.taffetadesign.com/
+//   node tools/publish.mjs --data data.json --keys keys.json --base https://prettyteam.taffetadesign.com/ [--access access.json]
+//   access.json (kept OUTSIDE the repo): {desk, form, logins:[{label,user,pw}]}. It is sealed into The Pretty Report only.
 //
 // data.json: { daily: {...}, pages: [ {slug,name,...}, ... ], week: {...} }   (same shapes as The Pretty Report's database)
 // keys.json: { leadership: {id, secret, pin}, stylists: { <slug>: {id, secret, pin} } }   (kept OUTSIDE the repo)
@@ -137,7 +138,8 @@ for (const p of pages) {
   fs.writeFileSync(path.join(outDir, k.id + '.json'), JSON.stringify(await seal({ daily: data.daily || null, mine }, k.secret, k.pin)));
   n++;
 }
-const board = { daily: data.daily || null, week: data.week || null, payroll: data.payroll || [], hoursList: (data.team && data.team.hoursList) || [], rates: (data.team && data.team.commission) || {}, retailRate: (data.team && data.team.retailRate) || 10, month: data.month || null, hub: { admin: keys.team.admin }, guideUrl: guideUrl || null, docs: docsFor('', true), pages: pages.map((p) => ({ ...strip(p), link: linkFor('s', keys.stylists[p.slug]) })) };
+const access = args.access && fs.existsSync(args.access) ? JSON.parse(fs.readFileSync(args.access, 'utf8')) : null;
+const board = { access: access ? { ...access, stylists: pages.map((p) => ({ name: p.name, link: linkFor('s', keys.stylists[p.slug]), pin: keys.stylists[p.slug].pin })).sort((a, b) => a.name.localeCompare(b.name)) } : null, daily: data.daily || null, week: data.week || null, payroll: data.payroll || [], hoursList: (data.team && data.team.hoursList) || [], rates: (data.team && data.team.commission) || {}, retailRate: (data.team && data.team.retailRate) || 10, month: data.month || null, hub: { admin: keys.team.admin }, guideUrl: guideUrl || null, docs: docsFor('', true), pages: pages.map((p) => ({ ...strip(p), link: linkFor('s', keys.stylists[p.slug]) })) };
 fs.writeFileSync(path.join(outDir, keys.leadership.id + '.json'), JSON.stringify(await seal(board, keys.leadership.secret, keys.leadership.pin)));
 fs.writeFileSync(args.keys, JSON.stringify(keys, null, 1));
 console.log(`Sealed ${n} stylist files + The Pretty Report into d/.`);

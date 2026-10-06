@@ -605,6 +605,7 @@ function render(){
   else if(S.rtab==='off') parts=adminOffView();
   else if(S.rtab==='month') parts=monthView();
   else if(S.rtab==='guide') parts=leaderGuideView();
+  else if(S.rtab==='access') parts=accessView();
   else if(!S.open) parts=teamBoard();
   else { const p=S.pages.find(x=>x.slug===S.open); parts=p?stylistPage(p):teamBoard(); }
   const d=S.daily;
@@ -761,6 +762,24 @@ function guideView(){
     p.fullGuide?fullGuideCard(p.fullGuide):null,
     isGoalsPerson(p)?h('div',{class:'sec2'},h('span',{class:'lbl'},'Every guest, every time'),
       h('ol',{class:'guide',style:'margin-top:10px'},g.map(([t,x])=>h('li',{},h('strong',{},t),h('span',{},x))))):null)];
+}
+function accessView(){
+  const A=S.access;
+  if(!A) return [h('div',{class:'empty'},h('h3',{},'Nothing here yet'),h('p',{},'Links and logins appear after the next publish.'))];
+  const copy=(txt,b)=>()=>{try{navigator.clipboard.writeText(txt).then(()=>{b.textContent='Copied';setTimeout(()=>{b.textContent='Copy'},1400)})}catch(e){}};
+  const row=(label,val,sub)=>{const b=h('button',{class:'tab',style:'padding:4px 12px;font-size:12px;flex:none'},'Copy');b.addEventListener('click',copy(val,b));
+    return h('div',{style:'display:flex;gap:10px;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--line)'},
+      h('div',{style:'min-width:0'},h('div',{style:'font-family:var(--display);font-size:16px'},label),h('div',{class:'soft',style:'font-size:12.5px;word-break:break-all'},sub||val)),b)};
+  return [h('section',{class:'section'},h('div',{class:'hub'},h('h2',{},'Access'),
+    h('p',{class:'soft',style:'font-size:13px'},'Only you and Rick see this page. Please don’t share or screenshot it.'),
+    h('div',{class:'gcard'},h('span',{class:'lbl'},'Apps & forms'),
+      A.desk?row('Front Desk app',A.desk,'Private desk link (includes the desk guide key)'):null,
+      A.form?row('Guest profile form',A.form):null),
+    h('div',{class:'gcard'},h('span',{class:'lbl'},'Team app · private link and PIN'),
+      (A.stylists||[]).map(s=>row(s.name,s.link,'PIN '+s.pin))),
+    A.logins&&A.logins.length?h('div',{class:'gcard'},h('span',{class:'lbl'},'Logins (same as the desk guide)'),
+      A.logins.map(l=>h('div',{style:'padding:10px 0;border-bottom:1px solid var(--line)'},h('div',{style:'font-family:var(--display);font-size:16px'},l.label),
+        h('div',{class:'soft',style:'font-size:13px;word-break:break-all'},'User: '+l.user),h('div',{class:'soft',style:'font-size:13px;word-break:break-all'},'Password: '+l.pw)))):null))];
 }
 function leaderGuideView(){
   return [h('section',{class:'section'},h('div',{class:'hub'},h('h2',{},'Culture'),
@@ -1157,7 +1176,7 @@ function monthView(){
         h('td',{class:rp(r.retail,r.service)>=15?'over':'under'},rp(r.retail,r.service)+'%'),h('td',{},r.addons==null?'–':String(r.addons)),h('td',{},r.rebook==null?'–':String(r.rebook))))))))];
 }
 function leaderTabs(){
-  return h('div',{class:'tabs',role:'tablist'},[['today','Today'],['payroll','Payroll'],['month','Month & Trends'],['off','Time Off'],['guide','Culture']].map(([k,l])=>
+  return h('div',{class:'tabs',role:'tablist'},[['today','Today'],['payroll','Payroll'],['month','Month & Trends'],['off','Time Off'],['guide','Culture'],['access','Access']].map(([k,l])=>
     h('button',{class:'tab',role:'tab','aria-selected':String(S.rtab===k),onclick:()=>{S.rtab=k;S.open=null;render()}},l)));
 }
 
@@ -1189,7 +1208,7 @@ function setHead(name){
 }
 function apply(P){
   S.daily=P.daily||null;
-  if(EDITION==='team'){S.isAdmin=true;S.pages=(P.pages||[]).filter(isGoalsPerson);S.week=P.week||null;S.hubKey=P.hub&&P.hub.admin;S.payroll=P.payroll||[];S.rates=P.rates||{};S.hoursList=P.hoursList||[];S.retailRate=P.retailRate==null?10:P.retailRate;S.month=P.month||null;S.guideUrl=P.guideUrl||null;S.docs=P.docs||null;S.rtab=S.rtab||'today';setHead()}
+  if(EDITION==='team'){S.isAdmin=true;S.pages=(P.pages||[]).filter(isGoalsPerson);S.week=P.week||null;S.hubKey=P.hub&&P.hub.admin;S.payroll=P.payroll||[];S.rates=P.rates||{};S.hoursList=P.hoursList||[];S.retailRate=P.retailRate==null?10:P.retailRate;S.month=P.month||null;S.guideUrl=P.guideUrl||null;S.docs=P.docs||null;S.access=P.access||null;S.rtab=S.rtab||'today';setHead()}
   else{S.mine=P.mine||null;setHead(S.mine&&S.mine.name);
     if(S.mine&&!S.tab){const st=S.mine.staff||{};S.tab=store.get('pp-tab:'+ID)||(st.clock?'home':isGoalsPerson(S.mine)?'today':'home')}
     if(S.mine&&S.mine.staff&&!HUB.started){HUB.started=true;hubGet();
