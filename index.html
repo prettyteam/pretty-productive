@@ -602,6 +602,7 @@ function render(){
   else if(EDITION==='stylist') parts=S.mine?stylistPage(S.mine):[h('div',{class:'empty'},h('h3',{},'Your page is being set up'),h('p',{},'Your goals will appear here the next morning the salon is open.'))];
   else if(!S.isAdmin) parts=[h('div',{class:'empty'},h('h3',{},'This board is for the leadership team'),h('p',{},'Your own goals live on your personal Pretty Productive link.'))];
   else if(S.rtab==='payroll') parts=payrollView();
+  else if(S.rtab==='off') parts=adminOffView();
   else if(S.rtab==='month') parts=monthView();
   else if(S.rtab==='guide') parts=leaderGuideView();
   else if(!S.open) parts=teamBoard();
@@ -804,7 +805,7 @@ function starSvg(p){
   return svg;
 }
 function growthView(){
-  const gr=S.mine.growth, out=[h('h1',{style:'font-size:28px'},'Your growth')];
+  const gr=S.mine.growth, out=[h('h1',{style:'font-size:28px'},S.mine.adv?'Your associate program':'Your growth')];
   if(S.mine.adv) out.push(...advView(S.mine.adv));
   if(isGoalsPerson(S.mine)){
     const est=S.mine.role==='esthetician', val=est?450:800;
@@ -962,7 +963,7 @@ function staffTabs(){
   const p=S.mine||{}, st=p.staff||{}, t=[];
   if(st.slug) t.push(['home','Home']);
   if(isGoalsPerson(p)) t.push(['today','Today']);
-  if(isGoalsPerson(p)||p.adv) t.push(['growth','Growth']);
+  if(isGoalsPerson(p)||p.adv) t.push(['growth',p.adv?'Associate Program':'Growth']);
   if(p.cr&&p.cr.weeks&&p.cr.weeks.length) t.push(['cr','Weekly CR']);
   if(st.slug) t.push(['off','Time off']);
   t.push(['guide','Culture']);
@@ -1043,11 +1044,27 @@ function payrollView(){
         h('p',{class:'soft'},ADM.err==='setup'?'The time clock isn’t connected yet.':ADM.err?'Can’t reach the time clock right now.':'Loading hours…'),
       h('p',{class:'soft',style:'font-size:13px'},'Only people who clock in appear here. From the time clock in each person’s app. Tap a name for each day. To fix a punch, edit the Time Clock tab in the ',
         ADM.data&&ADM.data.sheet?h('a',{href:ADM.data.sheet,target:'_blank',rel:'noopener',style:'color:inherit'},'Team Hub sheet'):'Team Hub sheet','.'),
-      ADM.data&&ADM.data.cover&&ADM.data.cover.length?h('div',{class:'sec2'},h('span',{class:'lbl'},'Shift coverage this week'),
-        ADM.data.cover.map(c=>h('div',{class:'lrow'},h('span',{},niceDay(c.date)+' · '+c.name),h('span',{class:'soft'},c.by?'→ '+c.by:'open')))):null,
-      ADM.data&&ADM.data.pendingOff&&ADM.data.pendingOff.length?h('div',{class:'sec2'},h('span',{class:'lbl'},'Time off waiting for a yes'),
-        ADM.data.pendingOff.map(o=>h('div',{class:'lrow'},h('span',{},o.name),h('span',{class:'soft'},o.from===o.to?niceDay(o.from):niceDay(o.from)+' – '+niceDay(o.to))))):null)));
+      null)));
   return out;
+}
+function adminOffView(){
+  if(!ADM.week){ADM.week=weekStartOf(new Date());admLoad()}
+  const ws=ADM.week, we=new Date(ws.getTime()+6*864e5), lab=d=>d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
+  const isThis=ymd(ws)===ymd(weekStartOf(new Date()));
+  const D=ADM.data&&ADM.data.week===ymd(ws)?ADM.data:null;
+  const shift=n=>{ADM.week=new Date(ws.getTime()+n*7*864e5);ADM.data=null;admLoad()};
+  const rng=o=>o.from===o.to?niceDay(o.from):niceDay(o.from)+' – '+niceDay(o.to);
+  const msg=ADM.err==='setup'?'The time clock isn’t connected yet.':ADM.err?'Can’t reach the time clock right now.':'Loading…';
+  return [h('section',{class:'section'},h('h2',{},'Time off waiting for a yes'),
+      D?(D.pendingOff&&D.pendingOff.length?D.pendingOff.map(o=>h('div',{class:'lrow'},h('b',{},o.name),h('span',{class:'soft'},rng(o)))):h('p',{class:'soft'},'Nothing waiting. You’re all caught up.')):h('p',{class:'soft'},msg),
+      h('p',{class:'soft',style:'font-size:13px'},'Requests also land in your email with one-tap Approve and Decline. Approved and declined requests are in the Time Off tab of the ',
+        D&&D.sheet?h('a',{href:D.sheet,target:'_blank',rel:'noopener',style:'color:inherit'},'Team Hub sheet'):'Team Hub sheet','.')),
+    h('section',{class:'section'},
+      h('div',{style:'display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px;align-items:center'},h('h2',{},'Shift coverage'),
+        h('div',{class:'wknav'},h('button',{onclick:()=>shift(-1),'aria-label':'Previous week'},'‹'),h('span',{},lab(ws)+' – '+lab(we)),h('button',{onclick:()=>shift(1),'aria-label':'Next week'},'›'))),
+      D?(D.cover&&D.cover.length?D.cover.map(c=>h('div',{class:'lrow'},
+          h('div',{},h('b',{},c.name),h('small',{style:'display:block'},niceDay(c.date)+(c.time?' · '+c.time:''))),
+          h('span',{class:'soft'},c.by?'Covered by '+c.by:'Still open'))):h('p',{class:'soft'},'No coverage requests this week.')):h('p',{class:'soft'},msg))];
 }
 function monthView(){
   const m=S.month;
@@ -1068,7 +1085,7 @@ function monthView(){
         h('td',{class:rp(r.retail,r.service)>=15?'over':'under'},rp(r.retail,r.service)+'%'),h('td',{},r.addons==null?'–':String(r.addons)),h('td',{},r.rebook==null?'–':String(r.rebook))))))))];
 }
 function leaderTabs(){
-  return h('div',{class:'tabs',role:'tablist'},[['today','Today'],['payroll','Payroll'],['month','Month & Trends'],['guide','Culture']].map(([k,l])=>
+  return h('div',{class:'tabs',role:'tablist'},[['today','Today'],['payroll','Payroll'],['month','Month & Trends'],['off','Time Off'],['guide','Culture']].map(([k,l])=>
     h('button',{class:'tab',role:'tab','aria-selected':String(S.rtab===k),onclick:()=>{S.rtab=k;S.open=null;render()}},l)));
 }
 
