@@ -963,7 +963,7 @@ function staffTabs(){
   const p=S.mine||{}, st=p.staff||{}, t=[];
   if(st.slug) t.push(['home','Home']);
   if(isGoalsPerson(p)) t.push(['today','Today']);
-  if(isGoalsPerson(p)) t.push(['tomorrow','Tomorrow']);
+  if(isGoalsPerson(p)) t.push(['tomorrow',st.clock?'Tomorrow':'Schedule']);
   if(isGoalsPerson(p)||p.adv) t.push(['growth',p.adv?'Associate Program':'Growth']);
   if(p.cr&&p.cr.weeks&&p.cr.weeks.length) t.push(['cr','Weekly CR']);
   if(st.slug) t.push(['off','Time off']);
@@ -976,18 +976,33 @@ function staffNav(){
   const tabs=staffTabs(); if(tabs.length<2) return null;
   return h('nav',{class:'nav','aria-label':'Sections'},h('div',{class:'in'},tabs.map(([k,l])=>h('button',{'aria-current':S.tab===k?'page':null,onclick:()=>{S.tab=k;store.set('pp-tab:'+ID,k);render();window.scrollTo(0,0);if(k==='home'||k==='off')hubGet()}},l))));
 }
+function weekCard(p){
+  const wks=(p.schedule&&p.schedule.weeks)||[], today=ymd(new Date());
+  const addD=(st,n)=>{const [y,m,d]=st.split('-').map(Number);return ymd(new Date(y,m-1,d+n))};
+  const ws=ymd(weekStartOf(new Date()));
+  const blocks=wks.map((w,i)=>{
+    const rows=(w.days||[]).map((tm,j)=>({date:addD(w.start,j),tm})).filter(r=>r.date>=today);
+    if(!rows.length) return null;
+    return h('div',{class:'sec2'},h('span',{class:'lbl'},w.start===ws?'This week':w.start===addD(ws,7)?'Next week':'Week of '+niceDay(w.start)),
+      rows.map(r=>h('div',{class:'lrow'},h('b',{},niceDay(r.date)),r.tm?h('span',{},r.tm):h('span',{class:'soft'},'Off'))));
+  }).filter(Boolean);
+  return h('section',{class:'section'},h('h2',{},'Your days & times'),
+    blocks.length?blocks:h('p',{class:'soft'},'Your schedule will show here soon.'));
+}
 function tomorrowView(){
   const p=S.mine||{}, t=p.tomorrow, today=ymd(new Date());
   const ready=t&&t.date&&t.date>today;
-  const head=h('h1',{style:'font-size:28px;margin-bottom:4px'},'Tomorrow');
-  if(!ready) return [h('div',{class:'hub'},head,h('div',{class:'empty'},h('h3',{},'Tomorrow isn’t posted yet'),
+  const comb=!(p.staff&&p.staff.clock);
+  const head=h('h1',{style:'font-size:28px;margin-bottom:4px'},comb?'Schedule':'Tomorrow');
+  const wk=comb?weekCard(p):null;
+  if(!ready) return [h('div',{class:'hub'},head,wk,h('div',{class:'empty'},h('h3',{},'Tomorrow isn’t posted yet'),
     h('p',{},'Tomorrow’s schedule goes up every evening after the last update. Check back tonight.')))];
-  const sub=h('p',{class:'soft',style:'margin-bottom:12px'},t.dateLabel||t.date);
-  if(!t.onBooks) return [h('div',{class:'hub'},head,sub,h('div',{class:'empty'},h('h3',{},'Not on the books tomorrow'),
+  const sub=h('p',{class:'soft',style:'margin:14px 0 12px'},(comb?'Tomorrow · ':'')+(t.dateLabel||t.date));
+  if(!t.onBooks) return [h('div',{class:'hub'},head,wk,sub,h('div',{class:'empty'},h('h3',{},'Not on the books tomorrow'),
     h('p',{},'Enjoy the day off. Your schedule will be here next time you are in.')))];
   const g=t.goals||{}, cl=t.clients||[], est=p.role==='esthetician';
   const stat=(l,v)=>h('div',{class:'cell tcell'},h('span',{class:'label',style:'font-size:11px'},l),h('span',{class:'num'},v));
-  return [h('div',{class:'hub'},head,sub,
+  return [h('div',{class:'hub'},head,wk,sub,
     h('section',{class:'section'},h('h2',{},'Tomorrow at a glance'),
       h('div',{class:'teamgrid'},
         stat('Guests',String(cl.length)),

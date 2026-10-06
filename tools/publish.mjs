@@ -113,6 +113,7 @@ const growthMap = (data.team && data.team.growth) || {};
 const guideUrl = keys.team && keys.team.guideUrl;
 const guideSet = new Set((data.team && data.team.docsGuide) || teamDefaults.docsGuide || []);
 const socialAll = (data.team && data.team.social) || teamDefaults.social || null;
+const schedMap = (data.schedule && data.schedule.people) || {};
 const clockSet = new Set((data.team && data.team.clock) || teamDefaults.clock || []);
 data.pages ||= [];
 for (const x of ((data.team && data.team.extra) || teamDefaults.extra || [])) if (!data.pages.some((p) => p && p.slug === x.slug)) data.pages.push({ ...x });
@@ -131,6 +132,7 @@ for (const p of pages) {
   if (advMap[p.slug]) mine.adv = advMap[p.slug];
   const dd = docsFor(p.slug, false); if (dd) { mine.docs = dd; if (dd.fg) delete mine.fullGuide; }
   if (keys.cr[p.slug] && keys.cr[p.slug].weeks.length) mine.cr = { k: keys.cr[p.slug].key, weeks: keys.cr[p.slug].weeks.map(({ week, label, file, service, retail, comm }) => ({ week, label, file, service, retail, comm })) };
+  if (schedMap[p.slug]) mine.schedule = { weeks: schedMap[p.slug], updated: (data.schedule && data.schedule.updated) || null };
   if (socialAll) mine.social = { week: socialAll.week, posts: p.role === 'esthetician' ? socialAll.esti : socialAll.hair };
   fs.writeFileSync(path.join(outDir, k.id + '.json'), JSON.stringify(await seal({ daily: data.daily || null, mine }, k.secret, k.pin)));
   n++;
