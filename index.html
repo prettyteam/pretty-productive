@@ -963,6 +963,7 @@ function staffTabs(){
   const p=S.mine||{}, st=p.staff||{}, t=[];
   if(st.slug) t.push(['home','Home']);
   if(isGoalsPerson(p)) t.push(['today','Today']);
+  if(isGoalsPerson(p)) t.push(['tomorrow','Tomorrow']);
   if(isGoalsPerson(p)||p.adv) t.push(['growth',p.adv?'Associate Program':'Growth']);
   if(p.cr&&p.cr.weeks&&p.cr.weeks.length) t.push(['cr','Weekly CR']);
   if(st.slug) t.push(['off','Time off']);
@@ -975,11 +976,42 @@ function staffNav(){
   const tabs=staffTabs(); if(tabs.length<2) return null;
   return h('nav',{class:'nav','aria-label':'Sections'},h('div',{class:'in'},tabs.map(([k,l])=>h('button',{'aria-current':S.tab===k?'page':null,onclick:()=>{S.tab=k;store.set('pp-tab:'+ID,k);render();window.scrollTo(0,0);if(k==='home'||k==='off')hubGet()}},l))));
 }
+function tomorrowView(){
+  const p=S.mine||{}, t=p.tomorrow, today=ymd(new Date());
+  const ready=t&&t.date&&t.date>today;
+  const head=h('h1',{style:'font-size:28px;margin-bottom:4px'},'Tomorrow');
+  if(!ready) return [h('div',{class:'hub'},head,h('div',{class:'empty'},h('h3',{},'Tomorrow isn’t posted yet'),
+    h('p',{},'Tomorrow’s schedule goes up every evening after the last update. Check back tonight.')))];
+  const sub=h('p',{class:'soft',style:'margin-bottom:12px'},t.dateLabel||t.date);
+  if(!t.onBooks) return [h('div',{class:'hub'},head,sub,h('div',{class:'empty'},h('h3',{},'Not on the books tomorrow'),
+    h('p',{},'Enjoy the day off. Your schedule will be here next time you are in.')))];
+  const g=t.goals||{}, cl=t.clients||[], est=p.role==='esthetician';
+  const stat=(l,v)=>h('div',{class:'cell tcell'},h('span',{class:'label',style:'font-size:11px'},l),h('span',{class:'num'},v));
+  return [h('div',{class:'hub'},head,sub,
+    h('section',{class:'section'},h('h2',{},'Tomorrow at a glance'),
+      h('div',{class:'teamgrid'},
+        stat('Guests',String(cl.length)),
+        stat('Booked',money(g.service&&g.service.booked)),
+        stat('Service goal',money(g.service&&g.service.goal)),
+        stat('Retail goal',money(g.retail&&g.retail.goal)),
+        stat('Add-ons',String(g.addons&&g.addons.goal||0)),
+        g.rebook?stat('Rebook',String(g.rebook.goal)):null)),
+    h('section',{class:'section'},h('h2',{},'Tomorrow’s lineup'),
+      cl.length?h('div',{class:'chair'},cl.map(c=>h('div',{class:'client'},
+        h('div',{class:'who'},h('strong',{},(c.time?c.time+' · ':'')+c.client,c.isNew?h('span',{class:'chip add',style:'margin-left:8px;font-weight:500'},'New guest'):null),
+          h('span',{class:'muted num',style:'font-size:14px'},money((c.services||[]).reduce((a,s)=>a+s.price,0)))),
+        (c.services||[]).length?h('div',{class:'chips'},c.services.map(s=>h('span',{class:'chip'+(s.addon?' add':'')},s.name+(s.addon?' · add-on':'')))):null,
+        est&&c.needsWaiver?h('p',{class:'muted',style:'font-size:14px'},'Needs a signed waiver before the service.'):null,
+        c.suggestion?h('details',{class:'tryd'},h('summary',{},h('span',{class:'tico','aria-hidden':'true'}),h('span',{class:'tlabel'},'Suggestion'),h('span',{class:'tplus','aria-hidden':'true'},'+')),h('p',{class:'try'},c.suggestion)):null))):
+        h('p',{class:'soft'},'No guests booked yet.')),
+    h('p',{class:'soft',style:'font-size:13px'},'The schedule can change. Check Today in the morning for the final lineup.'))];
+}
 function staffRender(){
   const tabs=staffTabs().map(x=>x[0]);
   if(!tabs.includes(S.tab)) S.tab=tabs[0];
   document.querySelector('.mast').hidden=S.tab!=='today';
   if(S.tab==='home') return homeView();
+  if(S.tab==='tomorrow') return tomorrowView();
   if(S.tab==='growth') return growthView();
   if(S.tab==='cr') return crView();
   if(S.tab==='off') return offView();
