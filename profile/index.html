@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#f2f1ec"><meta name="robots" content="noindex">
+<title>Your Taffeta Profile</title>
+<link rel="icon" href="../icon.png"><link rel="apple-touch-icon" href="../icon.png">
+<link rel="stylesheet" href="../g/base.css">
+<script src="../g/config.js?v=2"></script>
+<style>
+.hint{font-size:13.5px;color:var(--soft)}
+.sec{display:flex;flex-direction:column;gap:16px}
+.sec>.eyebrow{color:var(--brown);border-bottom:1px solid var(--gold);padding-bottom:6px}
+select.input{font:inherit;font-size:16px;padding:0 10px;width:100%;border-radius:0;-webkit-appearance:none;background:#fbfaf7 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%23423327' stroke-width='1.5'/%3E%3C/svg%3E") no-repeat right 12px center}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+.policy{display:block;border:1px solid var(--brown);padding:14px 16px;color:var(--ink);text-decoration:none;text-align:center;font-size:15px}
+.policy b{font-family:var(--display);font-weight:400;font-size:18px;display:block}
+.policy small{font-size:13px;color:var(--soft)}
+.secure{background:var(--card);padding:18px;display:flex;flex-direction:column;gap:8px}
+.secure h2{font-size:21px}
+.hp{position:absolute;left:-9999px;opacity:0}
+.err{color:#8a2a1a;font-size:14px;min-height:1px}
+.done{display:flex;flex-direction:column;align-items:center;text-align:center;gap:14px;padding-top:30px}
+</style>
+</head><body><main id="app">
+<div class="top">
+  <img src="../g/logo.png" alt="Taffeta Salon &amp; Spa">
+  <span class="eyebrow">Your Taffeta Profile</span>
+  <h1>Let’s make your next visit <em>effortless.</em></h1>
+  <p class="lede">A minute now means a smoother check-in, birthday surprises, and appointments held just for you.</p>
+</div>
+
+<form id="f" novalidate>
+<div style="display:flex;flex-direction:column;gap:28px">
+
+<section class="sec"><span class="eyebrow">About you</span>
+  <div class="row2">
+    <div class="field"><label for="first">First name *</label><input class="input" id="first" autocomplete="given-name" required></div>
+    <div class="field"><label for="last">Last name *</label><input class="input" id="last" autocomplete="family-name" required></div>
+  </div>
+  <div class="field"><label for="phone">Mobile number *</label><input class="input" id="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="So we can find your file" required></div>
+  <div class="field"><label for="email">Email *</label><input class="input" id="email" type="email" inputmode="email" autocomplete="email" required></div>
+</section>
+
+<section class="sec"><span class="eyebrow">Home address</span>
+  <div class="field"><label for="street">Street address *</label><input class="input" id="street" autocomplete="address-line1" required></div>
+  <div class="field"><label for="street2">Apt, unit <span style="color:var(--soft)">(optional)</span></label><input class="input" id="street2" autocomplete="address-line2"></div>
+  <div class="row3" style="grid-template-columns:1.4fr .7fr 1fr">
+    <div class="field"><label for="city">City *</label><input class="input" id="city" autocomplete="address-level2" required></div>
+    <div class="field"><label for="state">State *</label><input class="input" id="state" autocomplete="address-level1" maxlength="2" placeholder="NJ" style="text-transform:uppercase" required></div>
+    <div class="field"><label for="zip">ZIP *</label><input class="input" id="zip" autocomplete="postal-code" inputmode="numeric" maxlength="10" required></div>
+  </div>
+</section>
+
+<section class="sec"><span class="eyebrow">Your birthday</span>
+  <p class="hint">Month and day only. We’ll never ask your year.</p>
+  <div class="row2">
+    <div class="field"><label for="bm">Month *</label><select class="input" id="bm" required><option value="">Month</option></select></div>
+    <div class="field"><label for="bd">Day *</label><select class="input" id="bd" required><option value="">Day</option></select></div>
+  </div>
+</section>
+
+<section class="sec"><span class="eyebrow">Good to know <span style="text-transform:none;letter-spacing:0">(optional)</span></span>
+  <div class="field"><label for="allergies">Allergies or sensitivities</label><input class="input" id="allergies" placeholder="Fragrance, ammonia, latex…"></div>
+  <div class="field"><label for="notes">Anything else we should know?</label><input class="input" id="notes" placeholder="Prefers a quiet visit, new name, new number…"></div>
+  <label class="opt"><input type="checkbox" id="texts" checked><span class="box"></span><span class="t"><b>Text me appointment reminders</b><small>Confirmations and rebooking links. Reply STOP anytime.</small></span></label>
+</section>
+
+<section class="sec"><span class="eyebrow">Holding your appointment</span>
+  <div class="secure">
+    <h2>Longer visits are held with a card</h2>
+    <p>For appointments of <b>two hours or more</b> (color, balayage, smoothing, extensions), we hold your time with a card on file and a $50 deposit that goes toward your service. After you send this, you’ll add your card on our secure payment page. We never see or store your full card number in this form.</p>
+  </div>
+  <a class="policy" href="https://taffetadesign.com/salon-policy" target="_blank" rel="noopener"><b>Cancellation &amp; no-show policy</b><small>Tap to read it before you reserve ↗</small></a>
+  <label class="opt"><input type="checkbox" id="agree"><span class="box"></span><span class="t"><b>I’ve read the cancellation &amp; no-show policy *</b></span></label>
+</section>
+
+<input class="hp" id="website" tabindex="-1" autocomplete="off" aria-hidden="true">
+<p class="err" id="err" role="alert"></p>
+<button class="btn" id="go" type="submit">Send to the front desk</button>
+<p class="fine">Your details go straight to our front desk.</p>
+</div>
+</form>
+</main>
+<script>
+const $=s=>document.querySelector(s);
+const MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
+const DAYS=[31,29,31,30,31,30,31,31,30,31,30,31];
+$('#bm').innerHTML+=MONTHS.map((m,i)=>`<option value="${m}" data-n="${DAYS[i]}">${m}</option>`).join('');
+function fillDays(){const o=$('#bm').selectedOptions[0],n=o&&o.dataset.n?+o.dataset.n:31,cur=$('#bd').value;
+  $('#bd').innerHTML='<option value="">Day</option>'+Array.from({length:n},(_,i)=>`<option>${i+1}</option>`).join('');if(cur&&+cur<=n)$('#bd').value=cur}
+$('#bm').addEventListener('change',fillDays);fillDays();
+const clean=v=>String(v||'').trim();
+$('#f').addEventListener('submit',async e=>{
+  e.preventDefault();const err=$('#err');err.textContent='';
+  const v=id=>clean($('#'+id).value);
+  const need=[['first','your first name'],['last','your last name'],['phone','your mobile number'],['email','your email'],['street','your street address'],['city','your city'],['state','your state'],['zip','your ZIP'],['bm','your birthday month'],['bd','your birthday day']];
+  for(const [id,l] of need){if(!v(id)){err.textContent='Please add '+l+'.';$('#'+id).focus();return}}
+  if(!/^\S+@\S+\.\S+$/.test(v('email'))){err.textContent='That email doesn’t look quite right.';$('#email').focus();return}
+  if(v('phone').replace(/\D/g,'').length<10){err.textContent='Please add a 10-digit mobile number.';$('#phone').focus();return}
+  if(!$('#agree').checked){err.textContent='Please confirm you’ve read the cancellation & no-show policy.';return}
+  const address=[v('street'),v('street2'),v('city')+', '+v('state').toUpperCase()+' '+v('zip')].filter(Boolean).join(', ');
+  const d={type:'guestprofile',first:v('first'),last:v('last'),phone:v('phone'),email:v('email'),address,birthday:v('bm')+' '+v('bd'),allergies:v('allergies'),notes:v('notes'),texts:$('#texts').checked,website:v('website')};
+  if(!window.TAFFETA_ENDPOINT){err.textContent='Almost ready! Please share these details with the front desk for now.';return}
+  const b=$('#go');b.disabled=true;b.textContent='Sending…';
+  try{
+    await fetch(window.TAFFETA_ENDPOINT,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(d)});
+    const card=window.TAFFETA_CARD_URL;
+    const first=d.first.replace(/[<>&"]/g,'');
+    $('#app').innerHTML=`<div class="done"><img src="../g/logo.png" alt="" style="width:84px"><span class="eyebrow">Your Taffeta Profile</span><h1>Thank you, <em>${first}.</em></h1>
+    <p class="lede">Your details are with our front desk.</p>
+    ${card?`<a class="btn" href="${card}" rel="noopener">Add your card securely</a><p class="fine">Needed to hold appointments of two hours or more. You’ll go to our secure payment page.</p>`:`<p class="fine">We’ll reach out to securely add a card to hold any appointment of two hours or more.</p>`}
+    <a class="policy" style="width:100%" href="https://taffetadesign.com/salon-policy" target="_blank" rel="noopener"><b>Cancellation &amp; no-show policy</b><small>Read it anytime ↗</small></a></div>`;
+    scrollTo(0,0);
+  }catch(x){b.disabled=false;b.textContent='Send to the front desk';err.textContent='That didn’t go through. Please try again, or let the front desk know.'}
+});
+</script>
+</body></html>
