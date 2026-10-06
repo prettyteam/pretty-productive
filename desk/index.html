@@ -85,6 +85,32 @@ details.acc .in{padding:0 16px 16px;display:flex;flex-direction:column;gap:14px}
 .plink.big{background:var(--brown);color:var(--ivory);text-align:center;letter-spacing:.1em;text-transform:uppercase;font-size:14px;padding:15px}
 .sec{display:flex;flex-direction:column;gap:12px}
 .sec>h2{font-size:22px}
+/* ---- Team app look: light cream, white cards, black outlines, little bits of chocolate ---- */
+:root{--ivory:#f8f6f0;--card:#fff;--brown:#121212;--ink:#121212;--soft:#5f5b55;--line:#e2ded5;--gold:#4a3426}
+html,body{background:#f8f6f0}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;border:0}
+.tabs button{border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:999px;padding:7px 16px}
+.tabs button.on{background:var(--brown);color:#fff;border-color:var(--brown)}
+.n{background:var(--gold)}
+.req,details.acc,.lg{background:#fff;border:1px solid var(--line);border-radius:6px}
+.req{border-left:1px solid var(--line);border-top:3px solid var(--gold)}
+.req.doing{border-top-color:var(--ink)}.req.done{border-top-color:var(--line)}
+.badge{background:#fff;color:var(--ink);border:1px solid var(--ink);border-radius:999px;padding:2px 10px}
+.badge.s{background:#fff;color:var(--gold);border-color:var(--gold)}
+.chip,.pics a,.act button,.lg button,.plink,.seg{border-radius:6px}
+.act button,.lg button{border-color:var(--ink);background:#fff;color:var(--ink)}
+.act button.on{background:var(--ink);color:#fff}
+.seg{border-color:var(--ink);overflow:hidden}.seg button.on{background:var(--ink);color:#fff}
+.bnav{background:#fff;border-top:1px solid var(--line)}
+.bnav button.on::after{background:var(--gold)}
+.chk .bx{border-radius:50%;border-color:var(--ink)}
+.chk.on .bx{background:var(--ink)}
+.bar i{background:var(--ink)}
+.plink{background:#fff;border-color:var(--ink)}
+.plink.big{background:#fff;color:var(--ink);border:1px solid var(--ink)}
+.sub,.acc h4,details.more summary{color:var(--gold)}
+details.acc summary::after{color:var(--gold)}
+.empty{background:#fff;border-radius:6px}
 </style>
 </head><body><main id="app">
 <div class="head"><img src="../g/logo.png" alt="Taffeta Salon &amp; Spa"><div><span class="eyebrow">Front Desk</span><h1>Today at Taffeta</h1></div></div>

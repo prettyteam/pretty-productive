@@ -20,6 +20,14 @@ select.input{font:inherit;font-size:16px;padding:0 10px;width:100%;border-radius
 .hp{position:absolute;left:-9999px;opacity:0}
 .err{color:#8a2a1a;font-size:14px;min-height:1px}
 .done{display:flex;flex-direction:column;align-items:center;text-align:center;gap:14px;padding-top:30px}
+/* ---- Team app look ---- */
+:root{--ivory:#f8f6f0;--card:#fff;--brown:#121212;--ink:#121212;--soft:#5f5b55;--line:#e2ded5;--gold:#4a3426}
+html,body{background:#f8f6f0}
+.card,.input{background:#fff;border-radius:6px}
+.input{border:1px solid var(--line)}
+.btn{background:#fff;color:var(--ink);border:1px solid var(--ink);border-radius:6px}
+.box{border-color:var(--ink)}.opt:has(input:checked) .box{background:var(--ink)}
+.opt.on .box{background:var(--ink)}
 </style>
 </head><body><main id="app">
 <div class="top">
