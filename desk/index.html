@@ -76,9 +76,9 @@ details.acc .in{padding:0 16px 16px;display:flex;flex-direction:column;gap:14px}
 .acc ul{margin:6px 0 0;padding-left:18px;display:flex;flex-direction:column;gap:6px;font-size:15.5px}
 .lg{border:1px solid var(--line);background:#fbfaf7;padding:14px;display:flex;flex-direction:column;gap:6px}
 .lg b{font-family:var(--display);font-weight:400;font-size:18px}
-.lg .r{display:flex;justify-content:space-between;gap:10px;align-items:center;font-size:15px;overflow-wrap:anywhere}
+.lg .r{display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px 10px;align-items:center;font-size:15px;overflow-wrap:anywhere}
 .lg .r span:first-child{color:var(--soft);font-size:12.5px;letter-spacing:.12em;text-transform:uppercase;flex:none}
-.lg button{all:unset;cursor:pointer;border:1px solid var(--brown);padding:5px 10px;font-size:12px;letter-spacing:.12em;text-transform:uppercase}
+.lg button{all:unset;white-space:nowrap;cursor:pointer;border:1px solid var(--brown);padding:5px 10px;font-size:12px;letter-spacing:.12em;text-transform:uppercase}
 .lg .pw{font-family:ui-monospace,Menlo,monospace}
 .note2{font-size:14px;color:var(--soft)}
 .plink{display:block;border:1px solid var(--brown);padding:12px 14px;color:var(--ink);text-decoration:none;font-size:15px;margin-top:6px}
@@ -263,6 +263,6 @@ function demo(){const n=Date.now(),m=60000;return{concierge:[
  consult:[
  {row:3,at:n-12*m,first:'Sophia',last:'Reyes',phone:'(609) 555-0142',email:'sophia@example.com',hair:'Big color change, Extensions',skin:'',story:"Hair: Box dye about a year ago, want a soft lived-in blonde I don't have to touch up every 6 weeks.",sameBudget:'Yes',budget:'300',reach:'Text',photoNow:'#',photoGoal:'#',status:'New'},
  {row:2,at:n-62*m,first:'Lauren',last:'Kim',phone:'(609) 555-0198',email:'',hair:'',skin:'Signature facial, Brows',story:'Skin: Dry patches and redness, using retinol at night. Sensitive to fragrance.',sameBudget:'',budget:'',reach:'Call',photoNow:'',photoGoal:'',status:'New'}],
- profiles:[{row:3,at:n-20*m,first:'Maya',last:'Patel',phone:'(609) 555-0117',email:'maya@example.com',birthday:'March 14',reach:'Text',receipt:'Email',allergies:'Sensitive to ammonia',notes:'Prefers a quiet visit',changes:'New address and email',texts:'Yes',status:'New'}]}}
+ profiles:[{row:3,at:n-20*m,first:'Maya',last:'Patel',phone:'(609) 555-0117',email:'maya@example.com',birthday:'March 14',address:'12 Maple Ave, Hammonton, NJ 08037',allergies:'Sensitive to ammonia',notes:'Prefers a quiet visit',changes:'New address and email',texts:'Yes',status:'New'}]}}
 </script>
 </body></html>
