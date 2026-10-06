@@ -7,11 +7,11 @@
 <link rel="stylesheet" href="../g/base.css">
 <script src="../g/config.js?v=2"></script>
 <style>
-main{max-width:640px;gap:20px}
+main{max-width:640px;gap:20px;padding-bottom:110px}
 .head{display:flex;align-items:center;gap:14px}
 .head img{width:56px}
 .head h1{font-size:27px}
-.tabs{display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--brown)}
+.tabs{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid var(--brown)}
 .tabs button{all:unset;cursor:pointer;padding:12px;text-align:center;font-size:13px;letter-spacing:.12em;text-transform:uppercase}
 .tabs button.on{background:var(--brown);color:var(--ivory)}
 .tabs button:focus-visible{outline:2px solid var(--gold);outline-offset:-4px}
@@ -48,16 +48,86 @@ details.more summary{cursor:pointer;list-style:none;font-size:12px;letter-spacin
 details.more summary::-webkit-details-marker{display:none}
 details.more[open] summary{margin-bottom:12px}
 .lock{display:flex;flex-direction:column;gap:12px;text-align:center;align-items:center;padding-top:20px}
+
+.bnav{position:fixed;left:0;right:0;bottom:0;background:var(--ivory);border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(4,1fr);padding-bottom:env(safe-area-inset-bottom);z-index:5}
+.bnav button{all:unset;cursor:pointer;text-align:center;padding:14px 4px 12px;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--soft);position:relative}
+.bnav button.on{color:var(--ink)}
+.bnav button.on::after{content:"";position:absolute;left:30%;right:30%;top:0;height:2px;background:var(--brown)}
+.bnav .n{position:absolute;top:6px;margin-left:2px}
+.seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;border:1px solid var(--brown)}
+.seg button{all:unset;cursor:pointer;padding:11px;text-align:center;font-size:13px;letter-spacing:.12em;text-transform:uppercase}
+.seg button.on{background:var(--brown);color:var(--ivory)}
+.prog{font-size:13px;color:var(--soft);letter-spacing:.06em}
+.bar{height:3px;background:var(--line)}.bar i{display:block;height:3px;background:var(--brown)}
+.chk{all:unset;cursor:pointer;display:flex;gap:14px;align-items:flex-start;padding:14px 2px;border-bottom:1px solid var(--line);width:100%;box-sizing:border-box}
+.chk .bx{width:24px;height:24px;border:1.5px solid var(--brown);flex:none;display:grid;place-items:center;color:#fff;font-size:15px;margin-top:1px}
+.chk.on .bx{background:var(--brown)}
+.chk.on .tx{opacity:.5;text-decoration:line-through}
+.chk .tx b{font-weight:400;font-family:var(--display);font-size:18px;display:block}
+.chk .tx small{font-size:14px;color:var(--soft)}
+.chk:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+details.acc{border:1px solid var(--line);background:#fbfaf7}
+details.acc summary{cursor:pointer;list-style:none;padding:16px;font-family:var(--display);font-size:20px;display:flex;justify-content:space-between;align-items:center}
+details.acc summary::-webkit-details-marker{display:none}
+details.acc summary::after{content:"+";font-family:var(--body);font-size:20px;color:var(--brown)}
+details.acc[open] summary::after{content:"–"}
+details.acc .in{padding:0 16px 16px;display:flex;flex-direction:column;gap:14px}
+.acc h4{margin:0;font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--brown);font-weight:400}
+.acc ul{margin:6px 0 0;padding-left:18px;display:flex;flex-direction:column;gap:6px;font-size:15.5px}
+.lg{border:1px solid var(--line);background:#fbfaf7;padding:14px;display:flex;flex-direction:column;gap:6px}
+.lg b{font-family:var(--display);font-weight:400;font-size:18px}
+.lg .r{display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px 10px;align-items:center;font-size:15px;overflow-wrap:anywhere}
+.lg .r span:first-child{color:var(--soft);font-size:12.5px;letter-spacing:.12em;text-transform:uppercase;flex:none}
+.lg button{all:unset;white-space:nowrap;cursor:pointer;border:1px solid var(--brown);padding:5px 10px;font-size:12px;letter-spacing:.12em;text-transform:uppercase}
+.lg .pw{font-family:ui-monospace,Menlo,monospace}
+.note2{font-size:14px;color:var(--soft)}
+.plink{display:block;border:1px solid var(--brown);padding:12px 14px;color:var(--ink);text-decoration:none;font-size:15px;margin-top:6px}
+.plink.big{background:var(--brown);color:var(--ivory);text-align:center;letter-spacing:.1em;text-transform:uppercase;font-size:14px;padding:15px}
+.sec{display:flex;flex-direction:column;gap:12px}
+.sec>h2{font-size:22px}
+/* ---- Team app look: light cream, white cards, black outlines, little bits of chocolate ---- */
+:root{--ivory:#f8f6f0;--card:#fff;--brown:#121212;--ink:#121212;--soft:#5f5b55;--line:#e2ded5;--gold:#4a3426}
+html,body{background:#f8f6f0}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;border:0}
+.tabs button{border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:999px;padding:7px 16px}
+.tabs button.on{background:var(--brown);color:#fff;border-color:var(--brown)}
+.n{background:var(--gold)}
+.req,details.acc,.lg{background:#fff;border:1px solid var(--line);border-radius:6px}
+.req{border-left:1px solid var(--line);border-top:3px solid var(--gold)}
+.req.doing{border-top-color:var(--ink)}.req.done{border-top-color:var(--line)}
+.badge{background:#fff;color:var(--ink);border:1px solid var(--ink);border-radius:999px;padding:2px 10px}
+.badge.s{background:#fff;color:var(--gold);border-color:var(--gold)}
+.chip,.pics a,.act button,.lg button,.plink,.seg{border-radius:6px}
+.act button,.lg button{border-color:var(--ink);background:#fff;color:var(--ink)}
+.act button.on{background:var(--ink);color:#fff}
+.seg{border-color:var(--ink);overflow:hidden}.seg button.on{background:var(--ink);color:#fff}
+.bnav{background:#fff;border-top:1px solid var(--line)}
+.bnav button.on::after{background:var(--gold)}
+.chk .bx{border-radius:50%;border-color:var(--ink)}
+.chk.on .bx{background:var(--ink)}
+.bar i{background:var(--ink)}
+.plink{background:#fff;border-color:var(--ink)}
+.plink.big{background:#fff;color:var(--ink);border:1px solid var(--ink)}
+.sub,.acc h4,details.more summary{color:var(--gold)}
+details.acc summary::after{color:var(--gold)}
+.empty{background:#fff;border-radius:6px}
 </style>
 </head><body><main id="app">
 <div class="head"><img src="../g/logo.png" alt="Taffeta Salon &amp; Spa"><div><span class="eyebrow">Front Desk</span><h1>Today at Taffeta</h1></div></div>
 <div class="tabs" role="tablist">
   <button role="tab" id="tC" class="on">Concierge<span class="n" id="nC"></span></button>
   <button role="tab" id="tK">Consultations<span class="n" id="nK"></span></button>
+  <button role="tab" id="tP">Profiles<span class="n" id="nP"></span></button>
 </div>
 <div id="body" class="list"></div>
 <p class="status" id="st"></p>
 </main>
+<nav class="bnav" aria-label="Front desk sections">
+  <button data-area="G" class="on">Guests<span class="n" id="nG"></span></button>
+  <button data-area="D">Guide</button>
+  <button data-area="C">Clean</button>
+  <button data-area="B">Busy</button>
+</nav>
 <script>
 const $=s=>document.querySelector(s);
 const esc=v=>String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -65,9 +135,14 @@ const split=v=>String(v||'').split(',').map(x=>x.trim()).filter(Boolean);
 const DEMO=/[?&]demo\b/.test(location.search);
 const store={get(k){try{return localStorage.getItem(k)||''}catch(e){return ''}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
 const hk=(location.hash.match(/k=([\w-]+)/)||[])[1];
-if(hk){store.set('desk-key',hk);history.replaceState(null,'',location.pathname+location.search)}
-const KEY=hk||store.get('desk-key');
-let tab=store.get('desk-tab')||'C', data={concierge:[],consult:[]}, pending={}, lastOk=0;
+const gkh=(location.hash.match(/g=([\w-]+)/)||[])[1];
+if(hk)store.set('desk-key',hk); if(gkh)store.set('desk-gkey',gkh);
+if(hk||gkh)history.replaceState(null,'',location.pathname+location.search);
+const KEY=hk||store.get('desk-key'), GKEY=gkh||store.get('desk-gkey');
+let tab=store.get('desk-tab')||'C', area=store.get('desk-area')||'G', list=store.get('desk-list')||'opening', data={concierge:[],consult:[],profiles:[]}, pending={}, lastOk=0, GUIDE=null, shown={};
+const today=()=>new Date().toLocaleDateString('en-CA');
+const ticks=k=>{try{return JSON.parse(store.get('desk-chk:'+k+':'+today())||'[]')}catch(e){return[]}};
+const setTicks=(k,a)=>store.set('desk-chk:'+k+':'+today(),JSON.stringify(a));
 
 function ago(t){const m=Math.round((Date.now()-t)/60000);if(m<1)return'just now';if(m<60)return m+' min ago';
   const d=new Date(t),today=new Date();const tm=d.toLocaleTimeString([],{hour:'numeric',minute:'2-digit'});
@@ -96,21 +171,76 @@ function consult(r){
   ${pics?`<div class="pics">${pics}</div>`:''}${story}
   ${s==='Booked'?'':`<div class="act"><button data-t="consult" data-r="${r.row}" data-a="${r.at}" data-s="Contacted" class="${s==='Contacted'?'on':''}">Contacted ✓</button><button data-t="consult" data-r="${r.row}" data-a="${r.at}" data-s="Booked">Booked ✓</button></div>`}</div>`}
 
-function render(){
-  $('#tC').classList.toggle('on',tab==='C');$('#tK').classList.toggle('on',tab==='K');
+function profile(r){
+  const s=st(r), tel=String(r.phone||'').replace(/[^\d+]/g,'');
+  const rows=[['Phone',tel?`<a href="tel:${esc(tel)}">${esc(r.phone)}</a>`:''],['Email',esc(r.email)],['Address',esc(r.address)],['Birthday',esc(r.birthday)],['Reach by',esc(r.reach)],['Receipt by',esc(r.receipt)],['Texts OK',r.texts==='Yes'?'Yes':'No']].filter(x=>x[1]);
+  return `<div class="${s==='Updated'?'req done':'req'}"><div class="row"><span class="who">${esc((r.first+' '+(r.last||'')).trim())}</span><span class="when">${esc(ago(r.at))}</span></div>
+  ${r.changes?`<span class="lbl">What changed</span><p class="note">“${esc(r.changes)}”</p>`:''}
+  ${r.allergies?`<span class="lbl">Allergies or sensitivities</span><div class="chips"><span class="chip">${esc(r.allergies)}</span></div>`:''}
+  ${r.notes?`<span class="lbl">Good to know</span><p class="note">${esc(r.notes)}</p>`:''}
+  <div class="kv">${rows.map(x=>`<span>${x[0]}</span><span>${x[1]}</span>`).join('')}</div>
+  ${s==='Updated'?'':`<div class="act"><button data-t="profile" data-r="${r.row}" data-a="${r.at}" data-s="Updated">Updated in Paired Plus ✓</button></div>`}</div>`}
+
+function guests(){
   const cToday=data.concierge.filter(r=>isToday(r.at)||st(r)!=='Done');
   const cOpen=cToday.filter(r=>st(r)!=='Done'), cDone=cToday.filter(r=>st(r)==='Done'&&isToday(r.handledAt||r.at));
   const kOpen=data.consult.filter(r=>st(r)!=='Booked'), kDone=data.consult.filter(r=>st(r)==='Booked');
-  $('#nC').textContent=cOpen.length||''; $('#nK').textContent=kOpen.filter(r=>st(r)==='New').length||'';
-  let h='';
+  const pOpen=data.profiles.filter(r=>st(r)!=='Updated'), pDone=data.profiles.filter(r=>st(r)==='Updated');
+  const nC=cOpen.length, nK=kOpen.filter(r=>st(r)==='New').length, nP=pOpen.filter(r=>st(r)==='New').length;
+  $('#nC').textContent=nC||'';$('#nK').textContent=nK||'';$('#nP').textContent=nP||'';$('#nG').textContent=(nC+nK+nP)||'';
+  ['C','K','P'].forEach(k=>$('#t'+k).classList.toggle('on',tab===k));
   if(tab==='C'){
-    h=cOpen.length?cOpen.map(concierge).join(''):'<p class="empty">No requests right now. Every guest is taken care of.</p>';
-    if(cDone.length)h+=`<p class="sub">Handled today</p>`+cDone.map(concierge).join('');
-  }else{
-    h=kOpen.length?kOpen.map(consult).join(''):'<p class="empty">No new consultations.</p>';
-    if(kDone.length)h+=`<details class="more"><summary>Booked (${kDone.length}) +</summary><div class="list">${kDone.map(consult).join('')}</div></details>`;
-  }
-  $('#body').innerHTML=h;
+    let h=cOpen.length?cOpen.map(concierge).join(''):'<p class="empty">No requests right now. Every guest is taken care of.</p>';
+    if(cDone.length)h+=`<p class="sub">Handled today</p>`+cDone.map(concierge).join('');return h}
+  if(tab==='K'){
+    let h=kOpen.length?kOpen.map(consult).join(''):'<p class="empty">No new consultations.</p>';
+    if(kDone.length)h+=`<details class="more"><summary>Booked (${kDone.length}) +</summary><div class="list">${kDone.map(consult).join('')}</div></details>`;return h}
+  let h=pOpen.length?pOpen.map(profile).join(''):'<p class="empty">No profile updates waiting.</p>';
+  if(pDone.length)h+=`<details class="more"><summary>Updated (${pDone.length}) +</summary><div class="list">${pDone.map(profile).join('')}</div></details>`;return h}
+
+const LISTS={opening:'Opening',midday:'Midday',closing:'Closing'};
+function checks(key,items){
+  const d=ticks(key), n=d.filter(i=>i<items.length).length;
+  return `<p class="prog">${n} of ${items.length} done today</p><div class="bar"><i style="width:${items.length?Math.round(n/items.length*100):0}%"></i></div>`+
+   `<div>${items.map((it,i)=>`<button class="chk${d.includes(i)?' on':''}" data-k="${key}" data-i="${i}"><span class="bx">${d.includes(i)?'✓':''}</span><span class="tx"><b>${esc(it[0])}</b>${it[1]?`<small>${esc(it[1])}</small>`:''}</span></button>`).join('')}</div>`+
+   (n?`<button class="act-reset" data-k="${key}" style="all:unset;cursor:pointer;text-align:center;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--soft);padding:10px">Start over</button>`:'')}
+function cleanView(){
+  if(!GUIDE)return guideGate();
+  return `<div class="sec"><h2>Cleaning &amp; procedures</h2><div class="seg">${Object.keys(LISTS).map(k=>`<button data-l="${k}" class="${list===k?'on':''}">${LISTS[k]}</button>`).join('')}</div>${checks(list,GUIDE[list]||[])}</div>`}
+function busyView(){
+  if(!GUIDE)return guideGate();
+  return `<div class="sec"><h2>Keep busy</h2><p class="note2">Nothing at the desk? Pick something off this list. No phone at the desk.</p>${checks('busy',GUIDE.busy||[])}</div>`}
+function guideGate(){return GKEY?'<p class="empty">Opening the guide…</p>':'<p class="empty">This section needs the Front Desk link with the guide key. Ask Alexandra to send it to you.</p>'}
+function loginCard(l,i,g){
+  const id=g+i, show=!!shown[id];
+  const r=(k,v,copy)=>v?`<div class="r"><span>${k}</span><span>${esc(v)}</span>${copy?`<button data-copy="${esc(copy)}">Copy</button>`:''}</div>`:'';
+  return `<div class="lg"><b>${esc(l.label)}</b>${r('Site',l.site)}${r('User',l.user,l.user)}${l.pw?`<div class="r"><span>Password</span><span class="pw">${show?esc(l.pw):'••••••••'}</span><span style="display:flex;gap:6px"><button data-show="${id}">${show?'Hide':'Show'}</button><button data-copy="${esc(l.pw)}">Copy</button></span></div>`:''}${r('',l.extra)}${l.note?`<p class="note2">${esc(l.note)}</p>`:''}</div>`}
+function guideView(){
+  if(!GUIDE)return guideGate();
+  const acc=(t,body,open)=>`<details class="acc"${open?' open':''}><summary>${esc(t)}</summary><div class="in">${body}</div></details>`;
+  const logins=acc('Logins',`<p class="note2">For the desk team only. Please don’t share or screenshot.</p><h4>Paired Plus &amp; cards</h4>${(GUIDE.logins||[]).map((l,i)=>loginCard(l,i,'a')).join('')}<h4>Color &amp; retail ordering</h4>${(GUIDE.ordering||[]).map((l,i)=>loginCard(l,i,'o')).join('')}`);
+  const secs=(GUIDE.guide||[]).map(g=>acc(g.title,(g.sub?`<p class="note2">${esc(g.sub)}</p>`:'')+g.groups.map(x=>`<div><h4>${esc(x.h)}</h4>${x.links?x.links.map(l=>`<a class="plink" href="${esc(l.u)}" target="_blank" rel="noopener">${esc(l.t)} ↗</a>`).join(''):`<ul>${x.items.map(i=>`<li>${esc(i)}</li>`).join('')}</ul>`}</div>`).join('')));
+  const pl=(GUIDE.links||[]).map(l=>`<a class="plink big" href="${esc(l.u)}" target="_blank" rel="noopener">${esc(l.t)} ↗</a><p class="note2">${esc(l.sub||'')}</p>`).join('');
+  return `<div class="sec"><h2>Desk guide</h2>${pl}${logins}${secs.join('')}</div>`}
+
+function render(){
+  document.querySelectorAll('.bnav button').forEach(b=>b.classList.toggle('on',b.dataset.area===area));
+  const g=area==='G';
+  document.querySelector('.tabs').style.display=g?'':'none';
+  const body=g?guests():area==='D'?guideView():area==='C'?cleanView():busyView();
+  if(!g)guests();
+  $('#body').innerHTML=body;
+}
+
+async function loadGuide(){
+  if(GUIDE||!GKEY)return;
+  try{
+    const buf=new Uint8Array(await (await fetch('guide.dat?v=1',{cache:'no-store'})).arrayBuffer());
+    const raw=Uint8Array.from(atob(GKEY.replace(/-/g,'+').replace(/_/g,'/')+'='.repeat((4-GKEY.length%4)%4)),c=>c.charCodeAt(0));
+    const k=await crypto.subtle.importKey('raw',raw,'AES-GCM',false,['decrypt']);
+    const pt=await crypto.subtle.decrypt({name:'AES-GCM',iv:buf.slice(0,12)},k,buf.slice(12));
+    GUIDE=JSON.parse(new TextDecoder().decode(pt)); render();
+  }catch(e){$('#st').textContent='The guide couldn’t be opened. Ask Alexandra for a fresh link.'}
 }
 
 async function load(){
@@ -121,8 +251,8 @@ async function load(){
     const r=await fetch(window.TAFFETA_ENDPOINT+'?key='+encodeURIComponent(KEY)+'&t='+Date.now(),{cache:'no-store'});
     const j=await r.json();
     if(!j.ok){if(j.error==='key')lockView();return}
-    data={concierge:j.concierge||[],consult:j.consult||[]};lastOk=Date.now();
-    for(const k in pending){const [row,at]=k.split(':');const all=[...data.concierge,...data.consult];const m=all.find(x=>String(x.row)===row&&String(x.at)===at);if(m&&m.status===pending[k])delete pending[k]}
+    data={concierge:j.concierge||[],consult:j.consult||[],profiles:j.profiles||[]};lastOk=Date.now();
+    for(const k in pending){const [row,at]=k.split(':');const all=[...data.concierge,...data.consult,...data.profiles];const m=all.find(x=>String(x.row)===row&&String(x.at)===at);if(m&&m.status===pending[k])delete pending[k]}
     render();
   }catch(e){}
   status();
@@ -138,10 +268,18 @@ document.addEventListener('click',e=>{
     return}
   if(e.target.closest('#tC')){tab='C';store.set('desk-tab',tab);render()}
   if(e.target.closest('#tK')){tab='K';store.set('desk-tab',tab);render()}
+  if(e.target.closest('#tP')){tab='P';store.set('desk-tab',tab);render()}
+  const nb=e.target.closest('.bnav button'); if(nb){area=nb.dataset.area;store.set('desk-area',area);render();scrollTo(0,0);return}
+  const sg=e.target.closest('.seg button'); if(sg){list=sg.dataset.l;store.set('desk-list',list);render();return}
+  const ck=e.target.closest('.chk'); if(ck){const k=ck.dataset.k,i=Number(ck.dataset.i),d=ticks(k),x=d.indexOf(i);x<0?d.push(i):d.splice(x,1);setTicks(k,d);render();return}
+  const rs=e.target.closest('.act-reset'); if(rs){setTicks(rs.dataset.k,[]);render();return}
+  const sh=e.target.closest('[data-show]'); if(sh){shown[sh.dataset.show]=!shown[sh.dataset.show];render();return}
+  const cp=e.target.closest('[data-copy]'); if(cp){const v=cp.dataset.copy;const dn=()=>{cp.textContent='Copied';setTimeout(()=>{cp.textContent='Copy'},1200)};
+    if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(v).then(dn,dn);else{const t=document.createElement('textarea');t.value=v;document.body.appendChild(t);t.select();try{document.execCommand('copy')}catch(_){}t.remove();dn()}return}
 });
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')load()});
 setInterval(load,30000);setInterval(status,15000);
-render();load();
+render();load();loadGuide();
 
 function demo(){const n=Date.now(),m=60000;return{concierge:[
  {row:5,at:n-0.3*m,name:'Jess',sips:'Hi Pretty Latte',comforts:'Blanket, Quiet visit',before:'',note:'',status:'New'},
@@ -150,6 +288,7 @@ function demo(){const n=Date.now(),m=60000;return{concierge:[
  {row:2,at:n-40*m,name:'Taylor',sips:'Americano',comforts:'Wi-Fi password',before:'',note:'',status:'Done',handledAt:n-36*m}],
  consult:[
  {row:3,at:n-12*m,first:'Sophia',last:'Reyes',phone:'(609) 555-0142',email:'sophia@example.com',hair:'Big color change, Extensions',skin:'',story:"Hair: Box dye about a year ago, want a soft lived-in blonde I don't have to touch up every 6 weeks.",sameBudget:'Yes',budget:'300',reach:'Text',photoNow:'#',photoGoal:'#',status:'New'},
- {row:2,at:n-62*m,first:'Lauren',last:'Kim',phone:'(609) 555-0198',email:'',hair:'',skin:'Signature facial, Brows',story:'Skin: Dry patches and redness, using retinol at night. Sensitive to fragrance.',sameBudget:'',budget:'',reach:'Call',photoNow:'',photoGoal:'',status:'New'}]}}
+ {row:2,at:n-62*m,first:'Lauren',last:'Kim',phone:'(609) 555-0198',email:'',hair:'',skin:'Signature facial, Brows',story:'Skin: Dry patches and redness, using retinol at night. Sensitive to fragrance.',sameBudget:'',budget:'',reach:'Call',photoNow:'',photoGoal:'',status:'New'}],
+ profiles:[{row:3,at:n-20*m,first:'Maya',last:'Patel',phone:'(609) 555-0117',email:'maya@example.com',birthday:'March 14',address:'12 Maple Ave, Hammonton, NJ 08037',allergies:'Sensitive to ammonia',notes:'Prefers a quiet visit',changes:'New address and email',texts:'Yes',status:'New'}]}}
 </script>
 </body></html>

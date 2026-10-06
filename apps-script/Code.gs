@@ -23,7 +23,13 @@ const TABS = {
               'Pricing understood', 'Status', 'Artist'],
     keys:    ['at', 'first', 'last', 'phone', 'email', 'hair', 'skin', 'story', 'sameBudget', 'budget', 'reach',
               'photoNow', 'photoGoal', 'agree', 'status', 'artist'],
-    statuses: ['New', 'Contacted', 'Booked'] }
+    statuses: ['New', 'Contacted', 'Booked'] },
+  profile: { name: 'Profile Updates',
+    headers: ['Received', 'First name', 'Last name', 'Phone', 'Email', 'Home address', 'Birthday (month & day)',
+              'Allergies or sensitivities', 'Good to know', 'What changed', 'Texts OK', 'Status', 'Updated by'],
+    keys:    ['at', 'first', 'last', 'phone', 'email', 'address', 'birthday',
+              'allergies', 'notes', 'changes', 'texts', 'status', 'by'],
+    statuses: ['New', 'Updated'] }
 };
 
 /** Run once from the editor (▶ Run) to set up both tabs. */
@@ -52,7 +58,7 @@ function doGet(e) {
   if (p.admin) return adminGet_(p);
   if (p.decide) return decide_(p);
   if (p.key !== DESK_KEY) return json_({ ok: false, error: 'key' });
-  return json_({ ok: true, now: Date.now(), concierge: rows_(TABS.concierge, 2), consult: rows_(TABS.consult, 60) });
+  return json_({ ok: true, now: Date.now(), concierge: rows_(TABS.concierge, 2), consult: rows_(TABS.consult, 60), profiles: rows_(TABS.profile, 60) });
 }
 
 function doPost(e) {
@@ -80,6 +86,12 @@ function doPost(e) {
       alert_('New consultation: ' + who,
         who + ' · ' + [].concat(d.hair || [], d.skin || []).join(', ') + '\nReach by: ' + clean_(d.reach, 10) + ' · ' + clean_(d.phone, 30),
         'sparkles');
+    } else if (d.type === 'guestprofile') {
+      const who = clean_(d.first, 60) + ' ' + clean_(d.last, 60);
+      tab_(TABS.profile).appendRow([now, clean_(d.first, 60), clean_(d.last, 60), clean_(d.phone, 30), clean_(d.email, 120),
+        clean_(d.address, 200), clean_(d.birthday, 20), clean_(d.allergies, 500), clean_(d.notes, 1000),
+        clean_(d.changes, 1000), d.texts ? 'Yes' : 'No', 'New', '']);
+      alert_('Profile update: ' + who, who + ' sent new details. Update her file in Paired Plus.', 'memo');
     }
     return json_({ ok: true });
   } finally { lock.releaseLock(); }
