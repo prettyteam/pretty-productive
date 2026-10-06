@@ -33,19 +33,19 @@ def build(st, week, label, runOn, path):
     doc=SimpleDocTemplate(path,pagesize=letter,leftMargin=.7*inch,rightMargin=.7*inch,topMargin=.7*inch,bottomMargin=.7*inch,title='Weekly commission report – '+st['name'],author='Taffeta Salon & Spa')
     el=[Paragraph('TAFFETA SALON &amp; SPA',L),Spacer(1,4),Paragraph('Weekly commission report',H),Spacer(1,4),
         Paragraph('%s &nbsp;·&nbsp; %s<br/>Prepared %s'%(st['name'],label,runOn),S),Spacer(1,14)]
-    tot=[['Services',m(st['serviceTotal'])],['Retail',m(st['retailTotal'])],['Combined sales',m(float(st['serviceTotal'] or 0)+float(st['retailTotal'] or 0))],['Service commission rate','%g%%'%rate],['Retail commission rate','%g%%'%rrate],['Commission earned (take-home)',m(st['commTotal'])]]
+    tot=[['Services',m(st['serviceTotal'])],['Retail',m(st['retailTotal'])],['Combined sales',m(float(st['serviceTotal'] or 0)+float(st['retailTotal'] or 0))],['Commission earned (take-home)',m(st['commTotal'])]]
     t=Table(tot,colWidths=[3.2*inch,1.6*inch],hAlign='LEFT')
-    t.setStyle(TableStyle([('FONT',(0,0),(-1,-1),'Helvetica',11),('FONT',(0,4),(-1,4),'Helvetica-Bold',12),('TEXTCOLOR',(0,0),(-1,-1),BROWN),('ALIGN',(1,0),(1,-1),'RIGHT'),
-        ('BACKGROUND',(0,0),(-1,-1),IVORY),('LINEBELOW',(0,0),(-1,-2),.4,colors.HexColor('#d9d2c4')),('LINEABOVE',(0,4),(-1,4),.8,GOLD),('TOPPADDING',(0,0),(-1,-1),6),('BOTTOMPADDING',(0,0),(-1,-1),6),('LEFTPADDING',(0,0),(-1,-1),10),('RIGHTPADDING',(0,0),(-1,-1),10)]))
+    t.setStyle(TableStyle([('FONT',(0,0),(-1,-1),'Helvetica',11),('FONT',(0,3),(-1,3),'Helvetica-Bold',12),('TEXTCOLOR',(0,0),(-1,-1),BROWN),('ALIGN',(1,0),(1,-1),'RIGHT'),
+        ('BACKGROUND',(0,0),(-1,-1),IVORY),('LINEBELOW',(0,0),(-1,-2),.4,colors.HexColor('#d9d2c4')),('LINEABOVE',(0,3),(-1,3),.8,GOLD),('TOPPADDING',(0,0),(-1,-1),6),('BOTTOMPADDING',(0,0),(-1,-1),6),('LEFTPADDING',(0,0),(-1,-1),10),('RIGHTPADDING',(0,0),(-1,-1),10)]))
     el+=[t,Spacer(1,16)]
     def table(title, rows, total_label, total):
         el.append(Paragraph(title.upper(),L)); el.append(Spacer(1,4))
         if not rows:
             el.append(Paragraph('Nothing this week.',N)); el.append(Spacer(1,12)); return
-        data=[['Date','Guest','Service / product','Amount','Commission']]
-        for r in rows: data.append([r.get('date',''),short(r.get('client')),Paragraph(r.get('item',''),N),m(r.get('amount')),m(r.get('comm'))])
-        data.append(['','',total_label,m(total),m(sum(float(r.get('comm') or 0) for r in rows))])
-        tb=Table(data,colWidths=[.8*inch,1.3*inch,2.6*inch,.9*inch,1.0*inch],repeatRows=1)
+        data=[['Date','Guest','Service / product','Amount']]
+        for r in rows: data.append([r.get('date',''),short(r.get('client')),Paragraph(r.get('item',''),N),m(r.get('amount'))])
+        data.append(['','',total_label,m(total)])
+        tb=Table(data,colWidths=[.9*inch,1.6*inch,3.2*inch,1.3*inch],repeatRows=1)
         tb.setStyle(TableStyle([('FONT',(0,0),(-1,0),'Helvetica-Bold',8.5),('TEXTCOLOR',(0,0),(-1,0),colors.white),('BACKGROUND',(0,0),(-1,0),BROWN),
             ('FONT',(0,1),(-1,-1),'Helvetica',9),('TEXTCOLOR',(0,1),(-1,-1),BROWN),('ALIGN',(3,0),(-1,-1),'RIGHT'),('VALIGN',(0,0),(-1,-1),'MIDDLE'),
             ('ROWBACKGROUNDS',(0,1),(-1,-2),[colors.white,IVORY]),('FONT',(0,-1),(-1,-1),'Helvetica-Bold',9.5),('LINEABOVE',(0,-1),(-1,-1),.8,GOLD),
