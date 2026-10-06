@@ -667,7 +667,7 @@ function homeView(){
   const jk=S.daily&&S.daily.joke; if(jk) out.push(h('div',{class:'card2',style:'text-align:center'},h('span',{class:'lbl'},'Today’s giggle'),h('p',{style:'font-family:var(--display);font-style:italic;font-size:19px;margin:6px 0 0'},jk)));
   if(st.clock) out.push(clockCard());
   const shifts=(d&&d.shifts)||[];
-  out.push(h('div',{class:'sec2'},h('span',{class:'lbl'},'Next shifts'),
+  if(st.clock||shifts.length) out.push(h('div',{class:'sec2'},h('span',{class:'lbl'},'Next shifts'),
     shifts.length?shifts.map(s=>h('div',{class:'lrow'},h('b',{},niceDay(s.date)),h('span',{},s.start+' – '+s.end))):h('p',{class:'soft',style:'padding-top:8px'},'Your shifts will show here soon.')));
   const open=(d&&d.openShifts)||[];
   if(open.length) out.push(h('div',{class:'sec2'},h('span',{class:'lbl'},'Shifts you can pick up'),
