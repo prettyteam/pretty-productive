@@ -866,7 +866,7 @@ function growthView(){
   }
   if(gr&&gr.history&&gr.history.length>=1){
     const H=gr.history.slice(-2), cols=H.map(x=>x.q);
-    const rows=[['Service','service',money],['Retail %','retailPct',v=>v+'%'],['Avg ticket','avgTicket',money],['Guests','guests',String],['New guests','newGuests',String],['Retention','retention',v=>v+'%']];
+    const rows=[['Service','service',money],['Retail %','retailPct',v=>v+'%'],['Avg ticket','avgTicket',money],['Guests','guests',String],['New guests (quarter)','newGuests',String],['Retention (year to date)','retention',v=>v+'%'],['Retained (year to date)','retainedYtd',String]];
     out.push(h('div',{class:'sec2'},h('span',{class:'lbl'},'Past reviews'),h('table',{class:'mtab'},
       h('thead',{},h('tr',{},h('th',{}),cols.map(c=>h('th',{},c)))),
       h('tbody',{},rows.filter(r=>H.some(x=>x[r[1]]!=null)).map(([l,k,f])=>h('tr',{},h('td',{},l),H.map(x=>h('td',{},x[k]==null?'–':f(x[k])))))))));
