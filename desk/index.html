@@ -172,7 +172,7 @@ function consult(r){
   <span class="lbl">Interested in</span><div class="chips">${[...hair,...skin].map(i=>`<span class="chip">${esc(i)}</span>`).join('')}</div>
   <div class="kv"><span>Budget</span><span>${budget}</span><span>Reach by</span><span>${esc(r.reach||'Text')} · ${tel?`<a href="tel:${esc(tel)}">${esc(r.phone)}</a>`:''}</span>${r.email?`<span>Email</span><span>${esc(r.email)}</span>`:''}</div>
   ${pics?`<div class="pics">${pics}</div>`:''}${story}
-  ${s==='Booked'?'':`<div class="act"><button data-t="consult" data-r="${r.row}" data-a="${r.at}" data-s="Contacted" class="${s==='Contacted'?'on':''}">Contacted ✓</button><button data-t="consult" data-r="${r.row}" data-a="${r.at}" data-s="Booked">Booked ✓</button></div>`}</div>`}
+  ${s==='Booked'?`<div class="act"><button class="on" disabled style="cursor:default">✓ Booked</button></div>`:`<div class="act"><button data-t="consult" data-r="${r.row}" data-a="${r.at}" data-s="Contacted" class="${s==='Contacted'?'on':''}">${s==='Contacted'?'✓ ':''}Contacted</button><button data-t="consult" data-r="${r.row}" data-a="${r.at}" data-s="Booked">Booked</button></div>`}</div>`}
 
 function profile(r){
   const s=st(r), tel=String(r.phone||'').replace(/[^\d+]/g,'');
