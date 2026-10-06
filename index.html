@@ -593,6 +593,14 @@ function renderMast(){
     $sub.append(h('button',{class:'back',onclick:()=>{S.open=null;render()}},'← Team board'));
   }
 }
+function runCard(){
+  let t=0;try{t=Number(localStorage.getItem('pp-run-at'))||0}catch(e){}
+  const recent=t&&Date.now()-t<600000;
+  const msg=h('span',{class:'soft',style:'font-size:14px'},recent?'Requested '+new Date(t).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})+'. It runs at the next hourly check on the work computer.':'Refreshes the team app and this report with today’s Paired Plus numbers.');
+  const b=h('button',{class:'obtn',disabled:recent?'':null,onclick:()=>{const n=Date.now();try{localStorage.setItem('pp-run-at',String(n))}catch(e){}
+    fetch('https://ntfy.sh/taffeta-run-4bdce6bc66e12e69',{method:'POST',body:'run-all-updates '+new Date(n).toISOString(),headers:{'Title':'Run all updates requested','Priority':'high'}}).catch(()=>{});render()}},'Run all updates');
+  return h('div',{class:'card2',style:'display:flex;gap:12px;align-items:center;flex-wrap:wrap'},b,msg);
+}
 function render(){
   if(EDITION==='stylist'&&S.mine) document.querySelector('.mast').hidden=S.tab!=='today';
   renderMast();
@@ -612,6 +620,7 @@ function render(){
   if(d&&d.checkins&&(EDITION==='team'?S.rtab==='today':S.tab==='today')) parts.push(h('footer',{class:'schedule'},h('span',{class:'muted'},'Numbers update at'),
     d.checkins.map(c=>h('span',{class:'pill'+(c.done?' done':'')},c.time)),
     d.lastUpdated?h('span',{class:'muted'},'· last updated '+d.lastUpdated):null));
+  if(EDITION==='team'&&S.isAdmin&&!S.open&&S.rtab==='today') parts.unshift(runCard());
   $main.replaceChildren(...parts.filter(Boolean));
   const old=document.querySelector('nav.nav'); if(old) old.remove();
   if(EDITION==='stylist'&&S.mine){const n=staffNav(); if(n) document.body.append(n);}
