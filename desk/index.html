@@ -111,6 +111,9 @@ html,body{background:#f8f6f0}
 .sub,.acc h4,details.more summary{color:var(--gold)}
 details.acc summary::after{color:var(--gold)}
 .empty{background:#fff;border-radius:6px}
+.req{align-items:stretch;text-align:left;justify-content:flex-start;flex:none;height:auto;min-height:0}details.more .list{display:flex;flex-direction:column;gap:14px}
+.req.done{opacity:1}.req.done .who,.req.done .kv,.req.done .note{opacity:.75}
+.act button[disabled]{background:#fff;color:var(--ink);border-color:var(--ink);opacity:.8}
 </style>
 </head><body><main id="app">
 <div class="head"><img src="../g/logo.png" alt="Taffeta Salon &amp; Spa"><div><span class="eyebrow">Front Desk</span><h1>Today at Taffeta</h1></div></div>
@@ -179,7 +182,7 @@ function profile(r){
   ${r.allergies?`<span class="lbl">Allergies or sensitivities</span><div class="chips"><span class="chip">${esc(r.allergies)}</span></div>`:''}
   ${r.notes?`<span class="lbl">Good to know</span><p class="note">${esc(r.notes)}</p>`:''}
   <div class="kv">${rows.map(x=>`<span>${x[0]}</span><span>${x[1]}</span>`).join('')}</div>
-  ${s==='Updated'?'':`<div class="act"><button data-t="profile" data-r="${r.row}" data-a="${r.at}" data-s="Updated">Updated in Paired Plus ✓</button></div>`}</div>`}
+  ${s==='Updated'?`<div class="act"><button class="on" disabled style="cursor:default">✓ Updated in Paired Plus</button></div>`:`<div class="act"><button data-t="profile" data-r="${r.row}" data-a="${r.at}" data-s="Updated">Updated in Paired Plus</button></div>`}</div>`}
 
 function guests(){
   const cToday=data.concierge.filter(r=>isToday(r.at)||st(r)!=='Done');
