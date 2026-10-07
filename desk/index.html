@@ -118,10 +118,20 @@ details.acc summary::after{color:var(--gold)}
 .runbar button{all:unset;cursor:pointer;background:var(--ink);color:#fff;padding:11px 16px;border-radius:6px;font-size:13px;letter-spacing:.1em;text-transform:uppercase}
 .runbar button[disabled]{opacity:.55;cursor:default}
 .runbar span{font-size:13.5px;color:var(--soft);flex:1;min-width:150px}
+.send{background:#fff;border:1px solid var(--ink);border-radius:6px;padding:12px 14px}
+.send .item{display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--line);padding-top:12px}
+.send .item:first-child{border-top:0;padding-top:0}
+.send .item b{font-size:15px}.send .item p{margin:0;font-size:13.5px;color:var(--soft);line-height:1.45;white-space:pre-wrap}
+.send .item .b{display:flex;gap:8px;flex-wrap:wrap}
+.send .item button{all:unset;cursor:pointer;border:1px solid var(--ink);border-radius:6px;background:#fff;color:var(--ink);padding:10px 14px;font-size:12.5px;letter-spacing:.08em;text-transform:uppercase}
+.send .item button.ok{background:var(--ink);color:#fff}
 </style>
 </head><body><main id="app">
 <div class="head"><img src="../g/logo.png" alt="Taffeta Salon &amp; Spa"><div><span class="eyebrow">Front Desk</span><h1>Today at Taffeta</h1></div></div>
 <div class="runbar"><button id="runAll">Run all updates</button><span id="runSt">Refreshes the team app and the Pretty Report with today’s Paired Plus numbers.</span></div>
+<details class="more send" id="send"><summary>Send a link to a guest +</summary>
+  <div class="list" id="sendList"></div>
+</details>
 <div class="tabs" role="tablist">
   <button role="tab" id="tC" class="on">Concierge<span class="n" id="nC"></span></button>
   <button role="tab" id="tK">Consultations<span class="n" id="nK"></span></button>
@@ -178,9 +188,15 @@ function consult(r){
   ${pics?`<div class="pics">${pics}</div>`:''}${story}
   ${s==='Booked'?`<div class="act"><button class="on" disabled style="cursor:default">✓ Booked</button></div>`:`<div class="act"><button data-t="consult" data-r="${r.row}" data-a="${r.at}" data-s="Contacted" class="${s==='Contacted'?'on':''}">${s==='Contacted'?'✓ ':''}Contacted</button><button data-t="consult" data-r="${r.row}" data-a="${r.at}" data-s="Booked">Booked</button></div>`}</div>`}
 
+function bday(v){
+  v=String(v==null?'':v).trim(); if(!v)return '';
+  if(/^\d{4}-\d{2}-\d{2}T/.test(v)||/^\d{4}-\d{2}-\d{2}$/.test(v)){const d=new Date(v);if(!isNaN(d))return d.toLocaleDateString('en-US',{month:'long',day:'numeric'})}
+  const m=v.match(/^(\d{1,2})\/(\d{1,2})(?:\/\d{2,4})?$/);
+  if(m){const d=new Date(2000,+m[1]-1,+m[2]);if(!isNaN(d))return d.toLocaleDateString('en-US',{month:'long',day:'numeric'})}
+  return v}
 function profile(r){
   const s=st(r), tel=String(r.phone||'').replace(/[^\d+]/g,'');
-  const rows=[['Phone',tel?`<a href="tel:${esc(tel)}">${esc(r.phone)}</a>`:''],['Email',esc(r.email)],['Address',esc(r.address)],['Birthday',esc(r.birthday)],['Reach by',esc(r.reach)],['Receipt by',esc(r.receipt)],['Texts OK',r.texts==='Yes'?'Yes':'No']].filter(x=>x[1]);
+  const rows=[['Phone',tel?`<a href="tel:${esc(tel)}">${esc(r.phone)}</a>`:''],['Email',esc(r.email)],['Address',esc(r.address)],['Birthday',esc(bday(r.birthday))],['Reach by',esc(r.reach)],['Receipt by',esc(r.receipt)],['Texts OK',r.texts==='Yes'?'Yes':'No']].filter(x=>x[1]);
   return `<div class="${s==='Updated'?'req done':'req'}"><div class="row"><span class="who">${esc((r.first+' '+(r.last||'')).trim())}</span><span class="when">${esc(ago(r.at))}</span></div>
   ${r.changes?`<span class="lbl">What changed</span><p class="note">“${esc(r.changes)}”</p>`:''}
   ${r.allergies?`<span class="lbl">Allergies or sensitivities</span><div class="chips"><span class="chip">${esc(r.allergies)}</span></div>`:''}
@@ -307,5 +323,16 @@ function demo(){const n=Date.now(),m=60000;return{concierge:[
  {row:3,at:n-12*m,first:'Sophia',last:'Reyes',phone:'(609) 555-0142',email:'sophia@example.com',hair:'Big color change, Extensions',skin:'',story:"Hair: Box dye about a year ago, want a soft lived-in blonde I don't have to touch up every 6 weeks.",sameBudget:'Yes',budget:'300',reach:'Text',photoNow:'#',photoGoal:'#',status:'New'},
  {row:2,at:n-62*m,first:'Lauren',last:'Kim',phone:'(609) 555-0198',email:'',hair:'',skin:'Signature facial, Brows',story:'Skin: Dry patches and redness, using retinol at night. Sensitive to fragrance.',sameBudget:'',budget:'',reach:'Call',photoNow:'',photoGoal:'',status:'New'}],
  profiles:[{row:3,at:n-20*m,first:'Maya',last:'Patel',phone:'(609) 555-0117',email:'maya@example.com',birthday:'March 14',address:'12 Maple Ave, Hammonton, NJ 08037',allergies:'Sensitive to ammonia',notes:'Prefers a quiet visit',changes:'New address and email',texts:'Yes',status:'New'}]}}
+
+const LINKS=[
+ {t:'Customer profile',u:'https://prettyteam.taffetadesign.com/profile/',m:'Hi from Taffeta Salon & Spa! Please take a minute to update your profile so check-in is smooth and we can send you birthday surprises: '},
+ {t:'Client experience (concierge)',u:'https://prettyteam.taffetadesign.com/concierge/',m:'Welcome to Taffeta! Settle in and tell us what you would love, like a drink, a snack or something to keep you comfy, and we will bring it right over: '},
+ {t:'Complimentary consultation',u:'https://prettyteam.taffetadesign.com/consultation/',m:'Hi from Taffeta Salon & Spa! Share your goals and your artist will send you a personal plan and estimate before your visit: '}];
+$('#sendList').innerHTML=LINKS.map((l,i)=>`<div class="item"><b>${esc(l.t)}</b><p>${esc(l.m+l.u)}</p><div class="b"><button data-c="${i}" data-w="m">Copy message</button><button data-c="${i}" data-w="u">Copy link only</button></div></div>`).join('');
+$('#sendList').addEventListener('click',async e=>{
+  const b=e.target.closest('button[data-c]');if(!b)return;
+  const l=LINKS[+b.dataset.c], txt=b.dataset.w==='u'?l.u:l.m+l.u, old=b.textContent;
+  try{await navigator.clipboard.writeText(txt)}catch(_){const t=document.createElement('textarea');t.value=txt;document.body.appendChild(t);t.select();try{document.execCommand('copy')}catch(__){}t.remove()}
+  b.textContent='Copied ✓';b.classList.add('ok');setTimeout(()=>{b.textContent=old;b.classList.remove('ok')},1800)});
 </script>
 </body></html>
