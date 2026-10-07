@@ -106,6 +106,21 @@ if (args.cr) {
     }
   }
 }
+// Owner-only Inventory tab. --inv <file.json> (kept OUTSIDE the repo) holds the latest color report + backbar/retail lists.
+// It is encrypted once into docs/inv-*.enc with its own key; the key travels only inside the sealed pages of team.json "invOwners".
+// A run without --inv keeps the last one (remembered in keys.inv).
+if (args.inv) {
+  const bytes = fs.readFileSync(args.inv);
+  const sha = createHash('sha256').update(bytes).digest('hex');
+  const c = (keys.inv ||= { key: Buffer.from(rand(32)).toString('base64') });
+  if (c.sha !== sha) {
+    if (c.file) { try { fs.unlinkSync(path.join(root, 'docs', c.file + '.enc')); } catch (e) {} }
+    c.file = 'inv-' + createHash('sha256').update(c.key + sha).digest('hex').slice(0, 16);
+    fs.mkdirSync(path.join(root, 'docs'), { recursive: true });
+    fs.writeFileSync(path.join(root, 'docs', c.file + '.enc'), await sealBytes(bytes, c.key));
+    c.sha = sha; c.updated = new Date().toISOString().slice(0, 10);
+  }
+}
 // Team app defaults live in tools/team.json, so a run that doesn't send 'team' keeps the time clock and extra pages.
 const teamDefaults = JSON.parse(fs.readFileSync(path.join(root, 'tools', 'team.json'), 'utf8'));
 const fullGuideSet = new Set((data.team && data.team.fullGuide) || teamDefaults.fullGuide || []);
@@ -115,6 +130,7 @@ const guideUrl = keys.team && keys.team.guideUrl;
 const guideSet = new Set((data.team && data.team.docsGuide) || teamDefaults.docsGuide || []);
 const socialAll = (data.team && data.team.social) || teamDefaults.social || null;
 const schedMap = (data.schedule && data.schedule.people) || {};
+const invOwners = new Set((data.team && data.team.invOwners) || teamDefaults.invOwners || []);
 const clockSet = new Set((data.team && data.team.clock) || teamDefaults.clock || []);
 data.pages ||= [];
 for (const x of ((data.team && data.team.extra) || teamDefaults.extra || [])) if (!data.pages.some((p) => p && p.slug === x.slug)) data.pages.push({ ...x });
@@ -133,6 +149,7 @@ for (const p of pages) {
   if (advMap[p.slug]) mine.adv = advMap[p.slug];
   const dd = docsFor(p.slug, false); if (dd) { mine.docs = dd; if (dd.fg) delete mine.fullGuide; }
   if (keys.cr[p.slug] && keys.cr[p.slug].weeks.length) mine.cr = { k: keys.cr[p.slug].key, weeks: keys.cr[p.slug].weeks.map(({ week, label, file, service, retail, comm }) => ({ week, label, file, service, retail, comm })) };
+  if (keys.inv && keys.inv.file && invOwners.has(p.slug)) mine.inv = { k: keys.inv.key, file: keys.inv.file, updated: keys.inv.updated };
   if (schedMap[p.slug]) mine.schedule = { weeks: schedMap[p.slug], updated: (data.schedule && data.schedule.updated) || null };
   if (socialAll) mine.social = { week: socialAll.week, posts: p.role === 'esthetician' ? socialAll.esti : socialAll.hair };
   fs.writeFileSync(path.join(outDir, k.id + '.json'), JSON.stringify(await seal({ daily: data.daily || null, mine }, k.secret, k.pin)));

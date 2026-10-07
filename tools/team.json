@@ -1,5 +1,5 @@
 {
-  "note": "Team app defaults used when a run's data.json has no 'team' section. clock = who sees the time clock. extra = people who need an app page even when they are not on the book. fullGuide = who gets the private Employment Guide button (the doc link itself lives in the keys file, not here). adv = associate advancement progress by person: {skillId: models done}; leave a person out until their progress is known. docsGuide = who gets the Desk guide PDF tabs (the handbook PDF is for everyone). social = this week’s post ideas (hair for stylists/associates, esti for estheticians); the Sunday run replaces it.",
+  "note": "Team app defaults used when a run's data.json has no 'team' section. clock = who sees the time clock. extra = people who need an app page even when they are not on the book. fullGuide = who gets the private Employment Guide button (the doc link itself lives in the keys file, not here). adv = associate advancement progress by person: {skillId: models done}; leave a person out until their progress is known. docsGuide = who gets the Desk guide PDF tabs (the handbook PDF is for everyone). social = this week’s post ideas (hair for stylists/associates, esti for estheticians); the Sunday run replaces it. invOwners = who gets the private Inventory tab (color report, backbar and retail lists).",
   "clock": [
     "adriana",
     "alyssa",
@@ -148,5 +148,9 @@
         "Explain a simple routine and why you add one thing at a time."
       ]
     ]
-  }
+  },
+  "invOwners": [
+    "alexandra",
+    "rose"
+  ]
 }
