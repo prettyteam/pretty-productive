@@ -403,6 +403,14 @@ function decide_(p) {
     sh.getRange(row, 7, 1, 2).setValues([[status, who]]);
     mail_(APPROVERS.filter(a => a.name !== who).map(a => a.email).concat([OWNER_EMAIL]).join(','), 'Time off ' + status.toLowerCase() + ': ' + r[1],
       who + ' ' + status.toLowerCase() + ' ' + r[1] + "'s time off request.");
+    // Let the employee know too, if she has an email on her My info page.
+    const inf = tvals_(TT.info).find(x => String(x[1]) === String(r[2])), to = inf && String(inf[6] || '').trim();
+    if (to && to.indexOf('@') > 0) {
+      const dd = v => v instanceof Date ? day_(v) : String(v), a = dd(r[3]), b = dd(r[4]);
+      mail_(to, 'Your time off request was ' + status.toLowerCase(),
+        'Hi ' + firstName_(r[1]) + ',\n\nYour request for ' + (a === b ? a : a + ' to ' + b) + ' off was ' + status.toLowerCase() + ' by ' + who + '.' +
+        '\n\nYou can always see the latest in your Employee Experience App, under Time off.\n\nTaffeta Salon & Spa');
+    }
     return page(status + '. ' + firstName_(r[1]) + ' will see it in her app.');
   } finally { lock.releaseLock(); }
 }
