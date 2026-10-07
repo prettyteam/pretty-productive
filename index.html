@@ -195,6 +195,7 @@ details.tryd summary::-webkit-details-marker{display:none}
 .tplus{margin-left:auto;font-family:var(--display);font-size:22px;line-height:1;color:var(--gold)}
 details.tryd[open] .tplus{transform:rotate(45deg)}
 details.tryd .try{padding:4px 0 6px}
+ul.triplist{margin:0;padding:2px 0 6px 20px;display:flex;flex-direction:column;gap:5px}ul.triplist li{line-height:1.4}
 .tico{background:no-repeat center/contain url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 2l1.9 6.1L20 10l-6.1 1.9L12 18l-1.9-6.1L4 10l6.1-1.9z' fill='%23b4925b'/%3E%3Cpath d='M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z' fill='%23b4925b'/%3E%3C/svg%3E")}
 /* ---- Team app look (Oct 2026): light cream, black outlines, small chocolate touches ---- */
 :root{--marshmallow:#f8f6f0;--ivory:#ffffff;--brown:#121212;--ink:#121212;--muted:#5f5b55;--line:#e2ded5;--gold:#4a3426;--choc:#4a3426;--card:#ffffff}
@@ -364,6 +365,7 @@ details.days summary::-webkit-details-marker{display:none}
 let EDITION='stylist';
 const $main=document.getElementById('main'), $sub=document.getElementById('mastSub');
 const money=n=>'$'+Number(n||0).toLocaleString('en-US',{minimumFractionDigits:n%1?2:0,maximumFractionDigits:2});
+function tipList(c){let a=Array.isArray(c.suggestions)&&c.suggestions.length?c.suggestions:String(c.suggestion||'').split(/(?<=[.!?”"])\s+/).map(x=>x.trim()).filter(Boolean);return h('ul',{class:'try triplist'},a.map(t=>h('li',{},t)))}
 function h(tag,attrs,...kids){const e=document.createElement(tag);for(const[k,v]of Object.entries(attrs||{})){if(v==null)continue;if(k==='class')e.className=v;else if(k.startsWith('on'))e.addEventListener(k.slice(2),v);else e.setAttribute(k,v)}for(const c of kids.flat()){if(c==null||c===false)continue;e.append(c.nodeType?c:document.createTextNode(String(c)))}return e}
 const pct=(a,g)=>g>0?Math.max(0,Math.min(100,Math.round(a/g*100))):0;
 const store={get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
@@ -414,7 +416,7 @@ function stylistPage(p){
           h('span',{class:'muted num',style:'font-size:14px'},money(c.services.reduce((a,s)=>a+s.price,0)))),
         c.services.length?h('div',{class:'chips'},c.services.map(s=>h('span',{class:'chip'+(s.addon?' add':'')},s.name+(s.addon?' · add-on':'')))):null,
         c.retail.length?h('p',{class:'muted',style:'font-size:14px'},'Took home: '+c.retail.map(r=>r.name).join(', ')):null,
-        c.suggestion?h('details',{class:'tryd'},h('summary',{},h('span',{class:'tico','aria-hidden':'true'}),h('span',{class:'tlabel'},'Suggestion'),h('span',{class:'tplus','aria-hidden':'true'},'+')),h('p',{class:'try'},c.suggestion)):null,
+        (c.suggestion||(c.suggestions&&c.suggestions.length))?h('details',{class:'tryd'},h('summary',{},h('span',{class:'tico','aria-hidden':'true'}),h('span',{class:'tlabel'},'Suggestion'),h('span',{class:'tplus','aria-hidden':'true'},'+')),tipList(c)):null,
         c.services.length?guestChecks(c,p):null)))));
     parts.push(h('section',{class:'section'},
       h('h2',{},'Today’s goals'),
@@ -1073,7 +1075,7 @@ function tomorrowView(){
           h('span',{class:'muted num',style:'font-size:14px'},money((c.services||[]).reduce((a,s)=>a+s.price,0)))),
         (c.services||[]).length?h('div',{class:'chips'},c.services.map(s=>h('span',{class:'chip'+(s.addon?' add':'')},s.name+(s.addon?' · add-on':'')))):null,
         est&&c.needsWaiver?h('p',{class:'muted',style:'font-size:14px'},'Needs a signed waiver before the service.'):null,
-        c.suggestion?h('details',{class:'tryd'},h('summary',{},h('span',{class:'tico','aria-hidden':'true'}),h('span',{class:'tlabel'},'Suggestion'),h('span',{class:'tplus','aria-hidden':'true'},'+')),h('p',{class:'try'},c.suggestion)):null))):
+        (c.suggestion||(c.suggestions&&c.suggestions.length))?h('details',{class:'tryd'},h('summary',{},h('span',{class:'tico','aria-hidden':'true'}),h('span',{class:'tlabel'},'Suggestion'),h('span',{class:'tplus','aria-hidden':'true'},'+')),tipList(c)):null))):
         h('p',{class:'soft'},'No guests booked yet.')),
     h('p',{class:'soft',style:'font-size:13px'},'The schedule can change. Check Today in the morning for the final lineup.'))];
 }
