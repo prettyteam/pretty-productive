@@ -1116,7 +1116,7 @@ function payrollView(){
   const people0=(ADM.data&&ADM.data.week===ymd(ws))?ADM.data.people:null;
   const people=people0&&(S.hoursList&&S.hoursList.length?people0.filter(p=>S.hoursList.indexOf(slugOf(p.name))>=0):people0);
   const RT=S.rates||{},RR=S.retailRate==null?10:S.retailRate;
-  const hrsOf=n=>{const q=people&&people.find(p=>String(p.name).toLowerCase().trim()===String(n).toLowerCase().trim());return q?q.min:null};
+  const MH=(pay&&pay.hours)||{};const hrsOf=n=>{const m=MH[slugOf(n)];if(m!=null)return Math.round(m*60);const q=people&&people.find(p=>String(p.name).toLowerCase().trim()===String(n).toLowerCase().trim());return q?q.min:null};
   rows.forEach(r=>{r._rate=r.rate!=null?r.rate:RT[slugOf(r.name)];r._comm=r.comm!=null?r.comm:(r._rate==null?null:Math.round((r.service*r._rate/100+r.retail*RR/100)*100)/100);r._min=hrsOf(r.name)});
   const T=rows.reduce((a,r)=>({s:a.s+r.service,r:a.r+r.retail,c:a.c+(r._comm||0)}),{s:0,r:0,c:0});
   const totMin=people?people.reduce((a,p)=>a+p.min,0):null;
@@ -1139,7 +1139,7 @@ function payrollView(){
         h('p',{class:'soft'},'This week’s totals appear after the Monday payroll report runs.'),
       h('p',{class:'soft',style:'font-size:13px'},'Take-home = each artist’s service rate on services plus '+RR+'% on retail. Hours come from the time clock. '+(pay&&pay.live?'Week to date from Paired Plus. Final numbers come from the Monday payroll report.':'From the Monday payroll report (Paired Plus Comm Sales Analysis).'))),
     h('section',{class:'section'},h('h2',{},'Clocked In Hours'),
-      people?h('div',{},people.map(p=>h('details',{class:'days lrow',style:'display:block'},
+      (pay&&pay.hours)?h('div',{},Object.keys(pay.hours).map(k=>h('div',{class:'lrow'},h('b',{},k.replace(/-/g,' ').replace(/\b\w/g,c=>c.toUpperCase())),h('b',{class:'num'},pay.hours[k]+' h'))),h('div',{class:'lrow'},h('b',{},'Total'),h('b',{class:'num'},Math.round(Object.values(pay.hours).reduce((a,b)=>a+b,0)*100)/100+' h'))):people?h('div',{},people.map(p=>h('details',{class:'days lrow',style:'display:block'},
         h('summary',{},h('div',{style:'display:flex;justify-content:space-between;gap:10px'},h('b',{},p.name,p.flags.map(f=>h('span',{class:'flag'},f))),h('span',{class:'num'},hrs(p.min)+' h'))),
         h('div',{class:'daysgrid'},[0,1,2,3,4,5,6].map(i=>{const d=new Date(ws.getTime()+i*864e5),k=ymd(d);
           return h('div',{},d.toLocaleDateString('en-US',{weekday:'short'}),h('b',{},p.days[k]?hrs(p.days[k]):'–'))})))),
