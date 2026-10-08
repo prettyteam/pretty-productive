@@ -317,6 +317,12 @@ body{padding-bottom:110px}
 .gsk{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;font-size:14px;padding:5px 0}
 .gsk .gst{letter-spacing:2px;white-space:nowrap}
 .gsk.dim{color:var(--muted)}
+.gsk.mk{grid-template-columns:1fr auto auto}
+.gsk small{display:block;font-size:12px;color:var(--muted)}
+.mbtn{width:34px;height:34px;border-radius:50%;border:1px solid #121212;background:#f8f6f0;color:#121212;font-size:20px;line-height:1;display:flex;align-items:center;justify-content:center;padding:0;cursor:pointer}
+.mbtn:active{background:#121212;color:#f8f6f0}.mbtn:focus-visible{outline:2px solid #121212;outline-offset:3px}
+.mtoast{position:fixed;left:16px;right:16px;bottom:calc(80px + env(safe-area-inset-bottom));z-index:7;max-width:520px;margin:0 auto;box-shadow:0 4px 14px rgba(18,18,18,.18);display:flex;align-items:center;justify-content:space-between;gap:10px;background:#121212;color:#f8f6f0;border-radius:12px;padding:10px 14px;font-size:14px}
+.mtoast button{background:none;border:1px solid #f8f6f0;color:#f8f6f0;border-radius:999px;padding:4px 12px;font-size:13px;cursor:pointer}
 table.mtab{width:100%;border-collapse:collapse;font-size:14.5px}
 table.mtab th{font-weight:400;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);text-align:right;padding:4px 4px 6px;border-bottom:1px solid var(--line)}
 table.mtab th:first-child,table.mtab td:first-child{text-align:left}
@@ -648,7 +654,7 @@ let HUB={data:null,err:null,busy:false,toast:'',tick:null};
 async function hubGet(){
   const st=S.mine&&S.mine.staff; if(!st||!API()) return;
   try{const r=await fetch(API()+'?staff='+encodeURIComponent(st.slug)+'&t='+encodeURIComponent(st.t)+'&_='+Date.now());
-    const j=await r.json(); if(!j.ok) throw new Error(j.error||'x'); HUB.data=j; HUB.err=null; HUB.at=Date.now();}
+    const j=await r.json(); if(!j.ok) throw new Error(j.error||'x'); HUB.data=j; HUB.err=null; HUB.at=Date.now(); if(S.mine.adv&&mqGet().length) await modelFlush();}
   catch(e){HUB.err=e.message==='link'?'link':'offline'}
   if(EDITION==='stylist') render();
 }
@@ -810,7 +816,39 @@ const ADV=[
   ['Phase 3 · Cutting',[['cut-long','Long layers',3],['cut-short','Short layers bob',3],['cut-grad','Graduated bob',3],['cut-pixie','Pixie',1],['cut-razor','Texture / razor cut',1]]],
   ['Men’s cutting',[['m-fade','Traditional fade',3],['m-soc','Scissor over comb',3]]],
   ['Formal styling',[['f-style','Formal styling',3]]]];
-function advView(adv){
+/* associates check off their own models: saved to the Model Log tab of the Team Hub sheet (with the date), on top of Alexandra's tally in adv.
+   A tap is kept on the phone until the sheet confirms it, so nothing is lost on a bad signal. */
+const MQ=()=>'pp-models:'+((S.mine.staff||{}).slug||ID);
+const mqGet=()=>{try{return JSON.parse(store.get(MQ())||'[]')}catch(e){return []}};
+const mqSet=q=>store.set(MQ(),JSON.stringify(q));
+let MTOAST=null;
+function myModels(){return ((HUB.data&&HUB.data.models)||[]).concat(mqGet())}
+async function modelSend(m){
+  const st=S.mine.staff;
+  const r=await fetch(API(),{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({type:'model',id:m.id,skill:m.skill,date:m.date,action:m.undo?'undo':'add',slug:st.slug,t:st.t})});
+  const j=await r.json(); if(!j.ok) throw new Error(j.error||'x');
+}
+async function modelFlush(){
+  const q=mqGet(); if(!q.length||!API()) return;
+  for(const m of q){try{await modelSend(m); mqSet(mqGet().filter(x=>x.k!==m.k)); if(HUB.data){HUB.data.models||=[]; if(m.undo){const i=HUB.data.models.map(x=>x.id).lastIndexOf(m.id); if(i>=0) HUB.data.models.splice(i,1);} else HUB.data.models.push({id:m.id,date:m.date});}}catch(e){break}}
+}
+async function modelTap(id,skill){
+  const m={id,skill,date:ymd(new Date()),k:Date.now()+'-'+Math.random().toString(36).slice(2,6)};
+  mqSet(mqGet().concat([m])); MTOAST={m,msg:skill+' model checked off · '+niceDay(m.date)}; render(); const me=MTOAST; setTimeout(()=>{if(MTOAST===me){MTOAST=null;render()}},7000);
+  await modelFlush(); if(mqGet().some(x=>x.k===m.k)) MTOAST.msg=skill+' model saved on your phone. It sends next time you open the app.'; render();
+}
+async function modelUndo(m){
+  const q=mqGet();
+  if(q.some(x=>x.k===m.k)) mqSet(q.filter(x=>x.k!==m.k));
+  else { mqSet(q.concat([{...m,undo:true,k:m.k+'u'}])); await modelFlush(); }
+  MTOAST=null; render();
+}
+function advView(adv0){
+  const logged=myModels().filter(m=>!m.undo), adv={...adv0};
+  mqGet().filter(m=>m.undo).forEach(u=>{const i=logged.map(x=>x.id).lastIndexOf(u.id); if(i>=0) logged.splice(i,1)});
+  logged.forEach(m=>{adv[m.id]=(adv[m.id]||0)+1});
+  const lastOf=id=>{const x=logged.filter(m=>m.id===id).pop(); return x?x.date:null};
+  const canTap=!!(S.mine.staff&&S.mine.staff.slug&&API());
   const ph=ADV.map(([name,sk])=>{const need=sk.reduce((a,x)=>a+x[2],0),got=sk.reduce((a,x)=>a+Math.min(x[2],adv[x[0]]||0),0);return {name,sk,need,got}});
   let cur=ph.findIndex(x=>x.got<x.need); if(cur<0) cur=ph.length-1;
   const c=ph[cur], left=c.need-c.got, started=ph.some(x=>x.got>0);
@@ -826,7 +864,13 @@ function advView(adv){
     h('div',{class:'gcard',style:'gap:6px'},ph.map((x,i)=>h('div',{class:'gph'},
       h('h3',{},x.name,h('small',{},i>cur?'locked':x.got+' / '+x.need)),
       i>cur?h('div',{class:'gsk dim'},h('span',{},x.sk.slice(0,4).map(k=>k[1]).join(' · ')+(x.sk.length>4?' …':'')),h('span',{},x.sk.length+' skills')):
-      x.sk.map(([id,l,n])=>h('div',{class:'gsk'},h('span',{},l),h('span',{class:'gst'},stars(adv[id]||0,n)))))))];
+      x.sk.map(([id,l,n])=>{const have=adv[id]||0, tap=canTap&&have<n, last=lastOf(id);
+        return h('div',{class:'gsk'+(canTap?' mk':'')},h('span',{},l,last?h('small',{},'last model '+niceDay(last)):null),h('span',{class:'gst'},stars(have,n)),
+          canTap?(tap?h('button',{class:'mbtn','aria-label':'I did a '+l.toLowerCase()+' model',title:'I did a model',onclick:()=>modelTap(id,l)},'+'):h('span',{style:'width:34px;text-align:center'},'✓')):null)})))),
+    MTOAST?h('div',{class:'mtoast',role:'status'},h('span',{},MTOAST.msg),h('button',{onclick:()=>modelUndo(MTOAST.m)},'Undo')):null,
+    logged.length?h('div',{class:'sec2'},h('span',{class:'lbl'},'Your models'),logged.slice(-6).reverse().map(m=>{const sk=ADV.flatMap(x=>x[1]).find(x=>x[0]===m.id);
+      return h('div',{class:'lrow'},h('span',{},sk?sk[1]:m.id),h('span',{class:'soft'},niceDay(m.date)))})):null,
+    canTap?h('p',{class:'soft',style:'font-size:13px;text-align:center;margin:0'},'Tap + after each model you finish. It saves with today’s date.'):null];
 }
 
 const STAR='M32 4 L40.2 22.6 L60.5 24.7 L45.3 38.3 L49.6 58.3 L32 48 L14.4 58.3 L18.7 38.3 L3.5 24.7 L23.8 22.6 Z';
@@ -1215,7 +1259,7 @@ function staffTabs(){
 }
 function staffNav(){
   const tabs=staffTabs(); if(tabs.length<2) return null;
-  return h('nav',{class:'nav','aria-label':'Sections'},h('div',{class:'in'},tabs.map(([k,l])=>h('button',{'aria-current':S.tab===k?'page':null,onclick:()=>{S.tab=k;store.set('pp-tab:'+ID,k);render();window.scrollTo(0,0);if(k==='home'||k==='off'||k==='inv'||k==='skin')hubGet()}},l))));
+  return h('nav',{class:'nav','aria-label':'Sections'},h('div',{class:'in'},tabs.map(([k,l])=>h('button',{'aria-current':S.tab===k?'page':null,onclick:()=>{S.tab=k;store.set('pp-tab:'+ID,k);render();window.scrollTo(0,0);if(k==='home'||k==='off'||k==='inv'||k==='skin'||k==='growth')hubGet()}},l))));
 }
 function weekCard(p){
   const wks=(p.schedule&&p.schedule.weeks)||[], today=ymd(new Date());

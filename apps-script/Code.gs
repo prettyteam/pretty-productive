@@ -66,7 +66,7 @@ function doPost(e) {
   lock.waitLock(20000);
   try {
     const d = JSON.parse(e.postData.contents || '{}');
-    if (['clock', 'timeoff', 'cover', 'take', 'profile', 'sign', 'stock'].indexOf(d.type) >= 0) return teamPost_(d);
+    if (['clock', 'timeoff', 'cover', 'take', 'profile', 'sign', 'stock', 'model'].indexOf(d.type) >= 0) return teamPost_(d);
     if (d.website) return json_({ ok: true });                       // spam trap
     const now = new Date();
     if (d.type === 'status') return setStatus_(d);
@@ -188,7 +188,8 @@ const TT = {
   shift: { name: 'Shifts', headers: ['Date', 'Name', 'App ID', 'Start', 'End'] },
   info:  { name: 'Team Info', headers: ['Name', 'App ID', 'Emergency contact name', 'Emergency contact phone', 'Relationship', 'Home address', 'Email', 'Venmo name', 'Instagram', 'Updated'] },
   sigs:  { name: 'Handbook Signatures', headers: ['Signed', 'Name', 'App ID', 'Typed signature', 'Document'] },
-  stock: { name: 'Stock Counts', headers: ['Updated', 'Name', 'App ID', 'Item ID', 'Item', 'On hand'] }
+  stock: { name: 'Stock Counts', headers: ['Updated', 'Name', 'App ID', 'Item ID', 'Item', 'On hand'] },
+  models: { name: 'Model Log', headers: ['Logged', 'Name', 'App ID', 'Skill ID', 'Skill', 'Model date'] }
 };
 const STOCK_EDITORS = ['alexandra', 'rose', 'carolyn'];   // who can change stock counts in the app (everyone else only sees them)
 
@@ -281,7 +282,7 @@ function staffGet_(p) {
     .map(r => ({ from: r[3] instanceof Date ? day_(r[3]) : String(r[3]), to: r[4] instanceof Date ? day_(r[4]) : String(r[4]), status: String(r[6] || 'Waiting') }));
   return json_({ ok: true, now: now.getTime(), me: { name: me.name, group: me.group, clock: me.clock },
     clock: { in: !!open, since: open ? open.getTime() : null, sinceLabel: open ? hhmm_(open) : null, todayMin: Math.round(todayMin), weekMin: Math.round(weekMin) },
-    shifts, ann, openShifts, myCover, myOff, info: myInfo_(me.slug), signed: mySigs_(me.slug), stock: stock_(), stockEdit: STOCK_EDITORS.indexOf(me.slug) >= 0 });
+    shifts, ann, openShifts, myCover, myOff, info: myInfo_(me.slug), signed: mySigs_(me.slug), stock: stock_(), stockEdit: STOCK_EDITORS.indexOf(me.slug) >= 0, models: myModels_(me.slug) });
 }
 
 /** Private: only the person's own row is ever returned. */
@@ -294,6 +295,11 @@ function stock_() {
   const o = {};
   tvals_(TT.stock).forEach(r => { if (r[3] !== '') o[String(r[3])] = { n: Number(r[5]), by: String(r[1]), at: r[0] instanceof Date ? day_(r[0]) : '' }; });
   return o;
+}
+/** Associate program models the person checked off in the app: [{id, date}], oldest first. */
+function myModels_(slug) {
+  return tvals_(TT.models).filter(r => String(r[2]) === slug && r[3] !== '')
+    .map(r => ({ id: String(r[3]), date: r[5] instanceof Date ? day_(r[5]) : String(r[5]) }));
 }
 function mySigs_(slug) {
   const o = {};
@@ -369,6 +375,19 @@ function teamPost_(d) {
     const row = [now, me.name, me.slug, id, clean_(d.item, 160), n];
     const sh = ttab_(TT.stock), i = tvals_(TT.stock).findIndex(r => String(r[3]) === id);
     if (i >= 0) sh.getRange(i + 2, 1, 1, row.length).setValues([row]); else sh.appendRow(row);
+    sh.getRange('A2:A').setNumberFormat('ddd mmm d, h:mm am/pm');
+    return json_({ ok: true });
+  }
+  if (d.type === 'model') {
+    const id = clean_(d.id, 40), date = String(d.date || '');
+    if (!/^[a-z0-9-]{2,40}$/.test(id) || !/^\d{4}-\d{2}-\d{2}$/.test(date)) return json_({ ok: false, error: 'model' });
+    const sh = ttab_(TT.models);
+    if (d.action === 'undo') {
+      const vals = tvals_(TT.models);
+      for (let i = vals.length - 1; i >= 0; i--) if (String(vals[i][2]) === me.slug && String(vals[i][3]) === id) { sh.deleteRow(i + 2); break; }
+      return json_({ ok: true });
+    }
+    sh.appendRow([now, me.name, me.slug, id, clean_(d.skill, 80), date]);
     sh.getRange('A2:A').setNumberFormat('ddd mmm d, h:mm am/pm');
     return json_({ ok: true });
   }
