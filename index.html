@@ -1150,24 +1150,27 @@ function skinView(){
     docBytes(p.file,p.k).then(b=>{SKIN.data=JSON.parse(new TextDecoder().decode(b));SKIN.loading=false;render()}).catch(()=>{SKIN.err=true;SKIN.loading=false;render()});}
   const head=h('div',{},h('span',{class:'lbl'},'Spa'),h('h1',{style:'font-size:28px'},'Skincare stock'));
   if(!SKIN.data) return [h('div',{class:'hub'},head,h('p',{class:'dmsg'},SKIN.err?'Couldn’t open this right now. Check your signal and try again.':'Opening…'))];
-  const rows=[], els=SKIN.data.skin.map(([br,item,retail,oh])=>{
-    const n=stockOf('r:'+br+'|'+item,oh);
-    const e=h('div',{class:'lrow'},h('span',{},h('b',{},item),h('small',{},retail?'retail '+money(retail):'')),
-      n==null?h('span',{class:'soft',style:'font-size:13px'},'—'):n<=0?h('span',{class:'chip add',style:'white-space:nowrap'},'Out'):h('b',{},String(n)));
-    e.dataset.q=item.toLowerCase(); rows.push(e); return e;});
-  return [h('div',{class:'hub'},head,h('p',{class:'soft',style:'font-size:13px;margin:-14px 0 0'},'On hand right now. Tell Alexandra or Rose when something runs low.'),
-    invSearch('Search a product',rows),h('section',{class:'section'},h('h2',{},'Biologique Recherche'),h('div',{class:'sec2'},els)))];
+  const edit=!!(HUB.data&&HUB.data.stockEdit), rows=[], inS=[], outS=[];
+  SKIN.data.skin.forEach(([br,item,retail,oh])=>{
+    const id='r:'+br+'|'+item, n=stockOf(id,oh);
+    const right=edit?null:n==null?h('span',{class:'soft',style:'font-size:13px'},'—'):n<=0?h('span',{class:'chip add',style:'white-space:nowrap'},'Out'):h('b',{},String(n));
+    const e=h('div',{class:'lrow','data-grp':n>0?'skin1':'skin0'},h('span',{},h('b',{},item),h('small',{},retail?'retail '+money(retail):''),edit?stockBox(id,item,oh!=null&&oh>=0?oh:null):null),right);
+    e.dataset.q=item.toLowerCase(); rows.push(e); (n>0?inS:outS).push(e);});
+  return [h('div',{class:'hub'},head,h('p',{class:'soft',style:'font-size:13px;margin:-14px 0 0'},edit?'Type the count you see on the shelf. It saves for the whole spa team.':'On hand right now. Tell Carolyn, Alexandra or Rose when something runs low.'),
+    invSearch('Search a product',rows),
+    h('section',{class:'section',id:'skin1'},h('h2',{},'In stock · '+inS.length),h('div',{class:'sec2'},inS.length?inS:h('p',{class:'soft'},'Nothing in stock yet.'))),
+    h('section',{class:'section',id:'skin0'},h('h2',{},'Out of stock · '+outS.length),h('div',{class:'sec2'},outS)))];
 }
 
 function staffTabs(){
   const p=S.mine||{}, st=p.staff||{}, t=[];
   if(st.slug) t.push(['home','Home']);
   if(p.inv&&p.inv.file) t.push(['inv','Inventory']);
+  if(p.skin&&p.skin.file) t.push(['skin','Skincare stock']);
   if(isGoalsPerson(p)) t.push(['today','Today']);
   if(isGoalsPerson(p)) t.push(['tomorrow',st.clock?'Tomorrow':'Schedule']);
   if(isGoalsPerson(p)||p.adv) t.push(['growth',p.adv?'Associate Program':'Growth']);
   if(p.cr&&p.cr.weeks&&p.cr.weeks.length) t.push(['cr','Weekly CR']);
-  if(p.skin&&p.skin.file) t.push(['skin','Skincare stock']);
   if(st.slug) t.push(['off','Time off']);
   t.push(['guide','Culture']);
   const dc=p.docs||{}; if(dc.hb) t.push(['hb','Handbook']); if(dc.fg) t.push(['fg','Desk guide']);

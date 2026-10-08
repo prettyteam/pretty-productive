@@ -190,7 +190,7 @@ const TT = {
   sigs:  { name: 'Handbook Signatures', headers: ['Signed', 'Name', 'App ID', 'Typed signature', 'Document'] },
   stock: { name: 'Stock Counts', headers: ['Updated', 'Name', 'App ID', 'Item ID', 'Item', 'On hand'] }
 };
-const STOCK_EDITORS = ['alexandra', 'rose'];   // who can change stock counts in the app (everyone else only sees them)
+const STOCK_EDITORS = ['alexandra', 'rose', 'carolyn'];   // who can change stock counts in the app (everyone else only sees them)
 
 
 /** The team list the setup fills in. After that, edit the Team tab directly (Group: stylist, esthetician or associate). */
