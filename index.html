@@ -1033,11 +1033,10 @@ async function stockSave(inp,id,item,n){
   const st=S.mine.staff; inp.classList.remove('ok','err');
   try{const r=await fetch(API(),{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({type:'stock',id,item,n,slug:st.slug,t:st.t})});
     const j=await r.json(); if(!j.ok) throw new Error(); (HUB.data.stock||={})[id]={n}; inp.classList.add('ok');}
-  catch(e){inp.classList.add('err'); inp.title='Didn’t save. Check your signal and try again.'}
+  catch(e){inp.classList.add('err'); const m=inp.parentNode.querySelector('small'); if(m) m.textContent=HUB.data&&HUB.data.stockEdit?'didn’t save, try again':'not saved yet (sheet update needed)'}
 }
 function stockBox(id,item,dflt){
   const n=stockOf(id,dflt);
-  if(!(HUB.data&&HUB.data.stockEdit)) return n!=null?h('small',{},n<=0?'Out of stock':n+' on hand'):null;
   const inp=h('input',{type:'number',inputmode:'numeric',min:'0',step:'1',value:n==null?'':String(n),'aria-label':'On hand: '+item});
   inp.addEventListener('change',()=>{const v=inp.value.trim(); if(/^\d{1,4}$/.test(v)) stockSave(inp,id,item,+v); else inp.classList.add('err')});
   return h('label',{class:'cntw'},inp,h('small',{class:'soft'},'on hand'));
