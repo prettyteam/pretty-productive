@@ -136,6 +136,20 @@ if (args.spa) {
     c.sha = sha; c.updated = new Date().toISOString().slice(0, 10);
   }
 }
+// Thank-you card list (new guests from Paired Plus). --cards <file.json> (kept OUTSIDE the repo): {month, guests:[{name, address, visit, saw}]}.
+// Sealed into docs/cards-*.enc with keys.cards.key; only team.json "cards" people get the key. A run without --cards keeps the last list.
+if (args.cards) {
+  const bytes = fs.readFileSync(args.cards);
+  const sha = createHash('sha256').update(bytes).digest('hex');
+  const c = (keys.cards ||= { key: Buffer.from(rand(32)).toString('base64') });
+  if (c.sha !== sha || !c.file || !fs.existsSync(path.join(root, 'docs', c.file + '.enc'))) {
+    if (c.file) { try { fs.unlinkSync(path.join(root, 'docs', c.file + '.enc')); } catch (e) {} }
+    c.file = 'cards-' + createHash('sha256').update(c.key + sha).digest('hex').slice(0, 16);
+    fs.mkdirSync(path.join(root, 'docs'), { recursive: true });
+    fs.writeFileSync(path.join(root, 'docs', c.file + '.enc'), await sealBytes(bytes, c.key));
+    c.sha = sha; c.updated = new Date().toISOString().slice(0, 10);
+  }
+}
 const spaFor = {};
 if (keys.spa && keys.spa.file && fs.existsSync(path.join(root, 'docs', keys.spa.file + '.enc'))) {
   const raw = fs.readFileSync(path.join(root, 'docs', keys.spa.file + '.enc'));
@@ -199,6 +213,7 @@ const guideUrl = keys.team && keys.team.guideUrl;
 const guideSet = new Set((data.team && data.team.docsGuide) || teamDefaults.docsGuide || []);
 const socialAll = (data.team && data.team.social) || teamDefaults.social || null;
 const schedMap = (data.schedule && data.schedule.people) || {};
+const cardsSet = new Set((data.team && data.team.cards) || teamDefaults.cards || []);
 const spaCost = new Set((data.team && data.team.spaCost) || teamDefaults.spaCost || []);
 const invOwners = new Set((data.team && data.team.invOwners) || teamDefaults.invOwners || []);
 const clockSet = new Set((data.team && data.team.clock) || teamDefaults.clock || []);
@@ -222,6 +237,7 @@ for (const p of pages) {
   if (keys.inv && keys.inv.file && invOwners.has(p.slug)) mine.inv = invFor[p.slug] || { k: keys.inv.key, file: keys.inv.file, updated: keys.inv.updated };
   if (invFor.skin && p.role === 'esthetician') mine.skin = invFor.skin;
   if (spaFor.full && spaCost.has(p.slug)) mine.spa = spaFor.full;
+  if (keys.cards && keys.cards.file && cardsSet.has(p.slug)) mine.cards = { k: keys.cards.key, file: keys.cards.file, updated: keys.cards.updated };
   if (spaFor.list && p.role === 'esthetician') mine.spaList = spaFor.list;
   if (schedMap[p.slug]) mine.schedule = { weeks: schedMap[p.slug], updated: (data.schedule && data.schedule.updated) || null };
   if (socialAll) mine.social = { week: socialAll.week, posts: p.role === 'esthetician' ? socialAll.esti : socialAll.hair };

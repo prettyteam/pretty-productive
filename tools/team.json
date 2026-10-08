@@ -1,5 +1,5 @@
 {
-  "note": "Team app defaults used when a run's data.json has no 'team' section. clock = who sees the time clock. extra = people who need an app page even when they are not on the book. fullGuide = who gets the private Employment Guide button (the doc link itself lives in the keys file, not here). adv = associate advancement progress by person: {skillId: models done}; leave a person out until their progress is known. Models associates check off in the app (Model Log tab of the Team Hub sheet) are added on top of adv in the app, so don't also add them here. docsGuide = who gets the Desk guide PDF tabs (the handbook PDF is for everyone). social = this week’s post ideas (hair for stylists/associates, esti for estheticians); the Sunday run replaces it. invOwners = who gets the private Inventory tab (color report, backbar and retail lists). invHide = numbers left out of one person’s Inventory tab (cpb = cost per bowl/mix). spaCost = who sees spa supply costs and backbar cost per spa service (a Spa sub-tab of Inventory); estheticians see the spa supply list without costs.",
+  "note": "Team app defaults used when a run's data.json has no 'team' section. clock = who sees the time clock. extra = people who need an app page even when they are not on the book. fullGuide = who gets the private Employment Guide button (the doc link itself lives in the keys file, not here). adv = associate advancement progress by person: {skillId: models done}; leave a person out until their progress is known. Models associates check off in the app (Model Log tab of the Team Hub sheet) are added on top of adv in the app, so don't also add them here. docsGuide = who gets the Desk guide PDF tabs (the handbook PDF is for everyone). social = this week’s post ideas (hair for stylists/associates, esti for estheticians); the Sunday run replaces it. invOwners = who gets the private Inventory tab (color report, backbar and retail lists). invHide = numbers left out of one person’s Inventory tab (cpb = cost per bowl/mix). cards = who gets the Thank-you cards tab (new guests list from Paired Plus, marked done one by one). spaCost = who sees spa supply costs and backbar cost per spa service (a Spa sub-tab of Inventory); estheticians see the spa supply list without costs.",
   "clock": [
     "adriana",
     "alyssa",
@@ -153,6 +153,7 @@
     "alexandra",
     "rose"
   ],
+  "cards": ["adriana"],
   "spaCost": ["alexandra"],
   "invHide": {
     "rose": [

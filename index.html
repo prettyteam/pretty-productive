@@ -317,6 +317,11 @@ body{padding-bottom:110px}
 .gsk{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;font-size:14px;padding:5px 0}
 .gsk .gst{letter-spacing:2px;white-space:nowrap}
 .gsk.dim{color:var(--muted)}
+.cbar{height:8px;border:1px solid #121212;border-radius:999px;margin-top:10px;overflow:hidden;background:#f8f6f0}.cbar span{display:block;height:100%;background:#121212}
+.crow{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;padding:12px 0;border-top:1px solid var(--line)}.crow:first-of-type{border-top:0}
+.crow small{display:block}.crow b{font-family:var(--display);font-weight:400;font-size:18px;display:block}.caddr{font-size:14px;line-height:1.4;margin:2px 0}
+.crow.next{background:#f8f6f0;border:1px solid #121212;border-radius:12px;padding:12px 14px}
+.cdone{border:1px solid #121212;background:#f8f6f0;color:#121212;border-radius:999px;padding:8px 16px;font-size:14px;cursor:pointer}.cdone:active{background:#121212;color:#f8f6f0}
 .gsk.mk{grid-template-columns:1fr auto auto}
 .gsk small{display:block;font-size:12px;color:var(--muted)}
 .mbtn{width:34px;height:34px;border-radius:50%;border:1px solid #121212;background:#f8f6f0;color:#121212;font-size:20px;line-height:1;display:flex;align-items:center;justify-content:center;padding:0;cursor:pointer}
@@ -1242,11 +1247,41 @@ function skinSpa(edit){
   if(!SPA.data) return [h('div',{'data-nosearch':'1'},head,h('p',{class:'dmsg'},SPA.err?'Couldn’t open the supply list right now.':'Opening…'))];
   return [h('div',{'data-nosearch':'1'},head,h('p',{class:'soft',style:'font-size:13px;margin:4px 0 0'},edit?'Count what’s in the spa room and type it in.':'Tell Carolyn when something runs low.'),...spaSupplies(SPA.data.supplies||[],edit,false))];
 }
+/* Thank-you cards: new guests from Paired Plus. Tapping Done hides that guest on this phone for good, so the list shows where she left off. */
+let CARDS={data:null,err:null,loading:false,key:null}, CTOAST=null;
+const cardKey=g=>(g.name+'|'+(g.address||'')).toLowerCase();
+const cdKey=()=>'pp-cards-done:'+((S.mine.staff||{}).slug||ID);
+const cdGet=()=>{try{return JSON.parse(store.get(cdKey())||'[]')}catch(e){return []}};
+const cdSet=a=>store.set(cdKey(),JSON.stringify(a));
+function cardsView(){
+  const p=S.mine.cards;
+  if(p&&!(CARDS.key===p.file&&(CARDS.data||CARDS.loading))){CARDS={data:null,err:null,loading:true,key:p.file};
+    docBytes(p.file,p.k).then(b=>{CARDS.data=JSON.parse(new TextDecoder().decode(b));CARDS.loading=false;render()}).catch(()=>{CARDS.err=true;CARDS.loading=false;render()});}
+  const head=h('div',{},h('span',{class:'lbl'},'New guests'),h('h1',{style:'font-size:28px'},'Thank-you cards'));
+  if(!CARDS.data) return [h('div',{class:'hub'},head,h('p',{class:'dmsg'},CARDS.err?'Couldn’t open this right now. Check your signal and try again.':'Opening…'))];
+  const all=CARDS.data.guests||[], done=new Set(cdGet()), left=all.filter(g=>!done.has(cardKey(g)));
+  const n=all.length-left.length, pc=all.length?Math.round(n/all.length*100):0;
+  const markDone=g=>{cdSet(cdGet().concat([cardKey(g)])); const me=CTOAST={g,msg:'Done: '+g.name}; render(); setTimeout(()=>{if(CTOAST===me){CTOAST=null;render()}},6000)};
+  const undo=g=>{cdSet(cdGet().filter(k=>k!==cardKey(g))); CTOAST=null; render()};
+  return [h('div',{class:'hub'},head,
+    h('p',{class:'soft',style:'font-size:13.5px;margin:-14px 0 0'},(CARDS.data.month?'First-time guests · '+CARDS.data.month:'First-time guests')),
+    h('div',{class:'card2'},h('div',{style:'display:flex;justify-content:space-between;align-items:baseline'},h('b',{style:'font-family:var(--display);font-size:22px;font-weight:400'},left.length?left.length+' to go':'All done!'),h('span',{class:'soft',style:'font-size:13px'},n+' of '+all.length+' written')),
+      h('div',{class:'cbar'},h('span',{style:'width:'+pc+'%'}))),
+    left.length?h('div',{class:'sec2'},left.map((g,i)=>h('div',{class:'crow'+(i===0?' next':'')},
+      h('div',{},i===0?h('span',{class:'lbl',style:'font-size:10px'},'Up next'):null,h('b',{},g.name),
+        g.address?h('div',{class:'caddr'},String(g.address).split('\n').map(l=>h('div',{},l))):h('small',{class:'soft'},'No address on file'),
+        (g.visit||g.saw)?h('small',{class:'soft'},'First visit'+(g.visit?' '+g.visit:'')+(g.saw?' with '+g.saw:'')):null),
+      h('button',{class:'cdone',onclick:()=>markDone(g),'aria-label':'Done with '+g.name},'Done')))):
+      h('p',{class:'soft',style:'text-align:center'},'Every card is written. Thank you!'),
+    h('p',{class:'soft',style:'font-size:12.5px;text-align:center;margin:0'},'Tap Done after each card. That guest leaves your list for good.')),
+    CTOAST?h('div',{class:'mtoast',role:'status'},h('span',{},CTOAST.msg),h('button',{onclick:()=>undo(CTOAST.g)},'Undo')):null];
+}
 function staffTabs(){
   const p=S.mine||{}, st=p.staff||{}, t=[];
   if(st.slug) t.push(['home','Home']);
   if(p.inv&&p.inv.file) t.push(['inv','Inventory']);
   if(p.skin&&p.skin.file) t.push(['skin','Skincare stock']);
+  if(p.cards&&p.cards.file) t.push(['cards','Thank-you cards']);
   if(isGoalsPerson(p)) t.push(['today','Today']);
   if(isGoalsPerson(p)) t.push(['tomorrow',st.clock?'Tomorrow':'Schedule']);
   if(isGoalsPerson(p)||p.adv) t.push(['growth',p.adv?'Associate Program':'Growth']);
@@ -1316,6 +1351,7 @@ function staffRender(){
   if(S.tab==='cr') return crView();
   if(S.tab==='inv') return invView();
   if(S.tab==='skin') return skinView();
+  if(S.tab==='cards') return cardsView();
   if(S.tab==='off') return offView();
   if(S.tab==='guide') return guideView();
   if(S.tab==='hb') return hbView();
