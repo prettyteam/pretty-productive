@@ -1080,7 +1080,7 @@ function invBackbar(B){
   const groups={}; B.rows.forEach(r=>(groups[r[0]]||=[]).push(r));
   const rows=[], out=[];
   const bb=B.bb;
-  out.push(h('div',{class:'card2','data-nosearch':'1'},h('span',{class:'lbl'},'Brazilian Blowout · per treatment'),
+  const bbCard=(h('div',{class:'card2','data-nosearch':'1'},h('span',{class:'lbl'},'Brazilian Blowout · per treatment'),
     bb.lengths.map(([n,r,c])=>h('div',{class:'lrow'},h('span',{},h('b',{},n),h('small',{},r)),h('b',{},money(c)))),
     h('small',{class:'soft'},'12 oz solution $'+bb.price+' from Paramount = '+money(bb.perOz)+'/oz. '+bb.promo+'.')));
   Object.entries(groups).forEach(([g,list],gi)=>{
@@ -1091,6 +1091,7 @@ function invBackbar(B){
       e.dataset.q=(item+' '+br+' '+line+' '+sup).toLowerCase(); rows.push(e); return e;});
     out.push(h('section',{class:'section',id:gid},h('h2',{},g+' · '+list.length),h('div',{class:'sec2'},els)));
   });
+  out.push(bbCard);
   out.push(h('section',{class:'section','data-nosearch':'1'},h('h2',{},'Supplies'),h('div',{class:'sec2'},B.supplies.map(([i,s,sz,c,u])=>h('div',{class:'lrow'},h('span',{},h('b',{},i),h('small',{},s+' · '+sz+(u?' · '+u:'')),stockBox('s:'+i,i,null)),h('b',{},money(c)))))));
   out.push(h('section',{class:'section','data-nosearch':'1'},h('h2',{},'Shipping'),h('div',{class:'sec2'},Object.entries(B.ship).map(([s,x])=>h('div',{class:'lrow'},h('span',{},h('b',{},s),h('small',{},x)))))));
   return [invSearch('Search a shade, brand or supplier',rows),...out];
@@ -1131,9 +1132,9 @@ function invMerch(R){
 }
 function invView(){
   invLoad();
-  const sub=S.invt||'report';
+  const sub=S.invt||'back';
   const head=h('div',{},h('span',{class:'lbl'},'Just for you'),h('h1',{style:'font-size:28px'},'Inventory'));
-  const tabs=h('div',{class:'dtabs',role:'tablist'},[['report','Color report'],['back','Backbar list'],['retail','Retail list'],['merch','Hi Pretty merch']].map(([k,l])=>h('button',{role:'tab','aria-current':String(sub===k),onclick:()=>{S.invt=k;render();window.scrollTo(0,0)}},l)));
+  const tabs=h('div',{class:'dtabs',role:'tablist'},[['back','Backbar counts'],['retail','Retail counts'],['report','Color report'],['merch','Hi Pretty merch']].map(([k,l])=>h('button',{role:'tab','aria-current':String(sub===k),onclick:()=>{S.invt=k;render();window.scrollTo(0,0)}},l)));
   if(!INV.data) return [h('div',{class:'hub'},head,tabs,h('p',{class:'dmsg'},INV.err?'Couldn’t open this right now. Check your signal and try again.':'Opening…'))];
   const D=INV.data;
   const body=sub==='back'?invBackbar(D.backbar):sub==='retail'?invRetail(D.retail,D.merged,D.check):sub==='merch'?invMerch(D.retail):invReport(D.report);
@@ -1160,11 +1161,11 @@ function skinView(){
 function staffTabs(){
   const p=S.mine||{}, st=p.staff||{}, t=[];
   if(st.slug) t.push(['home','Home']);
+  if(p.inv&&p.inv.file) t.push(['inv','Inventory']);
   if(isGoalsPerson(p)) t.push(['today','Today']);
   if(isGoalsPerson(p)) t.push(['tomorrow',st.clock?'Tomorrow':'Schedule']);
   if(isGoalsPerson(p)||p.adv) t.push(['growth',p.adv?'Associate Program':'Growth']);
   if(p.cr&&p.cr.weeks&&p.cr.weeks.length) t.push(['cr','Weekly CR']);
-  if(p.inv&&p.inv.file) t.push(['inv','Inventory']);
   if(p.skin&&p.skin.file) t.push(['skin','Skincare stock']);
   if(st.slug) t.push(['off','Time off']);
   t.push(['guide','Culture']);
