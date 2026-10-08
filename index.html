@@ -226,6 +226,7 @@ body{padding-bottom:110px}
 .obtn.sm{height:32px;padding:0 16px;font-size:11px;letter-spacing:.16em}
 .lbl{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
 .sec2{display:flex;flex-direction:column;gap:2px}
+.cntw{display:flex;align-items:center;gap:6px;margin-top:6px}.cntw input{font:inherit;font-size:16px;width:76px;height:36px;border:1px solid var(--line);border-radius:4px;background:#fbfaf7;padding:0 8px;color:var(--ink)}.cntw input.ok{border-color:#5a8a5a}.cntw input.err{border-color:#b04a3a}
 .lrow{display:flex;justify-content:space-between;align-items:center;gap:12px;font-size:15px;padding:11px 0;border-bottom:1px solid var(--line)}
 .lrow:last-child{border-bottom:0}
 .lrow b{font-family:var(--display);font-weight:400}
@@ -1026,6 +1027,21 @@ function invLoad(){
   docBytes(p.file,p.k).then(b=>{INV.data=JSON.parse(new TextDecoder().decode(b));INV.loading=false;render()})
     .catch(()=>{INV.err=true;INV.loading=false;render()});
 }
+/* on-hand counts: typed in the app by Alexandra and Rose (Stock Counts tab of the Team Hub sheet), else the last inventory report */
+const stockOf=(id,dflt)=>{const x=HUB.data&&HUB.data.stock&&HUB.data.stock[id];return x?x.n:dflt};
+async function stockSave(inp,id,item,n){
+  const st=S.mine.staff; inp.classList.remove('ok','err');
+  try{const r=await fetch(API(),{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({type:'stock',id,item,n,slug:st.slug,t:st.t})});
+    const j=await r.json(); if(!j.ok) throw new Error(); (HUB.data.stock||={})[id]={n}; inp.classList.add('ok');}
+  catch(e){inp.classList.add('err'); inp.title='Didn’t save. Check your signal and try again.'}
+}
+function stockBox(id,item,dflt){
+  const n=stockOf(id,dflt);
+  if(!(HUB.data&&HUB.data.stockEdit)) return n!=null?h('small',{},n<=0?'Out of stock':n+' on hand'):null;
+  const inp=h('input',{type:'number',inputmode:'numeric',min:'0',step:'1',value:n==null?'':String(n),'aria-label':'On hand: '+item});
+  inp.addEventListener('change',()=>{const v=inp.value.trim(); if(/^\d{1,4}$/.test(v)) stockSave(inp,id,item,+v); else inp.classList.add('err')});
+  return h('label',{class:'cntw'},inp,h('small',{class:'soft'},'on hand'));
+}
 function invSearch(placeholder,rows){
   const inp=h('input',{type:'search',placeholder,autocomplete:'off','aria-label':placeholder});
   inp.addEventListener('input',()=>{const q=inp.value.trim().toLowerCase();
@@ -1043,7 +1059,7 @@ function invReport(R){
   return [
     h('p',{class:'soft',style:'font-size:13.5px;margin:0'},'Week of '+R.week+' · ran '+R.ran),
     h('section',{class:'section'},h('div',{class:'teamgrid'},
-      stat('Cost per bowl',money(t.cpb),t.avgMix),stat('Bowls mixed',String(t.bowls),t.grams.toLocaleString()+' g'),
+      t.cpb!=null?stat('Cost per bowl',money(t.cpb),t.avgMix):null,stat('Bowls mixed',String(t.bowls),t.grams.toLocaleString()+' g'),
       stat('Over-mixed',money(t.over),'over the scale recipe'),stat('Not weighed',String(t.notWeighed),'color services'))),
     h('section',{class:'section'},h('h2',{},'Cost per service'),h('div',{class:'sec2'},
       R.services.map(([s,n,cb,f,tot])=>h('div',{class:'lrow'},h('span',{},h('b',{},s),h('small',{},n+' last week'+(f?' · '+f+' foils':''))),h('b',{},money(tot)))),
@@ -1071,12 +1087,12 @@ function invBackbar(B){
   Object.entries(groups).forEach(([g,list],gi)=>{
     const gid='invg'+gi;
     const els=list.map(([cat,br,line,item,size,sup,cost,date,cpg,used,note])=>{
-      const e=h('div',{class:'lrow','data-grp':gid},h('span',{},h('b',{},item),h('small',{},br+' '+line+' · '+(sup||'?')+(size?' · '+size:'')+(note?' · '+note:''))),
+      const e=h('div',{class:'lrow','data-grp':gid},h('span',{},h('b',{},item),h('small',{},br+' '+line+' · '+(sup||'?')+(size?' · '+size:'')+(note?' · '+note:'')),stockBox('b:'+br+'|'+line+'|'+item,item,null)),
         h('span',{style:'text-align:right;white-space:nowrap'},cost!=null?h('b',{},money(cost)):h('span',{class:'soft'},'—'),h('small',{},cpgTxt(cpg))));
       e.dataset.q=(item+' '+br+' '+line+' '+sup).toLowerCase(); rows.push(e); return e;});
     out.push(h('section',{class:'section',id:gid},h('h2',{},g+' · '+list.length),h('div',{class:'sec2'},els)));
   });
-  out.push(h('section',{class:'section','data-nosearch':'1'},h('h2',{},'Supplies'),h('div',{class:'sec2'},B.supplies.map(([i,s,sz,c,u])=>h('div',{class:'lrow'},h('span',{},h('b',{},i),h('small',{},s+' · '+sz+(u?' · '+u:''))),h('b',{},money(c)))))));
+  out.push(h('section',{class:'section','data-nosearch':'1'},h('h2',{},'Supplies'),h('div',{class:'sec2'},B.supplies.map(([i,s,sz,c,u])=>h('div',{class:'lrow'},h('span',{},h('b',{},i),h('small',{},s+' · '+sz+(u?' · '+u:'')),stockBox('s:'+i,i,null)),h('b',{},money(c)))))));
   out.push(h('section',{class:'section','data-nosearch':'1'},h('h2',{},'Shipping'),h('div',{class:'sec2'},Object.entries(B.ship).map(([s,x])=>h('div',{class:'lrow'},h('span',{},h('b',{},s),h('small',{},x)))))));
   return [invSearch('Search a shade, brand or supplier',rows),...out];
 }
@@ -1087,7 +1103,7 @@ function invRetail(R,merged,check){
     const gid='invr'+gi;
     const els=list.map(([br,item,sup,cost,src,retail,oh,ytd])=>{
       const est=/^est/.test(src||'');
-      const e=h('div',{class:'lrow','data-grp':gid},h('span',{},h('b',{},item),h('small',{},(retail?'retail '+money(retail):'no retail price')+(oh!=null?' · '+oh+' on hand':'')+(ytd?' · '+ytd+' sold':''))),
+      const e=h('div',{class:'lrow','data-grp':gid},h('span',{},h('b',{},item),h('small',{},(retail?'retail '+money(retail):'no retail price')+(ytd?' · '+ytd+' sold':'')),stockBox('r:'+br+'|'+item,item,oh)),
         h('span',{style:'text-align:right;white-space:nowrap'},cost?h('b',{},money(cost)):h('span',{class:'soft',style:'font-size:13px'},'no cost'),h('small',{},cost?(est?'cost · est.':'cost'):'not found')));
       e.dataset.q=(item+' '+br+' '+sup).toLowerCase(); rows.push(e); return e;});
     out.push(h('section',{class:'section',id:gid},h('h2',{},b),h('small',{class:'soft',style:'margin-top:-8px'},list[0][2]),h('div',{class:'sec2'},els)));
@@ -1110,6 +1126,23 @@ function invView(){
   return [h('div',{class:'hub'},head,h('p',{class:'soft',style:'font-size:13px;margin:-14px 0 0'},'Updated '+D.updated+' · only you can see this'),tabs,...body)];
 }
 
+/* estheticians: Skincare stock (Biologique Recherche on-hand counts, no costs) */
+let SKIN={data:null,err:null,loading:false,key:null};
+function skinView(){
+  const p=S.mine.skin;
+  if(p&&!(SKIN.key===p.file&&(SKIN.data||SKIN.loading))){SKIN={data:null,err:null,loading:true,key:p.file};
+    docBytes(p.file,p.k).then(b=>{SKIN.data=JSON.parse(new TextDecoder().decode(b));SKIN.loading=false;render()}).catch(()=>{SKIN.err=true;SKIN.loading=false;render()});}
+  const head=h('div',{},h('span',{class:'lbl'},'Spa'),h('h1',{style:'font-size:28px'},'Skincare stock'));
+  if(!SKIN.data) return [h('div',{class:'hub'},head,h('p',{class:'dmsg'},SKIN.err?'Couldn’t open this right now. Check your signal and try again.':'Opening…'))];
+  const rows=[], els=SKIN.data.skin.map(([br,item,retail,oh])=>{
+    const n=stockOf('r:'+br+'|'+item,oh);
+    const e=h('div',{class:'lrow'},h('span',{},h('b',{},item),h('small',{},retail?'retail '+money(retail):'')),
+      n==null?h('span',{class:'soft',style:'font-size:13px'},'—'):n<=0?h('span',{class:'chip add',style:'white-space:nowrap'},'Out'):h('b',{},String(n)));
+    e.dataset.q=item.toLowerCase(); rows.push(e); return e;});
+  return [h('div',{class:'hub'},head,h('p',{class:'soft',style:'font-size:13px;margin:-14px 0 0'},'On hand right now. Tell Alexandra or Rose when something runs low.'),
+    invSearch('Search a product',rows),h('section',{class:'section'},h('h2',{},'Biologique Recherche'),h('div',{class:'sec2'},els)))];
+}
+
 function staffTabs(){
   const p=S.mine||{}, st=p.staff||{}, t=[];
   if(st.slug) t.push(['home','Home']);
@@ -1118,6 +1151,7 @@ function staffTabs(){
   if(isGoalsPerson(p)||p.adv) t.push(['growth',p.adv?'Associate Program':'Growth']);
   if(p.cr&&p.cr.weeks&&p.cr.weeks.length) t.push(['cr','Weekly CR']);
   if(p.inv&&p.inv.file) t.push(['inv','Inventory']);
+  if(p.skin&&p.skin.file) t.push(['skin','Skincare stock']);
   if(st.slug) t.push(['off','Time off']);
   t.push(['guide','Culture']);
   const dc=p.docs||{}; if(dc.hb) t.push(['hb','Handbook']); if(dc.fg) t.push(['fg','Desk guide']);
@@ -1126,7 +1160,7 @@ function staffTabs(){
 }
 function staffNav(){
   const tabs=staffTabs(); if(tabs.length<2) return null;
-  return h('nav',{class:'nav','aria-label':'Sections'},h('div',{class:'in'},tabs.map(([k,l])=>h('button',{'aria-current':S.tab===k?'page':null,onclick:()=>{S.tab=k;store.set('pp-tab:'+ID,k);render();window.scrollTo(0,0);if(k==='home'||k==='off')hubGet()}},l))));
+  return h('nav',{class:'nav','aria-label':'Sections'},h('div',{class:'in'},tabs.map(([k,l])=>h('button',{'aria-current':S.tab===k?'page':null,onclick:()=>{S.tab=k;store.set('pp-tab:'+ID,k);render();window.scrollTo(0,0);if(k==='home'||k==='off'||k==='inv'||k==='skin')hubGet()}},l))));
 }
 function weekCard(p){
   const wks=(p.schedule&&p.schedule.weeks)||[], today=ymd(new Date());
@@ -1182,6 +1216,7 @@ function staffRender(){
   if(S.tab==='growth') return growthView();
   if(S.tab==='cr') return crView();
   if(S.tab==='inv') return invView();
+  if(S.tab==='skin') return skinView();
   if(S.tab==='off') return offView();
   if(S.tab==='guide') return guideView();
   if(S.tab==='hb') return hbView();

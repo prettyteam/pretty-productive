@@ -66,7 +66,7 @@ function doPost(e) {
   lock.waitLock(20000);
   try {
     const d = JSON.parse(e.postData.contents || '{}');
-    if (['clock', 'timeoff', 'cover', 'take', 'profile', 'sign'].indexOf(d.type) >= 0) return teamPost_(d);
+    if (['clock', 'timeoff', 'cover', 'take', 'profile', 'sign', 'stock'].indexOf(d.type) >= 0) return teamPost_(d);
     if (d.website) return json_({ ok: true });                       // spam trap
     const now = new Date();
     if (d.type === 'status') return setStatus_(d);
@@ -187,8 +187,10 @@ const TT = {
   ann:   { name: 'Announcements', headers: ['Date', 'Message', 'From'] },
   shift: { name: 'Shifts', headers: ['Date', 'Name', 'App ID', 'Start', 'End'] },
   info:  { name: 'Team Info', headers: ['Name', 'App ID', 'Emergency contact name', 'Emergency contact phone', 'Relationship', 'Home address', 'Email', 'Venmo name', 'Instagram', 'Updated'] },
-  sigs:  { name: 'Handbook Signatures', headers: ['Signed', 'Name', 'App ID', 'Typed signature', 'Document'] }
+  sigs:  { name: 'Handbook Signatures', headers: ['Signed', 'Name', 'App ID', 'Typed signature', 'Document'] },
+  stock: { name: 'Stock Counts', headers: ['Updated', 'Name', 'App ID', 'Item ID', 'Item', 'On hand'] }
 };
+const STOCK_EDITORS = ['alexandra', 'rose'];   // who can change stock counts in the app (everyone else only sees them)
 
 
 /** The team list the setup fills in. After that, edit the Team tab directly (Group: stylist, esthetician or associate). */
@@ -279,13 +281,19 @@ function staffGet_(p) {
     .map(r => ({ from: r[3] instanceof Date ? day_(r[3]) : String(r[3]), to: r[4] instanceof Date ? day_(r[4]) : String(r[4]), status: String(r[6] || 'Waiting') }));
   return json_({ ok: true, now: now.getTime(), me: { name: me.name, group: me.group, clock: me.clock },
     clock: { in: !!open, since: open ? open.getTime() : null, sinceLabel: open ? hhmm_(open) : null, todayMin: Math.round(todayMin), weekMin: Math.round(weekMin) },
-    shifts, ann, openShifts, myCover, myOff, info: myInfo_(me.slug), signed: mySigs_(me.slug) });
+    shifts, ann, openShifts, myCover, myOff, info: myInfo_(me.slug), signed: mySigs_(me.slug), stock: stock_(), stockEdit: STOCK_EDITORS.indexOf(me.slug) >= 0 });
 }
 
 /** Private: only the person's own row is ever returned. */
 function myInfo_(slug) {
   const r = tvals_(TT.info).find(r => String(r[1]) === slug);
   return r ? { ecName: String(r[2]), ecPhone: String(r[3]), ecRel: String(r[4]), address: String(r[5]), email: String(r[6]), venmo: String(r[7]), instagram: String(r[8]) } : null;
+}
+/** Latest on-hand count per item, typed in the app by Alexandra or Rose: {itemId: {n, by, at}}. */
+function stock_() {
+  const o = {};
+  tvals_(TT.stock).forEach(r => { if (r[3] !== '') o[String(r[3])] = { n: Number(r[5]), by: String(r[1]), at: r[0] instanceof Date ? day_(r[0]) : '' }; });
+  return o;
 }
 function mySigs_(slug) {
   const o = {};
@@ -352,6 +360,16 @@ function teamPost_(d) {
     const sh = ttab_(TT.info), i = tvals_(TT.info).findIndex(r => String(r[1]) === me.slug);
     if (i >= 0) sh.getRange(i + 2, 1, 1, row.length).setValues([row]); else sh.appendRow(row);
     sh.getRange('J2:J').setNumberFormat('ddd mmm d, h:mm am/pm');
+    return json_({ ok: true });
+  }
+  if (d.type === 'stock') {
+    if (STOCK_EDITORS.indexOf(me.slug) < 0) return json_({ ok: false, error: 'stock' });
+    const id = clean_(d.id, 160), n = Number(d.n);
+    if (!id || !(n >= 0 && n <= 9999) || Math.floor(n) !== n) return json_({ ok: false, error: 'count' });
+    const row = [now, me.name, me.slug, id, clean_(d.item, 160), n];
+    const sh = ttab_(TT.stock), i = tvals_(TT.stock).findIndex(r => String(r[3]) === id);
+    if (i >= 0) sh.getRange(i + 2, 1, 1, row.length).setValues([row]); else sh.appendRow(row);
+    sh.getRange('A2:A').setNumberFormat('ddd mmm d, h:mm am/pm');
     return json_({ ok: true });
   }
   if (d.type === 'sign') {

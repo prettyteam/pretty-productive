@@ -121,6 +121,43 @@ if (args.inv) {
     c.sha = sha; c.updated = new Date().toISOString().slice(0, 10);
   }
 }
+// invHide (team.json) = fields left out of one person's copy of the Inventory tab, e.g. {"rose":["cpb"]} drops cost per bowl (cost per mix).
+// That person gets their own copy, sealed with its own key, so the hidden numbers never reach their device.
+const invHideMap = { ...(JSON.parse(fs.readFileSync(path.join(root, 'tools', 'team.json'), 'utf8')).invHide || {}), ...((data.team && data.team.invHide) || {}) };
+const HIDE = { cpb: (d) => { delete d.report.tiles.cpb; delete d.report.tiles.avgMix; d.report.services = d.report.services.map((r) => { const x = r.slice(); x[2] = null; return x; }); } };
+const invFor = {};
+if (keys.inv && keys.inv.file && fs.existsSync(path.join(root, 'docs', keys.inv.file + '.enc'))) {
+  const raw = fs.readFileSync(path.join(root, 'docs', keys.inv.file + '.enc'));
+  const k0 = await crypto.subtle.importKey('raw', Buffer.from(keys.inv.key, 'base64'), 'AES-GCM', false, ['decrypt']);
+  const full = new TextDecoder().decode(await crypto.subtle.decrypt({ name: 'AES-GCM', iv: raw.subarray(0, 12) }, k0, raw.subarray(12)));
+  keys.inv.variants ||= {};
+  for (const [slug, hide] of Object.entries(invHideMap)) {
+    const id = [...hide].sort().join(',');
+    if (!id) continue;
+    const d = JSON.parse(full); for (const f of hide) if (HIDE[f]) HIDE[f](d);
+    const bytes = Buffer.from(JSON.stringify(d));
+    const sha = createHash('sha256').update(bytes).digest('hex');
+    const v = (keys.inv.variants[id] ||= { key: Buffer.from(rand(32)).toString('base64') });
+    if (v.sha !== sha || !v.file || !fs.existsSync(path.join(root, 'docs', v.file + '.enc'))) {
+      if (v.file) { try { fs.unlinkSync(path.join(root, 'docs', v.file + '.enc')); } catch (e) {} }
+      v.file = 'inv-' + createHash('sha256').update(v.key + sha).digest('hex').slice(0, 16);
+      fs.writeFileSync(path.join(root, 'docs', v.file + '.enc'), await sealBytes(bytes, v.key));
+      v.sha = sha;
+    }
+    invFor[slug] = { k: v.key, file: v.file, updated: keys.inv.updated };
+  }
+  // Estheticians' Skincare stock tab: Biologique Recherche names, retail prices and last counts only (no costs).
+  const skin = { updated: keys.inv.updated, skin: (JSON.parse(full).retail || []).filter((r) => r[0] === 'Biologique Recherche').map((r) => [r[0], r[1], r[5] || null, r[6] == null ? null : r[6]]) };
+  const sb = Buffer.from(JSON.stringify(skin)), ssha = createHash('sha256').update(sb).digest('hex');
+  const sv = (keys.inv.skin ||= { key: Buffer.from(rand(32)).toString('base64') });
+  if (sv.sha !== ssha || !sv.file || !fs.existsSync(path.join(root, 'docs', sv.file + '.enc'))) {
+    if (sv.file) { try { fs.unlinkSync(path.join(root, 'docs', sv.file + '.enc')); } catch (e) {} }
+    sv.file = 'inv-' + createHash('sha256').update(sv.key + ssha).digest('hex').slice(0, 16);
+    fs.writeFileSync(path.join(root, 'docs', sv.file + '.enc'), await sealBytes(sb, sv.key));
+    sv.sha = ssha;
+  }
+  invFor.skin = { k: sv.key, file: sv.file, updated: keys.inv.updated };
+}
 // Team app defaults live in tools/team.json, so a run that doesn't send 'team' keeps the time clock and extra pages.
 const teamDefaults = JSON.parse(fs.readFileSync(path.join(root, 'tools', 'team.json'), 'utf8'));
 const fullGuideSet = new Set((data.team && data.team.fullGuide) || teamDefaults.fullGuide || []);
@@ -149,7 +186,8 @@ for (const p of pages) {
   if (advMap[p.slug]) mine.adv = advMap[p.slug];
   const dd = docsFor(p.slug, false); if (dd) { mine.docs = dd; if (dd.fg) delete mine.fullGuide; }
   if (keys.cr[p.slug] && keys.cr[p.slug].weeks.length) mine.cr = { k: keys.cr[p.slug].key, weeks: keys.cr[p.slug].weeks.map(({ week, label, file, service, retail, comm }) => ({ week, label, file, service, retail, comm })) };
-  if (keys.inv && keys.inv.file && invOwners.has(p.slug)) mine.inv = { k: keys.inv.key, file: keys.inv.file, updated: keys.inv.updated };
+  if (keys.inv && keys.inv.file && invOwners.has(p.slug)) mine.inv = invFor[p.slug] || { k: keys.inv.key, file: keys.inv.file, updated: keys.inv.updated };
+  if (invFor.skin && p.role === 'esthetician') mine.skin = invFor.skin;
   if (schedMap[p.slug]) mine.schedule = { weeks: schedMap[p.slug], updated: (data.schedule && data.schedule.updated) || null };
   if (socialAll) mine.social = { week: socialAll.week, posts: p.role === 'esthetician' ? socialAll.esti : socialAll.hair };
   fs.writeFileSync(path.join(outDir, k.id + '.json'), JSON.stringify(await seal({ daily: data.daily || null, mine }, k.secret, k.pin)));
