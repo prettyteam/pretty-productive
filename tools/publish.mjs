@@ -113,7 +113,7 @@ if (args.inv) {
   const bytes = fs.readFileSync(args.inv);
   const sha = createHash('sha256').update(bytes).digest('hex');
   const c = (keys.inv ||= { key: Buffer.from(rand(32)).toString('base64') });
-  if (c.sha !== sha) {
+  if (c.sha !== sha || !c.file || !fs.existsSync(path.join(root, 'docs', c.file + '.enc'))) {
     if (c.file) { try { fs.unlinkSync(path.join(root, 'docs', c.file + '.enc')); } catch (e) {} }
     c.file = 'inv-' + createHash('sha256').update(c.key + sha).digest('hex').slice(0, 16);
     fs.mkdirSync(path.join(root, 'docs'), { recursive: true });
