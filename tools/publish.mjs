@@ -121,6 +121,38 @@ if (args.inv) {
     c.sha = sha; c.updated = new Date().toISOString().slice(0, 10);
   }
 }
+// Spa room supplies and backbar cost per spa service. --spa <file.json> (kept OUTSIDE the repo) is sealed into docs/spa-*.enc
+// with keys.spa.key and goes only to team.json "spaCost" (costs included). Estheticians get a copy with item names only
+// (keys.spa.list) for their Skincare stock tab, where Carolyn types the counts. A run without --spa keeps the last one.
+if (args.spa) {
+  const bytes = fs.readFileSync(args.spa);
+  const sha = createHash('sha256').update(bytes).digest('hex');
+  const c = (keys.spa ||= { key: Buffer.from(rand(32)).toString('base64') });
+  if (c.sha !== sha || !c.file || !fs.existsSync(path.join(root, 'docs', c.file + '.enc'))) {
+    if (c.file) { try { fs.unlinkSync(path.join(root, 'docs', c.file + '.enc')); } catch (e) {} }
+    c.file = 'spa-' + createHash('sha256').update(c.key + sha).digest('hex').slice(0, 16);
+    fs.mkdirSync(path.join(root, 'docs'), { recursive: true });
+    fs.writeFileSync(path.join(root, 'docs', c.file + '.enc'), await sealBytes(bytes, c.key));
+    c.sha = sha; c.updated = new Date().toISOString().slice(0, 10);
+  }
+}
+const spaFor = {};
+if (keys.spa && keys.spa.file && fs.existsSync(path.join(root, 'docs', keys.spa.file + '.enc'))) {
+  const raw = fs.readFileSync(path.join(root, 'docs', keys.spa.file + '.enc'));
+  const k0 = await crypto.subtle.importKey('raw', Buffer.from(keys.spa.key, 'base64'), 'AES-GCM', false, ['decrypt']);
+  const full = JSON.parse(new TextDecoder().decode(await crypto.subtle.decrypt({ name: 'AES-GCM', iv: raw.subarray(0, 12) }, k0, raw.subarray(12))));
+  const lb = Buffer.from(JSON.stringify({ updated: keys.spa.updated, supplies: (full.supplies || []).map((x) => ({ cat: x.cat, item: x.item, unit: x.unit || null })) }));
+  const lsha = createHash('sha256').update(lb).digest('hex');
+  const lv = (keys.spa.list ||= { key: Buffer.from(rand(32)).toString('base64') });
+  if (lv.sha !== lsha || !lv.file || !fs.existsSync(path.join(root, 'docs', lv.file + '.enc'))) {
+    if (lv.file) { try { fs.unlinkSync(path.join(root, 'docs', lv.file + '.enc')); } catch (e) {} }
+    lv.file = 'spa-' + createHash('sha256').update(lv.key + lsha).digest('hex').slice(0, 16);
+    fs.writeFileSync(path.join(root, 'docs', lv.file + '.enc'), await sealBytes(lb, lv.key));
+    lv.sha = lsha;
+  }
+  spaFor.full = { k: keys.spa.key, file: keys.spa.file, updated: keys.spa.updated };
+  spaFor.list = { k: lv.key, file: lv.file, updated: keys.spa.updated };
+}
 // invHide (team.json) = fields left out of one person's copy of the Inventory tab, e.g. {"rose":["cpb"]} drops cost per bowl (cost per mix).
 // That person gets their own copy, sealed with its own key, so the hidden numbers never reach their device.
 const invHideMap = { ...(JSON.parse(fs.readFileSync(path.join(root, 'tools', 'team.json'), 'utf8')).invHide || {}), ...((data.team && data.team.invHide) || {}) };
@@ -167,6 +199,7 @@ const guideUrl = keys.team && keys.team.guideUrl;
 const guideSet = new Set((data.team && data.team.docsGuide) || teamDefaults.docsGuide || []);
 const socialAll = (data.team && data.team.social) || teamDefaults.social || null;
 const schedMap = (data.schedule && data.schedule.people) || {};
+const spaCost = new Set((data.team && data.team.spaCost) || teamDefaults.spaCost || []);
 const invOwners = new Set((data.team && data.team.invOwners) || teamDefaults.invOwners || []);
 const clockSet = new Set((data.team && data.team.clock) || teamDefaults.clock || []);
 data.pages ||= [];
@@ -188,6 +221,8 @@ for (const p of pages) {
   if (keys.cr[p.slug] && keys.cr[p.slug].weeks.length) mine.cr = { k: keys.cr[p.slug].key, weeks: keys.cr[p.slug].weeks.map(({ week, label, file, service, retail, comm }) => ({ week, label, file, service, retail, comm })) };
   if (keys.inv && keys.inv.file && invOwners.has(p.slug)) mine.inv = invFor[p.slug] || { k: keys.inv.key, file: keys.inv.file, updated: keys.inv.updated };
   if (invFor.skin && p.role === 'esthetician') mine.skin = invFor.skin;
+  if (spaFor.full && spaCost.has(p.slug)) mine.spa = spaFor.full;
+  if (spaFor.list && p.role === 'esthetician') mine.spaList = spaFor.list;
   if (schedMap[p.slug]) mine.schedule = { weeks: schedMap[p.slug], updated: (data.schedule && data.schedule.updated) || null };
   if (socialAll) mine.social = { week: socialAll.week, posts: p.role === 'esthetician' ? socialAll.esti : socialAll.hair };
   fs.writeFileSync(path.join(outDir, k.id + '.json'), JSON.stringify(await seal({ daily: data.daily || null, mine }, k.secret, k.pin)));

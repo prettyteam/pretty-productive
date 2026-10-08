@@ -1135,11 +1135,39 @@ function invView(){
   invLoad();
   const sub=S.invt||'back';
   const head=h('div',{},h('span',{class:'lbl'},'Just for you'),h('h1',{style:'font-size:28px'},'Inventory'));
-  const tabs=h('div',{class:'dtabs',role:'tablist'},[['back','Backbar counts'],['retail','Retail counts'],['report','Color report'],['merch','Hi Pretty merch']].map(([k,l])=>h('button',{role:'tab','aria-current':String(sub===k),onclick:()=>{S.invt=k;render();window.scrollTo(0,0)}},l)));
+  const tabs=h('div',{class:'dtabs',role:'tablist'},[['back','Backbar counts'],['retail','Retail counts'],['report','Color report'],['merch','Hi Pretty merch']].concat(S.mine.spa?[['spa','Spa supplies & cost']]:[]).map(([k,l])=>h('button',{role:'tab','aria-current':String(sub===k),onclick:()=>{S.invt=k;render();window.scrollTo(0,0)}},l)));
   if(!INV.data) return [h('div',{class:'hub'},head,tabs,h('p',{class:'dmsg'},INV.err?'Couldn’t open this right now. Check your signal and try again.':'Opening…'))];
   const D=INV.data;
-  const body=sub==='back'?invBackbar(D.backbar):sub==='retail'?invRetail(D.retail,D.merged,D.check):sub==='merch'?invMerch(D.retail):invReport(D.report);
+  const body=sub==='spa'&&S.mine.spa?invSpa():sub==='back'?invBackbar(D.backbar):sub==='retail'?invRetail(D.retail,D.merged,D.check):sub==='merch'?invMerch(D.retail):invReport(D.report);
   return [h('div',{class:'hub'},head,h('p',{class:'soft',style:'font-size:13px;margin:-14px 0 0'},'Updated '+D.updated+' · only you can see this'),tabs,...body)];
+}
+
+/* spa room supplies + backbar cost per spa service (Alexandra: costs; estheticians: names only, Carolyn types counts) */
+let SPA={data:null,err:null,loading:false,key:null};
+function spaLoad(p){
+  if(!p||(SPA.key===p.file&&(SPA.data||SPA.loading))) return;
+  SPA={data:null,err:null,loading:true,key:p.file};
+  docBytes(p.file,p.k).then(b=>{SPA.data=JSON.parse(new TextDecoder().decode(b));SPA.loading=false;render()}).catch(()=>{SPA.err=true;SPA.loading=false;render()});
+}
+function spaSupplies(list,edit,withCost){
+  const groups={}; list.forEach(x=>(groups[x.cat]||=[]).push(x));
+  return Object.entries(groups).map(([cat,xs])=>h('section',{class:'section'},h('h2',{},cat),h('div',{class:'sec2'},xs.map(x=>{
+    const id='spa:'+x.item, n=stockOf(id,null);
+    const right=withCost?h('span',{style:'text-align:right;white-space:nowrap'},x.cost!=null?h('b',{},money(x.cost)):h('span',{class:'soft',style:'font-size:13px'},'no price'),h('small',{},x.cost!=null?(x.src||'cost'):'not found'))
+      :edit?null:n==null?h('span',{class:'soft',style:'font-size:13px'},'—'):n<=0?h('span',{class:'chip add',style:'white-space:nowrap'},'Out'):h('b',{},String(n));
+    return h('div',{class:'lrow'},h('span',{},h('b',{},x.item),x.unit?h('small',{},x.unit):null,edit?stockBox(id,x.item,null):null),right);}))));
+}
+function invSpa(){
+  spaLoad(S.mine.spa);
+  if(!SPA.data) return [h('p',{class:'dmsg'},SPA.err?'Couldn’t open this right now. Check your signal and try again.':'Opening…')];
+  const D=SPA.data, sv=D.services||[];
+  const svc=h('section',{class:'section'},h('h2',{},'Backbar cost per service'),
+    h('small',{class:'soft',style:'margin-top:-8px'},'What the products and disposables cost for one guest.'),
+    h('div',{class:'sec2'},sv.map(x=>h('details',{class:'tryd'},h('summary',{},h('span',{class:'tlabel',style:'flex:1'},x.name),h('b',{style:'margin:0 12px 0 8px'},money(x.total)),h('span',{class:'tplus','aria-hidden':'true'},'+')),
+      h('div',{class:'sec2'},(x.parts||[]).map(([l,c])=>h('div',{class:'lrow'},h('span',{},l),h('span',{},money(c)))),x.note?h('p',{class:'soft',style:'font-size:13px;margin:4px 0 0'},x.note):null)))));
+  const pend=(D.pending||[]).length?h('section',{class:'section'},h('h2',{},'Still to add'),h('div',{class:'sec2'},D.pending.map(t=>h('p',{class:'soft',style:'margin:0;font-size:14px'},t)))):null;
+  return [svc,pend,h('h2',{style:'font-family:var(--display);font-size:22px;margin:22px 0 0'},'Spa room supplies'),h('p',{class:'soft',style:'font-size:13px;margin:4px 0 0'},'Carolyn keeps these counts up to date from her app.'),...spaSupplies(D.supplies||[],!!(HUB.data&&HUB.data.stockEdit),false),
+    h('details',{class:'tryd'},h('summary',{},h('span',{class:'tlabel'},'What each supply costs'),h('span',{class:'tplus','aria-hidden':'true'},'+')),...spaSupplies(D.supplies||[],false,true))];
 }
 
 /* estheticians: Skincare stock (Biologique Recherche on-hand counts, no costs) */
@@ -1159,9 +1187,17 @@ function skinView(){
   return [h('div',{class:'hub'},head,h('p',{class:'soft',style:'font-size:13px;margin:-14px 0 0'},edit?'Type the count you see on the shelf. It saves for the whole spa team.':'On hand right now. Tell Carolyn, Alexandra or Rose when something runs low.'),
     invSearch('Search a product',rows),
     h('section',{class:'section',id:'skin1'},h('h2',{},'In stock · '+inS.length),h('div',{class:'sec2'},inS.length?inS:h('p',{class:'soft'},'Nothing in stock yet.'))),
-    h('section',{class:'section',id:'skin0'},h('h2',{},'Out of stock · '+outS.length),h('div',{class:'sec2'},outS)))];
+    h('section',{class:'section',id:'skin0'},h('h2',{},'Out of stock · '+outS.length),h('div',{class:'sec2'},outS)),
+    ...skinSpa(edit))];
 }
 
+function skinSpa(edit){
+  const p=S.mine.spaList; if(!p) return [];
+  spaLoad(p);
+  const head=h('h2',{style:'font-family:var(--display);font-size:22px;margin:22px 0 0'},'Spa room supplies');
+  if(!SPA.data) return [h('div',{'data-nosearch':'1'},head,h('p',{class:'dmsg'},SPA.err?'Couldn’t open the supply list right now.':'Opening…'))];
+  return [h('div',{'data-nosearch':'1'},head,h('p',{class:'soft',style:'font-size:13px;margin:4px 0 0'},edit?'Count what’s in the spa room and type it in.':'Tell Carolyn when something runs low.'),...spaSupplies(SPA.data.supplies||[],edit,false))];
+}
 function staffTabs(){
   const p=S.mine||{}, st=p.staff||{}, t=[];
   if(st.slug) t.push(['home','Home']);
