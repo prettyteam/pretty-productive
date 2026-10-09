@@ -1,0 +1,984 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Taffeta Weddings Team</title>
+<meta name="robots" content="noindex,nofollow">
+<link rel="icon" href="../icon.png">
+<script src="config.js"></script>
+<style>:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;padding:0}img{max-width:100%}</style>
+</head><body>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400&family=Work+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: Taffeta brand (design system "Taffeta") - light and airy, black and white, thin hairlines, square corners. Form rail left, the printed timeline sheet right. Deliberately single light theme. */
+:root{
+  color-scheme:light;
+  --bg:#ffffff; --panel:#ffffff; --ink:#000000; --muted:#6a6a66; --line:#e4e2dd; --accent:#000000; --accent-ink:#ffffff; --soft:#f7f6f3; --warn:#7a4a12;
+  --paper:#ffffff; --paper-ink:#000000; --paper-muted:#5c5c58;
+  --script:"Playfair Display",Georgia,serif;
+  --serif:"Playfair Display",Georgia,"Times New Roman",serif;
+  --sans:"Libertinus Sans","Work Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+*{box-sizing:border-box}
+input[type="checkbox"]{accent-color:#000}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.45}
+.wrap{max-width:1280px;margin:0 auto;padding-inline:16px;padding-block:16px 48px}
+header.top{display:flex;flex-wrap:wrap;align-items:center;gap:12px 20px;justify-content:space-between;padding-block:4px 16px;border-bottom:1px solid var(--line);margin-bottom:16px}
+.brand{display:flex;align-items:baseline;gap:10px}
+.brand h1{font-family:var(--serif);font-weight:400;font-size:22px;letter-spacing:.18em;margin:0}
+.brand span{font-family:var(--serif);font-style:italic;font-size:20px;color:var(--muted)}
+.tabs{display:flex;flex-wrap:wrap;gap:0;border:1px solid var(--ink)}
+.tabs button{border:0;background:transparent;color:var(--ink);font:500 13px var(--sans);padding:8px 18px;cursor:pointer;letter-spacing:.06em;text-transform:uppercase;font-size:11.5px}
+.tabs button[aria-selected="true"]{background:var(--accent);color:var(--accent-ink)}
+.status{font-size:12px;color:var(--muted)}
+.grid2{display:grid;grid-template-columns:minmax(0,420px) minmax(0,1fr);gap:24px;align-items:start}
+@media (max-width:900px){.grid2{grid-template-columns:minmax(0,1fr)}}
+.rail{display:flex;flex-direction:column;gap:14px;min-width:0}
+.card{background:var(--panel);border:1px solid var(--line);padding:14px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.card h2{font:600 11px var(--sans);letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:0}
+.card h2.tog{cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:8px;user-select:none;min-height:24px}
+.card h2.tog .pl{font:300 22px/1 var(--sans);color:var(--ink);letter-spacing:0;transition:transform .2s}
+.card h2.tog:focus-visible{outline:2px solid var(--ink);outline-offset:4px}
+.cbody{display:flex;flex-direction:column;gap:10px}
+.card.closed .cbody{display:none}
+div.f{display:flex;flex-direction:column;gap:6px;font-size:12px;color:var(--muted)}
+@media (prefers-reduced-motion:reduce){.card h2.tog .pl{transition:none}}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+.row>*{flex:1 1 140px;min-width:0}
+label.f{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted)}
+input,select,textarea{font:400 14px var(--sans);color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:2px;padding:7px 9px;width:100%;min-width:0}
+textarea{resize:vertical;min-height:52px}
+input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.btn{border:1px solid var(--accent);background:var(--accent);color:var(--accent-ink);font:500 13px var(--sans);padding:8px 14px;cursor:pointer;white-space:nowrap;letter-spacing:.04em}
+.btn.ghost{background:transparent;color:var(--ink);border-color:var(--line)}
+.btn.small{padding:4px 9px;font-size:12px}
+.btn:disabled{opacity:.5;cursor:default}
+.list{display:flex;flex-direction:column;gap:6px}
+.item{display:grid;grid-template-columns:minmax(0,1fr) 110px auto auto auto;gap:6px;align-items:center}
+.item.artist{grid-template-columns:110px minmax(0,1fr) auto;row-gap:4px;padding-bottom:8px;border-bottom:1px solid var(--line)}.rsvp-accepted{border-color:#000;background:#000;color:#fff}.rsvp-declined{border-color:var(--warn);color:var(--warn)}
+.item input,.item select{padding:5px 7px;font-size:13px}
+.chk{display:flex;align-items:center;gap:4px;font-size:12px;color:var(--muted);white-space:nowrap}
+.chk input{width:auto}
+.x{border:0;background:transparent;color:var(--muted);font-size:18px;line-height:1;cursor:pointer;padding:2px 6px}
+.hint{font-size:12px;color:var(--muted);margin:0}
+.warn{font-size:12px;color:var(--warn);margin:0}
+.seg{display:inline-flex;border:1px solid var(--ink);overflow:hidden}
+.seg button{border:0;background:transparent;color:var(--ink);font:500 12px var(--sans);padding:6px 10px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+.toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;margin-bottom:12px}
+.toolbar .row{flex:0 1 auto}
+.paperwrap{overflow-x:auto;background:var(--soft);padding:28px}
+/* The timeline sheet: stays paper-white in both themes, like the Canva PDFs */
+.paper{background:var(--paper);color:var(--paper-ink);width:100%;max-width:760px;min-width:540px;margin:0 auto;padding:40px 36px 48px;border:1px solid var(--line)}
+.paper{text-align:center}
+.paper .brandline{font:500 9.5px var(--sans);letter-spacing:.32em;color:var(--paper-ink);margin-bottom:22px}
+.paper .bname{font-family:var(--serif);font-weight:400;font-size:21px;letter-spacing:.12em;text-transform:uppercase;margin-bottom:12px;color:var(--paper-ink)}
+.paper .dline{font:400 11.5px/1.65 var(--sans);color:var(--paper-ink);max-width:520px;margin:0 auto}
+.paper .dline.muted{color:var(--paper-muted)}
+.paper .dline.note{font-style:italic;color:var(--paper-muted);margin-top:4px}
+.paper .dline .sep{padding:0 3px}
+.paper .sp{height:24px}
+.paper .bow{display:block;width:64px;height:auto;margin:0 auto 20px}
+.paper .brandline.bottom{margin:30px 0 0}
+.tl{border-collapse:separate;border-spacing:0;margin:0 auto;font-family:var(--serif);color:var(--paper-ink)}
+.tl th{font:500 9.5px var(--sans);letter-spacing:.28em;text-transform:uppercase;padding:0 6px 9px;text-align:center;vertical-align:bottom}
+.tl th small{display:block;text-transform:none;letter-spacing:.04em;font:400 11px var(--sans);color:var(--paper-muted);margin-top:3px}
+.tl td.t{font-size:11.5px;text-align:center;padding:2px 10px;white-space:nowrap;color:var(--paper-ink);font-variant-numeric:tabular-nums;border:.75px solid var(--paper-ink);border-right:0;letter-spacing:.04em;background:#f2f1ec}
+.tl tr + tr td.t{border-top:0}
+.tl td.c{border:.75px solid var(--paper-ink);min-width:118px;height:34px;padding:2px 8px;text-align:center;font-size:12.5px;letter-spacing:.06em;text-transform:uppercase;position:relative}
+.tl td.c + td.c{border-left:0}
+.tl tr + tr td.c{border-top:0}
+.tl td.c.empty{border-color:var(--paper-ink)}
+.tl td.c.blank{border:0}
+.tl td.c .ct{position:absolute;left:5px;top:2px;font-size:9px;letter-spacing:0;text-transform:none;color:var(--paper-muted)}
+.tl td.c .fill{display:inline-block;min-width:60px;border-bottom:1px solid var(--paper-muted);margin-left:4px}
+.tl td.c[contenteditable="true"]{cursor:text}
+.tl td.c[contenteditable="true"]:hover{background:var(--soft)}
+.tl td.c.bride{font-weight:600}
+.legend{margin-top:10px;font-size:12px;color:var(--muted)}
+.team{display:grid;grid-template-columns:minmax(0,340px) minmax(0,1fr);gap:24px;align-items:start}
+@media (max-width:900px){.team{grid-template-columns:minmax(0,1fr)}}
+.wed{display:grid;grid-template-columns:56px minmax(0,1fr);gap:12px;align-items:start;padding:10px;border:1px solid var(--line);background:var(--panel);cursor:pointer;text-align:left;color:var(--ink);font:inherit;width:100%}
+.wed[aria-current="true"]{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
+.wed .d{font-family:var(--serif);text-align:center;line-height:1.1}
+.wed .d b{display:block;font-size:22px;font-weight:500}
+.wed .d small{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.wed .who{font-weight:600}
+.wed .sub{font-size:12px;color:var(--muted)}
+.pill{display:inline-block;font-size:11px;padding:1px 8px;border:1px solid var(--line);color:var(--ink);margin:2px 4px 0 0}
+.empty-state{padding:28px;text-align:center;color:var(--muted);border:1px dashed var(--line)}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--accent);color:var(--accent-ink);padding:8px 16px;font-size:13px;opacity:0;transition:opacity .2s;pointer-events:none}
+.toast.on{opacity:1}
+@media (prefers-reduced-motion:reduce){.toast{transition:none}}
+table.adm{border-collapse:collapse;font-size:13px;min-width:100%}table.adm th,table.adm td{border-bottom:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top;white-space:nowrap}table.adm th{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:500}.stale{color:var(--warn)}
+textarea.copyfallback{position:fixed;left:-9999px;top:0}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand"><h1>TAFFETA WEDDINGS</h1><span>timelines</span></div>
+    <div class="tabs" role="tablist">
+      <button id="tab-build" role="tab" aria-selected="true" hidden>Build a timeline</button>
+      <button id="tab-team" role="tab" aria-selected="false" hidden>Team schedule</button>
+      <button id="tab-info" role="tab" aria-selected="false" hidden>My info</button>
+      <button id="tab-pay" role="tab" aria-selected="false" hidden>Payout form</button>
+      <button id="tab-admin" role="tab" aria-selected="false" hidden>Team records</button>
+    </div>
+    <div class="row" style="flex:0 1 auto;align-items:center;gap:12px"><div class="status" id="status">Signing in…</div><button class="btn ghost small" id="signOut" hidden>Sign out</button></div>
+  </header>
+
+  <section id="view-signin" hidden>
+    <div class="card" style="max-width:420px;margin:40px auto">
+      <h2 data-open>Office sign in</h2>
+      <p class="hint" id="si-msg">Artists: open the private link the office sent you. Office: enter the office code.</p>
+      <label class="f">Office code<input id="si-code" autocomplete="off" autocapitalize="characters" spellcheck="false"></label>
+      <div class="row" style="align-items:center"><button class="btn" id="si-go">Sign in</button><span class="status" id="si-status"></span></div>
+    </div>
+  </section>
+
+  <section id="view-build" hidden>
+    <div class="grid2">
+      <div class="rail">
+        <div class="card">
+          <h2 data-open>Wedding</h2>
+          <div class="row">
+            <label class="f">Open a saved wedding
+              <select id="saved"><option value="">New wedding</option></select>
+            </label>
+          </div>
+          <div class="row">
+            <label class="f">Bride<input id="bride" placeholder="Bride's full name"></label>
+            <label class="f">Wedding date<input id="date" type="date"></label>
+          </div>
+          <label class="f">Getting-ready location<input id="location" placeholder="Venue or address"></label>
+          <label class="f">Room / details<input id="room" placeholder="e.g. Bridal suite, room 305"></label>
+          <div class="row">
+            <label class="f">Day-of contact<input id="contactName" placeholder="Team lead"></label>
+            <label class="f">Contact cell<input id="contactPhone" placeholder="(856) 000-0000"></label>
+          </div>
+          <label class="f">Notes on the sheet<textarea id="notes" placeholder="e.g. Bride renting extensions, Lexi bringing them"></textarea></label>
+        </div>
+
+        <div class="card">
+          <h2>Trial</h2>
+          <div class="row">
+            <label class="f">Trial date<input id="previewDate" type="date"></label>
+            <label class="f">Trial time<input id="previewTime" type="time"></label>
+            <label class="f" style="flex:0 1 110px">Length (min)<input id="previewLen" type="number" min="30" step="15" value="120"></label>
+          </div>
+          <label class="f">Trial location<input id="previewLoc" placeholder="Blank = salon. NY: bride's address"></label>
+          <p class="hint">NY trials happen at the bride's location, so add travel and parking.</p>
+        </div>
+        <div class="card">
+          <h2>Timing</h2>
+          <div class="row" style="align-items:flex-end">
+            <div class="seg" role="group" aria-label="Plan from">
+              <button id="mode-start" aria-pressed="true">Start time</button>
+              <button id="mode-finish" aria-pressed="false">Finish-by time</button>
+            </div>
+            <label class="f" id="startWrap">Services start<input id="start" type="time" value="08:00"></label>
+            <label class="f" id="finishWrap" hidden>Everyone done by<input id="finishBy" type="time" value="12:30"></label>
+          </div>
+          <div class="row">
+            <label class="f">Hair slot (min)<input id="hairSlot" type="number" min="15" step="5" value="60"></label>
+            <label class="f">Makeup slot (min)<input id="muSlot" type="number" min="15" step="5" value="60"></label>
+            <label class="f">Arrive early (min)<input id="arrival" type="number" min="0" step="5" value="30"></label>
+          </div>
+          <label class="f">Touch-ups before leaving (optional)<input id="touchups" placeholder="e.g. 1:30 PM - 2 PM"></label>
+          <p class="hint">One hour per service. Bride mid-day, moms and MOH just before her.</p>
+        </div>
+
+        <div class="card">
+          <h2>Team on site</h2>
+          <div class="list" id="artists"></div>
+          <div class="row"><button class="btn ghost small" id="addHair">+ Hair artist</button><button class="btn ghost small" id="addMu">+ Makeup artist</button></div>
+        </div>
+
+        <div class="card" id="calCard">
+          <h2>Calendar invites</h2>
+          <p class="hint">Sends or updates each artist's invite. Her Yes is her confirmation.</p>
+          <div class="row"><button class="btn" id="calSync">Send / update invites</button><button class="btn ghost" id="calCheck">Check confirmations</button></div>
+          <p class="status" id="calStatus"></p>
+        </div>
+
+        <div class="card">
+          <h2>Getting ready</h2>
+          <div class="list" id="people"></div>
+          <div class="row" style="align-items:center">
+            <button class="btn ghost small" id="addPerson">+ Person</button>
+            <label class="f" style="flex:0 1 160px">Add bridesmaids
+              <span class="row" style="flex-wrap:nowrap"><input id="bmCount" type="number" min="1" value="1" style="width:64px"><button class="btn ghost small" id="addBms">Add</button></span>
+            </label>
+          </div>
+          <p class="hint">Names are optional.</p>
+          <p class="warn" id="warnings"></p>
+        </div>
+      </div>
+
+      <div style="min-width:0">
+        <div class="toolbar">
+          <div class="seg" role="group" aria-label="Version">
+            <button id="ver-team" aria-pressed="true">Team copy</button>
+            <button id="ver-bride" aria-pressed="false">Bride copy (blank names)</button>
+          </div>
+          <div class="row">
+            <button class="btn ghost" id="copyText">Copy as text</button>
+            <button class="btn ghost" id="copySheet">Copy for Sheets</button>
+            <button class="btn" id="saveImg">Save image</button>
+          </div>
+        </div>
+        <div class="paperwrap"><div id="sheet"></div></div>
+        <p class="legend">Click any box on the sheet to change its wording. Your edits stay when you change the times or add people.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="view-team" hidden>
+    <div class="team">
+      <div class="rail">
+        <div class="card">
+          <h2 data-open>Upcoming weddings</h2>
+          <div class="row">
+            <label class="f">Show weddings for
+              <select id="artistFilter"><option value="">Everyone</option></select>
+            </label>
+          </div>
+          <label class="chk"><input type="checkbox" id="showPast"> Include past weddings</label>
+        </div>
+        <div class="list" id="wedList"></div>
+      </div>
+      <div style="min-width:0">
+        <div class="toolbar">
+          <div class="status" id="teamNote">Pick a wedding to see the timeline.</div>
+          <div class="row">
+            <button class="btn ghost" id="teamCopy" disabled>Copy as text</button>
+            <button class="btn" id="teamImg" disabled>Save image</button>
+          </div>
+        </div>
+        <div class="paperwrap"><div id="teamSheet"><div class="empty-state">Your weddings show up here, and they update as soon as the office changes them.</div></div></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="view-info" hidden>
+    <div class="grid2">
+      <div class="rail">
+        <div class="card">
+          <h2 data-open>My info</h2>
+          <p class="hint">Only you and the office see this.</p>
+          <div class="row">
+            <label class="f">Legal name (for tax forms)<input id="pf-legalName"></label>
+            <label class="f">Name you go by<input id="pf-preferredName"></label>
+          </div>
+          <div class="row">
+            <label class="f">Cell phone<input id="pf-phone" type="tel"></label>
+            <label class="f">Email<input id="pf-email" type="email"></label>
+          </div>
+          <label class="f">Mailing address<input id="pf-address"></label>
+          <div class="row">
+            <label class="f">City<input id="pf-city"></label>
+            <label class="f" style="flex:0 1 80px">State<input id="pf-state"></label>
+            <label class="f" style="flex:0 1 110px">ZIP<input id="pf-zip" inputmode="numeric"></label>
+          </div>
+          <div class="row">
+            <label class="f">I do
+              <select id="pf-role"><option value="">Choose</option><option>Hair</option><option>Makeup</option><option>Hair and makeup</option></select>
+            </label>
+            <label class="f">Instagram<input id="pf-instagram" placeholder="@"></label>
+          </div>
+        </div>
+      </div>
+      <div class="rail">
+        <div class="card">
+          <h2>Work details</h2>
+          <div class="row" id="pf-skills"></div>
+          <label class="f">Areas you'll travel to<input id="pf-area" placeholder="e.g. South Jersey, shore, Philly"></label>
+          <label class="f">Usual availability<textarea id="pf-availability" placeholder="e.g. Saturdays, Fridays after 2"></textarea></label>
+          <label class="f">Square direct deposit
+            <select id="pf-square"><option value="">Choose</option><option>Set up</option><option>Not set up yet</option><option>Need help setting up</option></select>
+          </label>
+          <div class="row">
+            <label class="f">Emergency contact<input id="pf-emergencyName"></label>
+            <label class="f">Their phone<input id="pf-emergencyPhone" type="tel"></label>
+          </div>
+          <label class="f">Anything else the office should know<textarea id="pf-notes"></textarea></label>
+          <div class="row" style="align-items:center">
+            <button class="btn" id="pf-save">Save my info</button>
+            <span class="status" id="pf-status"></span>
+          </div>
+          <p class="hint">Never enter your Social Security number here.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="view-pay" hidden>
+    <div class="grid2">
+      <div class="rail">
+        <div class="card" id="po-card">
+          <h2 data-open>Payout request</h2>
+          <p class="hint">Submit by the Monday after your event. Not needed for trials.</p>
+          <label class="f">Full name<input id="po-name" autocomplete="name"></label>
+          <div class="row">
+            <label class="f">Bride's full name<input id="po-bride" list="po-brides" autocomplete="off"><datalist id="po-brides"></datalist></label>
+            <label class="f">Event date<input id="po-date" type="date"></label>
+          </div>
+          <div class="row">
+            <label class="f">Event type<select id="po-type"><option value="">Choose</option><option>Wedding</option><option>Rehearsal Dinner</option><option value="__other">Other</option></select></label>
+            <label class="f">Location<select id="po-loc"><option value="">Choose</option><option>South Jersey</option><option>North Jersey</option><option>Pennsylvania</option><option>New York</option><option>Florida</option><option value="__other">Other</option></select></label>
+          </div>
+          <label class="f" id="po-typeOtherWrap" hidden>Event type (other)<input id="po-typeOther"></label>
+          <label class="f" id="po-locOtherWrap" hidden>Location (other)<input id="po-locOther"></label>
+          <div class="f"><span>Services you provided</span><div class="row" id="po-services" style="flex-wrap:wrap;gap:6px 14px"></div></div>
+          <label class="f" id="po-svOtherWrap" hidden>Other service<input id="po-svOther" placeholder="e.g. Hollywood glam waves, extensions"></label>
+          <label class="f">Quantity of services<textarea id="po-qty" placeholder="Bridal Hair: 1; Bridal Party Hair: 4"></textarea></label>
+          <div class="row">
+            <label class="f">Travel payout ($)<input id="po-travel" inputmode="decimal" placeholder="75.00"></label>
+            <label class="f">Total requested ($)<input id="po-total" inputmode="decimal" placeholder="395.00"></label>
+          </div>
+          <div class="row" style="align-items:center">
+            <button class="btn" id="po-send">Send to payroll</button>
+            <span class="status" id="po-status"></span>
+          </div>
+          <p class="hint">Opens payroll's form with your answers filled in. Check "Record my email" and tap Submit.</p>
+        </div>
+      </div>
+      <div class="rail">
+        <div class="card">
+          <h2>My sent requests</h2>
+          <div id="po-mine"><p class="hint">Requests you send show here.</p></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="view-admin" hidden>
+    <div class="card" style="margin-bottom:16px">
+      <h2 data-open>Add a team member</h2>
+      <div class="row">
+        <label class="f">Name she goes by<input id="am-name"></label>
+        <label class="f">Email (for calendar invites)<input id="am-email" type="email"></label>
+        <label class="f">Cell<input id="am-phone" type="tel"></label>
+        <label class="f" style="flex:0 1 160px">Does<select id="am-role"><option value="">Choose</option><option>Hair</option><option>Makeup</option><option>Hair and makeup</option></select></label>
+      </div>
+      <div class="row" style="align-items:center"><button class="btn" id="am-add" style="flex:0 0 auto">Add and copy her link</button><span class="status" id="am-status"></span></div>
+      <p class="hint">Text her the link. It's her private key to her weddings, her info and the payout form, so she shouldn't share it.</p>
+    </div>
+    <div class="toolbar">
+      <div class="status" id="adm-note">Team info, newest updates first.</div>
+      <button class="btn ghost" id="adm-copy">Copy for Sheets</button>
+    </div>
+    <div style="overflow-x:auto"><table class="adm" id="adm-table"></table></div>
+  </section>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script>
+(function(){
+const $=s=>document.querySelector(s);
+const uid=()=>Math.random().toString(36).slice(2,10);
+const BOW="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";
+const ROLES=["Bride","MOH","MOB","MOG","Bridesmaid","Junior BM","Flower girl","Family","Other"];
+const HELPERS=["MOH","MOB","MOG"];
+let canWrite=false, ROLE=null, AUTH=null, ME=null;
+const API=window.TW_ENDPOINT||"";
+async function api(action,data){
+  const body=JSON.stringify(Object.assign({action},AUTH||{},data||{}));
+  const r=await fetch(API,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body,redirect:"follow"});
+  const j=await r.json();
+  if(!j.ok){const e=new Error(j.message||j.error||"error");e.code=j.error;throw e}
+  return j;
+}
+let docId=null, saveTimer=null, version="team", allWeddings=[], teamSel=null;
+
+function starter(){
+  return {bride:"",date:"",location:"",room:"",contactName:"",contactPhone:"",notes:"",
+    mode:"start",start:"08:00",finishBy:"12:30",hairSlot:60,muSlot:60,arrival:30,touchups:"",
+    artists:[{id:uid(),role:"hair",name:""},{id:uid(),role:"mu",name:""}],
+    people:[{id:uid(),name:"",role:"Bride",hair:true,mu:true},{id:uid(),name:"",role:"MOB",hair:true,mu:true},{id:uid(),name:"",role:"MOG",hair:true,mu:true},
+      {id:uid(),name:"",role:"Bridesmaid",hair:true,mu:true},{id:uid(),name:"",role:"Bridesmaid",hair:true,mu:true},{id:uid(),name:"",role:"Bridesmaid",hair:true,mu:true}],
+    overrides:{}};
+}
+let S=starter();
+
+/* ---------- time helpers ---------- */
+const toMin=t=>{if(!t)return 480;const[h,m]=t.split(":").map(Number);return h*60+(m||0)};
+function fmt(min){min=((min%1440)+1440)%1440;let h=Math.floor(min/60),m=min%60;const ap=h>=12?"PM":"AM";h=h%12||12;return h+":"+String(m).padStart(2,"0")+" "+ap}
+function fmtDate(d){if(!d)return"";const[y,m,dd]=d.split("-").map(Number);return new Date(y,m-1,dd).toLocaleDateString("en-US",{weekday:"long",month:"long",day:"numeric",year:"numeric"})}
+function shortDate(d){if(!d)return"";const[y,m,dd]=d.split("-");return Number(m)+"/"+Number(dd)+"/"+y.slice(2)}
+
+/* ---------- scheduling ---------- */
+function build(s){
+  const warnings=[];
+  const hairSlot=Math.max(15,Number(s.hairSlot)||60), muSlot=Math.max(15,Number(s.muSlot)||60);
+  const hairA=s.artists.filter(a=>a.role==="hair"), muA=s.artists.filter(a=>a.role==="mu");
+  const bride=s.people.find(p=>p.role==="Bride");
+  const order=p=>HELPERS.includes(p.role)?1:0;
+  function pool(service,artists,slot,brideRowFn){
+    const people=s.people.filter(p=>p[service]);
+    if(!people.length)return {cols:[],slot};
+    if(!artists.length){warnings.push((service==="hair"?"Hair":"Makeup")+" services need at least one "+(service==="hair"?"hair":"makeup")+" artist.");return {cols:[],slot}}
+    const A=artists.length, rows=Math.ceil(people.length/A);
+    const grid=artists.map(()=>Array(rows).fill(null));
+    const hasBride=bride&&bride[service];
+    let bRow=null;
+    if(hasBride){bRow=brideRowFn(rows);if(bRow>=rows){grid.forEach(c=>c.push(null))}grid[0][bRow]=bride.id}
+    const R=()=>grid[0].length;
+    const helpers=people.filter(p=>p!==bride&&HELPERS.includes(p.role));
+    const others=people.filter(p=>p!==bride&&!HELPERS.includes(p.role));
+    const free=[];for(let c=0;c<A;c++)for(let r=0;r<R();r++)if(!grid[c][r])free.push([c,r]);
+    if(hasBride){
+      const near=free.slice().sort((a,b)=>{const da=a[1]<bRow?bRow-a[1]:a[1]-bRow+0.5, db_=b[1]<bRow?bRow-b[1]:b[1]-bRow+0.5;return da-db_||a[0]-b[0]});
+      helpers.forEach(p=>{const f=near.shift();grid[f[0]][f[1]]=p.id;free.splice(free.findIndex(x=>x[0]===f[0]&&x[1]===f[1]),1)});
+    }else others.unshift(...helpers);
+    others.forEach(p=>{const f=free.shift();if(f)grid[f[0]][f[1]]=p.id});
+    return {cols:artists.map((a,i)=>({artist:a,service,slot,cells:grid[i]})),slot,bRow};
+  }
+  const hair=pool("hair",hairA,hairSlot,rows=>Math.floor((rows-1)/2));
+  let hairStartB=null,hairEndB=null;
+  if(hair.bRow!=null){hairStartB=hair.bRow*hairSlot;hairEndB=hairStartB+hairSlot}
+  const mu=pool("mu",muA,muSlot,rows=>{
+    if(hairEndB==null)return Math.floor((rows-1)/2);
+    for(let i=0;i<rows;i++)if(i*muSlot>=hairEndB)return i;
+    for(let i=rows-1;i>=0;i--)if((i+1)*muSlot<=hairStartB)return i;
+    return rows;
+  });
+  const cols=[...hair.cols,...mu.cols];
+  // resolve same-person overlaps by swapping makeup cells
+  const iv=(col,r)=>[r*col.slot,(r+1)*col.slot];
+  const overl=(a,b)=>a[0]<b[1]&&b[0]<a[1];
+  function slotsOf(pid,service){const out=[];cols.forEach(c=>{if(c.service===service)c.cells.forEach((x,r)=>{if(x===pid)out.push(iv(c,r))})});return out}
+  function clash(pid,interval,service){const other=service==="hair"?"mu":"hair";return slotsOf(pid,other).some(o=>overl(o,interval))}
+  for(let pass=0;pass<4;pass++){
+    let changed=false;
+    mu.cols.forEach(c=>c.cells.forEach((pid,r)=>{
+      if(!pid||(bride&&pid===bride.id))return;
+      if(!clash(pid,iv(c,r),"mu"))return;
+      outer: for(const c2 of mu.cols)for(let r2=0;r2<c2.cells.length;r2++){
+        const q=c2.cells[r2]; if(c2===c&&r2===r)continue; if(bride&&q===bride.id)continue;
+        if(clash(pid,iv(c2,r2),"mu"))continue;
+        if(q&&clash(q,iv(c,r),"mu"))continue;
+        c2.cells[r2]=pid;c.cells[r]=q;changed=true;break outer;
+      }
+    }));
+    if(!changed)break;
+  }
+  // trim trailing empty rows
+  cols.forEach(c=>{while(c.cells.length&&c.cells[c.cells.length-1]==null)c.cells.pop()});
+  let span=0;cols.forEach(c=>span=Math.max(span,c.cells.length*c.slot));
+  let start=s.mode==="finish"?toMin(s.finishBy)-span:toMin(s.start);
+  // leftover same-person clashes
+  s.people.forEach(p=>{if(p.hair&&p.mu){const h=slotsOf(p.id,"hair"),m=slotsOf(p.id,"mu");if(h.some(a=>m.some(b=>overl(a,b))))warnings.push((p.name||p.role)+" has hair and makeup at the same time. Add an artist or move her by hand.")}});
+  return {cols,start,end:start+span,warnings};
+}
+
+/* ---------- labels ---------- */
+function labelMap(s,plan,ver){
+  const labels={};
+  ["hair","mu"].forEach(service=>{
+    const seq=[];
+    plan.cols.filter(c=>c.service===service).forEach(c=>c.cells.forEach((pid,r)=>{if(pid)seq.push({pid,t:r*c.slot,c})}));
+    seq.sort((a,b)=>a.t-b.t);
+    let n=0;
+    seq.forEach(x=>{
+      const p=s.people.find(q=>q.id===x.pid);if(!p)return;
+      const key=p.id+":"+service;
+      let txt;
+      if(p.role==="Bride")txt="Bride";
+      else if(["MOB","MOG","MOH"].includes(p.role))txt=(ver==="team"&&p.name)?p.name+" ("+p.role+")":p.role;
+      else if(ver==="team"&&p.name)txt=p.name;
+      else{n++;txt=(service==="hair"?"Hair ":"MU ")+n;if(p.role==="Junior BM")txt+=" (Jr BM)";if(p.role==="Flower girl")txt+=" (Flower girl)"}
+      if(ver==="team"&&s.overrides&&s.overrides[key])txt=s.overrides[key];
+      labels[key]={txt,blank:ver==="bride"&&!["Bride","MOB","MOG","MOH"].includes(p.role)};
+    });
+  });
+  return labels;
+}
+function servicesLine(s){
+  const h=s.people.filter(p=>p.hair&&p.role!=="Bride").length, m=s.people.filter(p=>p.mu&&p.role!=="Bride").length;
+  const b=s.people.find(p=>p.role==="Bride");
+  const part=(has,n,word)=>(has?"Bride + ":"")+n+" "+word;
+  const bits=[];
+  if(h||(b&&b.hair))bits.push(part(b&&b.hair,h,"Hair"));
+  if(m||(b&&b.mu))bits.push(part(b&&b.mu,m,"Makeup"));
+  return bits.join(" // ");
+}
+const esc=t=>String(t??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+/* ---------- render the sheet ---------- */
+function sheetHTML(s,ver,editable){
+  const plan=build(s), labels=labelMap(s,plan,ver);
+  const sameSlot=plan.cols.every(c=>c.slot===(plan.cols[0]||{}).slot);
+  const rows=Math.max(0,...plan.cols.map(c=>c.cells.length));
+  const loc=[s.location,s.room].filter(Boolean);
+  const arrive=plan.start-(Number(s.arrival)||0);
+  let h='<div class="paper" data-sheet>';
+  const blank="__________";
+  h+='<img class="bow" alt="" src="data:image/png;base64,'+BOW+'">';
+  h+='<div class="bname">'+esc(s.bride||"________________")+'</div>';
+  const l1=[s.date?fmtDate(s.date).replace(/^\w+, /,""):"Date "+blank, loc.join(", ")||"Location "+blank];
+  if(plan.cols.length)l1.push("Arrive "+fmt(arrive).replace(" ","\u00a0")+" · Start "+fmt(plan.start)+" · End "+fmt(plan.end));
+  h+='<div class="dline">'+l1.map(esc).join(' <span class="sep">·</span> ')+'</div>';
+  const l2=["Contact "+([s.contactName,s.contactPhone].filter(Boolean).join(" ")||blank),servicesLine(s)];
+  if(s.touchups)l2.push("Touch-ups: "+s.touchups);
+  h+='<div class="dline muted">'+l2.map(esc).join(' <span class="sep">·</span> ')+'</div>';
+  if(s.notes)h+='<div class="dline note">'+esc(s.notes)+'</div>';
+  h+='<div class="sp"></div>';
+  if(!plan.cols.length){h+='<p style="text-align:center;color:#5d554e;font-family:var(--serif)">Add an artist and the people getting ready to build the schedule.</p></div>';return {html:h,plan}}
+  h+='<table class="tl"><thead><tr>'+(sameSlot?'<th>Time</th>':'');
+  plan.cols.forEach(c=>{h+='<th>'+(c.service==="hair"?"Hair":"Makeup")+(c.artist.name?'<small>'+esc(c.artist.name)+'</small>':'')+'</th>'});
+  h+='</tr></thead><tbody>';
+  for(let r=0;r<rows;r++){
+    h+='<tr>';
+    if(sameSlot)h+='<td class="t">'+fmt(plan.start+r*plan.cols[0].slot)+'</td>';
+    plan.cols.forEach(c=>{
+      if(r>=c.cells.length){h+='<td class="c blank"></td>';return}
+      const pid=c.cells[r];
+      const ct=sameSlot?'':'<span class="ct">'+fmt(plan.start+r*c.slot)+'</span>';
+      if(!pid){h+='<td class="c empty">'+ct+'</td>';return}
+      const key=pid+":"+c.service, L=labels[key]||{txt:""};
+      const p=s.people.find(q=>q.id===pid);
+      const cls='c'+(p&&p.role==="Bride"?' bride':'');
+      const ed=editable&&ver==="team"?' contenteditable="true" data-key="'+key+'"':'';
+      h+='<td class="'+cls+'"'+ed+'>'+ct+esc(L.txt)+(L.blank?'<span class="fill"></span>':'')+'</td>';
+    });
+    h+='</tr>';
+  }
+  h+='</tbody></table>';
+  h+='<div class="brandline bottom">TAFFETA WEDDINGS</div></div>';
+  return {html:h,plan};
+}
+function textOf(s){
+  const plan=build(s), labels=labelMap(s,plan,"team");
+  const L=[];
+  L.push("TAFFETA WEDDINGS");
+  L.push("Bride: "+(s.bride||"")); L.push("Wedding date: "+fmtDate(s.date));
+  L.push("Location: "+[s.location,s.room].filter(Boolean).join(", "));
+  if(plan.cols.length){L.push("Team arrival / start: "+fmt(plan.start-(Number(s.arrival)||0))+" // "+fmt(plan.start));L.push("Team end time: "+fmt(plan.end))}
+  if(s.touchups)L.push("Touch-ups before leaving: "+s.touchups);
+  L.push("Day-of contact: "+[s.contactName,s.contactPhone].filter(Boolean).join(" "));
+  L.push("Services: "+servicesLine(s));
+  if(s.notes)L.push("Notes: "+s.notes);
+  plan.cols.forEach(c=>{
+    L.push("");L.push((c.service==="hair"?"HAIR":"MAKEUP")+(c.artist.name?" - "+c.artist.name.toUpperCase():""));
+    c.cells.forEach((pid,r)=>{if(pid)L.push(fmt(plan.start+r*c.slot)+"  "+((labels[pid+":"+c.service]||{}).txt||""))});
+  });
+  return L.join("\n");
+}
+function tsvOf(s){
+  const plan=build(s), labels=labelMap(s,plan,"team");
+  const rows=Math.max(0,...plan.cols.map(c=>c.cells.length));
+  const out=[["Time",...plan.cols.map(c=>(c.service==="hair"?"Hair":"Makeup")+(c.artist.name?" ("+c.artist.name+")":""))].join("\t")];
+  for(let r=0;r<rows;r++){out.push([fmt(plan.start+r*(plan.cols[0]?plan.cols[0].slot:60)),...plan.cols.map(c=>{const pid=c.cells[r];return pid?((labels[pid+":"+c.service]||{}).txt||""):""})].join("\t"))}
+  return out.join("\n");
+}
+
+/* ---------- form ---------- */
+const FIELDS=["bride","date","location","room","contactName","contactPhone","notes","previewDate","previewTime","previewLen","previewLoc","start","finishBy","hairSlot","muSlot","arrival","touchups"];
+function fillForm(){
+  FIELDS.forEach(f=>{const el=$("#"+f);if(el)el.value=S[f]??""});
+  setMode(S.mode,false);
+  renderArtists();renderPeople();renderSheet();
+}
+function renderArtists(){
+  const box=$("#artists");box.innerHTML="";
+  S.artists.forEach(a=>{
+    const d=document.createElement("div");d.className="item artist";
+    const st=(S.cal&&S.cal["w:"+a.id]&&S.cal["w:"+a.id].status)||"";
+    const chip=st?'<span class="pill rsvp-'+st+'">'+({accepted:"Confirmed",declined:"Declined",tentative:"Maybe",needsAction:"Waiting"}[st]||st)+'</span>':'';
+    const opts='<option value="">Pick from team…</option>'+profiles.map(pr=>'<option value="'+esc(pr._id)+'"'+(pr._id===a.uid?' selected':'')+'>'+esc(pr.preferredName||pr.legalName||"Unnamed")+'</option>').join("");
+    d.innerHTML='<select aria-label="Role" id="ar-'+a.id+'"><option value="hair">Hair</option><option value="mu">Makeup</option></select><input id="an-'+a.id+'" placeholder="Artist name" value="'+esc(a.name)+'"><button class="x" aria-label="Remove artist">×</button>'
+      +'<select class="pick" id="ap-'+a.id+'" aria-label="Team member" style="grid-column:1/2"'+(profiles.length?'':' hidden')+'>'+opts+'</select><input id="ae-'+a.id+'" type="email" placeholder="Email for calendar invite" value="'+esc(a.email||"")+'" style="grid-column:2/3"><span>'+chip+'</span>';
+    d.querySelector("#ar-"+a.id).value=a.role;
+    d.querySelector("#ar-"+a.id).onchange=e=>{a.role=e.target.value;changed()};
+    d.querySelector("#an-"+a.id).oninput=e=>{a.name=e.target.value;changed()};
+    d.querySelector("#ae-"+a.id).oninput=e=>{a.email=e.target.value.trim();queueSave()};
+    d.querySelector("#ap-"+a.id).onchange=e=>{const pr=profiles.find(x=>x._id===e.target.value);a.uid=pr?pr._id:"";if(pr){a.name=pr.preferredName||pr.legalName||a.name;a.email=pr.email||a.email;if(!a.phone)a.phone=pr.phone||""}renderArtists();changed()};
+    d.querySelector(".x").onclick=()=>{S.artists=S.artists.filter(x=>x!==a);renderArtists();changed()};
+    box.appendChild(d);
+  });
+}
+function renderPeople(){
+  const box=$("#people");box.innerHTML="";
+  S.people.forEach(p=>{
+    const d=document.createElement("div");d.className="item";
+    d.innerHTML='<input id="pn-'+p.id+'" placeholder="'+(p.role==="Bride"?"Bride":"Name (optional)")+'" value="'+esc(p.name)+'"><select id="pr-'+p.id+'" aria-label="Role">'+ROLES.map(r=>'<option>'+r+'</option>').join("")+'</select><label class="chk"><input type="checkbox" id="ph-'+p.id+'"'+(p.hair?" checked":"")+'>Hair</label><label class="chk"><input type="checkbox" id="pm-'+p.id+'"'+(p.mu?" checked":"")+'>MU</label><button class="x" aria-label="Remove">×</button>';
+    const sel=d.querySelector("select");sel.value=p.role;
+    d.querySelector("input").oninput=e=>{p.name=e.target.value;changed()};
+    sel.onchange=e=>{p.role=e.target.value;changed()};
+    d.querySelector("#ph-"+p.id).onchange=e=>{p.hair=e.target.checked;changed()};
+    d.querySelector("#pm-"+p.id).onchange=e=>{p.mu=e.target.checked;changed()};
+    d.querySelector(".x").onclick=()=>{S.people=S.people.filter(x=>x!==p);renderPeople();changed()};
+    box.appendChild(d);
+  });
+}
+function renderSheet(){
+  const {html,plan}=sheetHTML(S,version,true);
+  $("#sheet").innerHTML=html;
+  $("#warnings").textContent=plan.warnings?plan.warnings.join(" "):"";
+  $("#sheet").querySelectorAll("[data-key]").forEach(td=>{
+    td.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();td.blur()}});
+    td.addEventListener("blur",()=>{const v=td.textContent.trim();S.overrides=S.overrides||{};if(v)S.overrides[td.dataset.key]=v;else delete S.overrides[td.dataset.key];changed(true)});
+  });
+}
+function changed(skipSheet){if(!skipSheet)renderSheet();queueSave()}
+FIELDS.forEach(f=>{const el=$("#"+f);el.addEventListener("input",()=>{S[f]=el.type==="number"?Number(el.value):el.value;changed()})});
+function setMode(m,fire=true){S.mode=m;$("#mode-start").setAttribute("aria-pressed",m==="start");$("#mode-finish").setAttribute("aria-pressed",m==="finish");$("#startWrap").hidden=m!=="start";$("#finishWrap").hidden=m!=="finish";if(fire)changed()}
+$("#mode-start").onclick=()=>setMode("start");$("#mode-finish").onclick=()=>setMode("finish");
+$("#addHair").onclick=()=>{S.artists.push({id:uid(),role:"hair",name:""});renderArtists();changed()};
+$("#addMu").onclick=()=>{S.artists.push({id:uid(),role:"mu",name:""});renderArtists();changed()};
+$("#addPerson").onclick=()=>{S.people.push({id:uid(),name:"",role:"Bridesmaid",hair:true,mu:true});renderPeople();changed()};
+$("#addBms").onclick=()=>{const n=Math.min(30,Math.max(1,Number($("#bmCount").value)||1));for(let i=0;i<n;i++)S.people.push({id:uid(),name:"",role:"Bridesmaid",hair:true,mu:true});renderPeople();changed()};
+function setVersion(v){version=v;$("#ver-team").setAttribute("aria-pressed",v==="team");$("#ver-bride").setAttribute("aria-pressed",v==="bride");renderSheet()}
+$("#ver-team").onclick=()=>setVersion("team");$("#ver-bride").onclick=()=>setVersion("bride");
+
+/* ---------- copy / image ---------- */
+function toast(t){const el=$("#toast");el.textContent=t;el.classList.add("on");clearTimeout(toast.t);toast.t=setTimeout(()=>el.classList.remove("on"),2200)}
+async function copy(text){
+  try{await navigator.clipboard.writeText(text);toast("Copied")}
+  catch(e){const ta=document.createElement("textarea");ta.className="copyfallback";ta.value=text;document.body.appendChild(ta);ta.select();let ok=false;try{ok=document.execCommand("copy")}catch(_){}ta.remove();toast(ok?"Copied":"Select the text and copy it by hand")}
+}
+$("#copyText").onclick=()=>copy(version==="bride"?textOf(Object.assign({},S,{overrides:{}})):textOf(S));
+$("#copySheet").onclick=()=>copy(tsvOf(S));
+async function saveImage(container,name){
+  if(!window.html2canvas){toast("Saving images isn't available here");return}
+  const el=container.querySelector("[data-sheet]");if(!el)return;
+  try{
+    const canvas=await html2canvas(el,{scale:2,backgroundColor:"#ffffff"});
+    const a=document.createElement("a");a.href=canvas.toDataURL("image/png");a.download=name;document.body.appendChild(a);a.click();a.remove();
+  }catch(e){toast("The image didn't save. Try again.")}
+}
+const fileName=s=>((s.bride||"wedding").replace(/[^a-z0-9]+/gi,"-")+"-timeline"+(version==="bride"?"-bride-copy":"")+".png").toLowerCase();
+$("#saveImg").onclick=()=>saveImage($("#sheet"),fileName(S));
+
+/* ---------- tabs ---------- */
+const TABS=["build","team","info","pay","admin"];
+function showTab(t){if(!TABS.includes(t))t="team";TABS.forEach(k=>{$("#tab-"+k).setAttribute("aria-selected",k===t);$("#view-"+k).hidden=k!==t});try{localStorage.setItem("tt-tab",t)}catch(e){}}
+TABS.forEach(k=>$("#tab-"+k).onclick=()=>showTab(k));
+
+/* ---------- storage ---------- */
+function setStatus(t){$("#status").textContent=t}
+function queueSave(){
+  if(!canWrite){setStatus(ROLE?"View only":"Not signed in");return}
+  if(!S.bride.trim()){setStatus("Add the bride's name to save");return}
+  setStatus("Saving…");clearTimeout(saveTimer);saveTimer=setTimeout(save,900);
+}
+let saving=Promise.resolve();
+function save(){
+  saving=saving.then(async()=>{
+    try{
+      const body=JSON.parse(JSON.stringify(S));
+      delete body.cal;
+      const plan=build(S);
+      body.id=docId||undefined;
+      body.startMin=plan.start;body.endMin=plan.end;body.artistNames=S.artists.map(a=>a.name.trim()).filter(Boolean);
+      const r=await api("saveWedding",{wedding:body});
+      docId=r.id;S.id=r.id;if(r.cal)S.cal=r.cal;
+      body.id=r.id;body.updatedAt=r.updatedAt;body.cal=S.cal;
+      const i=allWeddings.findIndex(w=>w.id===r.id);
+      if(i>=0)allWeddings[i]={id:r.id,d:body};else allWeddings.push({id:r.id,d:body});
+      refreshSavedSelect();renderTeam();
+      setStatus("Saved");
+    }catch(e){
+      if(e&&e.code==="signin"){signOut("Your office code changed. Please sign in again.")}
+      else setStatus("Couldn't save. It will retry on your next change.");
+    }
+  });
+  return saving;
+}
+function refreshSavedSelect(){
+  const sel=$("#saved"), cur=docId||"";
+  sel.innerHTML='<option value="">New wedding</option>'+allWeddings.slice().sort((a,b)=>(a.d.date||"").localeCompare(b.d.date||"")).map(w=>'<option value="'+w.id+'">'+esc((w.d.date?shortDate(w.d.date)+" · ":"")+(w.d.bride||"Untitled"))+'</option>').join("");
+  sel.value=cur;
+}
+$("#saved").onchange=e=>{
+  const id=e.target.value;
+  if(!id){docId=null;S=starter();fillForm();setStatus("New wedding");return}
+  const w=allWeddings.find(x=>x.id===id);if(!w)return;
+  docId=id;
+  S=Object.assign(starter(),JSON.parse(JSON.stringify(w.d)));fillForm();setStatus("Opened");
+};
+
+/* ---------- team view ---------- */
+function renderTeam(){
+  const names=[...new Set(allWeddings.flatMap(w=>w.d.artistNames||[]))].sort();
+  const af=$("#artistFilter"), cur=af.value;
+  af.innerHTML='<option value="">Everyone</option>'+names.map(n=>'<option>'+esc(n)+'</option>').join("");
+  if(names.includes(cur))af.value=cur;
+  const today=new Date();today.setHours(0,0,0,0);
+  const iso=today.toISOString().slice(0,10);
+  let list=allWeddings.filter(w=>$("#showPast").checked||!w.d.date||w.d.date>=iso);
+  if(af.value)list=list.filter(w=>(w.d.artistNames||[]).includes(af.value));
+  list.sort((a,b)=>(a.d.date||"9").localeCompare(b.d.date||"9"));
+  const box=$("#wedList");
+  if(!list.length){box.innerHTML='<div class="empty-state">'+(allWeddings.length?"No weddings match this filter.":"Nothing here yet. Weddings you're booked on show up here once the office adds you.")+'</div>';return}
+  box.innerHTML="";
+  list.forEach(w=>{
+    const d=w.d;let mo="",day="";
+    if(d.date){const[y,m,dd]=d.date.split("-").map(Number);const dt=new Date(y,m-1,dd);mo=dt.toLocaleDateString("en-US",{month:"short"});day=dd}
+    const b=document.createElement("button");b.className="wed";b.setAttribute("aria-current",teamSel===w.id);
+    const mine=af.value?(d.artists||[]).filter(a=>a.name.trim()===af.value).map(a=>a.role==="hair"?"Hair":"Makeup").join(" + "):"";
+    b.innerHTML='<div class="d"><small>'+esc(mo)+'</small><b>'+esc(day||"–")+'</b></div><div><div class="who">'+esc(d.bride||"Untitled")+'</div><div class="sub">'+esc([d.location,d.room].filter(Boolean).join(" · "))+'</div><div class="sub">Arrive '+(d.startMin!=null?fmt(d.startMin-(Number(d.arrival)||0)):"–")+' · Start '+(d.startMin!=null?fmt(d.startMin):"–")+(mine?' · You: '+esc(mine):'')+'</div><div>'+(d.artistNames||[]).map(n=>'<span class="pill">'+esc(n)+'</span>').join("")+'</div></div>';
+    b.onclick=()=>{teamSel=w.id;renderTeam();renderTeamSheet()};
+    box.appendChild(b);
+  });
+}
+function renderTeamSheet(){
+  const w=allWeddings.find(x=>x.id===teamSel);
+  if(!w){$("#teamSheet").innerHTML='<div class="empty-state">Pick a wedding to see the timeline.</div>';$("#teamCopy").disabled=true;$("#teamImg").disabled=true;return}
+  const s=Object.assign(starter(),w.d);
+  $("#teamSheet").innerHTML=sheetHTML(s,"team",false).html;
+  $("#teamNote").textContent="Updated "+(w.d.updatedAt?new Date(w.d.updatedAt).toLocaleString("en-US",{month:"short",day:"numeric",hour:"numeric",minute:"2-digit"}):"");
+  $("#teamCopy").disabled=false;$("#teamImg").disabled=false;
+}
+$("#artistFilter").onchange=()=>{try{localStorage.setItem("tt-artist",$("#artistFilter").value)}catch(e){}renderTeam()};
+$("#showPast").onchange=renderTeam;
+$("#teamCopy").onclick=()=>{const w=allWeddings.find(x=>x.id===teamSel);if(w)copy(textOf(Object.assign(starter(),w.d)))};
+$("#teamImg").onclick=()=>{const w=allWeddings.find(x=>x.id===teamSel);if(w)saveImage($("#teamSheet"),((w.d.bride||"wedding").replace(/[^a-z0-9]+/gi,"-")+"-timeline.png").toLowerCase())};
+
+
+/* ---------- team info, payout link, records ---------- */
+const PF=["legalName","preferredName","phone","email","address","city","state","zip","role","instagram","area","availability","square","emergencyName","emergencyPhone","notes"];
+const SKILLS=["Bridal hair","Bridal makeup","Airbrush","Extensions","Lashes","Barber"];
+$("#pf-skills").innerHTML=SKILLS.map((k,i)=>'<label class="chk"><input type="checkbox" id="pf-sk'+i+'" value="'+k+'"> '+k+'</label>').join("");
+let profiles=[];
+function fillProfile(d){PF.forEach(f=>{$("#pf-"+f).value=(d&&d[f])||""});SKILLS.forEach((k,i)=>{$("#pf-sk"+i).checked=!!(d&&d.skills&&d.skills.includes(k))});if(d&&d.updatedAt)$("#pf-status").textContent="Last updated "+new Date(d.updatedAt).toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"})}
+$("#pf-save").onclick=async()=>{
+  if(ROLE!=="artist"){$("#pf-status").textContent="Open your private link to save your info.";return}
+  const body={};PF.forEach(f=>body[f]=$("#pf-"+f).value.trim());
+  body.skills=SKILLS.filter((k,i)=>$("#pf-sk"+i).checked);
+  if(!body.legalName&&!body.preferredName){$("#pf-status").textContent="Add your name first.";return}
+  $("#pf-status").textContent="Saving…";
+  try{await api("saveProfile",{profile:body});ME=Object.assign(ME||{},body);$("#pf-status").textContent="Saved. Thank you!"}
+  catch(e){$("#pf-status").textContent="That didn't save. Try again."}
+};
+const PO_FORM="https://docs.google.com/forms/d/e/1FAIpQLSfrvnrlQWGchpae8CuWPe394rB9Sq5aI1O8yLF_0euXg_kKww/viewform";
+const PO_E={name:378587757,bride:1168606751,date:33237343,type:990129114,loc:1483806607,services:623130993,qty:277197203,travel:1535840962,total:39364533};
+const PO_SERVICES=["Bridal Hair","Bridal Makeup","Bridal Party Formal Hair","Bridal Party Makeup","Flower Girl","Barber","Other"];
+$("#po-services").innerHTML=PO_SERVICES.map((k,i)=>'<label class="chk"><input type="checkbox" id="po-sv'+i+'" value="'+k+'"> '+k+'</label>').join("");
+const OTHER_SV=PO_SERVICES.length-1;
+$("#po-sv"+OTHER_SV).addEventListener("change",e=>$("#po-svOtherWrap").hidden=!e.target.checked);
+$("#po-type").addEventListener("change",e=>$("#po-typeOtherWrap").hidden=e.target.value!=="__other");
+$("#po-loc").addEventListener("change",e=>$("#po-locOtherWrap").hidden=e.target.value!=="__other");
+let myPayouts=[];
+const money=v=>{const n=parseFloat(String(v||"").replace(/[^0-9.]/g,""));return isNaN(n)?"":n.toFixed(2)};
+function poPrefill(d){if(!d)return;if(!$("#po-name").value)$("#po-name").value=d.legalName||d.preferredName||""}
+function poBrides(){$("#po-brides").innerHTML=allWeddings.map(w=>w.d).filter(d=>d.bride).map(d=>'<option value="'+esc(d.bride)+'">').join("")}
+$("#po-bride").addEventListener("change",()=>{const w=allWeddings.find(x=>(x.d.bride||"").trim().toLowerCase()===$("#po-bride").value.trim().toLowerCase());if(w&&!$("#po-date").value&&w.d.date)$("#po-date").value=w.d.date});
+function choice(sel,other){const v=$(sel).value;return v==="__other"?{other:$(other).value.trim()}:{v}}
+$("#po-send").onclick=async()=>{
+  const st=$("#po-status");
+  const r={name:$("#po-name").value.trim(),bride:$("#po-bride").value.trim(),date:$("#po-date").value,qty:$("#po-qty").value.trim(),travel:money($("#po-travel").value),total:money($("#po-total").value)};
+  const type=choice("#po-type","#po-typeOther"), loc=choice("#po-loc","#po-locOther");
+  const sv=PO_SERVICES.filter((k,i)=>i!==OTHER_SV&&$("#po-sv"+i).checked), svOther=$("#po-sv"+OTHER_SV).checked?$("#po-svOther").value.trim():"";
+  const miss=[];
+  if(!r.name)miss.push("your name");if(!r.bride)miss.push("the bride's name");if(!r.date)miss.push("the event date");
+  if(!(type.v||type.other))miss.push("the event type");if(!(loc.v||loc.other))miss.push("the location");
+  if(!sv.length&&!svOther)miss.push("your services");if(!r.qty)miss.push("the quantity");if(!r.travel)miss.push("travel (0 if none)");if(!r.total)miss.push("the total");
+  if(miss.length){st.textContent="Please add "+miss.join(", ")+".";return}
+  const q=new URLSearchParams();q.append("usp","pp_url");
+  q.append("entry."+PO_E.name,r.name);q.append("entry."+PO_E.bride,r.bride);q.append("entry."+PO_E.date,r.date);
+  const ch=(id,c)=>{if(c.v)q.append("entry."+id,c.v);else{q.append("entry."+id,"__other_option__");q.append("entry."+id+".other_option_response",c.other)}};
+  ch(PO_E.type,type);ch(PO_E.loc,loc);
+  sv.forEach(x=>q.append("entry."+PO_E.services,x));
+  if(svOther){q.append("entry."+PO_E.services,"__other_option__");q.append("entry."+PO_E.services+".other_option_response",svOther)}
+  q.append("entry."+PO_E.qty,r.qty);q.append("entry."+PO_E.travel,r.travel);q.append("entry."+PO_E.total,r.total);
+  const url=PO_FORM+"?"+q.toString();
+  const a=document.createElement("a");a.href=url;a.target="_blank";a.rel="noopener";document.body.appendChild(a);a.click();a.remove();
+  st.innerHTML='Opened. Tap Submit on the form to finish. <a href="'+esc(url)+'" target="_blank" rel="noopener">Didn\'t open?</a>';
+  if(ROLE==="artist"){const rec={bride:r.bride,date:r.date,type:type.v||type.other,total:r.total,sentAt:new Date().toISOString()};myPayouts.push(rec);renderMine();try{await api("logPayout",{request:rec})}catch(_){}}
+};
+const poDate=d=>{if(!d)return"";const[y,m,dd]=d.split("-");return Number(m)+"/"+Number(dd)+"/"+y};
+function renderMine(){
+  const box=$("#po-mine");
+  if(!myPayouts.length){box.innerHTML='<p class="hint">Requests you send show here.</p>';return}
+  box.innerHTML=myPayouts.slice().sort((a,b)=>(b.sentAt||"").localeCompare(a.sentAt||"")).map(r=>'<div style="border-bottom:1px solid var(--line);padding:8px 0;font-size:13px"><b>'+esc(r.bride)+'</b> · '+esc(r.type)+' · '+esc(poDate(r.date))+'<br><span class="hint">$'+esc(r.total)+' · opened '+esc(new Date(r.sentAt).toLocaleDateString("en-US"))+'</span></div>').join("");
+}
+const ADM_COLS=[["preferredName","Name"],["legalName","Legal name"],["role","Does"],["skills","Specialties"],["phone","Cell"],["email","Email"],["address","Address"],["city","City"],["state","State"],["zip","ZIP"],["area","Travel area"],["availability","Availability"],["square","Square direct deposit"],["emergencyName","Emergency contact"],["emergencyPhone","Emergency phone"],["instagram","Instagram"],["notes","Notes"],["updatedAt","Last updated"]];
+const cell=(d,k)=>k==="skills"?(d.skills||[]).join(", "):k==="updatedAt"?(d.updatedAt?new Date(d.updatedAt).toLocaleDateString("en-US"):""):(d[k]||"");
+const linkFor=m=>location.origin+location.pathname+"#a."+m.id+"."+m.secret;
+function renderAdmin(){
+  const rows=profiles.slice().sort((a,b)=>(a.active==="No")-(b.active==="No")||(b.updatedAt||"").localeCompare(a.updatedAt||""));
+  const old=Date.now()-1000*60*60*24*180;
+  $("#adm-note").textContent=rows.length?rows.length+" team members. Red dates are over 6 months old.":"No team members yet. Add each artist above and text her the link.";
+  $("#adm-table").innerHTML='<thead><tr><th>Link</th>'+ADM_COLS.map(c=>'<th>'+c[1]+'</th>').join("")+'</tr></thead><tbody>'+rows.map(d=>'<tr'+(d.active==="No"?' style="opacity:.45"':'')+'><td><button class="btn ghost small" data-copy="'+esc(d._id)+'">Copy link</button> <button class="btn ghost small" data-new="'+esc(d._id)+'">New link</button> <button class="btn ghost small" data-act="'+esc(d._id)+'">'+(d.active==="No"?"Turn on":"Turn off")+'</button></td>'+ADM_COLS.map(c=>'<td'+(c[0]==="updatedAt"&&d.updatedAt&&Date.parse(d.updatedAt)<old?' class="stale"':'')+'>'+esc(cell(d,c[0]))+'</td>').join("")+'</tr>').join("")+'</tbody>';
+  $("#adm-table").querySelectorAll("[data-copy]").forEach(b=>b.onclick=()=>{const m=profiles.find(x=>x._id===b.dataset.copy);if(m)copy(linkFor(m))});
+  $("#adm-table").querySelectorAll("[data-new]").forEach(b=>b.onclick=async()=>{
+    const m=profiles.find(x=>x._id===b.dataset.new);if(!m||!confirm("Make a new link for "+(m.preferredName||m.legalName)+"? Her old link stops working."))return;
+    try{const r=await api("newLink",{memberId:m.id});m.secret=r.secret;copy(linkFor(m));toast("New link copied")}catch(e){toast("That didn't work. Try again.")}
+  });
+  $("#adm-table").querySelectorAll("[data-act]").forEach(b=>b.onclick=async()=>{
+    const m=profiles.find(x=>x._id===b.dataset.act);if(!m)return;const on=m.active==="No";
+    try{await api("setActive",{memberId:m.id,active:on});m.active=on?"Yes":"No";renderAdmin();toast(on?"Her link works again":"Her link is turned off")}catch(e){toast("That didn't work. Try again.")}
+  });
+}
+$("#am-add").onclick=async()=>{
+  const st=$("#am-status");
+  const p={preferredName:$("#am-name").value.trim(),email:$("#am-email").value.trim(),phone:$("#am-phone").value.trim(),role:$("#am-role").value};
+  if(!p.preferredName){st.textContent="Add her name first.";return}
+  st.textContent="Adding…";
+  try{
+    const r=await api("addMember",{profile:p});
+    const m=Object.assign({_id:r.member.id},r.member);profiles.push(m);renderAdmin();renderArtists();
+    ["#am-name","#am-email","#am-phone"].forEach(x=>$(x).value="");$("#am-role").value="";
+    st.textContent="Added. Her link is copied, ready to text her.";copy(linkFor(m));
+  }catch(e){st.textContent="That didn't save. Try again."}
+};
+$("#adm-copy").onclick=()=>copy([ADM_COLS.map(c=>c[1]).join("\t"),...profiles.map(d=>ADM_COLS.map(c=>String(cell(d,c[0])).replace(/[\t\n]/g," ")).join("\t"))].join("\n"));
+
+
+/* ---------- Google Calendar invites (sent by the office's Google account) ---------- */
+function artistPlan(a){
+  const plan=build(S), labels=labelMap(S,plan,"team");
+  const cols=plan.cols.filter(c=>c.artist.id===a.id);
+  const slots=[];cols.forEach(c=>c.cells.forEach((pid,r)=>{if(pid)slots.push({t:plan.start+r*c.slot,end:plan.start+(r+1)*c.slot,txt:(labels[pid+":"+c.service]||{}).txt||""})}));
+  slots.sort((x,y)=>x.t-y.t);
+  return {plan,slots,start:plan.start-(Number(S.arrival)||0),end:slots.length?slots[slots.length-1].end:plan.end};
+}
+function inviteText(a,ap,kind){
+  const loc=[S.location,S.room].filter(Boolean).join(", ");
+  const L=[];
+  if(kind==="preview"){
+    L.push("Bridal preview for "+S.bride);
+    L.push("Wedding date: "+fmtDate(S.date));
+    L.push("Location: "+((S.previewLoc||"").trim()||"Taffeta Salon & Spa, 219 Bellevue Ave, Hammonton, NJ"));
+    L.push("");L.push("After the preview, please reply to the office about extensions: is she adding them, what type, color, length and pieces, and do we need to order or prep anything?");
+  }else{
+    L.push(S.bride+"'s wedding");
+    L.push("Call time: "+fmt(ap.start)+"  ·  Services start: "+fmt(ap.plan.start));
+    L.push("Location: "+loc);
+    L.push("Day-of contact: "+[S.contactName,S.contactPhone].filter(Boolean).join(" "));
+    L.push("");L.push("Your schedule ("+(a.role==="hair"?"hair":"makeup")+")");
+    ap.slots.forEach(x=>L.push(fmt(x.t)+"   "+x.txt));
+    if(S.touchups)L.push("Touch-ups before leaving: "+S.touchups);
+    if(S.notes){L.push("");L.push("Notes: "+S.notes)}
+  }
+  L.push("");L.push("Please tap Yes on this invite to confirm. If anything changes, this invite updates on your calendar.");
+  L.push("Your schedule and info: open your private Taffeta Weddings link.");
+  return L.join("\n");
+}
+const calErr=e=>e&&e.code==="signin"?"Please sign in again.":"Google Calendar didn't answer. Check your calendar before trying again so nothing is sent twice.";
+$("#calSync").onclick=async()=>{
+  const out=$("#calStatus");
+  if(!S.bride||!S.date){out.textContent="Add the bride's name and wedding date first.";return}
+  const missing=S.artists.filter(a=>!a.email);
+  if(missing.length){out.textContent="Add an email for "+missing.map(a=>a.name||"each artist").join(", ")+" first.";return}
+  $("#calSync").disabled=true;out.textContent="Sending invites…";
+  try{
+    clearTimeout(saveTimer);await save();
+    if(!docId){out.textContent="Save the wedding first.";return}
+    const plan=build(S);
+    const brideId=(S.people.find(p=>p.role==="Bride")||{}).id;
+    const events=[];
+    for(const a of S.artists){
+      const ap=artistPlan(a);
+      events.push({key:"w:"+a.id,email:a.email,summary:"Taffeta Wedding · "+S.bride+" · "+(a.role==="hair"?"Hair":"Makeup"),date:S.date,startMin:ap.start,endMin:ap.end,location:[S.location,S.room].filter(Boolean).join(", "),description:inviteText(a,ap,"wedding"),reminders:[1440,120]});
+      const doesBride=plan.cols.some(c=>c.artist.id===a.id&&c.cells.includes(brideId));
+      if(S.previewDate&&S.previewTime&&doesBride){
+        const st=toMin(S.previewTime);
+        events.push({key:"p:"+a.id,email:a.email,summary:"Taffeta Preview · "+S.bride+" · "+(a.role==="hair"?"Hair":"Makeup"),date:S.previewDate,startMin:st,endMin:st+(Number(S.previewLen)||120),location:(S.previewLoc||"").trim()||"Taffeta Salon & Spa, 219 Bellevue Ave, Hammonton, NJ 08037",description:inviteText(a,ap,"preview"),reminders:[1440,60]});
+      }
+    }
+    const r=await api("sendInvites",{weddingId:docId,events});
+    S.cal=r.cal;const n=S.artists.length;
+    out.textContent="Invites sent or updated for "+n+" artist"+(n===1?"":"s")+".";
+  }catch(e){out.textContent=calErr(e)}
+  finally{$("#calSync").disabled=false;renderArtists()}
+};
+$("#calCheck").onclick=async()=>{
+  const out=$("#calStatus");
+  if(!docId||!S.cal){out.textContent="Send invites first.";return}
+  out.textContent="Checking…";
+  try{
+    const r=await api("checkInvites",{weddingId:docId});S.cal=r.cal;
+    const w=Object.entries(S.cal).filter(([k])=>k.startsWith("w:"));
+    out.textContent=w.filter(([,v])=>v.status==="accepted").length+" of "+w.length+" confirmed.";renderArtists();
+  }catch(e){out.textContent=calErr(e)}
+};
+
+
+/* ---------- collapsible cards ---------- */
+document.querySelectorAll(".card").forEach((card,i)=>{
+  const h=card.querySelector(":scope > h2");if(!h)return;
+  const body=document.createElement("div");body.className="cbody";
+  while(h.nextSibling)body.appendChild(h.nextSibling);
+  card.appendChild(body);
+  h.classList.add("tog");h.setAttribute("role","button");h.tabIndex=0;
+  const pl=document.createElement("span");pl.className="pl";pl.setAttribute("aria-hidden","true");h.appendChild(pl);
+  const key="tt-card-"+i;let open=h.hasAttribute("data-open");
+  try{const v=localStorage.getItem(key);if(v!==null)open=v==="1"}catch(e){}
+  const set=o=>{card.classList.toggle("closed",!o);h.setAttribute("aria-expanded",o);pl.textContent=o?"\u2212":"+"};set(open);
+  const flip=()=>{const o=card.classList.contains("closed");set(o);try{localStorage.setItem(key,o?"1":"0")}catch(e){}};
+  h.addEventListener("click",flip);h.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();flip()}});
+});
+/* ---------- boot ---------- */
+const SKEY="tw-auth";
+function readAuth(){
+  const h=location.hash.match(/^#a\.([a-z0-9]+)\.([A-Z0-9]+)$/i);
+  if(h){const a={member:h[1],secret:h[2]};try{localStorage.setItem(SKEY,JSON.stringify(a))}catch(e){}history.replaceState(null,"",location.pathname);return a}
+  try{return JSON.parse(localStorage.getItem(SKEY)||"null")}catch(e){return null}
+}
+function showSignIn(msg){
+  ["build","team","info","pay","admin"].forEach(k=>{$("#tab-"+k).hidden=true;$("#view-"+k).hidden=true});
+  $("#view-signin").hidden=false;$("#signOut").hidden=true;setStatus("");
+  if(msg)$("#si-msg").textContent=msg;
+}
+function signOut(msg){AUTH=null;ROLE=null;canWrite=false;try{localStorage.removeItem(SKEY)}catch(e){}showSignIn(msg)}
+$("#signOut").onclick=()=>signOut();
+$("#si-go").onclick=async()=>{
+  const code=$("#si-code").value.trim().toUpperCase();if(!code)return;
+  $("#si-status").textContent="Checking…";
+  AUTH={code};
+  try{await start();try{localStorage.setItem(SKEY,JSON.stringify(AUTH))}catch(e){}$("#si-status").textContent=""}
+  catch(e){AUTH=null;$("#si-status").textContent=e&&e.code==="signin"?"That code didn't work.":"Couldn't reach the office. Try again."}
+};
+$("#si-code").addEventListener("keydown",e=>{if(e.key==="Enter")$("#si-go").click()});
+function applyData(j){
+  allWeddings=(j.weddings||[]).map(d=>({id:d.id,d}));
+  if(ROLE==="office"){profiles=(j.team||[]).map(m=>Object.assign({_id:m.id},m));renderAdmin();renderArtists()}
+  else{myPayouts=j.payouts||[];renderMine()}
+  if(docId&&S.cal){const w=allWeddings.find(x=>x.id===docId);if(w&&w.d.cal)S.cal=w.d.cal}
+  refreshSavedSelect();poBrides();renderTeam();renderTeamSheet();
+}
+async function start(){
+  const j=await api("load");
+  ROLE=j.role;canWrite=ROLE==="office";
+  $("#view-signin").hidden=true;$("#signOut").hidden=false;
+  const tabs=ROLE==="office"?["build","team","admin","pay"]:["team","info","pay"];
+  ["build","team","info","pay","admin"].forEach(k=>$("#tab-"+k).hidden=!tabs.includes(k));
+  $("#tab-team").textContent=ROLE==="office"?"Team schedule":"My weddings";
+  $("#artistFilter").closest(".row").hidden=ROLE!=="office";
+  $("#calCard").hidden=ROLE!=="office";
+  let t=null;try{t=localStorage.getItem("tt-tab")}catch(e){}
+  showTab(tabs.includes(t)?t:tabs[0]);
+  if(ROLE==="artist"){ME=j.me;fillProfile(ME);poPrefill(ME);setStatus("Hi "+(ME.preferredName||ME.legalName||"there"))}
+  else setStatus("Office");
+  applyData(j);
+}
+showTab=function(t){
+  const allowed=ROLE==="office"?["build","team","admin","pay"]:["team","info","pay"];
+  if(!allowed.includes(t))t=allowed[0];
+  TABS.forEach(k=>{$("#tab-"+k).setAttribute("aria-selected",k===t);$("#view-"+k).hidden=k!==t});
+  try{localStorage.setItem("tt-tab",t)}catch(e){}
+};
+// keep the team schedule fresh for everyone (the office's own edits stay put)
+setInterval(async()=>{
+  if(!ROLE||document.hidden)return;
+  try{applyData(await api("load"))}catch(e){}
+},90000);
+fillForm();
+(async()=>{
+  if(!API){showSignIn("This app isn't connected to the office sheet yet.");$("#si-go").disabled=true;return}
+  AUTH=readAuth();
+  if(!AUTH){showSignIn();return}
+  try{await start()}
+  catch(e){
+    if(e&&e.code==="signin")signOut(AUTH&&AUTH.member?"This link no longer works. Ask the office for a new one.":"Please sign in again.");
+    else{showSignIn("Couldn't reach the office right now. Check your connection and refresh.")}
+  }
+})();
+})();
+</script>
+
+</body></html>
