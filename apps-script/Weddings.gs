@@ -25,8 +25,13 @@ const TABS = {
               'Emergency phone', 'Notes', 'Updated', 'Added'],
     keys: ['id', 'secret', 'active', 'preferredName', 'legalName', 'phone', 'email', 'address', 'city', 'state', 'zip', 'role',
            'skills', 'instagram', 'area', 'availability', 'square', 'emergencyName', 'emergencyPhone', 'notes', 'updatedAt', 'addedAt'] },
-  payouts: { name: 'Payout requests', headers: ['Sent', 'Artist', 'Bride', 'Event date', 'Event type', 'Total'] }
+  payouts: { name: 'Payout requests', headers: ['Sent', 'Artist', 'Bride', 'Event date', 'Event type', 'Total'] },
+  previews: { name: 'Previews',
+    headers: ['Key', 'Preview date', 'Preview', 'Extensions', 'Length', 'Color', 'Pieces', 'Needs from the office', 'Notes', 'Photos',
+              'Updated by', 'Updated', 'Data (do not edit)'] }
 };
+const PREVIEW_WORD = /preview/i;           // calendar events with this in the title show on the Bridal preview tab
+const PHOTO_FOLDER = 'Taffeta Weddings Preview Photos';
 const PROFILE_KEYS = TABS.team.keys.slice(3, 20);
 
 /** Run once from the editor (▶ Run). Makes the tabs and the office code. */
@@ -46,8 +51,11 @@ function setup() {
   team.hideColumns(2);
   ss.getSheetByName(TABS.payouts.name).getRange('B:F').setNumberFormat('@');
   ss.getSheetByName(TABS.weddings.name).getRange('A:B').setNumberFormat('@');
+  ss.getSheetByName(TABS.previews.name).getRange('A:L').setNumberFormat('@');
   const readme = ss.getSheetByName('Read me') || ss.insertSheet('Read me', 0);
+  const extraCals = readme.getRange(8, 2).getValue();
   readme.clear();
+  readme.getRange(8, 1, 1, 2).setValues([['Also show previews from these Google calendars (calendar emails, comma separated; each must be shared with this account):', extraCals]]);
   readme.getRange(1, 1, 6, 1).setValues([
     ['Taffeta Weddings Team App'],
     ['Open the app: https://prettyteam.taffetadesign.com/weddings/'],
@@ -60,6 +68,7 @@ function setup() {
   const extra = ss.getSheetByName('Sheet1');
   if (extra && extra.getLastRow() === 0 && ss.getSheets().length > 1) ss.deleteSheet(extra);
   CalendarApp.getDefaultCalendar();   // asks for calendar access now, not on the first invite
+  photoFolder_();                     // and Drive access, for preview photos
 }
 
 /** Run from the editor if the office code ever needs to change. */
@@ -103,6 +112,11 @@ function doPost(e) {
       case 'load': return json_(Object.assign({ ok: true }, load_(who)));
       case 'saveProfile': return json_(saveProfile_(office ? d.memberId : who.member.id, d.profile));
       case 'logPayout': return json_(logPayout_(who, d.request));
+      case 'previews': return json_(previews_(who));
+      case 'savePreview': return json_(savePreview_(who, d.key, d.info));
+      case 'addPhoto': return json_(addPhoto_(who, d.key, d.photo));
+      case 'deletePhoto': return json_(deletePhoto_(who, d.key, d.id));
+      case 'photos': return json_(photos_(who, d.key, d.ids, !!d.full));
     }
     if (!office) return json_({ ok: false, error: 'office_only' });
     switch (d.action) {
@@ -294,6 +308,167 @@ function checkInvites_(weddingId) {
   w.d.cal = cal;
   writeWedding_(w);
   return { ok: true, cal: cal };
+}
+
+/* ---------- bridal previews ---------- */
+/** Upcoming previews from Google Calendar: this account's calendars plus any listed on the Read me tab. */
+function previewEvents_() {
+  const cache = CacheService.getScriptCache();
+  const hit = cache.get('previews');
+  if (hit) return JSON.parse(hit);
+  const now = new Date(), from = new Date(now.getTime() - 30 * 864e5), to = new Date(now.getTime() + 300 * 864e5);
+  const cals = {};
+  CalendarApp.getAllCalendars().forEach(c => { cals[c.getId()] = c; });
+  String(sheet_('Read me') ? sheet_('Read me').getRange(8, 2).getValue() : '').split(/[,\s]+/).filter(Boolean).forEach(id => {
+    if (cals[id]) return;
+    try { const c = CalendarApp.getCalendarById(id); if (c) cals[id] = c; } catch (_) {}
+  });
+  const seen = {}, out = [];
+  Object.keys(cals).forEach(id => {
+    let evs = [];
+    try { evs = cals[id].getEvents(from, to, { search: 'preview' }); } catch (_) { return; }
+    evs.forEach(ev => {
+      const title = ev.getTitle() || '';
+      if (!PREVIEW_WORD.test(title)) return;
+      const key = ev.getId();
+      if (seen[key]) return;
+      seen[key] = true;
+      let guests = [];
+      try { guests = ev.getGuestList(true).map(g => String(g.getEmail() || '').toLowerCase()); } catch (_) {}
+      out.push({ key: key, title: title.slice(0, 200), allDay: ev.isAllDayEvent(),
+        start: (ev.isAllDayEvent() ? ev.getAllDayStartDate() : ev.getStartTime()).toISOString(),
+        end: (ev.isAllDayEvent() ? ev.getAllDayEndDate() : ev.getEndTime()).toISOString(),
+        location: String(ev.getLocation() || '').slice(0, 200),
+        description: String(ev.getDescription() || '').replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]+>/g, '').slice(0, 800),
+        guests: guests });
+    });
+  });
+  out.sort((a, b) => a.start < b.start ? -1 : 1);
+  try { cache.put('previews', JSON.stringify(out), 300); } catch (_) {}
+  return out;
+}
+
+function previewRows_() {
+  const out = {};
+  rowsOf_(TABS.previews.name).forEach((r, i) => {
+    let d = {};
+    try { d = JSON.parse(r[12] || '{}'); } catch (_) {}
+    if (r[0]) out[r[0]] = { row: i + 2, d: d };
+  });
+  return out;
+}
+
+function myPreview_(who, ev) {
+  if (who.role === 'office') return true;
+  const email = String(who.member.email || '').toLowerCase();
+  return !!email && ev.guests.indexOf(email) >= 0;
+}
+
+function previews_(who) {
+  const team = members_(), byEmail = {};
+  team.forEach(m => { if (m.email) byEmail[String(m.email).toLowerCase()] = m.preferredName || m.legalName; });
+  const saved = previewRows_();
+  const list = previewEvents_().filter(ev => myPreview_(who, ev)).map(ev => {
+    const p = Object.assign({}, ev);
+    p.artists = ev.guests.map(g => byEmail[g]).filter(Boolean);
+    if (who.role !== 'office') delete p.guests;
+    p.info = (saved[ev.key] || {}).d || {};
+    return p;
+  });
+  return { ok: true, previews: list };
+}
+
+function findPreview_(who, key) {
+  const ev = previewEvents_().find(x => x.key === key);
+  return ev && myPreview_(who, ev) ? ev : null;
+}
+
+const PREVIEW_FIELDS = { ext: 20, length: 20, color: 60, colorOther: 80, pieces: 10, needs: 600, notes: 2000 };
+
+function savePreview_(who, key, info) {
+  const ev = findPreview_(who, key);
+  if (!ev || !info) return { ok: false, error: 'not_found' };
+  const saved = previewRows_()[key] || { d: {} };
+  const d = saved.d;
+  Object.keys(PREVIEW_FIELDS).forEach(k => { if (k in info) d[k] = String(info[k] == null ? '' : info[k]).slice(0, PREVIEW_FIELDS[k]); });
+  writePreview_(who, ev, saved.row, d);
+  return { ok: true, info: d };
+}
+
+function writePreview_(who, ev, row, d) {
+  d.updatedBy = who.role === 'office' ? 'Office' : (who.member.preferredName || who.member.legalName || 'Artist');
+  d.updatedAt = new Date().toISOString();
+  const photos = d.photos || [];
+  const values = [ev.key, Utilities.formatDate(new Date(ev.start), TZ, 'yyyy-MM-dd'), clean_(ev.title, 200), clean_(d.ext, 20), clean_(d.length, 20),
+    clean_(d.color === 'Other' ? d.colorOther : d.color, 80), clean_(d.pieces, 10), clean_(d.needs, 600), clean_(d.notes, 2000),
+    photos.length ? photos.length + ' (' + (d.folderUrl || '') + ')' : '', clean_(d.updatedBy, 80), new Date(), JSON.stringify(d)];
+  const sh = sheet_(TABS.previews.name);
+  if (row) sh.getRange(row, 1, 1, values.length).setValues([values]);
+  else sh.appendRow(values);
+}
+
+function photoFolder_() {
+  const props = PropertiesService.getScriptProperties();
+  const id = props.getProperty('PHOTO_FOLDER_ID');
+  if (id) { try { return DriveApp.getFolderById(id); } catch (_) {} }
+  const f = DriveApp.createFolder(PHOTO_FOLDER);
+  props.setProperty('PHOTO_FOLDER_ID', f.getId());
+  return f;
+}
+
+/** photo: {kind:'look'|'ext', data:'<base64 jpeg>', thumb:'<base64 jpeg>'} */
+function addPhoto_(who, key, photo) {
+  const ev = findPreview_(who, key);
+  if (!ev || !photo || !photo.data) return { ok: false, error: 'not_found' };
+  const saved = previewRows_()[key] || { d: {} };
+  const d = saved.d;
+  d.photos = d.photos || [];
+  if (d.photos.length >= 40) return { ok: false, error: 'too_many', message: 'This preview already has 40 photos.' };
+  let folder = null;
+  if (d.folderId) { try { folder = DriveApp.getFolderById(d.folderId); } catch (_) {} }
+  if (!folder) {
+    folder = photoFolder_().createFolder(Utilities.formatDate(new Date(ev.start), TZ, 'yyyy-MM-dd') + ' ' + ev.title.replace(/[\/\\]/g, '-'));
+    d.folderId = folder.getId(); d.folderUrl = folder.getUrl();
+  }
+  const kind = photo.kind === 'ext' ? 'ext' : 'look';
+  const by = who.role === 'office' ? 'Office' : (who.member.preferredName || who.member.legalName || 'Artist');
+  const stamp = Utilities.formatDate(new Date(), TZ, 'yyyy-MM-dd HHmmss');
+  const name = (kind === 'ext' ? 'Extensions' : 'Look') + ' - ' + by + ' - ' + stamp;
+  const file = folder.createFile(Utilities.newBlob(Utilities.base64Decode(photo.data), 'image/jpeg', name + '.jpg'));
+  const thumb = photo.thumb ? folder.createFile(Utilities.newBlob(Utilities.base64Decode(photo.thumb), 'image/jpeg', name + ' (small).jpg')) : file;
+  const rec = { id: file.getId(), thumbId: thumb.getId(), kind: kind, by: by, at: new Date().toISOString() };
+  d.photos.push(rec);
+  writePreview_(who, ev, saved.row, d);
+  return { ok: true, photo: rec, info: d };
+}
+
+function deletePhoto_(who, key, id) {
+  const ev = findPreview_(who, key);
+  const saved = ev && previewRows_()[key];
+  if (!saved) return { ok: false, error: 'not_found' };
+  const d = saved.d, me = who.role === 'office' ? 'Office' : (who.member.preferredName || who.member.legalName || 'Artist');
+  const rec = (d.photos || []).find(p => p.id === id);
+  if (!rec) return { ok: true, info: d };
+  if (who.role !== 'office' && rec.by !== me) return { ok: false, error: 'not_yours', message: 'Only the person who added a photo can remove it.' };
+  [rec.id, rec.thumbId].forEach(f => { try { DriveApp.getFileById(f).setTrashed(true); } catch (_) {} });
+  d.photos = d.photos.filter(p => p.id !== id);
+  writePreview_(who, ev, saved.row, d);
+  return { ok: true, info: d };
+}
+
+/** Sends photos back as data URLs, only for previews this person can see. */
+function photos_(who, key, ids, full) {
+  const ev = findPreview_(who, key);
+  const saved = ev && previewRows_()[key];
+  if (!saved) return { ok: false, error: 'not_found' };
+  const out = {};
+  (saved.d.photos || []).filter(p => (ids || []).indexOf(p.id) >= 0).slice(0, 40).forEach(p => {
+    try {
+      const b = DriveApp.getFileById(full ? p.id : p.thumbId).getBlob();
+      out[p.id] = 'data:image/jpeg;base64,' + Utilities.base64Encode(b.getBytes());
+    } catch (_) {}
+  });
+  return { ok: true, photos: out };
 }
 
 function writeWedding_(w) {

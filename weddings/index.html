@@ -111,6 +111,16 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 .toast.on{opacity:1}
 @media (prefers-reduced-motion:reduce){.toast{transition:none}}
 table.adm{border-collapse:collapse;font-size:13px;min-width:100%}table.adm th,table.adm td{border-bottom:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top;white-space:nowrap}table.adm th{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:500}.stale{color:var(--warn)}
+.pv-photos{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px}
+.pv-ph{position:relative;aspect-ratio:1;background:var(--soft);border:1px solid var(--line);overflow:hidden}
+.pv-ph button.open{all:unset;cursor:pointer;display:block;width:100%;height:100%}
+.pv-ph img{width:100%;height:100%;object-fit:cover;display:block}
+.pv-ph .x{position:absolute;top:2px;right:2px;background:#fff;border:1px solid var(--line);font-size:14px;padding:0 6px}
+.pv-ph small{position:absolute;left:0;right:0;bottom:0;background:rgba(255,255,255,.85);font-size:10px;padding:2px 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.filebtn{position:relative;overflow:hidden;display:inline-flex;align-items:center;justify-content:center}
+.filebtn input{position:absolute;inset:0;opacity:0;cursor:pointer}
+#pv-detail .seg{align-self:flex-start}
+.pv-desc{white-space:pre-wrap;font-size:13px;color:var(--muted);margin:0}
 textarea.copyfallback{position:fixed;left:-9999px;top:0}
 </style>
 
@@ -120,6 +130,7 @@ textarea.copyfallback{position:fixed;left:-9999px;top:0}
     <div class="tabs" role="tablist">
       <button id="tab-build" role="tab" aria-selected="true" hidden>Build a timeline</button>
       <button id="tab-team" role="tab" aria-selected="false" hidden>Team schedule</button>
+      <button id="tab-prev" role="tab" aria-selected="false" hidden>Bridal preview</button>
       <button id="tab-info" role="tab" aria-selected="false" hidden>My info</button>
       <button id="tab-pay" role="tab" aria-selected="false" hidden>Payout form</button>
       <button id="tab-admin" role="tab" aria-selected="false" hidden>Team records</button>
@@ -160,14 +171,14 @@ textarea.copyfallback{position:fixed;left:-9999px;top:0}
         </div>
 
         <div class="card">
-          <h2>Trial</h2>
+          <h2>Preview</h2>
           <div class="row">
-            <label class="f">Trial date<input id="previewDate" type="date"></label>
-            <label class="f">Trial time<input id="previewTime" type="time"></label>
+            <label class="f">Preview date<input id="previewDate" type="date"></label>
+            <label class="f">Preview time<input id="previewTime" type="time"></label>
             <label class="f" style="flex:0 1 110px">Length (min)<input id="previewLen" type="number" min="30" step="15" value="120"></label>
           </div>
-          <label class="f">Trial location<input id="previewLoc" placeholder="Blank = salon. NY: bride's address"></label>
-          <p class="hint">NY trials happen at the bride's location, so add travel and parking.</p>
+          <label class="f">Preview location<input id="previewLoc" placeholder="Blank = salon. NY: bride's address"></label>
+          <p class="hint">NY previews happen at the bride's location, so add travel and parking.</p>
         </div>
         <div class="card">
           <h2>Timing</h2>
@@ -317,7 +328,7 @@ textarea.copyfallback{position:fixed;left:-9999px;top:0}
       <div class="rail">
         <div class="card" id="po-card">
           <h2 data-open>Payout request</h2>
-          <p class="hint">Submit by the Monday after your event. Not needed for trials.</p>
+          <p class="hint">Submit by the Monday after your event. Not needed for previews.</p>
           <label class="f">Full name<input id="po-name" autocomplete="name"></label>
           <div class="row">
             <label class="f">Bride's full name<input id="po-bride" list="po-brides" autocomplete="off"><datalist id="po-brides"></datalist></label>
@@ -348,6 +359,27 @@ textarea.copyfallback{position:fixed;left:-9999px;top:0}
           <h2>My sent requests</h2>
           <div id="po-mine"><p class="hint">Requests you send show here.</p></div>
         </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="view-prev" hidden>
+    <div class="team">
+      <div class="rail">
+        <div class="card">
+          <h2 data-open>Upcoming previews</h2>
+          <div class="row" id="pv-filterRow">
+            <label class="f">Show previews for
+              <select id="pv-filter"><option value="">Everyone</option></select>
+            </label>
+          </div>
+          <label class="chk"><input type="checkbox" id="pv-past"> Include the last 30 days</label>
+          <p class="hint" id="pv-hint">From Google Calendar: any event with "preview" in its title that you're invited to.</p>
+        </div>
+        <div class="list" id="pv-list"><div class="empty-state">Loading previews…</div></div>
+      </div>
+      <div style="min-width:0" id="pv-detail">
+        <div class="empty-state">Pick a preview to add photos, notes and extensions.</div>
       </div>
     </div>
   </section>
@@ -653,7 +685,7 @@ const fileName=s=>((s.bride||"wedding").replace(/[^a-z0-9]+/gi,"-")+"-timeline"+
 $("#saveImg").onclick=()=>saveImage($("#sheet"),fileName(S));
 
 /* ---------- tabs ---------- */
-const TABS=["build","team","info","pay","admin"];
+const TABS=["build","team","prev","info","pay","admin"];
 function showTab(t){if(!TABS.includes(t))t="team";TABS.forEach(k=>{$("#tab-"+k).setAttribute("aria-selected",k===t);$("#view-"+k).hidden=k!==t});try{localStorage.setItem("tt-tab",t)}catch(e){}}
 TABS.forEach(k=>$("#tab-"+k).onclick=()=>showTab(k));
 
@@ -898,6 +930,134 @@ $("#calCheck").onclick=async()=>{
 };
 
 
+/* ---------- bridal previews ---------- */
+const PV_LENGTHS=['18"','20"','22"','24"'];
+const PV_COLORS=["Jet black","Off black","Dark brown","Medium brown","Light brown","Dark blonde","Golden blonde","Ash blonde","Platinum","Red / auburn","Blend / balayage","Other"];
+let previews=[], pvSel=null, pvLoaded=false, pvLoading=false, pvThumbs={};
+const pvDay=p=>{const d=new Date(p.start);return p.allDay?new Date(d.getUTCFullYear(),d.getUTCMonth(),d.getUTCDate()):d};
+const pvWhen=p=>{const d=pvDay(p);const day=d.toLocaleDateString(undefined,{weekday:"short",month:"short",day:"numeric",year:"numeric"});
+  return p.allDay?day:day+" · "+d.toLocaleTimeString(undefined,{hour:"numeric",minute:"2-digit"})};
+async function loadPreviews(force){
+  if(!ROLE||pvLoading||(pvLoaded&&!force))return;
+  pvLoading=true;
+  try{const j=await api("previews");previews=j.previews||[];const first=!pvLoaded;pvLoaded=true;renderPreviews();if(pvSel&&first)renderPreview()}
+  catch(e){if(!pvLoaded)$("#pv-list").innerHTML='<div class="empty-state">Couldn\'t load previews. Refresh to try again.</div>'}
+  finally{pvLoading=false}
+}
+function renderPreviews(){
+  $("#pv-filterRow").hidden=ROLE!=="office";
+  $("#pv-hint").textContent=ROLE==="office"?'From Google Calendar: every event with "preview" in its title, on the calendars this app can see.':'From Google Calendar: previews you\'re invited to.';
+  if(ROLE==="office"){
+    const f=$("#pv-filter"),cur=f.value,names=[...new Set(previews.flatMap(p=>p.artists||[]))].sort();
+    f.innerHTML='<option value="">Everyone</option>'+names.map(n=>'<option'+(n===cur?' selected':'')+'>'+esc(n)+'</option>').join("");
+  }
+  const who=ROLE==="office"?$("#pv-filter").value:"",past=$("#pv-past").checked,today=new Date();today.setHours(0,0,0,0);
+  const list=previews.filter(p=>(past||pvDay(p)>=today)&&(!who||(p.artists||[]).includes(who)));
+  const box=$("#pv-list");
+  if(!list.length){box.innerHTML='<div class="empty-state">'+(ROLE==="office"?"No previews on the calendar yet.":"No previews on your calendar yet. When the office invites you to one, it shows up here.")+'</div>';return}
+  box.innerHTML="";
+  list.forEach(p=>{
+    const d=pvDay(p),i=p.info||{},b=document.createElement("button");
+    b.className="wed";b.type="button";if(p.key===pvSel)b.setAttribute("aria-current","true");
+    const pills=[];if(i.ext==="Yes")pills.push("Extensions");if(i.ext==="No")pills.push("No extensions");if((i.photos||[]).length)pills.push((i.photos.length)+" photo"+(i.photos.length>1?"s":""));if(i.notes)pills.push("Notes");
+    b.innerHTML='<div class="d"><small>'+esc(d.toLocaleDateString(undefined,{month:"short"}))+'</small><b>'+d.getDate()+'</b></div><div><div class="who">'+esc(p.title)+'</div><div class="sub">'+esc(pvWhen(p))+(p.location?' · '+esc(p.location):'')+'</div>'
+      +((p.artists||[]).length?'<div class="sub">'+esc(p.artists.join(", "))+'</div>':'')+(pills.length?'<div>'+pills.map(x=>'<span class="pill">'+esc(x)+'</span>').join("")+'</div>':'')+'</div>';
+    b.onclick=()=>{pvSel=p.key;renderPreviews();renderPreview();if(window.innerWidth<900)$("#pv-detail").scrollIntoView({behavior:"smooth"})};
+    box.appendChild(b);
+  });
+}
+$("#pv-filter").onchange=renderPreviews;$("#pv-past").onchange=renderPreviews;
+function pvOpts(list,cur){return '<option value="">Choose</option>'+list.map(x=>'<option'+(x===cur?' selected':'')+'>'+esc(x)+'</option>').join("")}
+function renderPreview(){
+  const p=previews.find(x=>x.key===pvSel),box=$("#pv-detail");
+  if(!p){box.innerHTML='<div class="empty-state">Pick a preview to add photos, notes and extensions.</div>';return}
+  const i=p.info||{},me=ROLE==="office"?"Office":(ME&&(ME.preferredName||ME.legalName))||"";
+  const ext=i.ext||"";
+  box.innerHTML='<div class="rail">'
+   +'<div class="card"><h2>Preview</h2><div class="who" style="font-family:var(--serif);font-size:18px">'+esc(p.title)+'</div>'
+   +'<div class="sub">'+esc(pvWhen(p))+(p.location?' · '+esc(p.location):'')+'</div>'
+   +((p.artists||[]).length?'<div class="sub">Artists: '+esc(p.artists.join(", "))+'</div>':'')
+   +(p.description?'<p class="pv-desc">'+esc(p.description)+'</p>':'')+'</div>'
+   +'<div class="card"><h2>Extensions</h2>'
+   +'<div class="f"><span>Is the bride renting extensions?</span><div class="seg" role="group" aria-label="Extensions">'
+   +["Yes","No","Not sure yet"].map(v=>'<button type="button" data-ext="'+v+'" aria-pressed="'+(ext===v)+'">'+v+'</button>').join("")+'</div></div>'
+   +'<div id="pv-extFields"'+(ext==="Yes"?'':' hidden')+'><div class="row">'
+   +'<label class="f">Length<select id="pv-length">'+pvOpts(PV_LENGTHS,i.length)+'</select></label>'
+   +'<label class="f">Color<select id="pv-color">'+pvOpts(PV_COLORS,i.color)+'</select></label>'
+   +'<label class="f" style="flex:0 1 110px">Pieces<input id="pv-pieces" inputmode="numeric" value="'+esc(i.pieces||"")+'"></label></div>'
+   +'<label class="f" id="pv-colorOtherWrap"'+(i.color==="Other"?'':' hidden')+'>Color (other)<input id="pv-colorOther" value="'+esc(i.colorOther||"")+'"></label>'
+   +'<div class="f" style="margin-top:10px"><span>Photos of the extensions you used</span><div class="pv-photos" id="pv-ph-ext"></div>'
+   +'<span class="btn ghost filebtn">Add extension photos<input type="file" accept="image/*" multiple data-kind="ext" aria-label="Add extension photos"></span><span class="status" id="pv-up-ext"></span></div></div></div>'
+   +'<div class="card"><h2>Notes</h2>'
+   +'<label class="f">Preview notes (the look, products, timing, anything for the wedding day)<textarea id="pv-notes" rows="5">'+esc(i.notes||"")+'</textarea></label>'
+   +'<label class="f">Anything new needed from the office?<textarea id="pv-needs" rows="2">'+esc(i.needs||"")+'</textarea></label>'
+   +'<div class="row" style="align-items:center"><button class="btn" id="pv-save" style="flex:0 0 auto">Save</button><span class="status" id="pv-status">'+(i.updatedAt?'Last saved by '+esc(i.updatedBy||"")+', '+esc(new Date(i.updatedAt).toLocaleString(undefined,{month:"short",day:"numeric",hour:"numeric",minute:"2-digit"})):'')+'</span></div></div>'
+   +'<div class="card"><h2>Preview photos</h2><p class="hint">The finished look, inspiration pictures, or anything the wedding-day team should see.</p><div class="pv-photos" id="pv-ph-look"></div>'
+   +'<span class="btn ghost filebtn">Add photos<input type="file" accept="image/*" multiple data-kind="look" aria-label="Add preview photos"></span><span class="status" id="pv-up-look"></span></div>'
+   +'</div>';
+  let extVal=ext;
+  box.querySelectorAll("[data-ext]").forEach(b=>b.onclick=()=>{extVal=b.dataset.ext;box.querySelectorAll("[data-ext]").forEach(x=>x.setAttribute("aria-pressed",x===b));$("#pv-extFields").hidden=extVal!=="Yes";$("#pv-status").textContent="Not saved yet"});
+  $("#pv-color").onchange=e=>{$("#pv-colorOtherWrap").hidden=e.target.value!=="Other"};
+  box.querySelectorAll("input,textarea,select").forEach(el=>{if(el.type!=="file")el.addEventListener("input",()=>{$("#pv-status").textContent="Not saved yet"})});
+  $("#pv-save").onclick=async()=>{
+    const info={ext:extVal,length:$("#pv-length").value,color:$("#pv-color").value,colorOther:$("#pv-colorOther").value.trim(),pieces:$("#pv-pieces").value.trim(),notes:$("#pv-notes").value.trim(),needs:$("#pv-needs").value.trim()};
+    $("#pv-save").disabled=true;$("#pv-status").textContent="Saving…";
+    try{const j=await api("savePreview",{key:p.key,info});p.info=j.info;$("#pv-status").textContent="Saved. Thank you!";renderPreviews()}
+    catch(e){$("#pv-status").textContent="That didn't save. Try again."}
+    finally{$("#pv-save").disabled=false}
+  };
+  box.querySelectorAll('input[type="file"]').forEach(inp=>inp.onchange=()=>pvUpload(p,inp.dataset.kind,[...inp.files]).finally(()=>{inp.value=""}));
+  pvRenderPhotos(p,me);
+}
+function pvRenderPhotos(p,me){
+  const photos=(p.info&&p.info.photos)||[];
+  ["look","ext"].forEach(kind=>{
+    const box=$("#pv-ph-"+kind);if(!box)return;
+    const mine=photos.filter(x=>x.kind===kind);
+    box.innerHTML=mine.length?"":'<p class="hint" style="grid-column:1/-1">No photos yet.</p>';
+    mine.forEach(ph=>{
+      const d=document.createElement("div");d.className="pv-ph";
+      const can=ROLE==="office"||ph.by===me;
+      d.innerHTML='<button type="button" class="open" aria-label="Open photo">'+(pvThumbs[ph.id]?'<img alt="" src="'+pvThumbs[ph.id]+'">':'')+'</button>'+(can?'<button type="button" class="x" aria-label="Remove photo">×</button>':'')+'<small>'+esc(ph.by||"")+'</small>';
+      d.querySelector(".open").onclick=()=>pvOpenFull(p,ph);
+      if(can)d.querySelector(".x").onclick=async()=>{if(!confirm("Remove this photo?"))return;try{const j=await api("deletePhoto",{key:p.key,id:ph.id});p.info=j.info;pvRenderPhotos(p,me);renderPreviews()}catch(e){toast(e.message&&e.message!=="error"?e.message:"Couldn't remove it. Try again.")}};
+      box.appendChild(d);
+    });
+  });
+  const need=photos.filter(x=>!pvThumbs[x.id]).map(x=>x.id);
+  if(need.length)api("photos",{key:p.key,ids:need}).then(j=>{Object.assign(pvThumbs,j.photos||{});if(pvSel===p.key)pvRenderPhotos(p,me)}).catch(()=>{});
+}
+async function pvOpenFull(p,ph){
+  const w=window.open("","_blank");
+  try{const j=await api("photos",{key:p.key,ids:[ph.id],full:true});const src=(j.photos||{})[ph.id];
+    if(w&&src){w.document.title="Preview photo";w.document.body.style.margin="0";w.document.body.innerHTML='<img alt="Preview photo" style="max-width:100%;display:block;margin:auto" src="'+src+'">'}else if(w)w.close()}
+  catch(e){if(w)w.close();toast("Couldn't open that photo.")}
+}
+function pvShrink(file,max,q){
+  return new Promise((res,rej)=>{
+    const url=URL.createObjectURL(file),img=new Image();
+    img.onload=()=>{const k=Math.min(1,max/Math.max(img.width,img.height)),c=document.createElement("canvas");c.width=Math.round(img.width*k);c.height=Math.round(img.height*k);
+      c.getContext("2d").drawImage(img,0,0,c.width,c.height);URL.revokeObjectURL(url);res(c.toDataURL("image/jpeg",q).split(",")[1])};
+    img.onerror=()=>{URL.revokeObjectURL(url);rej(new Error("image"))};img.src=url;
+  });
+}
+async function pvUpload(p,kind,files){
+  const st=$("#pv-up-"+kind),me=ROLE==="office"?"Office":(ME&&(ME.preferredName||ME.legalName))||"";
+  let done=0;
+  for(const f of files){
+    if(!/^image\//.test(f.type)&&!/\.(jpe?g|png|heic|heif|webp)$/i.test(f.name))continue;
+    if(st)st.textContent="Uploading "+(done+1)+" of "+files.length+"…";
+    try{
+      const data=await pvShrink(f,1600,.82),thumb=await pvShrink(f,320,.7);
+      const j=await api("addPhoto",{key:p.key,photo:{kind,data,thumb}});
+      p.info=j.info;pvThumbs[j.photo.id]="data:image/jpeg;base64,"+thumb;done++;
+      if(pvSel===p.key)pvRenderPhotos(p,me);
+    }catch(e){toast(e.code==="too_many"?e.message:"A photo didn't upload. Try again.")}
+  }
+  if(st)st.textContent=done?done+" photo"+(done>1?"s":"")+" added.":"";
+  renderPreviews();
+}
+
 /* ---------- collapsible cards ---------- */
 document.querySelectorAll(".card").forEach((card,i)=>{
   const h=card.querySelector(":scope > h2");if(!h)return;
@@ -920,11 +1080,11 @@ function readAuth(){
   try{return JSON.parse(localStorage.getItem(SKEY)||"null")}catch(e){return null}
 }
 function showSignIn(msg){
-  ["build","team","info","pay","admin"].forEach(k=>{$("#tab-"+k).hidden=true;$("#view-"+k).hidden=true});
+  TABS.forEach(k=>{$("#tab-"+k).hidden=true;$("#view-"+k).hidden=true});
   $("#view-signin").hidden=false;$("#signOut").hidden=true;setStatus("");
   if(msg)$("#si-msg").textContent=msg;
 }
-function signOut(msg){AUTH=null;ROLE=null;canWrite=false;try{localStorage.removeItem(SKEY)}catch(e){}showSignIn(msg)}
+function signOut(msg){AUTH=null;ROLE=null;canWrite=false;previews=[];pvSel=null;pvLoaded=false;pvThumbs={};$("#pv-detail").innerHTML="";try{localStorage.removeItem(SKEY)}catch(e){}showSignIn(msg)}
 $("#signOut").onclick=()=>signOut();
 $("#si-go").onclick=async()=>{
   const code=$("#si-code").value.trim().toUpperCase();if(!code)return;
@@ -945,8 +1105,8 @@ async function start(){
   const j=await api("load");
   ROLE=j.role;canWrite=ROLE==="office";
   $("#view-signin").hidden=true;$("#signOut").hidden=false;
-  const tabs=ROLE==="office"?["build","team","admin","pay"]:["team","info","pay"];
-  ["build","team","info","pay","admin"].forEach(k=>$("#tab-"+k).hidden=!tabs.includes(k));
+  const tabs=ROLE==="office"?["build","team","prev","admin","pay"]:["team","prev","info","pay"];
+  TABS.forEach(k=>$("#tab-"+k).hidden=!tabs.includes(k));
   $("#tab-team").textContent=ROLE==="office"?"Team schedule":"My weddings";
   $("#artistFilter").closest(".row").hidden=ROLE!=="office";
   $("#calCard").hidden=ROLE!=="office";
@@ -957,15 +1117,17 @@ async function start(){
   applyData(j);
 }
 showTab=function(t){
-  const allowed=ROLE==="office"?["build","team","admin","pay"]:["team","info","pay"];
+  const allowed=ROLE==="office"?["build","team","prev","admin","pay"]:["team","prev","info","pay"];
   if(!allowed.includes(t))t=allowed[0];
   TABS.forEach(k=>{$("#tab-"+k).setAttribute("aria-selected",k===t);$("#view-"+k).hidden=k!==t});
+  if(t==="prev")loadPreviews();
   try{localStorage.setItem("tt-tab",t)}catch(e){}
 };
 // keep the team schedule fresh for everyone (the office's own edits stay put)
 setInterval(async()=>{
   if(!ROLE||document.hidden)return;
   try{applyData(await api("load"))}catch(e){}
+  if(pvLoaded&&!$("#view-prev").hidden)loadPreviews(true);
 },90000);
 fillForm();
 (async()=>{
