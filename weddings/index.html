@@ -126,7 +126,7 @@ textarea.copyfallback{position:fixed;left:-9999px;top:0}
 
 <div class="wrap">
   <header class="top">
-    <div class="brand"><h1>TAFFETA WEDDINGS</h1><span>timelines</span></div>
+    <div class="brand"><h1>TAFFETA WEDDINGS</h1><span id="pageTitle"></span></div>
     <div class="tabs" role="tablist">
       <button id="tab-booked" role="tab" aria-selected="true" hidden>Booked weddings</button>
       <button id="tab-build" role="tab" aria-selected="false" hidden>Build a timeline</button>
@@ -698,7 +698,7 @@ $("#saveImg").onclick=()=>saveImage($("#sheet"),fileName(S));
 
 /* ---------- tabs ---------- */
 const TABS=["build","team","prev","booked","info","pay","admin"];
-function showTab(t){if(!TABS.includes(t))t="team";TABS.forEach(k=>{$("#tab-"+k).setAttribute("aria-selected",k===t);$("#view-"+k).hidden=k!==t});try{localStorage.setItem("tt-tab",t)}catch(e){}}
+function showTab(t){if(!TABS.includes(t))t="team";TABS.forEach(k=>{$("#tab-"+k).setAttribute("aria-selected",k===t);$("#view-"+k).hidden=k!==t});$("#pageTitle").textContent=$("#tab-"+t).textContent;try{localStorage.setItem("tt-tab",t)}catch(e){}}
 TABS.forEach(k=>$("#tab-"+k).onclick=()=>showTab(k));
 
 /* ---------- storage ---------- */
@@ -1167,6 +1167,7 @@ showTab=function(t){
   const allowed=ROLE==="office"?["booked","build","team","prev","admin","pay"]:["team","prev","info","pay"];
   if(!allowed.includes(t))t=allowed[0];
   TABS.forEach(k=>{$("#tab-"+k).setAttribute("aria-selected",k===t);$("#view-"+k).hidden=k!==t});
+  $("#pageTitle").textContent=$("#tab-"+t).textContent;
   if(t==="prev")loadPreviews();
   try{localStorage.setItem("tt-tab",t)}catch(e){}
 };
