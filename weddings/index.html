@@ -126,7 +126,7 @@ textarea.copyfallback{position:fixed;left:-9999px;top:0}
 
 <div class="wrap">
   <header class="top">
-    <div class="brand"><h1>TAFFETA WEDDINGS</h1><span>timelines</span></div>
+    <div class="brand"><h1>TAFFETA WEDDINGS</h1><span id="pageTitle"></span></div>
     <div class="tabs" role="tablist">
       <button id="tab-booked" role="tab" aria-selected="true" hidden>Booked weddings</button>
       <button id="tab-build" role="tab" aria-selected="false" hidden>Build a timeline</button>
@@ -698,7 +698,7 @@ $("#saveImg").onclick=()=>saveImage($("#sheet"),fileName(S));
 
 /* ---------- tabs ---------- */
 const TABS=["build","team","prev","booked","info","pay","admin"];
-function showTab(t){if(!TABS.includes(t))t="team";TABS.forEach(k=>{$("#tab-"+k).setAttribute("aria-selected",k===t);$("#view-"+k).hidden=k!==t});try{localStorage.setItem("tt-tab",t)}catch(e){}}
+function showTab(t){if(!TABS.includes(t))t="team";TABS.forEach(k=>{$("#tab-"+k).setAttribute("aria-selected",k===t);$("#view-"+k).hidden=k!==t});$("#pageTitle").textContent=$("#tab-"+t).textContent;try{localStorage.setItem("tt-tab",t)}catch(e){}}
 TABS.forEach(k=>$("#tab-"+k).onclick=()=>showTab(k));
 
 /* ---------- storage ---------- */
@@ -1072,8 +1072,8 @@ async function pvUpload(p,kind,files){
 
 /* ---------- booked weddings (office) ---------- */
 function bkRows(){
-  const y=$("#bk-year").value;
-  return allWeddings.filter(w=>(w.d.date||"").slice(0,4)===y).sort((a,b)=>(a.d.date||"").localeCompare(b.d.date||""));
+  const y=$("#bk-year").value,today=new Date().toISOString().slice(0,10);
+  return allWeddings.filter(w=>(w.d.date||"").slice(0,4)===y&&w.d.date>=today).sort((a,b)=>(a.d.date||"").localeCompare(b.d.date||""));
 }
 function bkInfo(d){
   const ppl=d.people||[],hair=ppl.filter(p=>p.hair).length,mu=ppl.filter(p=>p.mu).length;
@@ -1085,17 +1085,16 @@ function bkInfo(d){
 function renderBooked(){
   if(ROLE!=="office")return;
   const sel=$("#bk-year"),cur=sel.value,thisYear=new Date().getFullYear();
-  const years=[...new Set([thisYear,thisYear+1,...allWeddings.map(w=>Number((w.d.date||"").slice(0,4))).filter(Boolean)])].sort();
+  const years=[...new Set([thisYear,thisYear+1,...allWeddings.map(w=>Number((w.d.date||"").slice(0,4))).filter(y=>y>=thisYear)])].sort();
   sel.innerHTML=years.map(y=>'<option'+(String(y)===cur?' selected':'')+'>'+y+'</option>').join("");
   if(!cur)sel.value=String(thisYear);
-  const rows=bkRows(),today=new Date().toISOString().slice(0,10);
-  const upcoming=rows.filter(w=>w.d.date>=today).length;
-  $("#bk-note").textContent=rows.length?rows.length+" wedding"+(rows.length>1?"s":"")+" booked in "+sel.value+(upcoming&&upcoming<rows.length?" ("+upcoming+" still to come)":""):"";
+  const rows=bkRows();
+  $("#bk-note").textContent=rows.length?rows.length+" wedding"+(rows.length>1?"s":"")+" still to come in "+sel.value:"";
   const t=$("#bk-table");
-  if(!rows.length){t.innerHTML='<tr><td><div class="empty-state">No weddings booked for '+esc(sel.value)+' yet. Weddings you save in Build a timeline show up here.</div></td></tr>';return}
+  if(!rows.length){t.innerHTML='<tr><td><div class="empty-state">No upcoming weddings for '+esc(sel.value)+'. Past weddings stay on the Weddings tab of the Google Sheet.</div></td></tr>';return}
   t.innerHTML='<tr><th>Date</th><th>Bride</th><th>Location</th><th>Hair</th><th>Makeup</th><th>Team</th><th>Preview</th><th>Invites</th><th></th></tr>'+rows.map(w=>{
-    const d=w.d,i=bkInfo(d),past=d.date<today;
-    return '<tr'+(past?' style="color:var(--muted)"':'')+'><td>'+esc(shortDate(d.date))+'</td><td><b>'+esc(d.bride||"Untitled")+'</b></td><td>'+esc([d.location,d.room].filter(Boolean).join(", "))+'</td><td>'+i.hair+'</td><td>'+i.mu+'</td><td style="white-space:normal;min-width:160px">'+esc(i.team.join(", ")||"Not assigned")+'</td><td>'+esc(i.prev||"–")+'</td><td>'+esc(i.invites)+'</td><td><button class="btn ghost small" data-open-w="'+esc(w.id)+'">Open</button></td></tr>';
+    const d=w.d,i=bkInfo(d);
+    return '<tr><td>'+esc(shortDate(d.date))+'</td><td><b>'+esc(d.bride||"Untitled")+'</b></td><td>'+esc([d.location,d.room].filter(Boolean).join(", "))+'</td><td>'+i.hair+'</td><td>'+i.mu+'</td><td style="white-space:normal;min-width:160px">'+esc(i.team.join(", ")||"Not assigned")+'</td><td>'+esc(i.prev||"–")+'</td><td>'+esc(i.invites)+'</td><td><button class="btn ghost small" data-open-w="'+esc(w.id)+'">Open</button></td></tr>';
   }).join("");
   t.querySelectorAll("[data-open-w]").forEach(b=>b.onclick=()=>{const s=$("#saved");s.value=b.dataset.openW;s.onchange({target:s});showTab("build");window.scrollTo(0,0)});
 }
@@ -1168,6 +1167,7 @@ showTab=function(t){
   const allowed=ROLE==="office"?["booked","build","team","prev","admin","pay"]:["team","prev","info","pay"];
   if(!allowed.includes(t))t=allowed[0];
   TABS.forEach(k=>{$("#tab-"+k).setAttribute("aria-selected",k===t);$("#view-"+k).hidden=k!==t});
+  $("#pageTitle").textContent=$("#tab-"+t).textContent;
   if(t==="prev")loadPreviews();
   try{localStorage.setItem("tt-tab",t)}catch(e){}
 };
