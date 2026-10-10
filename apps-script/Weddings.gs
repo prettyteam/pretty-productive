@@ -14,6 +14,7 @@
  * After changing this code later: Deploy > Manage deployments > Edit > New version.
  */
 const TZ = 'America/New_York';
+const BOUND_SHEET_ID = '';   // filled in at deploy time with the id of the "Taffeta Weddings Team App" Sheet
 const SALON = 'Taffeta Salon & Spa, 219 Bellevue Ave, Hammonton, NJ 08037';
 
 const TABS = {
@@ -30,7 +31,7 @@ const PROFILE_KEYS = TABS.team.keys.slice(3, 20);
 
 /** Run once from the editor (▶ Run). Makes the tabs and the office code. */
 function setup() {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const ss = ss_();
   const props = PropertiesService.getScriptProperties();
   props.setProperty('SHEET_ID', ss.getId());
   if (!props.getProperty('OFFICE_CODE')) props.setProperty('OFFICE_CODE', code_(8));
@@ -67,11 +68,31 @@ function newOfficeCode() {
   setup();
 }
 
-function doGet() { return json_({ ok: true, app: 'taffeta-weddings' }); }
+/** Opening the web app link: the owner sees a welcome page with the office code; everyone else sees nothing private. */
+function doGet() {
+  ensureSetup_();
+  let me = '', owner = '';
+  try { me = Session.getActiveUser().getEmail(); owner = Session.getEffectiveUser().getEmail(); } catch (_) {}
+  if (!me || me !== owner) return json_({ ok: true, app: 'taffeta-weddings' });
+  const code = PropertiesService.getScriptProperties().getProperty('OFFICE_CODE');
+  return HtmlService.createHtmlOutput(
+    '<div style="font:16px Georgia,serif;max-width:520px;margin:60px auto;text-align:center;line-height:1.6">' +
+    '<div style="letter-spacing:.2em;font-size:20px">TAFFETA WEDDINGS</div><p>The team app is connected.</p>' +
+    '<p>Your office code is<br><b style="font-size:28px;letter-spacing:.15em">' + code + '</b></p>' +
+    '<p>It is also on the Read me tab of the "Taffeta Weddings Team App" Google Sheet.</p>' +
+    '<p><a href="https://prettyteam.taffetadesign.com/weddings/" target="_top">Open the app</a></p></div>')
+    .setTitle('Taffeta Weddings Team App');
+}
+
+/** Runs setup the first time the app is used, so nobody has to open the script editor. */
+function ensureSetup_() {
+  if (!PropertiesService.getScriptProperties().getProperty('OFFICE_CODE')) setup();
+}
 
 function doPost(e) {
   let d;
   try { d = JSON.parse(e.postData.contents); } catch (err) { return json_({ ok: false, error: 'bad_request' }); }
+  ensureSetup_();
   const who = who_(d);
   if (!who) return json_({ ok: false, error: 'signin' });
   const lock = LockService.getScriptLock();
@@ -281,8 +302,8 @@ function writeWedding_(w) {
 
 /* ---------- helpers ---------- */
 function ss_() {
-  const id = PropertiesService.getScriptProperties().getProperty('SHEET_ID');
-  return id ? SpreadsheetApp.openById(id) : SpreadsheetApp.getActiveSpreadsheet();
+  const id = BOUND_SHEET_ID || PropertiesService.getScriptProperties().getProperty('SHEET_ID');
+  return id ? SpreadsheetApp.openById(id) : SpreadsheetApp.getActiveSpreadsheet();   // the Sheet this script lives in
 }
 function sheet_(name) { return ss_().getSheetByName(name); }
 function rowsOf_(name) {
