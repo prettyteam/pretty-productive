@@ -128,10 +128,10 @@ textarea.copyfallback{position:fixed;left:-9999px;top:0}
   <header class="top">
     <div class="brand"><h1>TAFFETA WEDDINGS</h1><span>timelines</span></div>
     <div class="tabs" role="tablist">
-      <button id="tab-build" role="tab" aria-selected="true" hidden>Build a timeline</button>
+      <button id="tab-booked" role="tab" aria-selected="true" hidden>Booked weddings</button>
+      <button id="tab-build" role="tab" aria-selected="false" hidden>Build a timeline</button>
       <button id="tab-team" role="tab" aria-selected="false" hidden>Team schedule</button>
       <button id="tab-prev" role="tab" aria-selected="false" hidden>Bridal preview</button>
-      <button id="tab-booked" role="tab" aria-selected="false" hidden>Booked weddings</button>
       <button id="tab-info" role="tab" aria-selected="false" hidden>My info</button>
       <button id="tab-pay" role="tab" aria-selected="false" hidden>Payout form</button>
       <button id="tab-admin" role="tab" aria-selected="false" hidden>Team records</button>
@@ -1153,19 +1153,19 @@ async function start(){
   const j=await api("load");
   ROLE=j.role;canWrite=ROLE==="office";
   $("#view-signin").hidden=true;$("#signOut").hidden=false;
-  const tabs=ROLE==="office"?["build","team","prev","booked","admin","pay"]:["team","prev","info","pay"];
+  const tabs=ROLE==="office"?["booked","build","team","prev","admin","pay"]:["team","prev","info","pay"];
   TABS.forEach(k=>$("#tab-"+k).hidden=!tabs.includes(k));
   $("#tab-team").textContent=ROLE==="office"?"Team schedule":"My weddings";
   $("#artistFilter").closest(".row").hidden=ROLE!=="office";
   $("#calCard").hidden=ROLE!=="office";
   let t=null;try{t=localStorage.getItem("tt-tab")}catch(e){}
-  showTab(tabs.includes(t)?t:tabs[0]);
+  showTab(ROLE==="office"?"booked":(tabs.includes(t)?t:tabs[0]));   // the office always opens on Booked weddings
   if(ROLE==="artist"){ME=j.me;fillProfile(ME);poPrefill(ME);setStatus("Hi "+(ME.preferredName||ME.legalName||"there"))}
   else setStatus("Office");
   applyData(j);
 }
 showTab=function(t){
-  const allowed=ROLE==="office"?["build","team","prev","booked","admin","pay"]:["team","prev","info","pay"];
+  const allowed=ROLE==="office"?["booked","build","team","prev","admin","pay"]:["team","prev","info","pay"];
   if(!allowed.includes(t))t=allowed[0];
   TABS.forEach(k=>{$("#tab-"+k).setAttribute("aria-selected",k===t);$("#view-"+k).hidden=k!==t});
   if(t==="prev")loadPreviews();
