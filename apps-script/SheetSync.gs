@@ -5,11 +5,15 @@
  * already in the app, and skips rows marked CANCELLED or GROOM. A wedding deleted in the
  * app is not added back.
  * It also reads a "HONEYBOOK BOOKINGS" tab, where a Zapier zap adds each newly booked
- * HoneyBook project (BRIDE, DATE, LOCATION); the year comes from the date there.
+ * HoneyBook project (BRIDE, DATE, LOCATION, EMAIL); the year comes from the date there.
+ * A bride from that tab is only added once she has paid: a second zap adds every HoneyBook
+ * payment (card, or marked paid by hand for Venmo etc.) to a "HONEYBOOK PAYMENTS" tab
+ * (BRIDE, EMAIL, ...), matched by email or name.
  * Run installSheetSync once from the editor to switch the hourly check on.
  */
 const BOOKINGS_SHEET_ID = '19kl0X_Qzh5bG6HQGaLILaQCDlBJgEZ3vcRlMNc3vwmU';
 const HONEYBOOK_TAB = /^honeybook bookings$/i;
+const PAYMENTS_TAB = /^honeybook payments$/i;
 
 /** Run once from the editor: switches on the hourly check (and runs it once now). */
 function installSheetSync() {
@@ -34,8 +38,10 @@ function syncFromWeddingsSheet_(dryRun) {
     const words = s => String(s || '').toLowerCase().replace(/[^a-z\s]/g, ' ').split(/\s+/).filter(w => w.length >= 3);
     const inApp = (date, bride) => have.some(d => d.date === date &&
       words(bride).some(w => String(d.bride || '').toLowerCase().indexOf(w) >= 0));
-    const added = [];
-    SpreadsheetApp.openById(BOOKINGS_SHEET_ID).getSheets().forEach(sh => {
+    const added = [], book = SpreadsheetApp.openById(BOOKINGS_SHEET_ID);
+    const paid = paidClients_(book);
+    const hasPaid = (bride, email) => (email && paid.emails.has(email)) || paid.names.has(bride.toLowerCase());
+    book.getSheets().forEach(sh => {
       const m = sh.getName().trim().match(/^(\d{4})\s+weddings$/i);
       const hb = HONEYBOOK_TAB.test(sh.getName().trim());
       if (!hb && (!m || Number(m[1]) < thisYear)) return;
@@ -43,7 +49,7 @@ function syncFromWeddingsSheet_(dryRun) {
       const vals = sh.getDataRange().getValues();
       if (vals.length < 2) return;
       const head = vals[0].map(h => String(h).trim().toUpperCase());
-      const cB = head.indexOf('BRIDE'), cD = head.indexOf('DATE'), cL = head.indexOf('LOCATION');
+      const cB = head.indexOf('BRIDE'), cD = head.indexOf('DATE'), cL = head.indexOf('LOCATION'), cE = head.indexOf('EMAIL');
       if (cB < 0 || cD < 0) return;
       const seenKey = 'SYNC_SEEN_' + (hb ? 'HB' : year), props = PropertiesService.getScriptProperties();
       const seen = new Set(JSON.parse(props.getProperty(seenKey) || '[]'));   // rows already looked at, so a wedding deleted in the app isn't added back
@@ -54,6 +60,7 @@ function syncFromWeddingsSheet_(dryRun) {
         if (!date) return;
         const key = date + '|' + bride.toLowerCase();
         if (seen.has(key)) return;
+        if (hb && !hasPaid(bride.toLowerCase(), cE >= 0 ? String(r[cE] || '').trim().toLowerCase() : '')) return;   // signed but no payment yet: check again next hour
         if (!dryRun) seen.add(key);
         if (date < today || inApp(date, bride)) return;
         const loc = cL >= 0 ? String(r[cL] || '').replace(/\s+/g, ' ').trim() : '';
@@ -71,6 +78,21 @@ function syncFromWeddingsSheet_(dryRun) {
   } finally {
     lock.releaseLock();
   }
+}
+
+/** Emails and names of clients with at least one payment on the HONEYBOOK PAYMENTS tab. */
+function paidClients_(book) {
+  const out = { emails: new Set(), names: new Set() };
+  const sh = book.getSheets().find(t => PAYMENTS_TAB.test(t.getName().trim()));
+  if (!sh) return out;
+  const vals = sh.getDataRange().getValues();
+  const head = (vals[0] || []).map(h => String(h).trim().toUpperCase());
+  const cB = head.indexOf('BRIDE'), cE = head.indexOf('EMAIL');
+  vals.slice(1).forEach(r => {
+    if (cE >= 0 && String(r[cE] || '').trim()) out.emails.add(String(r[cE]).trim().toLowerCase());
+    if (cB >= 0 && String(r[cB] || '').trim()) out.names.add(String(r[cB]).replace(/\s+/g, ' ').trim().toLowerCase());
+  });
+  return out;
 }
 
 /** "2/21/2026", "3/21/26", "1/31" (year from the tab), "May 1, 2027" or a real date -> "yyyy-MM-dd". */
