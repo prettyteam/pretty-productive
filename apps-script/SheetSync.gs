@@ -4,9 +4,12 @@
  * upcoming wedding that isn't in the app yet. It never changes or removes weddings
  * already in the app, and skips rows marked CANCELLED or GROOM. A wedding deleted in the
  * app is not added back.
+ * It also reads a "HONEYBOOK BOOKINGS" tab, where a Zapier zap adds each newly booked
+ * HoneyBook project (BRIDE, DATE, LOCATION); the year comes from the date there.
  * Run installSheetSync once from the editor to switch the hourly check on.
  */
 const BOOKINGS_SHEET_ID = '19kl0X_Qzh5bG6HQGaLILaQCDlBJgEZ3vcRlMNc3vwmU';
+const HONEYBOOK_TAB = /^honeybook bookings$/i;
 
 /** Run once from the editor: switches on the hourly check (and runs it once now). */
 function installSheetSync() {
@@ -34,17 +37,18 @@ function syncFromWeddingsSheet_(dryRun) {
     const added = [];
     SpreadsheetApp.openById(BOOKINGS_SHEET_ID).getSheets().forEach(sh => {
       const m = sh.getName().trim().match(/^(\d{4})\s+weddings$/i);
-      if (!m || Number(m[1]) < thisYear) return;
-      const year = Number(m[1]);
+      const hb = HONEYBOOK_TAB.test(sh.getName().trim());
+      if (!hb && (!m || Number(m[1]) < thisYear)) return;
+      const year = hb ? thisYear : Number(m[1]);
       const vals = sh.getDataRange().getValues();
       if (vals.length < 2) return;
       const head = vals[0].map(h => String(h).trim().toUpperCase());
       const cB = head.indexOf('BRIDE'), cD = head.indexOf('DATE'), cL = head.indexOf('LOCATION');
       if (cB < 0 || cD < 0) return;
-      const seenKey = 'SYNC_SEEN_' + year, props = PropertiesService.getScriptProperties();
+      const seenKey = 'SYNC_SEEN_' + (hb ? 'HB' : year), props = PropertiesService.getScriptProperties();
       const seen = new Set(JSON.parse(props.getProperty(seenKey) || '[]'));   // rows already looked at, so a wedding deleted in the app isn't added back
       vals.slice(1).forEach(r => {
-        const bride = String(r[cB] || '').replace(/\s+/g, ' ').trim();
+        const bride = String(r[cB] || '').replace(/\s+/g, ' ').trim().replace(/\s+(project|wedding)$/i, '');
         if (!bride || /cancel|groom/i.test(bride)) return;
         const date = sheetDate_(r[cD], year);
         if (!date) return;
@@ -69,11 +73,14 @@ function syncFromWeddingsSheet_(dryRun) {
   }
 }
 
-/** "2/21/2026", "3/21/26", "1/31" (year from the tab) or a real date -> "yyyy-MM-dd". */
+/** "2/21/2026", "3/21/26", "1/31" (year from the tab), "May 1, 2027" or a real date -> "yyyy-MM-dd". */
 function sheetDate_(v, year) {
   if (v instanceof Date && !isNaN(v)) return Utilities.formatDate(v, TZ, 'yyyy-MM-dd');
   const m = String(v || '').trim().match(/^(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?$/);
-  if (!m) return '';
+  if (!m) {
+    const t = new Date(String(v || '').trim());   // "2027-05-01T00:00:00", "May 1, 2027" from Zapier
+    return /\d{4}/.test(String(v)) && !isNaN(t) ? Utilities.formatDate(t, TZ, 'yyyy-MM-dd') : '';
+  }
   let y = m[3] ? Number(m[3]) : year;
   if (y < 100) y += 2000;
   const mo = Number(m[1]), d = Number(m[2]);
