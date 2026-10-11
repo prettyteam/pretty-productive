@@ -65,6 +65,15 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 .chk input{width:auto}
 .x{border:0;background:transparent;color:var(--muted);font-size:18px;line-height:1;cursor:pointer;padding:2px 6px}
 .hint{font-size:12px;color:var(--muted);margin:0}
+.todo-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;align-items:start}
+@media (max-width:820px){.todo-grid{grid-template-columns:minmax(0,1fr)}}
+.td-add{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px}
+.td-add .more{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:12px;color:var(--muted)}
+.td-item{display:grid;grid-template-columns:auto minmax(0,1fr);gap:8px;align-items:start;padding:8px 0;border-top:1px solid var(--line)}
+.td-item input{margin-top:3px;width:16px;height:16px;accent-color:var(--ink)}
+.td-item .tx{overflow-wrap:anywhere}
+.td-item .mt{display:block;font-size:11px;color:var(--muted);margin-top:2px}
+.td-item.done .tx{text-decoration:line-through;color:var(--muted)}
 .warn{font-size:12px;color:var(--warn);margin:0}
 .seg{display:inline-flex;border:1px solid var(--ink);overflow:hidden}
 .seg button{border:0;background:transparent;color:var(--ink);font:500 12px var(--sans);padding:6px 10px;cursor:pointer}
@@ -135,6 +144,7 @@ textarea.copyfallback{position:fixed;left:-9999px;top:0}
       <span id="pageTitle" class="tab-title" aria-live="polite"></span>
       <button id="tab-booked" role="tab" aria-selected="true" hidden>Booked weddings</button>
       <button id="tab-pipe" role="tab" aria-selected="false" hidden>Pipeline</button>
+      <button id="tab-todo" role="tab" aria-selected="false" hidden>To do</button>
       <button id="tab-build" role="tab" aria-selected="false" hidden>Timeline</button>
       <button id="tab-team" role="tab" aria-selected="false" hidden>Schedule</button>
       <button id="tab-cal" role="tab" aria-selected="false" hidden>Calendar</button>
@@ -407,6 +417,12 @@ textarea.copyfallback{position:fixed;left:-9999px;top:0}
       <button class="btn ghost" id="bk-copy">Copy for Sheets</button>
     </div>
     <div style="overflow-x:auto"><table class="adm" id="bk-table"></table></div>
+  </section>
+
+  <section id="view-todo" hidden>
+    <div class="toolbar"><div class="status" id="td-note">Loading…</div><button class="btn ghost" id="td-refresh">Refresh</button></div>
+    <div class="todo-grid" id="td-grid"></div>
+    <p class="hint" style="margin-top:12px">Check a task off when it's done. It stays crossed out for 2 days, then clears from the list (it's still kept on the "To do" tab of the app's Sheet).</p>
   </section>
 
   <section id="view-pipe" hidden>
@@ -750,7 +766,7 @@ const fileName=s=>((s.bride||"wedding").replace(/[^a-z0-9]+/gi,"-")+"-timeline"+
 $("#saveImg").onclick=()=>saveImage($("#sheet"),fileName(S));
 
 /* ---------- tabs ---------- */
-const TABS=["build","team","cal","prev","booked","pipe","info","pay","admin"];
+const TABS=["build","team","cal","prev","booked","pipe","todo","info","pay","admin"];
 function showTab(t){if(!TABS.includes(t))t="team";TABS.forEach(k=>{$("#tab-"+k).setAttribute("aria-selected",k===t);$("#view-"+k).hidden=k!==t});$("#pageTitle").textContent=$("#tab-"+t).textContent;try{localStorage.setItem("tt-tab",t)}catch(e){}}
 TABS.forEach(k=>$("#tab-"+k).onclick=()=>showTab(k));
 
@@ -1171,6 +1187,40 @@ $("#bk-copy").onclick=()=>{
 
 /* ---------- pipeline (office) ---------- */
 let ppRows=[],ppOpen=null;
+/* ---------- to do ---------- */
+const TD_LISTS=[["Dom","Alex"],["Alex","Dom"],["Cherish","Alex"]];   // [list, who usually gives it]
+let tdItems=[];
+async function loadTodos(){
+  $("#td-note").textContent="Loading…";
+  try{const j=await api("todos");tdItems=j.items||[];renderTodos()}
+  catch(e){$("#td-note").textContent="Couldn't load the to do lists. Try Refresh."}
+}
+function renderTodos(){
+  const open=tdItems.filter(t=>!t.doneAt).length;
+  $("#td-note").textContent=open?open+" task"+(open===1?"":"s")+" to do":"All caught up";
+  const g=$("#td-grid");
+  g.innerHTML=TD_LISTS.map(([who,from])=>{
+    const items=tdItems.filter(t=>t.list===who).sort((a,b)=>(!!a.doneAt-!!b.doneAt)||((a.due||"9999").localeCompare(b.due||"9999"))||a.added.localeCompare(b.added));
+    const fromOpts=TD_LISTS.map(([n])=>n).filter(n=>n!==who).map(n=>'<option'+(n===from?' selected':'')+'>'+n+'</option>').join("");
+    return '<div class="card"><h2>'+who+'</h2>'
+      +'<form class="td-add" data-list="'+who+'"><input id="td-t-'+who+'" placeholder="Add a task for '+who+'" autocomplete="off" aria-label="New task for '+who+'"><button class="btn small" type="submit">Add</button>'
+      +'<div class="more"><label>Due <input type="date" id="td-d-'+who+'"></label><label>From <select id="td-f-'+who+'">'+fromOpts+'</select></label></div></form>'
+      +'<div>'+(items.length?items.map(t=>'<label class="td-item'+(t.doneAt?' done':'')+'"><input type="checkbox" data-id="'+esc(t.id)+'"'+(t.doneAt?' checked':'')+'><span><span class="tx">'+esc(t.task)+'</span><span class="mt">'+[t.due?"Due "+shortDate(t.due):"",t.from?"From "+esc(t.from):""].filter(Boolean).join(" · ")+'</span></span></label>').join(""):'<p class="hint" style="padding-top:8px;border-top:1px solid var(--line)">Nothing on '+who+'\'s list.</p>')+'</div></div>';
+  }).join("");
+  g.querySelectorAll(".td-add").forEach(f=>f.onsubmit=async e=>{
+    e.preventDefault();const who=f.dataset.list,inp=$("#td-t-"+who),task=inp.value.trim();if(!task)return;
+    f.querySelector("button").disabled=true;
+    try{const j=await api("addTodo",{todo:{list:who,task,due:$("#td-d-"+who).value,from:$("#td-f-"+who).value}});tdItems=j.items||tdItems;renderTodos();$("#td-t-"+who).focus()}
+    catch(err){toast("That task didn't save. Try again.");f.querySelector("button").disabled=false}
+  });
+  g.querySelectorAll(".td-item input").forEach(c=>c.onchange=async()=>{
+    const it=tdItems.find(t=>t.id===c.dataset.id);if(it){it.doneAt=c.checked?new Date().toISOString():"";renderTodos()}
+    try{const j=await api("doneTodo",{id:c.dataset.id,done:c.checked});tdItems=j.items||tdItems;renderTodos()}
+    catch(err){toast("That didn't save. Try again.");loadTodos()}
+  });
+}
+$("#td-refresh").onclick=loadTodos;
+
 async function loadPipeline(){
   $("#pp-note").textContent="Loading…";
   try{const j=await api("pipeline");ppRows=j.rows||[];renderPipeline(j)}
@@ -1262,7 +1312,7 @@ async function start(){
   const j=await api("load");
   ROLE=j.role;canWrite=ROLE==="office";
   $("#view-signin").hidden=true;$("#signOut").hidden=false;
-  const tabs=ROLE==="office"?["booked","pipe","build","team","cal","prev","admin","pay"]:["team","prev","info","pay"];
+  const tabs=ROLE==="office"?["booked","pipe","todo","build","team","cal","prev","admin","pay"]:["team","prev","info","pay"];
   TABS.forEach(k=>$("#tab-"+k).hidden=!tabs.includes(k));
   $("#tab-team").textContent=ROLE==="office"?"Schedule":"My weddings";
   $("#artistFilter").closest(".row").hidden=ROLE!=="office";
@@ -1274,12 +1324,13 @@ async function start(){
   applyData(j);
 }
 showTab=function(t){
-  const allowed=ROLE==="office"?["booked","pipe","build","team","cal","prev","admin","pay"]:["team","prev","info","pay"];
+  const allowed=ROLE==="office"?["booked","pipe","todo","build","team","cal","prev","admin","pay"]:["team","prev","info","pay"];
   if(!allowed.includes(t))t=allowed[0];
   TABS.forEach(k=>{$("#tab-"+k).setAttribute("aria-selected",k===t);$("#view-"+k).hidden=k!==t});
   $("#pageTitle").textContent=$("#tab-"+t).textContent;
   if(t==="prev")loadPreviews();
   if(t==="pipe")loadPipeline();
+  if(t==="todo")loadTodos();
   if(t==="cal")renderCalPicker();
   try{localStorage.setItem("tt-tab",t)}catch(e){}
 };

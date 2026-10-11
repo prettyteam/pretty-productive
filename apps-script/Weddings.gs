@@ -129,6 +129,9 @@ function doPost(e) {
       case 'checkInvites': return json_(checkInvites_(d.weddingId));
       case 'pipeline': return json_(pipeline_());
       case 'markPaid': return json_(markPaid_(d.payment));
+      case 'todos': return json_(todos_());
+      case 'addTodo': return json_(addTodo_(d.todo));
+      case 'doneTodo': return json_(doneTodo_(d.id, !!d.done));
     }
     return json_({ ok: false, error: 'unknown_action' });
   } catch (err) {
