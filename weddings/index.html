@@ -239,7 +239,19 @@ textarea.copyfallback{position:fixed;left:-9999px;top:0}
               <label class="f">Length<input id="ext-length" placeholder="e.g. 20 in"></label>
               <label class="f">Pieces<input id="ext-pieces" inputmode="numeric"></label>
             </div>
-            <label class="f">Ship to<textarea id="ext-addr" rows="2" placeholder="Name, street, city, state, ZIP"></textarea></label>
+            <div class="row">
+              <label class="f">Ship to (name)<input id="ext-sname"></label>
+              <label class="f">Phone<input id="ext-sphone" inputmode="tel"></label>
+            </div>
+            <div class="row">
+              <label class="f">Street<input id="ext-sstreet"></label>
+              <label class="f" style="flex:0 1 140px">Apt / unit<input id="ext-sstreet2"></label>
+            </div>
+            <div class="row">
+              <label class="f">City<input id="ext-scity"></label>
+              <label class="f" style="flex:0 1 90px">State<input id="ext-sstate" maxlength="2" placeholder="NJ"></label>
+              <label class="f" style="flex:0 1 120px">ZIP<input id="ext-szip" inputmode="numeric"></label>
+            </div>
             <div class="row">
               <label class="f">Ship by<input id="ext-shipby" type="date"></label>
               <label class="f">Label cost ($)<input id="ext-label" inputmode="decimal" placeholder="billed to the bride"></label>
@@ -252,7 +264,20 @@ textarea.copyfallback{position:fixed;left:-9999px;top:0}
               <label class="chk"><input type="checkbox" id="ext-returned"> Returned</label>
             </div>
             <p class="status" id="ext-due"></p>
-            <div class="row"><a class="btn ghost small" href="https://apps.goshippo.com/" target="_blank" rel="noopener">Open Shippo</a><span class="hint">Buy the label in Shippo yourself, then add the cost and tracking here. Bill the label cost to the bride.</span></div>
+            <div class="ship">
+              <div class="row" style="align-items:center"><button class="btn ghost small" id="sh-out">Get label prices</button><button class="btn ghost small" id="sh-ret">Return label prices</button><a class="btn ghost small" href="https://apps.goshippo.com/" target="_blank" rel="noopener">Open Shippo</a></div>
+              <div id="sh-rates" class="list"></div>
+              <div class="row" id="sh-buyrow" hidden><button class="btn small" id="sh-buy">Buy label</button><span class="hint">Charges the card on your Shippo account. Bill the label cost to the bride.</span></div>
+              <p class="status" id="sh-status"></p>
+              <div id="sh-labels"></div>
+              <details class="hint"><summary>Box size for labels</summary>
+                <div class="row" style="margin-top:6px">
+                  <label class="f">Length (in)<input id="sh-l" inputmode="decimal"></label><label class="f">Width (in)<input id="sh-w" inputmode="decimal"></label>
+                  <label class="f">Height (in)<input id="sh-h" inputmode="decimal"></label><label class="f">Weight (lb)<input id="sh-wt" inputmode="decimal"></label>
+                </div>
+                <button class="btn ghost small" id="sh-save">Save box size</button>
+              </details>
+            </div>
           </div>
         </div>
 
@@ -1247,7 +1272,7 @@ $("#bk-copy").onclick=()=>{
 /* ---------- pipeline (office) ---------- */
 let ppRows=[],ppOpen=null;
 /* ---------- extensions (office only, saved with the wedding) ---------- */
-const EXT_TEXT={type:"ext-type",color:"ext-color",length:"ext-length",pieces:"ext-pieces",addr:"ext-addr",shipBy:"ext-shipby",labelCost:"ext-label",tracking:"ext-track"};
+const EXT_TEXT={type:"ext-type",color:"ext-color",length:"ext-length",pieces:"ext-pieces",shipName:"ext-sname",shipPhone:"ext-sphone",shipStreet:"ext-sstreet",shipStreet2:"ext-sstreet2",shipCity:"ext-scity",shipState:"ext-sstate",shipZip:"ext-szip",shipBy:"ext-shipby",labelCost:"ext-label",tracking:"ext-track"};
 const EXT_CHECK={prepped:"ext-prepped",bought:"ext-bought",shipped:"ext-shipped",returned:"ext-returned"};
 function renderExt(){
   const x=S.ext||{};
@@ -1256,10 +1281,57 @@ function renderExt(){
   Object.entries(EXT_CHECK).forEach(([k,id])=>$("#"+id).checked=!!x[k]);
   let due="";
   if(S.date){const d=new Date(S.date+"T12:00:00");d.setDate(d.getDate()+5);due=d.toISOString().slice(0,10)}
+  renderLabels();
   $("#ext-due").textContent=due?"Return due "+shortDate(due)+" (wedding date + 5 days)"+(x.returned?" · returned":""):"Add the wedding date to see the return due date.";
 }
 function extSet(k,v){S.ext=Object.assign({},S.ext||{},{[k]:v});renderExt();queueSave()}
 $("#ext-on").onchange=e=>extSet("on",e.target.checked);
+/* Shippo: prices first, a label is bought only after the office confirms */
+let shKind="out",shRates=[];
+function renderLabels(){
+  const x=S.ext||{},row=(t,l)=>l&&l.bought?'<div class="hint" style="margin-top:4px"><b>'+t+' label</b> · $'+esc(l.cost||"?")+' · '+(l.trackUrl?'<a href="'+esc(l.trackUrl)+'" target="_blank" rel="noopener">'+esc(l.tracking||"Track")+'</a>':esc(l.tracking||""))+(l.labelUrl?' · <a href="'+esc(l.labelUrl)+'" target="_blank" rel="noopener">Print label</a>':'')+'</div>':'';
+  $("#sh-labels").innerHTML=row("Outbound",x.out)+row("Return",x.ret);
+}
+async function shPrices(kind){
+  const out=$("#sh-status");shKind=kind;shRates=[];$("#sh-rates").innerHTML="";$("#sh-buyrow").hidden=true;
+  const x=S.ext||{};
+  if(!x.shipName||!x.shipStreet||!x.shipCity||!x.shipState||!x.shipZip){out.textContent="Fill in the ship-to name and address first.";return}
+  out.textContent="Getting prices…";
+  try{
+    clearTimeout(saveTimer);await save();
+    if(!docId){out.textContent="Save the wedding first.";return}
+    const r=await api("shippoRates",{weddingId:docId,kind});
+    if(r.ok===false){out.textContent=r.message||"Couldn't get prices.";return}
+    shRates=r.rates||[];
+    $("#sh-rates").innerHTML=shRates.map((t,i)=>'<label class="chk" style="color:var(--ink);font-size:13px"><input type="radio" name="sh-rate" value="'+i+'"'+(i?'':' checked')+'> '+esc(t.service)+' · $'+esc(t.amount)+(t.days?' · about '+esc(t.days)+' day'+(t.days==1?'':'s'):'')+'</label>').join("");
+    $("#sh-buyrow").hidden=!shRates.length;out.textContent=(kind==="return"?"Return label":"Outbound label")+" prices from Shippo:";shPick();
+    $("#sh-rates").querySelectorAll("input").forEach(i=>i.onchange=shPick);
+  }catch(e){out.textContent="Couldn't reach Shippo. Try again."}
+}
+function shPick(){const i=Number(($("#sh-rates").querySelector("input:checked")||{}).value||0),t=shRates[i];$("#sh-buy").textContent=t?"Buy "+(shKind==="return"?"return ":"")+"label – $"+t.amount:"Buy label"}
+$("#sh-out").onclick=()=>shPrices("out");
+$("#sh-ret").onclick=()=>shPrices("return");
+$("#sh-buy").onclick=async()=>{
+  const i=Number(($("#sh-rates").querySelector("input:checked")||{}).value||0),t=shRates[i],out=$("#sh-status");if(!t)return;
+  if(!confirm("Buy this "+(shKind==="return"?"return ":"")+"label for $"+t.amount+" ("+t.service+")? It charges the card on your Shippo account."))return;
+  $("#sh-buy").disabled=true;out.textContent="Buying the label…";
+  try{
+    const r=await api("shippoBuy",{weddingId:docId,rateId:t.id,kind:shKind});
+    if(r.ok===false){out.textContent=r.message||"The label wasn't bought.";return}
+    S.ext=r.ext;renderExt();$("#sh-rates").innerHTML="";$("#sh-buyrow").hidden=true;out.textContent="Label bought.";
+    if(r.labelUrl)window.open(r.labelUrl,"_blank","noopener");
+  }catch(e){out.textContent="Couldn't reach Shippo. Check Shippo before trying again so you don't buy twice."}
+  finally{$("#sh-buy").disabled=false}
+};
+async function shLoadBox(save){
+  try{
+    const r=await api("shippoSettings",save?{parcel:{length:$("#sh-l").value,width:$("#sh-w").value,height:$("#sh-h").value,weight:$("#sh-wt").value}}:{});
+    const p=r.parcel||{};$("#sh-l").value=p.length||"";$("#sh-w").value=p.width||"";$("#sh-h").value=p.height||"";$("#sh-wt").value=p.weight||"";
+    if(save)toast("Box size saved.");if(!r.hasKey)$("#sh-status").textContent="Add your Shippo key first (Project Settings > Script properties > SHIPPO_API_KEY).";
+  }catch(e){if(save)toast("That didn't save. Try again.")}
+}
+$("#sh-save").onclick=()=>shLoadBox(true);
+document.querySelector("#extCard details").addEventListener("toggle",e=>{if(e.target.open)shLoadBox(false)});
 Object.entries(EXT_TEXT).forEach(([k,id])=>$("#"+id).addEventListener("change",e=>extSet(k,e.target.value.trim())));
 Object.entries(EXT_CHECK).forEach(([k,id])=>$("#"+id).onchange=e=>extSet(k,e.target.checked));
 
