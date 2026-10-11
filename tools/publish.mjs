@@ -261,7 +261,17 @@ for (const p of pages) {
   fs.writeFileSync(path.join(outDir, k.id + '.json'), JSON.stringify(await seal({ daily: staffDaily, mine }, k.secret, k.pin)));
   n++;
 }
-const access = args.access && fs.existsSync(args.access) ? JSON.parse(fs.readFileSync(args.access, 'utf8')) : null;
+let access = args.access && fs.existsSync(args.access) ? JSON.parse(fs.readFileSync(args.access, 'utf8')) : null;
+// No --access file: carry the desk link, form link and logins over from the last published report so the Access tab never goes blank.
+if (!access) {
+  try {
+    const o = JSON.parse(fs.readFileSync(path.join(outDir, keys.leadership.id + '.json'), 'utf8'));
+    const bk = await crypto.subtle.importKey('raw', enc.encode(keys.leadership.secret + ':' + keys.leadership.pin), 'PBKDF2', false, ['deriveKey']);
+    const key = await crypto.subtle.deriveKey({ name: 'PBKDF2', salt: Buffer.from(o.salt, 'base64'), iterations: o.iter, hash: 'SHA-256' }, bk, { name: 'AES-GCM', length: 256 }, false, ['decrypt']);
+    const prev = JSON.parse(new TextDecoder().decode(await crypto.subtle.decrypt({ name: 'AES-GCM', iv: Buffer.from(o.iv, 'base64') }, key, Buffer.from(o.ct, 'base64'))));
+    if (prev.access) { const { stylists, ...rest } = prev.access; access = rest; console.log('Access: kept from the last publish (no --access file given).'); }
+  } catch (e) { console.warn('Access: no --access file and the last report could not be read, so the Access tab will be empty.'); }
+}
 const board = { access: access ? { ...access, stylists: pages.map((p) => ({ name: p.name, link: linkFor('s', keys.stylists[p.slug]), pin: keys.stylists[p.slug].pin })).sort((a, b) => a.name.localeCompare(b.name)) } : null, daily: data.daily || null, week: data.week || null, payroll: data.payroll || [], hoursList: (data.team && data.team.hoursList) || [], rates: (data.team && data.team.commission) || {}, retailRate: (data.team && data.team.retailRate) || 10, month: data.month || null, hub: { admin: keys.team.admin }, guideUrl: guideUrl || null, docs: docsFor('', true), pages: pages.map((p) => ({ ...strip(p), link: linkFor('s', keys.stylists[p.slug]) })) };
 fs.writeFileSync(path.join(outDir, keys.leadership.id + '.json'), JSON.stringify(await seal(board, keys.leadership.secret, keys.leadership.pin)));
 fs.writeFileSync(args.keys, JSON.stringify(keys, null, 1));
