@@ -72,6 +72,12 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 .jb-pin:hover,.jb-pin:focus-visible{color:var(--ink)}
 .job{border:1px solid var(--line);padding:12px;display:grid;gap:6px}
 .job .meta{font-size:13px;color:var(--muted)}
+.tp-list{display:flex;flex-direction:column;gap:22px;margin-top:10px}
+.tp-cat h3{font:600 11px var(--sans);letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:0 0 8px}
+.tp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
+.tp-card{border:1px solid var(--line);padding:12px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.tp-card b{font-size:13px}
+.tp-text{white-space:pre-wrap;font-size:13px;line-height:1.5;overflow-wrap:anywhere}
 .todo-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;align-items:start}
 @media (max-width:820px){.todo-grid{grid-template-columns:minmax(0,1fr)}}
 .td-add{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px}
@@ -152,6 +158,7 @@ textarea.copyfallback{position:fixed;left:-9999px;top:0}
       <button id="tab-booked" role="tab" aria-selected="true" hidden>Booked weddings</button>
       <button id="tab-pipe" role="tab" aria-selected="false" hidden>Pipeline</button>
       <button id="tab-todo" role="tab" aria-selected="false" hidden>To do</button>
+      <button id="tab-tpl" role="tab" aria-selected="false" hidden>Texts</button>
       <button id="tab-build" role="tab" aria-selected="false" hidden>Timeline</button>
       <button id="tab-team" role="tab" aria-selected="false" hidden>Schedule</button>
       <button id="tab-cal" role="tab" aria-selected="false" hidden>Calendar</button>
@@ -513,6 +520,29 @@ textarea.copyfallback{position:fixed;left:-9999px;top:0}
     <p class="hint" style="margin-top:12px">Check a task off when it's done. It stays crossed out for 2 days, then clears from the list (it's still kept on the "To do" tab of the app's Sheet).</p>
   </section>
 
+  <section id="view-tpl" hidden>
+    <div class="toolbar">
+      <div class="row" style="align-items:flex-end;flex:1 1 auto">
+        <label class="f" style="flex:0 1 200px">Bride's first name<input id="tp-bride" autocomplete="off" placeholder="fills in [Name]"></label>
+        <label class="f" style="flex:0 1 180px">Your name<select id="tp-me"><option>Alex</option><option>Dom</option><option>Cherish</option></select></label>
+        <label class="f" style="flex:0 1 220px">Search<input id="tp-q" type="search" autocomplete="off" placeholder="e.g. price, trial"></label>
+        <label class="f" style="flex:0 1 200px">Category<select id="tp-cat"><option value="">All</option></select></label>
+      </div>
+      <button class="btn ghost" id="tp-new">+ New template</button>
+    </div>
+    <div class="card" id="tp-form" hidden style="max-width:760px;margin-bottom:14px">
+      <h2 data-open id="tp-form-title">New template</h2>
+      <div class="row">
+        <label class="f">Category<input id="tp-f-cat" list="tp-cats" autocomplete="off" placeholder="e.g. First reply"><datalist id="tp-cats"></datalist></label>
+        <label class="f">Title<input id="tp-f-title" placeholder="e.g. New inquiry, warm"></label>
+      </div>
+      <label class="f">Message<textarea id="tp-f-text" rows="6" placeholder="Use [Name] for the bride's name and [Me] for yours."></textarea></label>
+      <div class="row"><button class="btn" id="tp-f-save">Save</button><button class="btn ghost" id="tp-f-cancel">Cancel</button><button class="btn ghost" id="tp-f-archive" hidden>Remove template</button></div>
+    </div>
+    <div class="status" id="tp-note">Loading…</div>
+    <div id="tp-list" class="tp-list"></div>
+  </section>
+
   <section id="view-pipe" hidden>
     <div class="toolbar">
       <div class="status" id="pp-note">Loading…</div>
@@ -854,7 +884,7 @@ const fileName=s=>((s.bride||"wedding").replace(/[^a-z0-9]+/gi,"-")+"-timeline"+
 $("#saveImg").onclick=()=>saveImage($("#sheet"),fileName(S));
 
 /* ---------- tabs ---------- */
-const TABS=["build","team","cal","jobs","prev","booked","pipe","todo","info","pay","admin"];
+const TABS=["build","team","cal","jobs","prev","booked","pipe","todo","tpl","info","pay","admin"];
 function showTab(t){if(!TABS.includes(t))t="team";TABS.forEach(k=>{$("#tab-"+k).setAttribute("aria-selected",k===t);$("#view-"+k).hidden=k!==t});$("#pageTitle").textContent=$("#tab-"+t).textContent;try{localStorage.setItem("tt-tab",t)}catch(e){}}
 TABS.forEach(k=>$("#tab-"+k).onclick=()=>showTab(k));
 
@@ -1418,6 +1448,52 @@ function renderMyJobs(){
 }
 $("#jb-mine-refresh").onclick=loadJobs;
 
+/* ---------- text templates (office only, editable, kept on the app Sheet) ---------- */
+let tpItems=[],tpEditing=null;
+async function loadTemplates(){
+  $("#tp-note").textContent="Loading…";
+  try{const j=await api("templates");tpItems=j.templates||[];renderTemplates()}
+  catch(e){$("#tp-note").textContent="Couldn't load the templates. Try again."}
+}
+const tpFill=t=>t.replace(/\[Name\]/g,$("#tp-bride").value.trim()||"[Name]").replace(/\[Me\]/g,$("#tp-me").value);
+function renderTemplates(){
+  const cats=[...new Set(tpItems.map(t=>t.category||"General"))];
+  const sel=$("#tp-cat"),cur=sel.value;
+  sel.innerHTML='<option value="">All</option>'+cats.map(c=>'<option>'+esc(c)+'</option>').join("");sel.value=cats.includes(cur)?cur:"";
+  $("#tp-cats").innerHTML=cats.map(c=>'<option value="'+esc(c)+'">').join("");
+  const q=$("#tp-q").value.trim().toLowerCase();
+  const list=tpItems.filter(t=>(!sel.value||t.category===sel.value)&&(!q||(t.title+" "+t.text+" "+t.category).toLowerCase().includes(q)));
+  $("#tp-note").textContent=tpItems.length?(list.length+" template"+(list.length===1?"":"s")+(q||sel.value?" match":"")):"No templates yet. Tap + New template to add one.";
+  const by={};list.forEach(t=>(by[t.category||"General"]=by[t.category||"General"]||[]).push(t));
+  $("#tp-list").innerHTML=Object.entries(by).map(([c,ts])=>'<div class="tp-cat"><h3>'+esc(c)+'</h3><div class="tp-grid">'+ts.sort((a,b)=>(a.order||0)-(b.order||0)).map(t=>
+    '<div class="tp-card"><b>'+esc(t.title)+'</b><div class="tp-text">'+esc(tpFill(t.text))+'</div><div class="row"><button class="btn small" data-tp-copy="'+esc(t.id)+'">Copy</button><button class="btn ghost small" data-tp-edit="'+esc(t.id)+'">Edit</button></div></div>').join("")+'</div></div>').join("");
+  $("#tp-list").querySelectorAll("[data-tp-copy]").forEach(b=>b.onclick=()=>{const t=tpItems.find(x=>x.id===b.dataset.tpCopy);if(t)copy(tpFill(t.text))});
+  $("#tp-list").querySelectorAll("[data-tp-edit]").forEach(b=>b.onclick=()=>tpOpen(tpItems.find(x=>x.id===b.dataset.tpEdit)));
+}
+function tpOpen(t){
+  tpEditing=t||null;$("#tp-form").hidden=false;$("#tp-form-title").textContent=t?"Edit template":"New template";
+  $("#tp-f-cat").value=t?t.category:($("#tp-cat").value||"");$("#tp-f-title").value=t?t.title:"";$("#tp-f-text").value=t?t.text:"";
+  $("#tp-f-archive").hidden=!t;$("#tp-f-title").focus();window.scrollTo(0,0);
+}
+$("#tp-new").onclick=()=>tpOpen(null);
+$("#tp-f-cancel").onclick=()=>{$("#tp-form").hidden=true;tpEditing=null};
+$("#tp-f-save").onclick=async()=>{
+  const t={id:tpEditing&&tpEditing.id,category:$("#tp-f-cat").value.trim(),title:$("#tp-f-title").value.trim(),text:$("#tp-f-text").value};
+  if(!t.title||!t.text.trim()){toast("Add a title and the message.");return}
+  $("#tp-f-save").disabled=true;
+  try{const j=await api("saveTemplate",{template:t});if(j.ok===false){toast(j.message||"That didn't save.");return}tpItems=j.templates||tpItems;$("#tp-form").hidden=true;tpEditing=null;renderTemplates();toast("Saved.")}
+  catch(e){toast("That didn't save. Try again.")}
+  finally{$("#tp-f-save").disabled=false}
+};
+$("#tp-f-archive").onclick=async()=>{
+  if(!tpEditing)return;
+  if(!confirm("Remove this template from the list? (It stays on the Sheet as a record.)"))return;
+  try{const j=await api("archiveTemplate",{id:tpEditing.id});tpItems=j.templates||tpItems;$("#tp-form").hidden=true;tpEditing=null;renderTemplates()}
+  catch(e){toast("That didn't save. Try again.")}
+};
+["tp-bride","tp-q"].forEach(id=>$("#"+id).addEventListener("input",renderTemplates));
+["tp-me","tp-cat"].forEach(id=>$("#"+id).addEventListener("change",renderTemplates));
+
 /* ---------- to do ---------- */
 const TD_LISTS=[["Dom","Alex"],["Alex","Dom"],["Cherish","Alex"]];   // [list, who usually gives it]
 let tdItems=[];
@@ -1543,7 +1619,7 @@ async function start(){
   const j=await api("load");
   ROLE=j.role;canWrite=ROLE==="office";
   $("#view-signin").hidden=true;$("#signOut").hidden=false;
-  const tabs=ROLE==="office"?["booked","pipe","todo","build","team","cal","jobs","prev","admin","pay"]:["team","jobs","prev","info","pay"];
+  const tabs=ROLE==="office"?["booked","pipe","todo","tpl","build","team","cal","jobs","prev","admin","pay"]:["team","jobs","prev","info","pay"];
   TABS.forEach(k=>$("#tab-"+k).hidden=!tabs.includes(k));
   $("#tab-team").textContent=ROLE==="office"?"Schedule":"My weddings";
   $("#tab-jobs").textContent=ROLE==="office"?"Jobs":"Job offers";
@@ -1557,13 +1633,14 @@ async function start(){
   applyData(j);
 }
 showTab=function(t){
-  const allowed=ROLE==="office"?["booked","pipe","todo","build","team","cal","jobs","prev","admin","pay"]:["team","jobs","prev","info","pay"];
+  const allowed=ROLE==="office"?["booked","pipe","todo","tpl","build","team","cal","jobs","prev","admin","pay"]:["team","jobs","prev","info","pay"];
   if(!allowed.includes(t))t=allowed[0];
   TABS.forEach(k=>{$("#tab-"+k).setAttribute("aria-selected",k===t);$("#view-"+k).hidden=k!==t});
   $("#pageTitle").textContent=$("#tab-"+t).textContent;
   if(t==="prev")loadPreviews();
   if(t==="pipe")loadPipeline();
   if(t==="todo")loadTodos();
+  if(t==="tpl")loadTemplates();
   if(t==="jobs")loadJobs();
   if(t==="cal")renderCalPicker();
   try{localStorage.setItem("tt-tab",t)}catch(e){}

@@ -137,6 +137,9 @@ function doPost(e) {
       case 'jobs': return json_(jobs_());
       case 'offerJob': return json_(offerJob_(d.offer));
       case 'setJobTop': return json_(setJobTop_(d.ids));
+      case 'templates': return json_(templates_());
+      case 'saveTemplate': return json_(saveTemplate_(d.template));
+      case 'archiveTemplate': return json_(archiveTemplate_(d.id));
       case 'shippoSettings': return json_(shippoSettings_(d.parcel));
       case 'shippoRates': return json_(shippoRates_(d.weddingId, d.kind));
       case 'shippoBuy': return json_(shippoBuy_(d.weddingId, d.rateId, d.kind));
