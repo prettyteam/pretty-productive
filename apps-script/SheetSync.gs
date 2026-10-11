@@ -81,11 +81,15 @@ function syncFromWeddingsSheet_(dryRun) {
   }
 }
 
-/** Emails and names of clients with at least one payment on the HONEYBOOK PAYMENTS tab. */
+/** Emails and names of clients with at least one payment on the HONEYBOOK PAYMENTS or PAID IN APP tab. */
 function paidClients_(book) {
   const out = { emails: new Set(), names: new Set() };
-  const sh = book.getSheets().find(t => PAYMENTS_TAB.test(t.getName().trim()));
-  if (!sh) return out;
+  book.getSheets().filter(t => PAYMENTS_TAB.test(t.getName().trim()) || /^paid in app$/i.test(t.getName().trim()))
+    .forEach(sh => addPaid_(out, sh));
+  return out;
+}
+
+function addPaid_(out, sh) {
   const vals = sh.getDataRange().getValues();
   const head = (vals[0] || []).map(h => String(h).trim().toUpperCase());
   const cB = head.indexOf('BRIDE'), cE = head.indexOf('EMAIL');
@@ -93,7 +97,6 @@ function paidClients_(book) {
     if (cE >= 0 && String(r[cE] || '').trim()) out.emails.add(String(r[cE]).trim().toLowerCase());
     if (cB >= 0 && String(r[cB] || '').trim()) out.names.add(String(r[cB]).replace(/\s+/g, ' ').trim().toLowerCase());
   });
-  return out;
 }
 
 /** "2/21/2026", "3/21/26", "1/31" (year from the tab), "May 1, 2027" or a real date -> "yyyy-MM-dd". */

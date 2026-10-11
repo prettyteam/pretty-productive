@@ -129,6 +129,7 @@ textarea.copyfallback{position:fixed;left:-9999px;top:0}
     <div class="brand"><h1>TAFFETA WEDDINGS</h1><span id="pageTitle"></span></div>
     <div class="tabs" role="tablist">
       <button id="tab-booked" role="tab" aria-selected="true" hidden>Booked weddings</button>
+      <button id="tab-pipe" role="tab" aria-selected="false" hidden>Pipeline</button>
       <button id="tab-build" role="tab" aria-selected="false" hidden>Build a timeline</button>
       <button id="tab-team" role="tab" aria-selected="false" hidden>Team schedule</button>
       <button id="tab-prev" role="tab" aria-selected="false" hidden>Bridal preview</button>
@@ -394,6 +395,17 @@ textarea.copyfallback{position:fixed;left:-9999px;top:0}
       <button class="btn ghost" id="bk-copy">Copy for Sheets</button>
     </div>
     <div style="overflow-x:auto"><table class="adm" id="bk-table"></table></div>
+  </section>
+
+  <section id="view-pipe" hidden>
+    <div class="toolbar">
+      <div class="status" id="pp-note">Loading…</div>
+      <button class="btn ghost" id="pp-refresh">Refresh</button>
+    </div>
+    <div style="overflow-x:auto"><table class="adm" id="pp-table"></table></div>
+    <h3 style="margin:28px 0 8px;font:500 12px var(--sans);letter-spacing:.14em;text-transform:uppercase">Marked paid in the app</h3>
+    <div style="overflow-x:auto"><table class="adm" id="pp-marked"></table></div>
+    <p class="hint" style="margin-top:10px">Marking a bride paid here adds her to Booked weddings right away. HoneyBook still needs the payment marked too: ask Claude to "mark the app payments in HoneyBook", and the last column fills in once it's done.</p>
   </section>
 
   <section id="view-admin" hidden>
@@ -697,7 +709,7 @@ const fileName=s=>((s.bride||"wedding").replace(/[^a-z0-9]+/gi,"-")+"-timeline"+
 $("#saveImg").onclick=()=>saveImage($("#sheet"),fileName(S));
 
 /* ---------- tabs ---------- */
-const TABS=["build","team","prev","booked","info","pay","admin"];
+const TABS=["build","team","prev","booked","pipe","info","pay","admin"];
 function showTab(t){if(!TABS.includes(t))t="team";TABS.forEach(k=>{$("#tab-"+k).setAttribute("aria-selected",k===t);$("#view-"+k).hidden=k!==t});$("#pageTitle").textContent=$("#tab-"+t).textContent;try{localStorage.setItem("tt-tab",t)}catch(e){}}
 TABS.forEach(k=>$("#tab-"+k).onclick=()=>showTab(k));
 
@@ -1105,6 +1117,52 @@ $("#bk-copy").onclick=()=>{
   copy(lines.join("\n"));
 };
 
+/* ---------- pipeline (office) ---------- */
+let ppRows=[],ppOpen=null;
+async function loadPipeline(){
+  $("#pp-note").textContent="Loading…";
+  try{const j=await api("pipeline");ppRows=j.rows||[];renderPipeline(j)}
+  catch(e){$("#pp-note").textContent="Couldn't load the pipeline. Try Refresh."}
+}
+function renderPipeline(j){
+  const n=ppRows.length;
+  $("#pp-note").textContent=(n?n+" bride"+(n>1?"s":"")+" haven't paid yet":"Everyone in the pipeline has paid")+(j&&j.updated?" · HoneyBook list from "+shortDate(j.updated):" · say \"run bride follow-ups\" to Claude to load your HoneyBook leads");
+  const t=$("#pp-table");
+  if(!n){t.innerHTML='<tr><td><div class="empty-state">No unpaid brides right now.</div></td></tr>'}
+  else{
+    t.innerHTML='<tr><th>Date</th><th>Bride</th><th>Location</th><th>Stage</th><th>Last contact</th><th>Next step</th><th></th></tr>'+ppRows.map((r,i)=>{
+      const row='<tr><td>'+esc(shortDate(r.date)||"–")+'</td><td><b>'+esc(r.bride)+'</b></td><td>'+esc(r.location)+'</td><td>'+esc(r.stage)+'</td><td>'+esc(shortDate(r.lastContact)||"–")+'</td><td style="white-space:normal;min-width:180px">'+esc(r.nextStep)+'</td><td><button class="btn ghost small" data-pp="'+i+'">Mark paid</button></td></tr>';
+      if(ppOpen!==i)return row;
+      const today=new Date().toISOString().slice(0,10);
+      return row+'<tr><td colspan="7"><div class="row" style="align-items:flex-end">'+
+        '<label class="f" style="flex:0 1 120px">Amount ($)<input id="pp-amt" inputmode="decimal" placeholder="600"></label>'+
+        '<label class="f" style="flex:0 1 140px">How she paid<select id="pp-method"><option>Venmo</option><option>Zelle</option><option>Cash</option><option>Check</option><option>Card</option></select></label>'+
+        '<label class="f" style="flex:0 1 160px">Paid on<input id="pp-on" type="date" value="'+today+'"></label>'+
+        '<button class="btn" id="pp-save" style="flex:0 0 auto">Save as paid</button><button class="btn ghost" id="pp-cancel" style="flex:0 0 auto">Cancel</button>'+
+        '<span class="status" id="pp-status"></span></div></td></tr>';
+    }).join("");
+    t.querySelectorAll("[data-pp]").forEach(b=>b.onclick=()=>{ppOpen=Number(b.dataset.pp);renderPipeline(j);const a=$("#pp-amt");if(a)a.focus()});
+    if(ppOpen!==null&&$("#pp-save")){
+      $("#pp-cancel").onclick=()=>{ppOpen=null;renderPipeline(j)};
+      $("#pp-save").onclick=async()=>{
+        const r=ppRows[ppOpen],amt=$("#pp-amt").value.trim();
+        if(!(Number(amt.replace(/[$,]/g,""))>0)){$("#pp-status").textContent="Add the amount.";return}
+        $("#pp-save").disabled=true;$("#pp-status").textContent="Saving…";
+        try{
+          const res=await api("markPaid",{payment:{bride:r.bride,date:r.date,location:r.location,amount:amt,method:$("#pp-method").value,paidOn:$("#pp-on").value}});
+          ppOpen=null;
+          if(res.added){try{applyData(await api("load"))}catch(e){}}
+          await loadPipeline();
+          $("#pp-note").textContent=r.bride+" is marked paid"+(res.added?" and added to Booked weddings":"")+". "+$("#pp-note").textContent;
+        }catch(e){$("#pp-save").disabled=false;$("#pp-status").textContent=e.message||"Couldn't save. Try again."}
+      };
+    }
+  }
+  const m=(j&&j.marked)||[],mt=$("#pp-marked");
+  mt.innerHTML=m.length?'<tr><th>Bride</th><th>Wedding</th><th>Amount</th><th>How</th><th>Paid on</th><th>In HoneyBook</th></tr>'+m.map(x=>'<tr><td><b>'+esc(x.bride)+'</b></td><td>'+esc(shortDate(x.date)||"–")+'</td><td>$'+esc(x.amount)+'</td><td>'+esc(x.method)+'</td><td>'+esc(shortDate(x.paidOn))+'</td><td>'+(x.inHoneyBook?"Done "+esc(shortDate(x.inHoneyBook)||x.inHoneyBook):"Waiting")+'</td></tr>').join(""):'<tr><td><div class="empty-state">Nothing marked paid in the app yet.</div></td></tr>';
+}
+$("#pp-refresh").onclick=()=>{ppOpen=null;loadPipeline()};
+
 /* ---------- collapsible cards ---------- */
 document.querySelectorAll(".card").forEach((card,i)=>{
   const h=card.querySelector(":scope > h2");if(!h)return;
@@ -1152,7 +1210,7 @@ async function start(){
   const j=await api("load");
   ROLE=j.role;canWrite=ROLE==="office";
   $("#view-signin").hidden=true;$("#signOut").hidden=false;
-  const tabs=ROLE==="office"?["booked","build","team","prev","admin","pay"]:["team","prev","info","pay"];
+  const tabs=ROLE==="office"?["booked","pipe","build","team","prev","admin","pay"]:["team","prev","info","pay"];
   TABS.forEach(k=>$("#tab-"+k).hidden=!tabs.includes(k));
   $("#tab-team").textContent=ROLE==="office"?"Team schedule":"My weddings";
   $("#artistFilter").closest(".row").hidden=ROLE!=="office";
@@ -1164,11 +1222,12 @@ async function start(){
   applyData(j);
 }
 showTab=function(t){
-  const allowed=ROLE==="office"?["booked","build","team","prev","admin","pay"]:["team","prev","info","pay"];
+  const allowed=ROLE==="office"?["booked","pipe","build","team","prev","admin","pay"]:["team","prev","info","pay"];
   if(!allowed.includes(t))t=allowed[0];
   TABS.forEach(k=>{$("#tab-"+k).setAttribute("aria-selected",k===t);$("#view-"+k).hidden=k!==t});
   $("#pageTitle").textContent=$("#tab-"+t).textContent;
   if(t==="prev")loadPreviews();
+  if(t==="pipe")loadPipeline();
   try{localStorage.setItem("tt-tab",t)}catch(e){}
 };
 // keep the team schedule fresh for everyone (the office's own edits stay put)

@@ -127,6 +127,8 @@ function doPost(e) {
       case 'setActive': return json_(setActive_(d.memberId, !!d.active));
       case 'sendInvites': return json_(sendInvites_(d.weddingId, d.events || []));
       case 'checkInvites': return json_(checkInvites_(d.weddingId));
+      case 'pipeline': return json_(pipeline_());
+      case 'markPaid': return json_(markPaid_(d.payment));
     }
     return json_({ ok: false, error: 'unknown_action' });
   } catch (err) {
