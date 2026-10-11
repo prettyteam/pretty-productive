@@ -241,6 +241,11 @@ for (const p of pages) {
   if (spaFor.list && p.role === 'esthetician') mine.spaList = spaFor.list;
   if (schedMap[p.slug]) mine.schedule = { weeks: schedMap[p.slug], updated: (data.schedule && data.schedule.updated) || null };
   if (socialAll) mine.social = { week: socialAll.week, posts: p.role === 'esthetician' ? socialAll.esti : socialAll.hair };
+  // This week: only this person's own row plus the team's retail and add-ons (never the team's service sales or anyone else's row).
+  if (data.week && Array.isArray(data.week.rows)) {
+    const r = data.week.rows.find((x) => x && x.slug === p.slug), t = data.week.team || {};
+    mine.week = { weekLabel: data.week.weekLabel || '', me: r ? { service: r.service ?? null, retail: r.retail ?? null, addons: r.addons ?? null } : null, team: { retail: t.retail || null, addons: t.addons || null } };
+  }
   fs.writeFileSync(path.join(outDir, k.id + '.json'), JSON.stringify(await seal({ daily: data.daily || null, mine }, k.secret, k.pin)));
   n++;
 }

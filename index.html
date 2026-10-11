@@ -441,9 +441,24 @@ function stylistPage(p){
     parts.push(wrapBlock(p));
     parts.push(guestGuide(p));
   }
+  parts.push(weekBlock(p));
   parts.push(teamBlock(d));
   parts.push(tipsBlock(d,p));
   return parts;
+}
+/* artist's own week to date, plus the team's retail and add-ons for the week (no team service sales, no coworkers' numbers) */
+function weekBlock(p){
+  const w=p.week; if(!w||(!w.me&&!w.team)) return null;
+  const me=w.me||{}, t=w.team||{};
+  const mine=(label,v,fmt)=>h('div',{class:'cell tcell'},h('span',{class:'label',style:'font-size:11px'},label),h('span',{class:'num'},v==null?'–':fmt(v)));
+  const team=(label,v,fmt)=>v?h('div',{class:'cell tcell'+(v.actual!=null&&v.goal>0&&v.actual>=v.goal?' hit':'')},
+    h('span',{class:'label',style:'font-size:11px'},label),h('span',{class:'num'},(v.actual==null?'–':fmt(v.actual))+' / '+fmt(v.goal)),bar(v.actual||0,v.goal)):null;
+  return h('section',{class:'section'},
+    h('div',{style:'display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;align-items:baseline'},h('h2',{},'This week'),h('span',{class:'muted',style:'font-size:14px'},w.weekLabel||'')),
+    w.me?h('p',{class:'muted',style:'font-size:14px'},'Your week so far. Only you see these.'):null,
+    w.me?h('div',{class:'teamgrid'},mine('Your service',me.service,money),mine('Your retail',me.retail,money),mine('Your add-ons',me.addons,String)):null,
+    (t.retail||t.addons)?h('p',{class:'muted',style:'font-size:14px;margin-top:14px'},'The team’s week, together.'):null,
+    (t.retail||t.addons)?h('div',{class:'teamgrid'},team('Team retail',t.retail,money),team('Team add-ons',t.addons,String)):null);
 }
 function incentiveCard(i){
   if(!i||!i.parts) return null;
