@@ -65,6 +65,9 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 .chk input{width:auto}
 .x{border:0;background:transparent;color:var(--muted);font-size:18px;line-height:1;cursor:pointer;padding:2px 6px}
 .hint{font-size:12px;color:var(--muted);margin:0}
+.jb-team{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:6px}
+.job{border:1px solid var(--line);padding:12px;display:grid;gap:6px}
+.job .meta{font-size:13px;color:var(--muted)}
 .todo-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;align-items:start}
 @media (max-width:820px){.todo-grid{grid-template-columns:minmax(0,1fr)}}
 .td-add{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px}
@@ -148,6 +151,7 @@ textarea.copyfallback{position:fixed;left:-9999px;top:0}
       <button id="tab-build" role="tab" aria-selected="false" hidden>Timeline</button>
       <button id="tab-team" role="tab" aria-selected="false" hidden>Schedule</button>
       <button id="tab-cal" role="tab" aria-selected="false" hidden>Calendar</button>
+      <button id="tab-jobs" role="tab" aria-selected="false" hidden>Jobs</button>
       <button id="tab-prev" role="tab" aria-selected="false" hidden>Bridal preview</button>
       <button id="tab-info" role="tab" aria-selected="false" hidden>My info</button>
       <button id="tab-pay" role="tab" aria-selected="false" hidden>Payout form</button>
@@ -223,6 +227,33 @@ textarea.copyfallback{position:fixed;left:-9999px;top:0}
           <h2>Team on site</h2>
           <div class="list" id="artists"></div>
           <div class="row"><button class="btn ghost small" id="addHair">+ Hair artist</button><button class="btn ghost small" id="addMu">+ Makeup artist</button></div>
+        </div>
+
+        <div class="card" id="extCard">
+          <h2>Extensions</h2>
+          <label class="chk"><input type="checkbox" id="ext-on"> She's renting extensions ($150 + the label cost, no deposit)</label>
+          <div id="ext-body" hidden style="display:flex;flex-direction:column;gap:10px">
+            <div class="row">
+              <label class="f">Type<input id="ext-type" placeholder="e.g. clip-in, halo"></label>
+              <label class="f">Color<input id="ext-color"></label>
+              <label class="f">Length<input id="ext-length" placeholder="e.g. 20 in"></label>
+              <label class="f">Pieces<input id="ext-pieces" inputmode="numeric"></label>
+            </div>
+            <label class="f">Ship to<textarea id="ext-addr" rows="2" placeholder="Name, street, city, state, ZIP"></textarea></label>
+            <div class="row">
+              <label class="f">Ship by<input id="ext-shipby" type="date"></label>
+              <label class="f">Label cost ($)<input id="ext-label" inputmode="decimal" placeholder="billed to the bride"></label>
+              <label class="f">Tracking number<input id="ext-track"></label>
+            </div>
+            <div class="row" style="gap:14px;flex-wrap:wrap">
+              <label class="chk"><input type="checkbox" id="ext-prepped"> Prepped</label>
+              <label class="chk"><input type="checkbox" id="ext-bought"> Label bought</label>
+              <label class="chk"><input type="checkbox" id="ext-shipped"> Shipped</label>
+              <label class="chk"><input type="checkbox" id="ext-returned"> Returned</label>
+            </div>
+            <p class="status" id="ext-due"></p>
+            <div class="row"><a class="btn ghost small" href="https://apps.goshippo.com/" target="_blank" rel="noopener">Open Shippo</a><span class="hint">Buy the label in Shippo yourself, then add the cost and tracking here. Bill the label cost to the bride.</span></div>
+          </div>
         </div>
 
         <div class="card">
@@ -405,6 +436,34 @@ textarea.copyfallback{position:fixed;left:-9999px;top:0}
       <div class="list" id="cal-team"></div>
       <div class="row"><button class="btn" id="calSync">Send / update invites</button><button class="btn ghost" id="calCheck">Check confirmations</button></div>
       <p class="status" id="calStatus"></p>
+    </div>
+  </section>
+
+  <section id="view-jobs" hidden>
+    <div id="jb-office" hidden>
+      <div class="card" style="max-width:820px">
+        <h2 data-open>Offer a job</h2>
+        <p class="hint">Offer a wedding to one or more artists. Keep it to ranges. Creating the offer doesn't message anyone: copy the text and send it yourself. Each artist answers Yes or No on her private link.</p>
+        <div class="row">
+          <label class="f">Wedding<select id="jb-wedding"></select></label>
+          <label class="f" style="flex:0 1 180px">Role<select id="jb-role"><option value="hair">Hair</option><option value="mu">Makeup</option><option value="both">Hair &amp; makeup</option></select></label>
+        </div>
+        <div class="row">
+          <label class="f">Headcount<input id="jb-head" placeholder="e.g. 4 to 6 people"></label>
+          <label class="f">Travel minimum<input id="jb-travel" placeholder="e.g. 3 to 4 services"></label>
+          <label class="f">Payout<input id="jb-pay" placeholder="e.g. $300 to $450"></label>
+        </div>
+        <label class="f">Note (optional)<input id="jb-note" placeholder="e.g. early start, parking on site"></label>
+        <div><span class="hint">Artists</span><div id="jb-team" class="jb-team"></div></div>
+        <div class="row"><button class="btn" id="jb-send">Create offer</button><button class="btn ghost" id="jb-copy">Copy text</button></div>
+        <p class="status" id="jb-status"></p>
+      </div>
+      <div class="toolbar" style="margin-top:18px"><div class="status" id="jb-note2">Offers</div><button class="btn ghost" id="jb-refresh">Refresh</button></div>
+      <div style="overflow-x:auto"><table class="adm" id="jb-table"></table></div>
+    </div>
+    <div id="jb-artist" hidden>
+      <div class="toolbar"><div class="status" id="jb-mine-note">Loading…</div><button class="btn ghost" id="jb-mine-refresh">Refresh</button></div>
+      <div class="list" id="jb-mine"></div>
     </div>
   </section>
 
@@ -664,7 +723,7 @@ const FIELDS=["bride","date","location","room","contactName","contactPhone","not
 function fillForm(){
   FIELDS.forEach(f=>{const el=$("#"+f);if(el)el.value=S[f]??""});
   setMode(S.mode,false);
-  renderArtists();renderPeople();renderSheet();
+  renderArtists();renderPeople();renderSheet();renderExt();
 }
 function renderArtists(){
   const box=$("#artists");box.innerHTML="";
@@ -766,7 +825,7 @@ const fileName=s=>((s.bride||"wedding").replace(/[^a-z0-9]+/gi,"-")+"-timeline"+
 $("#saveImg").onclick=()=>saveImage($("#sheet"),fileName(S));
 
 /* ---------- tabs ---------- */
-const TABS=["build","team","cal","prev","booked","pipe","todo","info","pay","admin"];
+const TABS=["build","team","cal","jobs","prev","booked","pipe","todo","info","pay","admin"];
 function showTab(t){if(!TABS.includes(t))t="team";TABS.forEach(k=>{$("#tab-"+k).setAttribute("aria-selected",k===t);$("#view-"+k).hidden=k!==t});$("#pageTitle").textContent=$("#tab-"+t).textContent;try{localStorage.setItem("tt-tab",t)}catch(e){}}
 TABS.forEach(k=>$("#tab-"+k).onclick=()=>showTab(k));
 
@@ -1187,6 +1246,89 @@ $("#bk-copy").onclick=()=>{
 
 /* ---------- pipeline (office) ---------- */
 let ppRows=[],ppOpen=null;
+/* ---------- extensions (office only, saved with the wedding) ---------- */
+const EXT_TEXT={type:"ext-type",color:"ext-color",length:"ext-length",pieces:"ext-pieces",addr:"ext-addr",shipBy:"ext-shipby",labelCost:"ext-label",tracking:"ext-track"};
+const EXT_CHECK={prepped:"ext-prepped",bought:"ext-bought",shipped:"ext-shipped",returned:"ext-returned"};
+function renderExt(){
+  const x=S.ext||{};
+  $("#ext-on").checked=!!x.on;$("#ext-body").hidden=!x.on;
+  Object.entries(EXT_TEXT).forEach(([k,id])=>$("#"+id).value=x[k]||"");
+  Object.entries(EXT_CHECK).forEach(([k,id])=>$("#"+id).checked=!!x[k]);
+  let due="";
+  if(S.date){const d=new Date(S.date+"T12:00:00");d.setDate(d.getDate()+5);due=d.toISOString().slice(0,10)}
+  $("#ext-due").textContent=due?"Return due "+shortDate(due)+" (wedding date + 5 days)"+(x.returned?" · returned":""):"Add the wedding date to see the return due date.";
+}
+function extSet(k,v){S.ext=Object.assign({},S.ext||{},{[k]:v});renderExt();queueSave()}
+$("#ext-on").onchange=e=>extSet("on",e.target.checked);
+Object.entries(EXT_TEXT).forEach(([k,id])=>$("#"+id).addEventListener("change",e=>extSet(k,e.target.value.trim())));
+Object.entries(EXT_CHECK).forEach(([k,id])=>$("#"+id).onchange=e=>extSet(k,e.target.checked));
+
+/* ---------- job offers ---------- */
+let jbJobs=[];
+const jbRange=j=>[j.headcount&&("Headcount: "+j.headcount),j.travel&&("Travel minimum: "+j.travel),j.payout&&("Payout: "+j.payout)].filter(Boolean);
+async function loadJobs(){
+  if(ROLE==="office"){
+    const today=new Date().toISOString().slice(0,10);
+    const sel=$("#jb-wedding"),cur=sel.value;
+    sel.innerHTML='<option value="">Choose a wedding</option>'+allWeddings.filter(w=>(w.d.date||"")>=today).sort((a,b)=>(a.d.date||"").localeCompare(b.d.date||""))
+      .map(w=>'<option value="'+w.id+'">'+esc((w.d.date?shortDate(w.d.date)+" · ":"")+(w.d.bride||"Untitled"))+'</option>').join("");
+    sel.value=cur;
+    const team=profiles.filter(p=>String(p.active).toLowerCase()!=="false");
+    $("#jb-team").innerHTML=team.length?team.map(p=>'<label class="chk"><input type="checkbox" value="'+esc(p._id)+'"> '+esc(p.preferredName||p.legalName||"Unnamed")+'</label>').join(""):'<span class="hint">Add artists in Team records first.</span>';
+    try{const j=await api("jobs");jbJobs=j.jobs||[];renderJobs()}catch(e){$("#jb-note2").textContent="Couldn't load offers. Try Refresh."}
+  }else{
+    $("#jb-mine-note").textContent="Loading…";
+    try{const j=await api("myJobs");jbJobs=j.jobs||[];renderMyJobs()}catch(e){$("#jb-mine-note").textContent="Couldn't load your offers. Try Refresh."}
+  }
+}
+function renderJobs(){
+  const t=$("#jb-table");
+  $("#jb-note2").textContent=jbJobs.length?jbJobs.filter(j=>j.status==="Waiting").length+" waiting on an answer":"No offers yet";
+  if(!jbJobs.length){t.innerHTML="";return}
+  t.innerHTML='<tr><th>Wedding</th><th>Bride</th><th>Artist</th><th>Role</th><th>Ranges</th><th>Answer</th></tr>'+jbJobs.slice().sort((a,b)=>(a.date||"").localeCompare(b.date||"")||a.artist.localeCompare(b.artist)).map(j=>
+    '<tr><td>'+esc(shortDate(j.date)||"–")+'</td><td><b>'+esc(j.bride)+'</b></td><td>'+esc(j.artist)+'</td><td>'+esc(j.role)+'</td><td style="white-space:normal;min-width:180px">'+esc(jbRange(j).join(" · "))+'</td><td>'
+    +(j.status==="Yes"?'<span class="pill">Yes</span><div class="hint">Add her under Team on site on the Timeline.</div>':j.status==="No"?'<span class="pill">No</span>':'<span class="hint">Waiting</span>')+'</td></tr>').join("");
+}
+function jbText(){
+  const w=allWeddings.find(x=>x.id===$("#jb-wedding").value);if(!w)return "";
+  const role={hair:"Hair",mu:"Makeup",both:"Hair & makeup"}[$("#jb-role").value];
+  const L=["Taffeta Weddings job offer","Date: "+(w.d.date?shortDate(w.d.date):"TBD"),"Location: "+([w.d.location,w.d.room].filter(Boolean).join(", ")||"TBD"),"Role: "+role];
+  if($("#jb-head").value.trim())L.push("Headcount: "+$("#jb-head").value.trim());
+  if($("#jb-travel").value.trim())L.push("Travel minimum: "+$("#jb-travel").value.trim());
+  if($("#jb-pay").value.trim())L.push("Payout: "+$("#jb-pay").value.trim());
+  if($("#jb-note").value.trim())L.push($("#jb-note").value.trim());
+  L.push("","Open your Taffeta Weddings link and tap Yes or No under Job offers.");
+  return L.join("\n");
+}
+$("#jb-copy").onclick=()=>{const t=jbText();if(!t){$("#jb-status").textContent="Choose a wedding first.";return}copy(t)};
+$("#jb-send").onclick=async()=>{
+  const ids=[...$("#jb-team").querySelectorAll("input:checked")].map(c=>c.value),out=$("#jb-status");
+  if(!$("#jb-wedding").value){out.textContent="Choose a wedding first.";return}
+  if(!ids.length){out.textContent="Tick at least one artist.";return}
+  $("#jb-send").disabled=true;out.textContent="Creating…";
+  try{
+    const j=await api("offerJob",{offer:{weddingId:$("#jb-wedding").value,memberIds:ids,role:$("#jb-role").value,headcount:$("#jb-head").value,travel:$("#jb-travel").value,payout:$("#jb-pay").value,note:$("#jb-note").value}});
+    if(j.ok===false){out.textContent=j.message||"That didn't save.";return}
+    jbJobs=j.jobs||jbJobs;renderJobs();out.textContent="Offer created for "+ids.length+" artist"+(ids.length===1?"":"s")+". Copy the text and send it to them.";
+    $("#jb-team").querySelectorAll("input:checked").forEach(c=>c.checked=false);
+  }catch(e){out.textContent="That didn't save. Try again."}
+  finally{$("#jb-send").disabled=false}
+};
+$("#jb-refresh").onclick=loadJobs;
+function renderMyJobs(){
+  const box=$("#jb-mine"),open=jbJobs.filter(j=>j.status==="Waiting").length;
+  $("#jb-mine-note").textContent=jbJobs.length?(open?open+" waiting on your answer":"You've answered every offer"):"No job offers right now";
+  box.innerHTML=jbJobs.slice().sort((a,b)=>(a.date||"").localeCompare(b.date||"")).map(j=>'<div class="job"><div><b>'+esc(shortDate(j.date)||"Date TBD")+'</b> · '+esc(j.role)+'</div><div class="meta">'+esc(j.location||"Location TBD")+'</div>'
+    +(jbRange(j).length?'<div class="meta">'+esc(jbRange(j).join(" · "))+'</div>':'')+(j.note?'<div class="meta">'+esc(j.note)+'</div>':'')
+    +'<div class="row" style="align-items:center">'+(j.status==="Waiting"?'<button class="btn small" data-yes="'+esc(j.id)+'">Yes, I can</button><button class="btn ghost small" data-no="'+esc(j.id)+'">No</button>':'<span class="pill">You said '+esc(j.status)+'</span>')+'</div></div>').join("");
+  box.querySelectorAll("[data-yes],[data-no]").forEach(b=>b.onclick=async()=>{
+    const id=b.dataset.yes||b.dataset.no,yes=!!b.dataset.yes;b.disabled=true;
+    try{const j=await api("answerJob",{id,yes});jbJobs=j.jobs||jbJobs;renderMyJobs();toast(yes?"Thanks, the office will confirm.":"Got it, thanks.")}
+    catch(e){toast("That didn't save. Try again.");b.disabled=false}
+  });
+}
+$("#jb-mine-refresh").onclick=loadJobs;
+
 /* ---------- to do ---------- */
 const TD_LISTS=[["Dom","Alex"],["Alex","Dom"],["Cherish","Alex"]];   // [list, who usually gives it]
 let tdItems=[];
@@ -1312,9 +1454,11 @@ async function start(){
   const j=await api("load");
   ROLE=j.role;canWrite=ROLE==="office";
   $("#view-signin").hidden=true;$("#signOut").hidden=false;
-  const tabs=ROLE==="office"?["booked","pipe","todo","build","team","cal","prev","admin","pay"]:["team","prev","info","pay"];
+  const tabs=ROLE==="office"?["booked","pipe","todo","build","team","cal","jobs","prev","admin","pay"]:["team","jobs","prev","info","pay"];
   TABS.forEach(k=>$("#tab-"+k).hidden=!tabs.includes(k));
   $("#tab-team").textContent=ROLE==="office"?"Schedule":"My weddings";
+  $("#tab-jobs").textContent=ROLE==="office"?"Jobs":"Job offers";
+  $("#jb-office").hidden=ROLE!=="office";$("#jb-artist").hidden=ROLE==="office";$("#extCard").hidden=ROLE!=="office";
   $("#artistFilter").closest(".row").hidden=ROLE!=="office";
   $("#calCard").hidden=ROLE!=="office";
   let t=null;try{t=localStorage.getItem("tt-tab")}catch(e){}
@@ -1324,13 +1468,14 @@ async function start(){
   applyData(j);
 }
 showTab=function(t){
-  const allowed=ROLE==="office"?["booked","pipe","todo","build","team","cal","prev","admin","pay"]:["team","prev","info","pay"];
+  const allowed=ROLE==="office"?["booked","pipe","todo","build","team","cal","jobs","prev","admin","pay"]:["team","jobs","prev","info","pay"];
   if(!allowed.includes(t))t=allowed[0];
   TABS.forEach(k=>{$("#tab-"+k).setAttribute("aria-selected",k===t);$("#view-"+k).hidden=k!==t});
   $("#pageTitle").textContent=$("#tab-"+t).textContent;
   if(t==="prev")loadPreviews();
   if(t==="pipe")loadPipeline();
   if(t==="todo")loadTodos();
+  if(t==="jobs")loadJobs();
   if(t==="cal")renderCalPicker();
   try{localStorage.setItem("tt-tab",t)}catch(e){}
 };

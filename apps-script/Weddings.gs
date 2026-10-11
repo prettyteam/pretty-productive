@@ -117,6 +117,8 @@ function doPost(e) {
       case 'addPhoto': return json_(addPhoto_(who, d.key, d.photo));
       case 'deletePhoto': return json_(deletePhoto_(who, d.key, d.id));
       case 'photos': return json_(photos_(who, d.key, d.ids, !!d.full));
+      case 'myJobs': return json_(office ? { ok: true, jobs: [] } : myJobs_(who.member));
+      case 'answerJob': return json_(office ? { ok: false, error: 'office_only' } : answerJob_(who.member, d.id, !!d.yes));
     }
     if (!office) return json_({ ok: false, error: 'office_only' });
     switch (d.action) {
@@ -132,6 +134,8 @@ function doPost(e) {
       case 'todos': return json_(todos_());
       case 'addTodo': return json_(addTodo_(d.todo));
       case 'doneTodo': return json_(doneTodo_(d.id, !!d.done));
+      case 'jobs': return json_(jobs_());
+      case 'offerJob': return json_(offerJob_(d.offer));
     }
     return json_({ ok: false, error: 'unknown_action' });
   } catch (err) {
