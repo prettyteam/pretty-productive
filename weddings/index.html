@@ -78,6 +78,9 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 .tp-card{border:1px solid var(--line);padding:12px;display:flex;flex-direction:column;gap:8px;min-width:0}
 .tp-card b{font-size:13px}
 .tp-text{white-space:pre-wrap;font-size:13px;line-height:1.5;overflow-wrap:anywhere}
+.tp-price{display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap}
+.tp-price img{width:150px;max-width:100%;height:auto;border:1px solid var(--line);display:block}
+.tp-price .row{flex-wrap:wrap}
 .todo-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;align-items:start}
 @media (max-width:820px){.todo-grid{grid-template-columns:minmax(0,1fr)}}
 .td-add{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px}
@@ -538,6 +541,16 @@ textarea.copyfallback{position:fixed;left:-9999px;top:0}
       </div>
       <label class="f">Message<textarea id="tp-f-text" rows="6" placeholder="Use [Name] for the bride's name and [Me] for yours."></textarea></label>
       <div class="row"><button class="btn" id="tp-f-save">Save</button><button class="btn ghost" id="tp-f-cancel">Cancel</button><button class="btn ghost" id="tp-f-archive" hidden>Remove template</button></div>
+    </div>
+    <div class="card" id="tp-price-card" style="margin-bottom:14px">
+      <h2 data-open>À la carte price sheet</h2>
+      <div class="tp-price">
+        <a href="a-la-carte-pricing-2027.jpg" target="_blank" rel="noopener"><img src="a-la-carte-pricing-2027.jpg" alt="Taffeta Weddings à la carte pricing 2027" loading="lazy"></a>
+        <div style="flex:1 1 220px;min-width:0">
+          <p class="hint" style="margin-top:0">2027 pricing. Save the picture, then attach it to your text. On a phone, Share sends it straight to Messages.</p>
+          <div class="row"><button class="btn small" id="tp-price-share" hidden>Share</button><a class="btn small" id="tp-price-save" href="a-la-carte-pricing-2027.jpg" download="Taffeta a la carte pricing 2027.jpg">Save image</a><button class="btn ghost small" id="tp-price-copy" hidden>Copy image</button><a class="btn ghost small" href="a-la-carte-pricing-2027.jpg" target="_blank" rel="noopener">Open full size</a></div>
+        </div>
+      </div>
     </div>
     <div class="status" id="tp-note">Loading…</div>
     <div id="tp-list" class="tp-list"></div>
@@ -1491,6 +1504,18 @@ $("#tp-f-archive").onclick=async()=>{
   try{const j=await api("archiveTemplate",{id:tpEditing.id});tpItems=j.templates||tpItems;$("#tp-form").hidden=true;tpEditing=null;renderTemplates()}
   catch(e){toast("That didn't save. Try again.")}
 };
+// price sheet: Share on phones (when the browser can share files), Copy image where the clipboard takes pictures
+const TP_PRICE="a-la-carte-pricing-2027.jpg";
+const tpPriceBlob=async()=>{const r=await fetch(TP_PRICE);if(!r.ok)throw new Error("load");return r.blob()};
+(()=>{try{const f=new File([new Blob()],"x.jpg",{type:"image/jpeg"});$("#tp-price-share").hidden=!(navigator.canShare&&navigator.canShare({files:[f]}))}catch(e){}
+  $("#tp-price-copy").hidden=!$("#tp-price-share").hidden||!(window.ClipboardItem&&navigator.clipboard&&navigator.clipboard.write)})();
+$("#tp-price-share").onclick=async()=>{
+  try{const f=new File([await tpPriceBlob()],"Taffeta a la carte pricing 2027.jpg",{type:"image/jpeg"});await navigator.share({files:[f]})}
+  catch(e){if(e&&e.name!=="AbortError")toast("Couldn't share. Use Save image instead.")}};
+$("#tp-price-copy").onclick=async()=>{
+  try{const png=new Promise(async(res,rej)=>{try{const im=await createImageBitmap(await tpPriceBlob()),c=document.createElement("canvas");c.width=im.width;c.height=im.height;c.getContext("2d").drawImage(im,0,0);c.toBlob(b=>b?res(b):rej(),"image/png")}catch(e){rej(e)}});
+    await navigator.clipboard.write([new ClipboardItem({"image/png":png})]);toast("Price sheet copied. Paste it into your message.")}
+  catch(e){toast("Couldn't copy. Use Save image instead.")}};
 ["tp-bride","tp-q"].forEach(id=>$("#"+id).addEventListener("input",renderTemplates));
 ["tp-me","tp-cat"].forEach(id=>$("#"+id).addEventListener("change",renderTemplates));
 
