@@ -135,8 +135,8 @@ textarea.copyfallback{position:fixed;left:-9999px;top:0}
       <span id="pageTitle" class="tab-title" aria-live="polite"></span>
       <button id="tab-booked" role="tab" aria-selected="true" hidden>Booked weddings</button>
       <button id="tab-pipe" role="tab" aria-selected="false" hidden>Pipeline</button>
-      <button id="tab-build" role="tab" aria-selected="false" hidden>Build a timeline</button>
-      <button id="tab-team" role="tab" aria-selected="false" hidden>Team schedule</button>
+      <button id="tab-build" role="tab" aria-selected="false" hidden>Timeline</button>
+      <button id="tab-team" role="tab" aria-selected="false" hidden>Schedule</button>
       <button id="tab-prev" role="tab" aria-selected="false" hidden>Bridal preview</button>
       <button id="tab-info" role="tab" aria-selected="false" hidden>My info</button>
       <button id="tab-pay" role="tab" aria-selected="false" hidden>Payout form</button>
@@ -161,6 +161,9 @@ textarea.copyfallback{position:fixed;left:-9999px;top:0}
           <div class="row">
             <label class="f">Open a saved wedding
               <select id="saved"><option value="">New wedding</option></select>
+            </label>
+            <label class="f">Completed timelines
+              <select id="done"><option value="">Choose a finished timeline</option></select>
             </label>
           </div>
           <div class="row">
@@ -752,7 +755,18 @@ function refreshSavedSelect(){
   const sel=$("#saved"), cur=docId||"";
   sel.innerHTML='<option value="">New wedding</option>'+allWeddings.slice().sort((a,b)=>(a.d.date||"").localeCompare(b.d.date||"")).map(w=>'<option value="'+w.id+'">'+esc((w.d.date?shortDate(w.d.date)+" · ":"")+(w.d.bride||"Untitled"))+'</option>').join("");
   sel.value=cur;
+  // completed = the party and the team are both filled in
+  const done=allWeddings.filter(w=>(w.d.people||[]).length&&(w.d.artists||[]).some(a=>(a.name||"").trim()))
+    .sort((a,b)=>(a.d.date||"").localeCompare(b.d.date||""));
+  const today=new Date().toISOString().slice(0,10);
+  const opt=w=>'<option value="'+w.id+'">'+esc((w.d.date?shortDate(w.d.date)+" · ":"")+(w.d.bride||"Untitled"))+'</option>';
+  const up=done.filter(w=>(w.d.date||"")>=today), past=done.filter(w=>(w.d.date||"")<today).reverse();
+  $("#done").innerHTML='<option value="">'+(done.length?"Choose a finished timeline":"No finished timelines yet")+'</option>'
+    +(up.length?'<optgroup label="Upcoming">'+up.map(opt).join("")+'</optgroup>':"")
+    +(past.length?'<optgroup label="Past">'+past.map(opt).join("")+'</optgroup>':"");
+  $("#done").value=done.some(w=>w.id===cur)?cur:"";
 }
+$("#done").onchange=e=>{const id=e.target.value;if(!id)return;const s=$("#saved");s.value=id;s.onchange({target:s})};
 $("#saved").onchange=e=>{
   const id=e.target.value;
   if(!id){docId=null;S=starter();fillForm();setStatus("New wedding");return}
@@ -1217,7 +1231,7 @@ async function start(){
   $("#view-signin").hidden=true;$("#signOut").hidden=false;
   const tabs=ROLE==="office"?["booked","pipe","build","team","prev","admin","pay"]:["team","prev","info","pay"];
   TABS.forEach(k=>$("#tab-"+k).hidden=!tabs.includes(k));
-  $("#tab-team").textContent=ROLE==="office"?"Team schedule":"My weddings";
+  $("#tab-team").textContent=ROLE==="office"?"Schedule":"My weddings";
   $("#artistFilter").closest(".row").hidden=ROLE!=="office";
   $("#calCard").hidden=ROLE!=="office";
   let t=null;try{t=localStorage.getItem("tt-tab")}catch(e){}
