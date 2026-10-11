@@ -78,6 +78,8 @@ function sheetDate_(v, year) {
   if (v instanceof Date && !isNaN(v)) return Utilities.formatDate(v, TZ, 'yyyy-MM-dd');
   const m = String(v || '').trim().match(/^(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?$/);
   if (!m) {
+    const iso = String(v || '').trim().match(/^(\d{4})-(\d{2})-(\d{2})/);   // the calendar date as written, not shifted by time zone
+    if (iso) return iso[1] + '-' + iso[2] + '-' + iso[3];
     const t = new Date(String(v || '').trim());   // "2027-05-01T00:00:00", "May 1, 2027" from Zapier
     return /\d{4}/.test(String(v)) && !isNaN(t) ? Utilities.formatDate(t, TZ, 'yyyy-MM-dd') : '';
   }
