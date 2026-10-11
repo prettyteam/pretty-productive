@@ -137,6 +137,7 @@ textarea.copyfallback{position:fixed;left:-9999px;top:0}
       <button id="tab-pipe" role="tab" aria-selected="false" hidden>Pipeline</button>
       <button id="tab-build" role="tab" aria-selected="false" hidden>Timeline</button>
       <button id="tab-team" role="tab" aria-selected="false" hidden>Schedule</button>
+      <button id="tab-cal" role="tab" aria-selected="false" hidden>Calendar</button>
       <button id="tab-prev" role="tab" aria-selected="false" hidden>Bridal preview</button>
       <button id="tab-info" role="tab" aria-selected="false" hidden>My info</button>
       <button id="tab-pay" role="tab" aria-selected="false" hidden>Payout form</button>
@@ -212,13 +213,6 @@ textarea.copyfallback{position:fixed;left:-9999px;top:0}
           <h2>Team on site</h2>
           <div class="list" id="artists"></div>
           <div class="row"><button class="btn ghost small" id="addHair">+ Hair artist</button><button class="btn ghost small" id="addMu">+ Makeup artist</button></div>
-        </div>
-
-        <div class="card" id="calCard">
-          <h2>Calendar invites</h2>
-          <p class="hint">Sends or updates each artist's invite. Her Yes is her confirmation.</p>
-          <div class="row"><button class="btn" id="calSync">Send / update invites</button><button class="btn ghost" id="calCheck">Check confirmations</button></div>
-          <p class="status" id="calStatus"></p>
         </div>
 
         <div class="card">
@@ -390,6 +384,17 @@ textarea.copyfallback{position:fixed;left:-9999px;top:0}
       <div style="min-width:0" id="pv-detail">
         <div class="empty-state">Pick a preview to add photos, notes and extensions.</div>
       </div>
+    </div>
+  </section>
+
+  <section id="view-cal" hidden>
+    <div class="card" id="calCard" style="max-width:760px">
+      <h2>Calendar invites</h2>
+      <p class="hint">Pick a wedding to send or update each artist's calendar invite. Her Yes is her confirmation. The team and times come from that wedding's timeline.</p>
+      <label class="f" style="max-width:360px">Wedding<select id="cal-wedding"></select></label>
+      <div class="list" id="cal-team"></div>
+      <div class="row"><button class="btn" id="calSync">Send / update invites</button><button class="btn ghost" id="calCheck">Check confirmations</button></div>
+      <p class="status" id="calStatus"></p>
     </div>
   </section>
 
@@ -660,9 +665,37 @@ function renderArtists(){
     d.querySelector("#ae-"+a.id).oninput=e=>{a.email=e.target.value.trim();queueSave()};
     d.querySelector("#ap-"+a.id).onchange=e=>{const pr=profiles.find(x=>x._id===e.target.value);a.uid=pr?pr._id:"";if(pr){a.name=pr.preferredName||pr.legalName||a.name;a.email=pr.email||a.email;if(!a.phone)a.phone=pr.phone||""}renderArtists();changed()};
     d.querySelector(".x").onclick=()=>{S.artists=S.artists.filter(x=>x!==a);renderArtists();changed()};
+    const nm=d.querySelector("#an-"+a.id);nm.setAttribute("list","team-names");nm.setAttribute("autocomplete","off");
+    nm.addEventListener("change",e=>{   // typed a team member's name: fill in her email from Team records
+      const v=e.target.value.trim().toLowerCase();
+      const pr=profiles.find(x=>[x.preferredName,x.legalName].some(n=>(n||"").trim().toLowerCase()===v));
+      if(pr){a.uid=pr._id;a.name=pr.preferredName||pr.legalName||a.name;a.email=pr.email||a.email;if(!a.phone)a.phone=pr.phone||"";renderArtists();changed()}
+    });
     box.appendChild(d);
   });
+  let dl=$("#team-names");if(!dl){dl=document.createElement("datalist");dl.id="team-names";document.body.appendChild(dl)}
+  dl.innerHTML=[...new Set(profiles.flatMap(pr=>[pr.preferredName,pr.legalName]).filter(Boolean))].map(n=>'<option value="'+esc(n)+'">').join("");
+  renderCalTeam();
 }
+/* ---------- calendar tab ---------- */
+function renderCalPicker(){
+  const sel=$("#cal-wedding"),today=new Date().toISOString().slice(0,10);
+  const list=allWeddings.filter(w=>(w.d.date||"")>=today).sort((a,b)=>(a.d.date||"").localeCompare(b.d.date||""));
+  sel.innerHTML='<option value="">Choose a wedding</option>'+list.map(w=>'<option value="'+w.id+'">'+esc((w.d.date?shortDate(w.d.date)+" · ":"")+(w.d.bride||"Untitled"))+'</option>').join("");
+  sel.value=list.some(w=>w.id===docId)?docId:"";
+  renderCalTeam();
+}
+function renderCalTeam(){
+  const box=$("#cal-team");if(!box)return;
+  if(!docId||!$("#cal-wedding").value){box.innerHTML='<p class="hint">Choose a wedding above.</p>';return}
+  if(!S.artists.length){box.innerHTML='<p class="hint">No team on this wedding yet. Add the artists on the Timeline tab (Team on site).</p>';return}
+  box.innerHTML=S.artists.map(a=>{
+    const st=(S.cal&&S.cal["w:"+a.id]&&S.cal["w:"+a.id].status)||"";
+    const chip=st?'<span class="pill rsvp-'+st+'">'+({accepted:"Confirmed",declined:"Declined",tentative:"Maybe",needsAction:"Waiting"}[st]||st)+'</span>':'<span class="hint">Not sent</span>';
+    return '<div class="item" style="display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center"><b>'+esc(a.name||"Unnamed")+'</b><span>'+(a.role==="hair"?"Hair":"Makeup")+'</span><span>'+(a.email?esc(a.email):'<span class="hint">No email yet: add it on the Timeline tab</span>')+'</span>'+chip+'</div>';
+  }).join("");
+}
+$("#cal-wedding").onchange=e=>{const id=e.target.value;$("#calStatus").textContent="";if(!id){renderCalTeam();return}const s=$("#saved");s.value=id;s.onchange({target:s});renderCalTeam()};
 function renderPeople(){
   const box=$("#people");box.innerHTML="";
   S.people.forEach(p=>{
@@ -717,7 +750,7 @@ const fileName=s=>((s.bride||"wedding").replace(/[^a-z0-9]+/gi,"-")+"-timeline"+
 $("#saveImg").onclick=()=>saveImage($("#sheet"),fileName(S));
 
 /* ---------- tabs ---------- */
-const TABS=["build","team","prev","booked","pipe","info","pay","admin"];
+const TABS=["build","team","cal","prev","booked","pipe","info","pay","admin"];
 function showTab(t){if(!TABS.includes(t))t="team";TABS.forEach(k=>{$("#tab-"+k).setAttribute("aria-selected",k===t);$("#view-"+k).hidden=k!==t});$("#pageTitle").textContent=$("#tab-"+t).textContent;try{localStorage.setItem("tt-tab",t)}catch(e){}}
 TABS.forEach(k=>$("#tab-"+k).onclick=()=>showTab(k));
 
@@ -1229,7 +1262,7 @@ async function start(){
   const j=await api("load");
   ROLE=j.role;canWrite=ROLE==="office";
   $("#view-signin").hidden=true;$("#signOut").hidden=false;
-  const tabs=ROLE==="office"?["booked","pipe","build","team","prev","admin","pay"]:["team","prev","info","pay"];
+  const tabs=ROLE==="office"?["booked","pipe","build","team","cal","prev","admin","pay"]:["team","prev","info","pay"];
   TABS.forEach(k=>$("#tab-"+k).hidden=!tabs.includes(k));
   $("#tab-team").textContent=ROLE==="office"?"Schedule":"My weddings";
   $("#artistFilter").closest(".row").hidden=ROLE!=="office";
@@ -1241,12 +1274,13 @@ async function start(){
   applyData(j);
 }
 showTab=function(t){
-  const allowed=ROLE==="office"?["booked","pipe","build","team","prev","admin","pay"]:["team","prev","info","pay"];
+  const allowed=ROLE==="office"?["booked","pipe","build","team","cal","prev","admin","pay"]:["team","prev","info","pay"];
   if(!allowed.includes(t))t=allowed[0];
   TABS.forEach(k=>{$("#tab-"+k).setAttribute("aria-selected",k===t);$("#view-"+k).hidden=k!==t});
   $("#pageTitle").textContent=$("#tab-"+t).textContent;
   if(t==="prev")loadPreviews();
   if(t==="pipe")loadPipeline();
+  if(t==="cal")renderCalPicker();
   try{localStorage.setItem("tt-tab",t)}catch(e){}
 };
 // keep the team schedule fresh for everyone (the office's own edits stay put)
