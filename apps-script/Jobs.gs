@@ -35,7 +35,7 @@ const jobPublic_ = j => { const o = Object.assign({}, j); delete o.row; return o
 /** Office: every offer for weddings from 30 days ago on. */
 function jobs_() {
   const since = Utilities.formatDate(new Date(Date.now() - 30 * 864e5), TZ, 'yyyy-MM-dd');
-  return { ok: true, jobs: jobRows_().filter(j => !j.date || j.date >= since).map(jobPublic_) };
+  return { ok: true, jobs: jobRows_().filter(j => !j.date || j.date >= since).map(jobPublic_), top: jobTop_() };
 }
 
 /** Office: one offer row per chosen artist. */
@@ -68,4 +68,22 @@ function answerJob_(member, id, yes) {
   if (!j) return { ok: false, error: 'not_found' };
   jobsSheet_().getRange(j.row, 13, 1, 3).setValues([[yes ? 'Yes' : 'No', j.sentAt, new Date().toISOString()]]);
   return myJobs_(member);
+}
+
+/** Go-to artists pinned to the top of the Jobs list, in order. Kept in the script property JOB_TOP (member ids). */
+const JOB_TOP_SEED = ['kateryna galiamova', 'alexis ramos', 'jessica george', 'ashley sees', 'rebekah ortiz', 'carolyn crescenzo',
+                      'lauren soupik', 'stephanie chicchino', 'gabrielle grasso', 'eugene locastro', 'emily ogle'];
+function jobTop_() {
+  const props = PropertiesService.getScriptProperties(), raw = props.getProperty('JOB_TOP');
+  if (raw) { try { return JSON.parse(raw); } catch (_) {} }
+  const team = members_(), nm = m => String(m.legalName || m.preferredName || '').toLowerCase();
+  const ids = JOB_TOP_SEED.map(f => (team.find(m => nm(m).indexOf(f) === 0) || {}).id).filter(Boolean);
+  props.setProperty('JOB_TOP', JSON.stringify(ids));
+  return ids;
+}
+function setJobTop_(ids) {
+  const valid = new Set(members_().map(m => m.id));
+  const clean = (Array.isArray(ids) ? ids : []).map(String).filter((id, i, a) => valid.has(id) && a.indexOf(id) === i);
+  PropertiesService.getScriptProperties().setProperty('JOB_TOP', JSON.stringify(clean));
+  return { ok: true, top: clean };
 }

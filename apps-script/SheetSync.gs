@@ -5,15 +5,14 @@
  * already in the app, and skips rows marked CANCELLED or GROOM. A wedding deleted in the
  * app is not added back.
  * It also reads a "HONEYBOOK BOOKINGS" tab, where a Zapier zap adds each newly booked
- * HoneyBook project (BRIDE, DATE, LOCATION, EMAIL); the year comes from the date there.
- * A bride from that tab is only added once she has paid: a second zap adds every HoneyBook
- * payment (card, or marked paid by hand for Venmo etc.) to a "HONEYBOOK PAYMENTS" tab
- * (BRIDE, EMAIL, ...), matched by email or name.
+ * HoneyBook project (BRIDE, DATE, LOCATION); the year comes from the date there.
  * Run installSheetSync once from the editor to switch the hourly check on.
  */
 const BOOKINGS_SHEET_ID = '19kl0X_Qzh5bG6HQGaLILaQCDlBJgEZ3vcRlMNc3vwmU';
 const HONEYBOOK_TAB = /^honeybook bookings$/i;
 const PAYMENTS_TAB = /^honeybook payments$/i;
+
+function previewSheetSync() { return syncFromWeddingsSheet_(true); }   // logs what would be added, adds nothing
 
 /** Run once from the editor: switches on the hourly check (and runs it once now). */
 function installSheetSync() {
@@ -25,7 +24,6 @@ function installSheetSync() {
 }
 
 function syncFromWeddingsSheet() { return syncFromWeddingsSheet_(false); }
-function previewSheetSync() { return syncFromWeddingsSheet_(true); }   // logs what would be added, adds nothing
 
 function syncFromWeddingsSheet_(dryRun) {
   ensureSetup_();
@@ -43,7 +41,9 @@ function syncFromWeddingsSheet_(dryRun) {
     const hasPaid = (bride, email) => (email && paid.emails.has(email)) || paid.names.has(bride.toLowerCase());
     book.getSheets().forEach(sh => {
       const m = sh.getName().trim().match(/^(\d{4})\s+weddings$/i);
-      const hb = HONEYBOOK_TAB.test(sh.getName().trim());
+      // HONEYBOOK BOOKINGS and the PIPELINE list (leads signed before the zap existed) only add a bride once she has paid
+      const hb = HONEYBOOK_TAB.test(sh.getName().trim()) || /^pipeline$/i.test(sh.getName().trim());
+      const pipe = /^pipeline$/i.test(sh.getName().trim());
       if (!hb && (!m || Number(m[1]) < thisYear)) return;
       const year = hb ? thisYear : Number(m[1]);
       const vals = sh.getDataRange().getValues();
@@ -51,7 +51,7 @@ function syncFromWeddingsSheet_(dryRun) {
       const head = vals[0].map(h => String(h).trim().toUpperCase());
       const cB = head.indexOf('BRIDE'), cD = head.indexOf('DATE'), cL = head.indexOf('LOCATION'), cE = head.indexOf('EMAIL');
       if (cB < 0 || cD < 0) return;
-      const seenKey = 'SYNC_SEEN_' + (hb ? 'HB' : year), props = PropertiesService.getScriptProperties();
+      const seenKey = 'SYNC_SEEN_' + (pipe ? 'PIPE' : hb ? 'HB' : year), props = PropertiesService.getScriptProperties();
       const seen = new Set(JSON.parse(props.getProperty(seenKey) || '[]'));   // rows already looked at, so a wedding deleted in the app isn't added back
       vals.slice(1).forEach(r => {
         const bride = String(r[cB] || '').replace(/\s+/g, ' ').trim().replace(/\s+(project|wedding)$/i, '');
@@ -92,10 +92,13 @@ function paidClients_(book) {
 function addPaid_(out, sh) {
   const vals = sh.getDataRange().getValues();
   const head = (vals[0] || []).map(h => String(h).trim().toUpperCase());
-  const cB = head.indexOf('BRIDE'), cE = head.indexOf('EMAIL');
+  const cB = head.indexOf('BRIDE'), cE = head.indexOf('EMAIL'), cP = head.indexOf('PROJECT');
+  const real = v => { const t = String(v || '').replace(/\s+/g, ' ').trim(); return /^(n\/?a|none|-)$/i.test(t) ? '' : t; };
   vals.slice(1).forEach(r => {
-    if (cE >= 0 && String(r[cE] || '').trim()) out.emails.add(String(r[cE]).trim().toLowerCase());
-    if (cB >= 0 && String(r[cB] || '').trim()) out.names.add(String(r[cB]).replace(/\s+/g, ' ').trim().toLowerCase());
+    if (cE >= 0 && real(r[cE])) out.emails.add(real(r[cE]).toLowerCase());
+    if (cB >= 0 && real(r[cB])) out.names.add(real(r[cB]).toLowerCase());
+    // hand-marked HoneyBook payments can come through with the name as "N/A": use the project name ("Jane Doe's Project")
+    if (cP >= 0 && real(r[cP])) out.names.add(real(r[cP]).replace(/['\u2019]s?\s+(project|wedding)$/i, '').replace(/\s+(project|wedding)$/i, '').trim().toLowerCase());
   });
 }
 

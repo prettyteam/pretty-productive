@@ -136,6 +136,7 @@ function doPost(e) {
       case 'doneTodo': return json_(doneTodo_(d.id, !!d.done));
       case 'jobs': return json_(jobs_());
       case 'offerJob': return json_(offerJob_(d.offer));
+      case 'setJobTop': return json_(setJobTop_(d.ids));
       case 'shippoSettings': return json_(shippoSettings_(d.parcel));
       case 'shippoRates': return json_(shippoRates_(d.weddingId, d.kind));
       case 'shippoBuy': return json_(shippoBuy_(d.weddingId, d.rateId, d.kind));

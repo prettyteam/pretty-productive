@@ -66,6 +66,10 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 .x{border:0;background:transparent;color:var(--muted);font-size:18px;line-height:1;cursor:pointer;padding:2px 6px}
 .hint{font-size:12px;color:var(--muted);margin:0}
 .jb-team{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:6px}
+.jb-group{margin-top:8px}
+.jb-artist{display:inline-flex;align-items:center;gap:2px}
+.jb-pin{border:0;background:transparent;color:var(--muted);cursor:pointer;font:500 14px var(--sans);padding:0 4px;line-height:1}
+.jb-pin:hover,.jb-pin:focus-visible{color:var(--ink)}
 .job{border:1px solid var(--line);padding:12px;display:grid;gap:6px}
 .job .meta{font-size:13px;color:var(--muted)}
 .todo-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;align-items:start}
@@ -479,7 +483,7 @@ textarea.copyfallback{position:fixed;left:-9999px;top:0}
           <label class="f">Payout<input id="jb-pay" placeholder="e.g. $300 to $450"></label>
         </div>
         <label class="f">Note (optional)<input id="jb-note" placeholder="e.g. early start, parking on site"></label>
-        <div><span class="hint">Artists</span><div id="jb-team" class="jb-team"></div></div>
+        <div id="jb-team"></div>
         <div class="row"><button class="btn" id="jb-send">Create offer</button><button class="btn ghost" id="jb-copy">Copy text</button></div>
         <p class="status" id="jb-status"></p>
       </div>
@@ -1336,7 +1340,7 @@ Object.entries(EXT_TEXT).forEach(([k,id])=>$("#"+id).addEventListener("change",e
 Object.entries(EXT_CHECK).forEach(([k,id])=>$("#"+id).onchange=e=>extSet(k,e.target.checked));
 
 /* ---------- job offers ---------- */
-let jbJobs=[];
+let jbJobs=[],jbTop=[];   // jbTop: go-to artists pinned to the top, in order (member ids, kept on the server)
 const jbRange=j=>[j.headcount&&("Headcount: "+j.headcount),j.travel&&("Travel minimum: "+j.travel),j.payout&&("Payout: "+j.payout)].filter(Boolean);
 async function loadJobs(){
   if(ROLE==="office"){
@@ -1345,13 +1349,26 @@ async function loadJobs(){
     sel.innerHTML='<option value="">Choose a wedding</option>'+allWeddings.filter(w=>(w.d.date||"")>=today).sort((a,b)=>(a.d.date||"").localeCompare(b.d.date||""))
       .map(w=>'<option value="'+w.id+'">'+esc((w.d.date?shortDate(w.d.date)+" · ":"")+(w.d.bride||"Untitled"))+'</option>').join("");
     sel.value=cur;
-    const team=profiles.filter(p=>String(p.active).toLowerCase()!=="false");
-    $("#jb-team").innerHTML=team.length?team.map(p=>'<label class="chk"><input type="checkbox" value="'+esc(p._id)+'"> '+esc(p.preferredName||p.legalName||"Unnamed")+'</label>').join(""):'<span class="hint">Add artists in Team records first.</span>';
-    try{const j=await api("jobs");jbJobs=j.jobs||[];renderJobs()}catch(e){$("#jb-note2").textContent="Couldn't load offers. Try Refresh."}
+    try{const j=await api("jobs");jbJobs=j.jobs||[];jbTop=j.top||[];renderJobTeam();renderJobs()}catch(e){$("#jb-note2").textContent="Couldn't load offers. Try Refresh."}
   }else{
     $("#jb-mine-note").textContent="Loading…";
     try{const j=await api("myJobs");jbJobs=j.jobs||[];renderMyJobs()}catch(e){$("#jb-mine-note").textContent="Couldn't load your offers. Try Refresh."}
   }
+}
+function renderJobTeam(){
+  const box=$("#jb-team"),ticked=new Set([...box.querySelectorAll("input:checked")].map(c=>c.value));
+  const nm=p=>(p.preferredName||p.legalName||"").toLowerCase();
+  const team=profiles.filter(p=>String(p.active).toLowerCase()!=="false"&&!/team member \(salon\/office\)/i.test(p.notes||""));
+  const top=jbTop.map(id=>team.find(p=>p._id===id)).filter(Boolean),rest=team.filter(p=>!jbTop.includes(p._id)).sort((a,b)=>nm(a).localeCompare(nm(b)));
+  const row=(p,pinned)=>'<span class="jb-artist"><label class="chk"><input type="checkbox" value="'+esc(p._id)+'"'+(ticked.has(p._id)?' checked':'')+'> '+esc(p.preferredName||p.legalName||"Unnamed")+'</label>'
+    +'<button type="button" class="jb-pin" data-pin="'+esc(p._id)+'" title="'+(pinned?"Remove from go-to artists":"Add to go-to artists")+'" aria-label="'+(pinned?"Unpin ":"Pin ")+esc(p.preferredName||p.legalName||"")+'">'+(pinned?"×":"+")+'</button></span>';
+  box.innerHTML=team.length?'<div class="jb-group"><span class="hint">Go-to artists (always at the top; tap × to remove)</span><div class="jb-team">'+(top.length?top.map(p=>row(p,true)).join(""):'<span class="hint">None yet. Tap + next to a name below to pin her here.</span>')+'</div></div>'
+    +'<div class="jb-group"><span class="hint">Everyone else (tap + to pin)</span><div class="jb-team">'+rest.map(p=>row(p,false)).join("")+'</div></div>':'<span class="hint">Add artists in Team records first.</span>';
+  box.querySelectorAll("[data-pin]").forEach(b=>b.onclick=async()=>{
+    const id=b.dataset.pin,prev=jbTop.slice();
+    jbTop=jbTop.includes(id)?jbTop.filter(x=>x!==id):jbTop.concat(id);renderJobTeam();
+    try{const r=await api("setJobTop",{ids:jbTop});jbTop=r.top||jbTop}catch(e){jbTop=prev;renderJobTeam();toast("That didn't save. Try again.")}
+  });
 }
 function renderJobs(){
   const t=$("#jb-table");
