@@ -29,7 +29,11 @@ const TABS = {
               'Allergies or sensitivities', 'Good to know', 'What changed', 'Texts OK', 'Status', 'Updated by'],
     keys:    ['at', 'first', 'last', 'phone', 'email', 'address', 'birthday',
               'allergies', 'notes', 'changes', 'texts', 'status', 'by'],
-    statuses: ['New', 'Updated'] }
+    statuses: ['New', 'Updated'] },
+  todo: { name: 'To Do',
+    headers: ['Received', 'Task', 'Guest', 'Detail', 'List', 'Status', 'Done at'],
+    keys:    ['at', 'task', 'guest', 'detail', 'group', 'status', 'doneAt'],
+    statuses: ['Open', 'Done'] }
 };
 
 /** Run once from the editor (▶ Run) to set up both tabs. */
@@ -58,7 +62,7 @@ function doGet(e) {
   if (p.admin) return adminGet_(p);
   if (p.decide) return decide_(p);
   if (p.key !== DESK_KEY) return json_({ ok: false, error: 'key' });
-  return json_({ ok: true, now: Date.now(), concierge: rows_(TABS.concierge, 2), consult: rows_(TABS.consult, 60), profiles: rows_(TABS.profile, 60) });
+  return json_({ ok: true, now: Date.now(), concierge: rows_(TABS.concierge, 2), consult: rows_(TABS.consult, 60), profiles: rows_(TABS.profile, 60), todo: todoRows_() });
 }
 
 function doPost(e) {
@@ -110,6 +114,7 @@ function setStatus_(d) {
   if (!(at instanceof Date) || Math.abs(at.getTime() - Number(d.at)) > 1500) return json_({ ok: false });   // rows were moved
   sh.getRange(row, t.keys.indexOf('status') + 1).setValue(d.status);
   if (d.tab === 'concierge') sh.getRange(row, t.keys.indexOf('handledAt') + 1).setValue(d.status === 'Done' ? new Date() : '');
+  if (d.tab === 'todo') sh.getRange(row, t.keys.indexOf('doneAt') + 1).setValue(d.status === 'Done' ? new Date() : '');
   return json_({ ok: true });
 }
 
@@ -126,6 +131,21 @@ function rows_(t, days) {
     out.push(o);
   });
   return out.reverse().slice(0, 300);
+}
+
+/** The Front Desk To Do tab: every open task, plus tasks finished in the last 3 days. Rows are added by Claude's monthly runs. */
+function todoRows_() {
+  const t = TABS.todo, sh = tab_(t), n = sh.getLastRow();
+  if (n < 2) return [];
+  const vals = sh.getRange(2, 1, n - 1, t.headers.length).getValues(), cut = Date.now() - 3 * 864e5, out = [];
+  vals.forEach((r, i) => {
+    if (!(r[0] instanceof Date) || !r[1]) return;
+    const o = { row: i + 2 };
+    t.keys.forEach((k, j) => { o[k] = r[j] instanceof Date ? r[j].getTime() : r[j]; });
+    if (o.status === 'Done' && !(o.doneAt >= cut)) return;
+    out.push(o);
+  });
+  return out.slice(0, 300);
 }
 
 function alert_(title, body, tag) {
