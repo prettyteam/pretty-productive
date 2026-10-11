@@ -73,6 +73,7 @@ function syncFromWeddingsSheet_(dryRun) {
       });
       if (!dryRun) props.setProperty(seenKey, JSON.stringify([...seen]));
     });
+    flodeskMoveBookedBrides_(book, hasPaid, dryRun);
     Logger.log((dryRun ? 'Would add ' : 'Added ') + added.length + ' new weddings' + (added.length ? ': ' + added.join('; ') : '.'));
     return added.length;
   } finally {
