@@ -460,9 +460,11 @@ function weekBlock(p){
     (t.retail||t.addons)?h('p',{class:'muted',style:'font-size:14px;margin-top:14px'},'The team’s week, together.'):null,
     (t.retail||t.addons)?h('div',{class:'teamgrid'},team('Team retail',t.retail,money),team('Team add-ons',t.addons,String)):null);
 }
-function incentiveCard(i){
+function incentiveCard(i,staff){
   if(!i||!i.parts) return null;
-  const done=i.parts.every(x=>x.actual!=null&&x.actual>=x.goal);
+  const done=i.done!=null?i.done:i.parts.every(x=>x.actual!=null&&x.actual>=x.goal);
+  /* the team never sees team sales, only retail, add-ons and rebooking */
+  if(staff){const parts=i.parts.filter(x=>x.label!=='Sales');i={...i,parts,message:String(i.message||'').replace(/all three/,parts.length===2?'both':'all the')};}
   return h('div',{class:'incent'+(done?' won':'')},
     h('div',{class:'incent-top'},h('span',{class:'label'},i.title+(i.example?' · example numbers':'')),h('span',{class:'muted',style:'font-size:13px'},'Ends '+i.ends)),
     h('p',{class:'reward'},done?'You did it. Your surprise is on the way!':'A surprise, on us'),
@@ -477,8 +479,8 @@ function teamBlock(d){
   return h('section',{class:'section'},
     h('h2',{},'Team progress'),
     h('p',{class:'muted',style:'font-size:14px'},'All '+t.stylists+' stylists on the books today, together.'),
-    h('div',{class:'teamgrid'},row('Service',t.service,money),row('Retail',t.retail,money),row('Add-ons',t.addons,String),row('Rebooked',t.rebook,String)),
-    incentiveCard(d.incentive));
+    h('div',{class:'teamgrid'},row('Retail',t.retail,money),row('Add-ons',t.addons,String),row('Rebooked',t.rebook,String)),
+    incentiveCard(d.incentive,true));
 }
 const GUIDE=[
   ['Consult like you mean it','Sit down with her before you touch anything. Ask about her goals, her last visit and her routine at home, and feel the hair.'],

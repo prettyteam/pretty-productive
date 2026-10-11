@@ -221,6 +221,18 @@ data.pages ||= [];
 for (const x of ((data.team && data.team.extra) || teamDefaults.extra || [])) if (!data.pages.some((p) => p && p.slug === x.slug)) data.pages.push({ ...x });
 if (!keys.leadership) { keys.leadership = newKey(6); created.push(['The Pretty Report', linkFor('r', keys.leadership), keys.leadership.pin]); }
 const pages = (data.pages || []).filter((p) => p && p.slug);
+// The team never sees team sales: drop team service $ (and contractor sales) and the incentive's Sales part from their copy.
+// Alexandra's board keeps the full daily. done is worked out on the full goal so the surprise still needs every goal.
+const staffDaily = (() => {
+  const d = data.daily; if (!d) return null;
+  const out = { ...d };
+  if (d.team) { const { service, contractor, ...t } = d.team; out.team = t; }
+  if (d.incentive && Array.isArray(d.incentive.parts)) {
+    const all = d.incentive.parts, parts = all.filter((x) => x.label !== 'Sales');
+    out.incentive = { ...d.incentive, done: all.every((x) => x.actual != null && x.actual >= x.goal), parts, message: String(d.incentive.message || '').replace(/all three/, parts.length === 2 ? 'both' : 'all the') };
+  }
+  return out;
+})();
 for (const p of pages) {
   if (!keys.stylists[p.slug]) { keys.stylists[p.slug] = newKey(4); created.push([p.name, linkFor('s', keys.stylists[p.slug]), keys.stylists[p.slug].pin]); }
 }
@@ -246,7 +258,7 @@ for (const p of pages) {
     const r = data.week.rows.find((x) => x && x.slug === p.slug), t = data.week.team || {};
     mine.week = { weekLabel: data.week.weekLabel || '', me: r ? { service: r.service ?? null, retail: r.retail ?? null, addons: r.addons ?? null } : null, team: { retail: t.retail || null, addons: t.addons || null } };
   }
-  fs.writeFileSync(path.join(outDir, k.id + '.json'), JSON.stringify(await seal({ daily: data.daily || null, mine }, k.secret, k.pin)));
+  fs.writeFileSync(path.join(outDir, k.id + '.json'), JSON.stringify(await seal({ daily: staffDaily, mine }, k.secret, k.pin)));
   n++;
 }
 const access = args.access && fs.existsSync(args.access) ? JSON.parse(fs.readFileSync(args.access, 'utf8')) : null;
