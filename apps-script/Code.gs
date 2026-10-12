@@ -31,8 +31,8 @@ const TABS = {
               'allergies', 'notes', 'changes', 'texts', 'status', 'by'],
     statuses: ['New', 'Updated'] },
   todo: { name: 'To Do',
-    headers: ['Received', 'Task', 'Guest', 'Detail', 'List', 'Status', 'Done at'],
-    keys:    ['at', 'task', 'guest', 'detail', 'group', 'status', 'doneAt'],
+    headers: ['Received', 'Task', 'Guest', 'Detail', 'List', 'Status', 'Done at', 'Address'],
+    keys:    ['at', 'task', 'guest', 'detail', 'group', 'status', 'doneAt', 'address'],
     statuses: ['Open', 'Done'] }
 };
 
@@ -74,6 +74,7 @@ function doPost(e) {
     if (d.website) return json_({ ok: true });                       // spam trap
     const now = new Date();
     if (d.type === 'status') return setStatus_(d);
+    if (d.type === 'todoAddr') return todoAddr_(d);
     if (d.type === 'concierge') {
       const name = clean_(d.name, 80);
       tab_(TABS.concierge).appendRow([now, name, list_(d.sips), list_(d.comforts), list_(d.before), clean_(d.note, 500), 'New', '']);
@@ -131,6 +132,33 @@ function rows_(t, days) {
     out.push(o);
   });
   return out.reverse().slice(0, 300);
+}
+
+/** Front desk typed a mailing address on a thank-you card to-do: save it, mark the task done.
+    Adriana's Thank-you cards tab picks it up (cardAddr_). */
+function todoAddr_(d) {
+  if (d.key !== DESK_KEY) return json_({ ok: false, error: 'key' });
+  const t = TABS.todo, sh = tab_(t), row = Number(d.row), addr = clean_(d.address, 300);
+  if (!addr || !(row >= 2 && row <= sh.getLastRow())) return json_({ ok: false });
+  const at = sh.getRange(row, 1).getValue();
+  if (!(at instanceof Date) || Math.abs(at.getTime() - Number(d.at)) > 1500) return json_({ ok: false });
+  const col = k => t.keys.indexOf(k) + 1;
+  if (sh.getRange(1, col('address')).getValue() !== 'Address') sh.getRange(1, col('address')).setValue('Address').setFontWeight('bold');
+  sh.getRange(row, col('address')).setValue(addr);
+  sh.getRange(row, col('status')).setValue('Done');
+  sh.getRange(row, col('doneAt')).setValue(new Date());
+  return json_({ ok: true });
+}
+
+/** Addresses the front desk added for thank-you cards: [{guest, address}]. Only sent to CARD_WRITERS. */
+const CARD_WRITERS = ['adriana'];
+function cardAddr_() {
+  const t = TABS.todo, sh = tab_(t), n = sh.getLastRow();
+  if (n < 2) return [];
+  const gi = t.keys.indexOf('guest'), li = t.keys.indexOf('group'), ai = t.keys.indexOf('address');
+  return sh.getRange(2, 1, n - 1, t.headers.length).getValues()
+    .filter(r => r[ai] && /thank-you/i.test(String(r[li])))
+    .map(r => ({ guest: String(r[gi]), address: String(r[ai]) }));
 }
 
 /** The Front Desk To Do tab: every open task, plus tasks finished in the last 3 days. Rows are added by Claude's monthly runs. */
@@ -302,7 +330,8 @@ function staffGet_(p) {
     .map(r => ({ from: r[3] instanceof Date ? day_(r[3]) : String(r[3]), to: r[4] instanceof Date ? day_(r[4]) : String(r[4]), status: String(r[6] || 'Waiting') }));
   return json_({ ok: true, now: now.getTime(), me: { name: me.name, group: me.group, clock: me.clock },
     clock: { in: !!open, since: open ? open.getTime() : null, sinceLabel: open ? hhmm_(open) : null, todayMin: Math.round(todayMin), weekMin: Math.round(weekMin) },
-    shifts, ann, openShifts, myCover, myOff, info: myInfo_(me.slug), signed: mySigs_(me.slug), stock: stock_(), stockEdit: STOCK_EDITORS.indexOf(me.slug) >= 0, models: myModels_(me.slug) });
+    shifts, ann, openShifts, myCover, myOff, info: myInfo_(me.slug), signed: mySigs_(me.slug), stock: stock_(), stockEdit: STOCK_EDITORS.indexOf(me.slug) >= 0, models: myModels_(me.slug),
+    cardAddr: CARD_WRITERS.indexOf(me.slug) >= 0 ? cardAddr_() : null });
 }
 
 /** Private: only the person's own row is ever returned. */

@@ -125,6 +125,7 @@ details.acc summary::after{color:var(--gold)}
 .send .item .b{display:flex;gap:8px;flex-wrap:wrap}
 .send .item button{all:unset;cursor:pointer;border:1px solid var(--ink);border-radius:6px;background:#fff;color:var(--ink);padding:10px 14px;font-size:12.5px;letter-spacing:.08em;text-transform:uppercase}
 .send .item button.ok{background:var(--ink);color:#fff}
+.tda{display:flex;flex-direction:column;gap:6px;margin:0 0 10px 34px}.tdaddr{font:inherit;font-size:15px;padding:8px 10px;border:1px solid var(--line);border-radius:6px;background:#fff;resize:vertical}.tdaddr[aria-invalid=true]{border-color:#9b2c2c}.tdsave{align-self:flex-start;font:inherit;font-size:13px;letter-spacing:.06em;text-transform:uppercase;background:var(--ink);color:#fff;border:0;border-radius:4px;padding:8px 14px;cursor:pointer}
 .todo{background:#fff;border:1px solid var(--ink);border-radius:6px;padding:4px 14px 8px}
 .td{all:unset;box-sizing:border-box;cursor:pointer;width:100%;display:flex;align-items:center;gap:12px;padding:12px 0;border-top:1px solid var(--line)}
 .td:first-child{border-top:0}
@@ -234,6 +235,7 @@ function guests(){
 function showTodo(on){const b=$('#bT');if(!b)return;b.style.display=on?'':'none';document.querySelector('.bnav').style.gridTemplateColumns='repeat('+(on?5:4)+',1fr)';if(!on&&area==='T'){area='G'}}
 /* To Do: tasks Claude adds to the "To Do" tab of the guest Sheet (e.g. thank-you card addresses). A tap marks it done for every desk device. */
 function todoCount(){const n=(data.todo||[]).filter(r=>st(r)!=='Done').length;const el=$('#nT');if(el)el.textContent=n||'';return n}
+const drafts={};
 function todoView(){
   const all=data.todo||[], groups=[];
   all.forEach(r=>{let g=groups.find(x=>x.name===(r.group||r.task));if(!g)groups.push(g={name:r.group||r.task,task:r.task,items:[]});g.items.push(r)});
@@ -241,7 +243,10 @@ function todoView(){
   return groups.map(g=>{const open=g.items.filter(r=>st(r)!=='Done'), done=g.items.length-open.length;
     return `<div class="sec"><span class="lbl">To do</span><h2 class="tdh">${esc(g.name)}</h2>${g.task&&g.task!==g.name?`<p class="note2" style="margin:0 0 10px">${esc(g.task)}</p>`:''}
     <div class="todo">${[...open,...g.items.filter(r=>st(r)==='Done')].map(r=>{const on=st(r)==='Done';
-      return `<button class="td${on?' on':''}" data-td="${r.row}" data-a="${r.at}" data-s="${on?'Open':'Done'}" aria-label="${on?'Undo ':'Done: '}${esc(r.guest)}"><span class="bx">${on?'✓':''}</span><span><b>${esc(r.guest)}</b>${r.detail?`<small>${esc(r.detail)}</small>`:''}</span></button>`}).join('')}
+      const ty=/thank-you/i.test(g.name), k=r.row+':'+r.at;
+      /* thank-you card addresses: type it here and it goes straight to Adriana's Thank-you cards tab */
+      const box=ty&&!on&&!r.address&&('address' in r)?`<div class="tda"><textarea class="tdaddr" data-k="${k}" rows="2" placeholder="Mailing address (street, city, state, zip)" aria-label="Mailing address for ${esc(r.guest)}">${esc(drafts[k]||'')}</textarea><button class="tdsave" data-td="${r.row}" data-a="${r.at}">Save address</button></div>`:'';
+      return `<div class="tdw"><button class="td${on?' on':''}" data-td="${r.row}" data-a="${r.at}" data-s="${on?'Open':'Done'}" aria-label="${on?'Undo ':'Done: '}${esc(r.guest)}"><span class="bx">${on?'✓':''}</span><span><b>${esc(r.guest)}</b>${r.detail?`<small>${esc(r.detail)}</small>`:''}${r.address?`<small style="display:block">Address sent to Adriana: ${esc(r.address)}</small>`:''}</span></button>${box}</div>`}).join('')}
     <p class="status" style="margin:10px 0 0">${done} of ${g.items.length} done</p></div></div>`}).join('')}
 
 const LISTS={opening:'Opening',midday:'Midday',closing:'Closing'};
@@ -276,6 +281,7 @@ function render(){
   const body=g?guests():area==='T'?todoView():area==='D'?guideView():area==='C'?cleanView():busyView();
   if(!g)guests();
   todoCount();
+  const f=document.activeElement; if(f&&f.classList&&f.classList.contains('tdaddr')&&$('#body').contains(f)) return;   // don't wipe an address being typed
   $('#body').innerHTML=body;
 }
 
@@ -307,7 +313,16 @@ async function load(){
 function status(){$('#st').textContent=lastOk?(Date.now()-lastOk>120000?'Can’t reach the Sheet right now. Check the Wi-Fi.':'Updates on its own every 30 seconds'):''}
 function lockView(){$('#body').innerHTML='<div class="lock"><p>This page needs the full Front Desk link (the long one). Open it in Safari first, then add it to the Home Screen from there. Ask Alexandra to resend it if needed.</p></div>';$('#st').textContent=''}
 
+document.addEventListener('input',e=>{if(e.target.classList.contains('tdaddr'))drafts[e.target.dataset.k]=e.target.value});
 document.addEventListener('click',e=>{
+  const sv=e.target.closest('.tdsave');
+  if(sv){const k=sv.dataset.td+':'+sv.dataset.a, ta=sv.parentNode.querySelector('.tdaddr'), v=(ta.value||'').trim();
+    if(v.length<8){ta.focus();ta.setAttribute('aria-invalid','true');return}
+    ta.blur(); const m=(data.todo||[]).find(x=>String(x.row)===sv.dataset.td&&String(x.at)===sv.dataset.a); if(m){m.address=v;m.status='Done'}
+    delete drafts[k]; pending[k]='Done'; render();
+    if(!DEMO&&window.TAFFETA_ENDPOINT&&KEY)fetch(window.TAFFETA_ENDPOINT,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify({type:'todoAddr',key:KEY,row:Number(sv.dataset.td),at:Number(sv.dataset.a),address:v})}).then(()=>setTimeout(load,2500)).catch(()=>{});
+    return}
   const td=e.target.closest('.td');
   if(td){pending[td.dataset.td+':'+td.dataset.a]=td.dataset.s;render();
     if(!DEMO&&window.TAFFETA_ENDPOINT&&KEY)fetch(window.TAFFETA_ENDPOINT,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},
@@ -351,7 +366,7 @@ function demo(){const n=Date.now(),m=60000;return{concierge:[
  consult:[
  {row:3,at:n-12*m,first:'Sophia',last:'Reyes',phone:'(609) 555-0142',email:'sophia@example.com',hair:'Big color change, Extensions',skin:'',story:"Hair: Box dye about a year ago, want a soft lived-in blonde I don't have to touch up every 6 weeks.",sameBudget:'Yes',budget:'300',reach:'Text',photoNow:'#',photoGoal:'#',status:'New'},
  {row:2,at:n-62*m,first:'Lauren',last:'Kim',phone:'(609) 555-0198',email:'',hair:'',skin:'Signature facial, Brows',story:'Skin: Dry patches and redness, using retinol at night. Sensitive to fragrance.',sameBudget:'',budget:'',reach:'Call',photoNow:'',photoGoal:'',status:'New'}],
- todo:[['Samantha Corigliano','Sep 18'],['Colella Dolan','Sep 1'],['Sarah Freed','Sep 16'],['Ruth Gibson','Sep 24']].map((x,i)=>({row:i+2,at:n-90*m,task:'September first-time guests with no address in Paired Plus. Text them the profile form or ask at check-in, add it in Paired Plus, then tap the circle.',guest:x[0],detail:'First visit '+x[1]+' · needs a mailing address',group:'Addresses for thank-you cards',status:i===1?'Done':'Open'})),
+ todo:[['Sample Guest A','Sep 18'],['Sample Guest B','Sep 1'],['Sample Guest C','Sep 16'],['Sample Guest D','Sep 24']].map((x,i)=>({row:i+2,at:n-90*m,task:'September first-time guests with no address in Paired Plus. Text them the profile form or ask at check-in, add it in Paired Plus, then tap the circle.',guest:x[0],detail:'First visit '+x[1]+' · needs a mailing address',group:'Addresses for thank-you cards',status:i===1?'Done':'Open',address:''})),
  profiles:[{row:3,at:n-20*m,first:'Maya',last:'Patel',phone:'(609) 555-0117',email:'maya@example.com',birthday:'March 14',address:'12 Maple Ave, Hammonton, NJ 08037',allergies:'Sensitive to ammonia',notes:'Prefers a quiet visit',changes:'New address and email',texts:'Yes',status:'New'}]}}
 
 const LINKS=[

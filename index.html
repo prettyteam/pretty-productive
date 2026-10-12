@@ -1377,7 +1377,12 @@ function skinSpa(edit){
 }
 /* Thank-you cards: new guests from Paired Plus. Tapping Done hides that guest on this phone for good, so the list shows where she left off. */
 let CARDS={data:null,err:null,loading:false,key:null}, CTOAST=null;
-const cardKey=g=>(g.name+'|'+(g.address||'')).toLowerCase();
+const cardKey=g=>g._k||(g.name+'|'+(g.address||'')).toLowerCase();
+/* addresses the front desk typed on the Front Desk To Do list (live from the guest Sheet) fill in guests with none on file */
+function cardsWithDesk(all){
+  const a={}; ((HUB.data&&HUB.data.cardAddr)||[]).forEach(x=>{a[String(x.guest).trim().toLowerCase()]=x.address});
+  return all.map(g=>{const x=!g.address&&a[String(g.name).trim().toLowerCase()]; return x?Object.assign({},g,{address:x,desk:true,_k:cardKey(g)}):g});
+}
 const cdKey=()=>'pp-cards-done:'+((S.mine.staff||{}).slug||ID);
 const cdGet=()=>{try{return JSON.parse(store.get(cdKey())||'[]')}catch(e){return []}};
 const cdSet=a=>store.set(cdKey(),JSON.stringify(a));
@@ -1387,7 +1392,7 @@ function cardsView(){
     docBytes(p.file,p.k).then(b=>{CARDS.data=JSON.parse(new TextDecoder().decode(b));CARDS.loading=false;render()}).catch(()=>{CARDS.err=true;CARDS.loading=false;render()});}
   const head=h('div',{},h('span',{class:'lbl'},'New guests'),h('h1',{style:'font-size:28px'},'Thank-you cards'));
   if(!CARDS.data) return [h('div',{class:'hub'},head,h('p',{class:'dmsg'},CARDS.err?'Couldn’t open this right now. Check your signal and try again.':'Opening…'))];
-  const all=CARDS.data.guests||[], done=new Set(cdGet()), left=all.filter(g=>!done.has(cardKey(g)));
+  const all=cardsWithDesk(CARDS.data.guests||[]), done=new Set(cdGet()), left=all.filter(g=>!done.has(cardKey(g)));
   const n=all.length-left.length, pc=all.length?Math.round(n/all.length*100):0;
   const markDone=g=>{cdSet(cdGet().concat([cardKey(g)])); const me=CTOAST={g,msg:'Done: '+g.name}; render(); setTimeout(()=>{if(CTOAST===me){CTOAST=null;render()}},6000)};
   const undo=g=>{cdSet(cdGet().filter(k=>k!==cardKey(g))); CTOAST=null; render()};
@@ -1397,7 +1402,8 @@ function cardsView(){
       h('div',{class:'cbar'},h('span',{style:'width:'+pc+'%'}))),
     left.length?h('div',{class:'sec2'},left.map((g,i)=>h('div',{class:'crow'+(i===0?' next':'')},
       h('div',{},i===0?h('span',{class:'lbl',style:'font-size:10px'},'Up next'):null,h('b',{},g.name),
-        g.address?h('div',{class:'caddr'},String(g.address).split('\n').map(l=>h('div',{},l))):h('small',{class:'soft'},'No address on file'),
+        g.address?h('div',{class:'caddr'},String(g.address).split('\n').map(l=>h('div',{},l))):h('small',{class:'soft'},'No address on file yet. The front desk is collecting it.'),
+        g.desk?h('small',{class:'soft'},'Address added by the front desk'):null,
         (g.visit||g.saw)?h('small',{class:'soft'},'First visit'+(g.visit?' '+g.visit:'')+(g.saw?' with '+g.saw:'')):null),
       h('button',{class:'cdone',onclick:()=>markDone(g),'aria-label':'Done with '+g.name},'Done')))):
       h('p',{class:'soft',style:'text-align:center'},'Every card is written. Thank you!'),
@@ -1422,7 +1428,7 @@ function staffTabs(){
 }
 function staffNav(){
   const tabs=staffTabs(); if(tabs.length<2) return null;
-  return h('nav',{class:'nav','aria-label':'Sections'},h('div',{class:'in'},tabs.map(([k,l])=>h('button',{'aria-current':S.tab===k?'page':null,onclick:()=>{S.tab=k;store.set('pp-tab:'+ID,k);render();window.scrollTo(0,0);if(k==='home'||k==='off'||k==='inv'||k==='skin'||k==='growth')hubGet()}},l))));
+  return h('nav',{class:'nav','aria-label':'Sections'},h('div',{class:'in'},tabs.map(([k,l])=>h('button',{'aria-current':S.tab===k?'page':null,onclick:()=>{S.tab=k;store.set('pp-tab:'+ID,k);render();window.scrollTo(0,0);if(k==='home'||k==='off'||k==='inv'||k==='skin'||k==='growth'||k==='cards')hubGet()}},l))));
 }
 function weekCard(p){
   const wks=(p.schedule&&p.schedule.weeks)||[], today=ymd(new Date());
