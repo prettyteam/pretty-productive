@@ -1150,7 +1150,7 @@ const invPct=v=>v==null?'—':(v>0?'+':'')+v+'%';
 const cpgTxt=v=>v==null?'—':'$'+(v<0.1?v.toFixed(3):v.toFixed(2))+'/g';
 function invReport(R){
   const t=R.tiles, stat=(l,v,sub)=>h('div',{class:'cell tcell'},h('span',{class:'label',style:'font-size:11px'},l),h('span',{class:'num',style:'font-family:var(--display);font-size:24px'},v),sub?h('small',{class:'soft',style:'font-size:12px'},sub):null);
-  const KIND={'Color charged, no bowl weighed':'Charged, never weighed','Color mixed, no ticket found':'Mixed, no ticket found','Color mixed, no color service charged':'Mixed, no color charged','Charged under another artist':'Rung up under another artist','Extra bowl (2 bowls for a 1-bowl service)':'Extra bowl','Mixed 20%+ over recommended':'20%+ over the recipe','Date differs (mixed vs. charged)':'Different day'};
+  const KIND={'Color charged, no bowl weighed':'Charged, never weighed','Color mixed, no ticket found':'Mixed, no ticket found','Color mixed, no color service charged':'Mixed, no color charged','Charged under another artist':'Rung up under another artist','Extra bowl (2 bowls for a 1-bowl service)':'Extra bowl','Mixed 20%+ over recommended':'20%+ over the recipe','Date differs (mixed vs. charged)':'Different day','Charged differs from what was mixed':'Charged for something else'};
   return [
     h('p',{class:'soft',style:'font-size:13.5px;margin:0'},'Week of '+R.week+' · ran '+R.ran),
     h('section',{class:'section'},h('div',{class:'teamgrid'},
