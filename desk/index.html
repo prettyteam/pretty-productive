@@ -219,7 +219,7 @@ function guests(){
   const cToday=data.concierge.filter(r=>isToday(r.at)||st(r)!=='Done');
   const cOpen=cToday.filter(r=>st(r)!=='Done'), cDone=cToday.filter(r=>st(r)==='Done'&&isToday(r.handledAt||r.at));
   const kOpen=data.consult.filter(r=>st(r)!=='Booked'), kDone=data.consult.filter(r=>st(r)==='Booked');
-  const pOpen=data.profiles.filter(r=>st(r)!=='Updated'), pDone=data.profiles.filter(r=>st(r)==='Updated');
+  const pOpen=data.profiles.filter(r=>st(r)!=='Updated'), pDone=data.profiles.filter(r=>st(r)==='Updated'&&(pending[r.row+':'+r.at]||Date.now()-(Number(r.updatedAt)||Number(r.at))<2*864e5));   /* updated profiles drop off after 2 days */
   const nC=cOpen.length, nK=kOpen.filter(r=>st(r)==='New').length, nP=pOpen.filter(r=>st(r)==='New').length;
   $('#nC').textContent=nC||'';$('#nK').textContent=nK||'';$('#nP').textContent=nP||'';$('#nG').textContent=(nC+nK+nP)||'';
   ['C','K','P'].forEach(k=>$('#t'+k).classList.toggle('on',tab===k));

@@ -26,9 +26,9 @@ const TABS = {
     statuses: ['New', 'Contacted', 'Booked'] },
   profile: { name: 'Profile Updates',
     headers: ['Received', 'First name', 'Last name', 'Phone', 'Email', 'Home address', 'Birthday (month & day)',
-              'Allergies or sensitivities', 'Good to know', 'What changed', 'Texts OK', 'Status', 'Updated by'],
+              'Allergies or sensitivities', 'Good to know', 'What changed', 'Texts OK', 'Status', 'Updated by', 'Updated at'],
     keys:    ['at', 'first', 'last', 'phone', 'email', 'address', 'birthday',
-              'allergies', 'notes', 'changes', 'texts', 'status', 'by'],
+              'allergies', 'notes', 'changes', 'texts', 'status', 'by', 'updatedAt'],
     statuses: ['New', 'Updated'] },
   todo: { name: 'To Do',
     headers: ['Received', 'Task', 'Guest', 'Detail', 'List', 'Status', 'Done at', 'Address'],
@@ -116,6 +116,11 @@ function setStatus_(d) {
   sh.getRange(row, t.keys.indexOf('status') + 1).setValue(d.status);
   if (d.tab === 'concierge') sh.getRange(row, t.keys.indexOf('handledAt') + 1).setValue(d.status === 'Done' ? new Date() : '');
   if (d.tab === 'todo') sh.getRange(row, t.keys.indexOf('doneAt') + 1).setValue(d.status === 'Done' ? new Date() : '');
+  if (d.tab === 'profile') {   // the Front Desk page hides Updated profiles 2 days after this time
+    const c = t.keys.indexOf('updatedAt') + 1;
+    if (sh.getRange(1, c).getValue() !== 'Updated at') sh.getRange(1, c).setValue('Updated at').setFontWeight('bold');
+    sh.getRange(row, c).setValue(d.status === 'Updated' ? new Date() : '');
+  }
   return json_({ ok: true });
 }
 
