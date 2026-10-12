@@ -1232,22 +1232,42 @@ function invBackbar(B){
   out.push(h('section',{class:'section','data-nosearch':'1'},h('h2',{},'Shipping'),h('div',{class:'sec2'},Object.entries(B.ship).map(([s,x])=>h('div',{class:'lrow'},h('span',{},h('b',{},s),h('small',{},x)))))));
   return [invSearch('Search a shade, brand or supplier',rows),invAll(),...out];
 }
-function invRetail(R,merged,check){
+/* same product and size listed twice in Paired Plus (Alexandra, 2026-10-12): [brand, kept item, extra item, name shown].
+   One row and one count box per product; a count typed under the extra item carries over until one is typed on the kept row. */
+const RETAIL_MERGE=[
+  ['Oribe','33oz Oribe- Goldlsut Repair And Restore Conditione','Oribe Gold Lust Cond 33oz','Oribe Gold Lust Repair And Restore Conditioner 33oz'],
+  ['Oribe','Oribe Rough Luxury Soft Molding Paste','Rough Luxury Soft'],
+  ['Biologique Recherche','*Solution Demaquillante Pour Le','Solution Demaquillante Pour','Solution Demaquillante Pour Le'],
+  ['Biologique Recherche','Serum TEWL .3','Serum T.E.W.L']];
+function retailMerge(R){
+  const drop={}, keep={};
+  RETAIL_MERGE.forEach(m=>{if(R.some(r=>r[0]===m[0]&&r[1]===m[1])&&R.some(r=>r[0]===m[0]&&r[1]===m[2])){drop[m[0]+'|'+m[2]]=m;keep[m[0]+'|'+m[1]]=m}});
+  const ohOf={}; R.forEach(r=>{const m=drop[r[0]+'|'+r[1]]; if(m) ohOf[m[0]+'|'+m[1]]=r[6]});
+  const rows=R.filter(r=>!drop[r[0]+'|'+r[1]]).map(r=>{const m=keep[r[0]+'|'+r[1]]; if(!m) return r;
+    const o=[r[6],ohOf[m[0]+'|'+m[1]]].filter(x=>x!=null), x=[...r]; x[6]=o.length?o.reduce((a,b)=>a+b,0):null; x.m=m; return x});
+  return {rows, pairs:Object.values(keep)};
+}
+function invRetail(R0,merged,check){
+  const {rows:R,pairs}=retailMerge(R0);
+  check=(check||[]).filter(([br,x])=>!pairs.some(([b,k,d])=>b===br&&x.includes(k)&&x.includes(d)));
   const groups={}; R.forEach(r=>(groups[r[0]]||=[]).push(r));
   const rows=[], out=[];
   Object.entries(groups).forEach(([b,list],gi)=>{
     const gid='invr'+gi;
     const ids=list.map(([br,item])=>'r:'+br+'|'+item);
-    const els=list.map(([br,item,sup,cost,src,retail,oh,ytd])=>{
+    const els=list.map(r=>{const [br,item,sup,cost,src,retail,oh,ytd]=r, m=r.m;
       const est=/^est/.test(src||'');
-      const e=h('div',{class:'lrow','data-grp':gid},h('span',{},h('b',{},item),h('small',{},(retail?'retail '+money(retail):'no retail price')+(ytd?' · '+ytd+' sold':'')),stockBox('r:'+br+'|'+item,item,oh)),
+      /* merged pair: the kept row's count wins, else a count typed on the extra item, else the two Paired Plus counts added */
+      const dflt=m?stockOf('r:'+br+'|'+m[2],oh):oh;
+      const e=h('div',{class:'lrow','data-grp':gid},h('span',{},h('b',{},m&&m[3]||item),h('small',{},(retail?'retail '+money(retail):'no retail price')+(ytd?' · '+ytd+' sold':'')+(m?' · 2 SKUs merged':'')),stockBox('r:'+br+'|'+item,m&&m[3]||item,dflt)),
         h('span',{style:'text-align:right;white-space:nowrap'},cost?h('b',{},money(cost)):h('span',{class:'soft',style:'font-size:13px'},'no cost'),h('small',{},cost?(est?'cost · est.':'cost'):'not found')));
-      e.dataset.q=(item+' '+br+' '+sup).toLowerCase(); rows.push(e); return e;});
+      e.dataset.q=(item+' '+br+' '+sup+(m?' '+m[2]+' '+(m[3]||''):'')).toLowerCase(); rows.push(e); return e;});
     out.push(invGroup(gid,'r|'+b,b,list[0][2],els,ids));
   });
-  if((merged&&merged.length)||(check&&check.length)) out.push(h('section',{class:'section','data-nosearch':'1'},h('h2',{},'Duplicates'),
+  if((merged&&merged.length)||pairs.length||(check&&check.length)) out.push(h('section',{class:'section','data-nosearch':'1'},h('h2',{},'Duplicates'),
     h('p',{class:'soft',style:'font-size:13px;margin:0'},'Merged on this list. Delete the extra SKU in Paired Plus when you can.'),
-    h('div',{class:'sec2'},(merged||[]).map(([br,k,ks,d,ds])=>h('div',{class:'lrow'},h('span',{},h('b',{},k),h('small',{},'SKU '+ks+' + '+d+' (SKU '+ds+')'))))),
+    h('div',{class:'sec2'},(merged||[]).map(([br,k,ks,d,ds])=>h('div',{class:'lrow'},h('span',{},h('b',{},k),h('small',{},'SKU '+ks+' + '+d+' (SKU '+ds+')')))),
+      pairs.map(([br,k,d,n])=>h('div',{class:'lrow'},h('span',{},h('b',{},n||k),h('small',{},br+' · '+k+' + '+d))))),
     check&&check.length?h('details',{class:'tryd'},h('summary',{},h('span',{class:'tlabel'},'Maybe the same · '+check.length),h('span',{class:'tplus','aria-hidden':'true'},'+')),
       h('div',{class:'sec2'},check.map(([br,x,why])=>h('div',{class:'lrow'},h('span',{},h('b',{},x),h('small',{},br+' · '+why)))))):null));
   return [invSearch('Search a product or brand',rows),invAll(),...out];
