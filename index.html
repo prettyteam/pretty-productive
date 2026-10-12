@@ -1247,6 +1247,14 @@ function retailMerge(R){
     const o=[r[6],ohOf[m[0]+'|'+m[1]]].filter(x=>x!=null), x=[...r]; x[6]=o.length?o.reduce((a,b)=>a+b,0):null; x.m=m; return x});
   return {rows, pairs:Object.values(keep)};
 }
+/* shown name: brand dropped (it's the section title) and a leading size moved to the end, so the list reads A to Z by product */
+function retailName(br,item){
+  let n=item.replace(/^\*+/,''), sz='';
+  const m=n.match(/^(\d+\.\d+\s*(?:oz)?|\d+\s*oz)\s+/i); if(m){sz=m[1];n=n.slice(m[0].length)}
+  n=n.replace(new RegExp('^'+br.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'\\s*-?\\s*','i'),'');
+  if(sz) n+=' '+sz+(/^\d+(\.\d+)?$/.test(sz)?'oz':'');
+  return n||item;
+}
 function invRetail(R0,merged,check){
   const {rows:R,pairs}=retailMerge(R0);
   check=(check||[]).filter(([br,x])=>!pairs.some(([b,k,d])=>b===br&&x.includes(k)&&x.includes(d)));
@@ -1254,14 +1262,15 @@ function invRetail(R0,merged,check){
   const rows=[], out=[];
   Object.entries(groups).forEach(([b,list],gi)=>{
     const gid='invr'+gi;
+    list=list.map(r=>[r,r.m&&r.m[3]?retailName(r[0],r.m[3]):retailName(r[0],r[1])]).sort((a,b)=>a[1].localeCompare(b[1],'en',{sensitivity:'base'})).map(([r,n])=>(r.nm=n,r));
     const ids=list.map(([br,item])=>'r:'+br+'|'+item);
     const els=list.map(r=>{const [br,item,sup,cost,src,retail,oh,ytd]=r, m=r.m;
       const est=/^est/.test(src||'');
       /* merged pair: the kept row's count wins, else a count typed on the extra item, else the two Paired Plus counts added */
       const dflt=m?stockOf('r:'+br+'|'+m[2],oh):oh;
-      const e=h('div',{class:'lrow','data-grp':gid},h('span',{},h('b',{},m&&m[3]||item),h('small',{},(retail?'retail '+money(retail):'no retail price')+(ytd?' · '+ytd+' sold':'')+(m?' · 2 SKUs merged':'')),stockBox('r:'+br+'|'+item,m&&m[3]||item,dflt)),
+      const e=h('div',{class:'lrow','data-grp':gid},h('span',{},h('b',{},r.nm),h('small',{},(retail?'retail '+money(retail):'no retail price')+(ytd?' · '+ytd+' sold':'')+(m?' · 2 SKUs merged':'')),stockBox('r:'+br+'|'+item,r.nm,dflt)),
         h('span',{style:'text-align:right;white-space:nowrap'},cost?h('b',{},money(cost)):h('span',{class:'soft',style:'font-size:13px'},'no cost'),h('small',{},cost?(est?'cost · est.':'cost'):'not found')));
-      e.dataset.q=(item+' '+br+' '+sup+(m?' '+m[2]+' '+(m[3]||''):'')).toLowerCase(); rows.push(e); return e;});
+      e.dataset.q=(item+' '+r.nm+' '+br+' '+sup+(m?' '+m[2]+' '+(m[3]||''):'')).toLowerCase(); rows.push(e); return e;});
     out.push(invGroup(gid,'r|'+b,b,list[0][2],els,ids));
   });
   if((merged&&merged.length)||pairs.length||(check&&check.length)) out.push(h('section',{class:'section','data-nosearch':'1'},h('h2',{},'Duplicates'),
