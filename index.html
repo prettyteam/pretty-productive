@@ -659,6 +659,7 @@ function render(){
   else if(S.rtab==='payroll') parts=payrollView();
   else if(S.rtab==='off') parts=adminOffView();
   else if(S.rtab==='month') parts=monthView();
+  else if(S.rtab==='color') parts=colorRoomView();
   else if(S.rtab==='guide') parts=leaderGuideView();
   else if(S.rtab==='access') parts=accessView();
   else if(!S.open) parts=teamBoard();
@@ -1570,6 +1571,39 @@ function adminOffView(){
           h('div',{},h('b',{},c.name),h('small',{style:'display:block'},niceDay(c.date)+(c.time?' · '+c.time:''))),
           h('span',{class:'soft'},c.by?'Covered by '+c.by:'Still open'))):h('p',{class:'soft'},'No coverage requests this week.')):h('p',{class:'soft'},msg))];
 }
+/* The Pretty Report: Color Room tab (approved mockup, Oct 2026). Reads Alexandra's sealed inventory doc (key in the board as P.inv). */
+let CRV={data:null,err:false,key:null};
+function colorRoomView(){
+  const p=S.inv;
+  if(CRV.key!==p.file){CRV={data:null,err:false,key:p.file};docBytes(p.file,p.k).then(b=>{CRV.data=JSON.parse(new TextDecoder().decode(b));render()}).catch(()=>{CRV.err=true;render()})}
+  const R=CRV.data&&CRV.data.report;
+  if(!R) return [h('section',{class:'section'},h('h2',{},'Color Room'),h('div',{class:'empty'},h('p',{},CRV.err?'The color report didn’t open. Tap Refresh to try again.':'Opening this week’s color report…')))];
+  const t=R.tiles, chg=t.charged||null, onScale=chg?Math.max(0,Math.round((chg-t.notWeighed)/chg*100)):null;
+  const stat=(v,l)=>h('div',{class:'cell tcell'},h('span',{class:'num',style:'font-family:var(--display);font-size:24px'},v),h('small',{class:'soft',style:'font-size:12px'},l));
+  const svc=n=>{const r=R.services.find(x=>x[0].toLowerCase()===n.toLowerCase());return r?r[4]:null};
+  const fullHead=svc('Foil (Full)');
+  const costs=[['Full head foil',fullHead],['Single process',svc('Single Process')],['Glaze',svc('Glaze')]].filter(x=>x[1]!=null);
+  const est=onScale?t.over/(onScale/100):null, r5=v=>Math.round(v/5)*5;
+  const look=R.look||R.artists.filter(a=>a[7]).map(a=>[a[0],a[7]]);
+  const wk=String(R.week).replace(/, \d{4}$/,'').replace(/^(\w+) (\d+) – \1 /,'$1 $2 – ');
+  const L=R.links||{};
+  return [
+    h('section',{class:'section'},h('h2',{},'Week of '+wk),
+      h('div',{class:'teamgrid',style:'grid-template-columns:repeat(2,minmax(0,1fr))'},
+        stat(String(t.bowls),'bowls weighed'),t.cpb!=null?stat(money(t.cpb),'avg cost per bowl'):null,
+        stat('$'+Math.round(t.over),'over-mixed this week'),stat(chg?t.notWeighed+' of '+chg:String(t.notWeighed),'color services not weighed')),
+      onScale!=null?h('div',{class:'bar',style:'height:8px;margin-top:14px'},h('i',{style:'width:'+onScale+'%'})):null,
+      onScale!=null?h('p',{class:'soft',style:'font-size:13px;margin:6px 0 0'},onScale+'% of color services went on the scale · goal 100%'):null),
+    h('section',{class:'section'},h('h2',{},'Worth a look'),h('div',{class:'sec2'},
+      look.map(([a,x])=>h('div',{class:'lrow'},h('b',{},a),h('span',{class:'chip',style:'white-space:nowrap'},x)))),
+      h('p',{class:'soft',style:'font-size:13px;margin:8px 0 0'},'Not accusations. Name spellings or guests moved between artists can explain some.')),
+    h('section',{class:'section'},h('h2',{},'What it costs us'),h('div',{class:'sec2'},
+      costs.map(([n,v])=>h('div',{class:'lrow'},h('span',{},n),h('b',{},money(v)))),
+      est?h('div',{class:'lrow'},h('span',{},'If every bowl were weighed: over-mix'),h('b',{},'~$'+(r5(est)-5)+'–'+r5(est)+' / wk')):null),
+      (L.report||L.audit)?h('div',{style:'display:flex;gap:8px;flex-wrap:wrap;margin-top:12px'},
+        L.report?h('a',{class:'tab',style:'text-decoration:none',href:L.report,target:'_blank',rel:'noopener'},'Open full report'):null,
+        L.audit?h('a',{class:'tab',style:'text-decoration:none',href:L.audit,target:'_blank',rel:'noopener'},'Open artist audit'):null):null)];
+}
 function monthView(){
   const m=S.month;
   if(!m||!m.rows||!m.rows.length) return [h('section',{class:'section'},h('h2',{},'Month & Trends'),h('div',{class:'empty'},h('p',{},'Month-to-date numbers fill in after tonight’s end-of-day update.')))];
@@ -1589,7 +1623,7 @@ function monthView(){
         h('td',{class:rp(r.retail,r.service)>=15?'over':'under'},rp(r.retail,r.service)+'%'),h('td',{},r.addons==null?'–':String(r.addons)),h('td',{},r.rebook==null?'–':String(r.rebook))))))))];
 }
 function leaderTabs(){
-  return h('div',{class:'tabs',role:'tablist'},[['today','Today'],['payroll','Payroll'],['month','Month & Trends'],['off','Time Off'],['guide','Culture'],['access','Access']].map(([k,l])=>
+  return h('div',{class:'tabs',role:'tablist'},[['today','Today'],['payroll','Payroll'],['month','Month & Trends']].concat(S.inv?[['color','Color Room']]:[]).concat([['off','Time Off'],['guide','Culture'],['access','Access']]).map(([k,l])=>
     h('button',{class:'tab',role:'tab','aria-selected':String(S.rtab===k),onclick:()=>{S.rtab=k;S.open=null;render()}},l)));
 }
 
@@ -1621,7 +1655,7 @@ function setHead(name){
 }
 function apply(P){
   S.daily=P.daily||null;
-  if(EDITION==='team'){S.isAdmin=true;S.pages=(P.pages||[]).filter(isGoalsPerson);S.week=P.week||null;S.hubKey=P.hub&&P.hub.admin;S.payroll=P.payroll||[];S.rates=P.rates||{};S.hoursList=P.hoursList||[];S.retailRate=P.retailRate==null?10:P.retailRate;S.month=P.month||null;S.guideUrl=P.guideUrl||null;S.docs=P.docs||null;S.access=P.access||null;S.rtab=S.rtab||'today';setHead()}
+  if(EDITION==='team'){S.isAdmin=true;S.pages=(P.pages||[]).filter(isGoalsPerson);S.week=P.week||null;S.hubKey=P.hub&&P.hub.admin;S.payroll=P.payroll||[];S.rates=P.rates||{};S.hoursList=P.hoursList||[];S.retailRate=P.retailRate==null?10:P.retailRate;S.month=P.month||null;S.guideUrl=P.guideUrl||null;S.docs=P.docs||null;S.access=P.access||null;S.inv=P.inv||null;S.rtab=S.rtab||'today';setHead()}
   else{S.mine=P.mine||null;setHead(S.mine&&S.mine.name);
     if(S.mine&&!S.tab){const st=S.mine.staff||{};S.tab=store.get('pp-tab:'+ID)||(st.clock?'home':isGoalsPerson(S.mine)?'today':'home')}
     if(S.mine&&S.mine.staff&&!HUB.started){HUB.started=true;hubGet();
