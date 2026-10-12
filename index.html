@@ -1171,7 +1171,9 @@ function invReport(R){
     R.missing&&R.missing.length?h('p',{class:'soft',style:'font-size:12.5px;margin:0'},'No price yet: '+R.missing.join(' · ')):null];
 }
 function invBackbar(B){
-  const groups={}; B.rows.forEach(r=>(groups[r[0]]||=[]).push(r));
+  /* one section per color line (Goldwell Topchic, Colorance, Shades EQ...), developers and lighteners on their own */
+  const grpOf=r=>/Developer|Lightener|Smoothing/.test(r[0])||/Lightener/.test(r[2])?(/Lightener/.test(r[2])?'Lighteners':r[0]):r[1]+' '+r[2].replace(/ ?(Blonding Cream|High Blond|@Elumenated)$/,'').trim();
+  const groups={}; B.rows.forEach(r=>(groups[grpOf(r)]||=[]).push(r));
   const rows=[], out=[];
   const bb=B.bb;
   const bbCard=(h('div',{class:'card2','data-nosearch':'1'},h('span',{class:'lbl'},'Brazilian Blowout · per treatment'),
