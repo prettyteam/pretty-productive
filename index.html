@@ -203,6 +203,7 @@ details.invg>summary h2{margin:0;flex:1;min-width:0;font-size:20px}
 details.invg>summary .invc{font-size:12.5px;white-space:nowrap}
 details.invg[open]>summary .tplus{transform:rotate(45deg)}
 details.invg>.sec2{padding-bottom:12px}
+.shelf{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);padding:12px 0 2px;border-bottom:1px solid var(--line)}
 .invall{display:flex;gap:8px;justify-content:flex-end;margin:-6px 0 0}
 .invall button{padding:4px 12px;font-size:12px;flex:none}
 ul.triplist{margin:0;padding:2px 0 6px 20px;display:flex;flex-direction:column;gap:5px}ul.triplist li{line-height:1.4}
@@ -1132,12 +1133,12 @@ function invSearch(placeholder,rows){
 const INVOPEN={}, invN=n=>n+(n===1?' item':' items');
 function invGroup(gid,key,title,sub,els,ids){
   const counted=()=>ids.filter(id=>HUB.data&&HUB.data.stock&&HUB.data.stock[id]).length;
-  const cnt=h('span',{class:'invc soft'},invN(els.length)+(ids.length?' · '+counted()+' counted':''));
+  const cnt=h('span',{class:'invc soft'},invN(ids.length||els.length)+(ids.length?' · '+counted()+' counted':''));
   const d=h('details',{class:'section invg',id:gid,'data-key':key},h('summary',{},h('h2',{},title),cnt,h('span',{class:'tplus','aria-hidden':'true'},'+')),
     sub?h('small',{class:'soft',style:'margin-top:-8px'},sub):null,h('div',{class:'sec2'},els));
   if(INVOPEN[key]) d.open=true;
-  d.addEventListener('recount',()=>{cnt.textContent=invN(els.length)+(ids.length?' · '+counted()+' counted':'')});
-  d.addEventListener('toggle',()=>{if(!d.dataset.auto) INVOPEN[key]=d.open; if(d.open) cnt.textContent=invN(els.length)+(ids.length?' · '+counted()+' counted':'')});
+  d.addEventListener('recount',()=>{cnt.textContent=invN(ids.length||els.length)+(ids.length?' · '+counted()+' counted':'')});
+  d.addEventListener('toggle',()=>{if(!d.dataset.auto) INVOPEN[key]=d.open; if(d.open) cnt.textContent=invN(ids.length||els.length)+(ids.length?' · '+counted()+' counted':'')});
   return d;
 }
 function invAll(){
@@ -1170,6 +1171,41 @@ function invReport(R){
     h('section',{class:'section'},h('h2',{},'Fastest-used'),h('div',{class:'sec2'},R.fastest.map(([l,p,u])=>h('div',{class:'lrow'},h('span',{},h('b',{},p),h('small',{},l)),h('span',{class:'soft',style:'font-size:13px'},u+' / wk'))))),
     R.missing&&R.missing.length?h('p',{class:'soft',style:'font-size:12.5px;margin:0'},'No price yet: '+R.missing.join(' · ')):null];
 }
+/* color room shelf order, read from Alexandra's backstock photos (Oct 12): counts follow the racks so nobody jumps around */
+const SHELVES={
+  'Goldwell Topchic Canister':[
+    ['Rack A · shelf 1','10V 10P 12BN 12BS 11N 11G'],['Rack A · shelf 2','8B 8KN 8A 8CA 8SB 9G'],['Rack A · shelf 3','6RR_MAX 6R 7K 7KG 3VV_MAX 7RO_MAX'],
+    ['Rack A · shelf 4','4V 4R 5K 5VV_MAX 5VA 5RR_MAX'],['Rack A · shelf 5','6SB 6BM 7G 7GB 7B 7BG'],['Rack A · shelf 6','6NP 9NP 7NP 5MB 6G 6GB'],
+    ['Rack A · shelf 7','6N@GB 6NN@CV 7N@BP 7N@BK 8N@GB 8N@GK 2A 4G 4B'],['Rack A · shelf 8','6NN 7NN 8NN 9NN 3NA 4NA'],['Rack A · shelf 9','2N 3N 4N 5N 6N 7N'],
+    ['Rack B · shelf 3','11P 11SV 11V 11A ASH_BLONDING_CREAM 5N@RR G-B'],['Rack B · shelf 4','9GB 9GN 9A 9MB 10GB 10A'],['Rack B · shelf 5','7OO_MAX 7RR_MAX 8K 8KG 8G 8GB'],
+    ['Rack B · shelf 6','5R 6K 6KG 6KR 6VV_MAX 6RV_MAX'],['Rack B · shelf 7','7RB 7A 7MB 7SB 7BN 5A'],['Rack B · shelf 8','6B 6RB 6BP 6A 6MB 6BS'],
+    ['Rack B · shelf 9','4BP 5GB 5B 5BG 5RB 5BP'],['Rack B · shelf 10','5NA 6NA 7NA 8NA 9NA 5N@BP 5N@BK'],['Rack B · shelf 11','8N 9N 10N 3NN 4NN 5NN']],
+  'Goldwell Colorance Canister':[
+    ['Blue rack · shelf 1','10P 10V CLEAR PASTEL_PEACH'],['Blue rack · shelf 2','10BB 10BG 10BP 10BS 10G 10N'],['Blue rack · shelf 3','9GB 9KG 9MB 9N 9NA 10BA'],
+    ['Blue rack · shelf 4','8K 8N 8OR 8SB 8SB@PK 9BA'],['Blue rack · shelf 5','7RR@RR 8BA 8BP 8CA 8G 8GB'],['Blue rack · shelf 6','7KG 7MB 7N 7NA 7RB 7RR_MAX'],
+    ['Blue rack · shelf 7','6RB 6SB 6VV_MAX 7B 7BG 7G'],['Blue rack · shelf 8','6BP 6K 6KG 6KR 6N 6R'],['Blue rack · shelf 9','5NA 5R 5RB 5VV_MAX 6A 6B'],
+    ['Blue rack · shelf 10','5B 5BG 5K 5MB 5N'],['Blue rack · shelf 11','2A 2N 3N 4BP 4G 4N']]};
+const SHELF_ALIAS={'ASH BLONDING CREAM':'BLONDING CREAM ASH'};
+/* rows in shelf order with a small rack/shelf label; shades not on the photos go last */
+function shelfOrder(g,list){
+  const sh=SHELVES[g], name=r=>String(r[3]).toUpperCase();
+  if(sh){
+    const left=[...list], out=[];
+    const hit=c=>{c=c.replace(/_/g,' ');c=SHELF_ALIAS[c]||c;return r=>{const n=name(r);return n===c||n.startsWith(c+' ')}};
+    sh.forEach(([lbl,codes])=>{const got=[];codes.split(' ').forEach(c=>{const i=left.findIndex(hit(c));if(i>=0) got.push(left.splice(i,1)[0])}); if(got.length) out.push([lbl,got])});
+    if(left.length) out.push(['Not on the shelf photos',left]);
+    return out;
+  }
+  if(g==='Redken Shades EQ'){
+    const lvl=r=>{const m=name(r).match(/^0?(\d{1,2})/);return m?+m[1]:99}, fam=r=>{const m=name(r).match(/^0?\d{1,2}([A-Z]*)/);return m?m[1]:'~'};
+    const bins=[['Bin 01–04',1,4],['Bin 05–06',5,6],['Bin 07',7,7],['Bin 08',8,8],['Bin 09',9,9],['Bin 010',10,10]], out=[];
+    const key=r=>{const f=fam(r);return (f[0]==='N'?'0':'1')+f};
+    bins.forEach(([lbl,a,b])=>{const got=list.filter(r=>lvl(r)>=a&&lvl(r)<=b).sort((x,y)=>key(x).localeCompare(key(y))); if(got.length) out.push([lbl,got])});
+    const rest=list.filter(r=>lvl(r)>10); if(rest.length) out.push(['Clear, bonder and solution',rest]);
+    return out;
+  }
+  return [[null,list]];
+}
 function invBackbar(B){
   /* one section per color line (Goldwell Topchic, Colorance, Shades EQ...), developers and lighteners on their own */
   const grpOf=r=>/Developer|Lightener|Smoothing/.test(r[0])||/Lightener/.test(r[2])?(/Lightener/.test(r[2])?'Lighteners':r[0]):r[1]+' '+r[2].replace(/ ?(Blonding Cream|High Blond|@Elumenated)$/,'').trim();
@@ -1181,12 +1217,14 @@ function invBackbar(B){
     h('small',{class:'soft'},'12 oz solution $'+bb.price+' from Paramount = '+money(bb.perOz)+'/oz. '+bb.promo+'.')));
   Object.entries(groups).forEach(([g,list],gi)=>{
     const gid='invg'+gi;
-    const ids=[];
-    const els=list.map(([cat,br,line,item,size,sup,cost,date,cpg,used,note])=>{
+    const ids=[], els=[];
+    shelfOrder(g,list).forEach(([lbl,part])=>{
+      if(lbl) els.push(h('div',{class:'shelf','data-nosearch':'1'},lbl));
+      part.forEach(([cat,br,line,item,size,sup,cost,date,cpg,used,note])=>{
       ids.push('b:'+br+'|'+line+'|'+item);
       const e=h('div',{class:'lrow','data-grp':gid},h('span',{},h('b',{},item),h('small',{},br+' '+line+' · '+(sup||'?')+(size?' · '+size:'')+(note?' · '+note:'')),stockBox('b:'+br+'|'+line+'|'+item,item,null)),
         h('span',{style:'text-align:right;white-space:nowrap'},cost!=null?h('b',{},money(cost)):h('span',{class:'soft'},'—'),h('small',{},cpgTxt(cpg))));
-      e.dataset.q=(item+' '+br+' '+line+' '+sup).toLowerCase(); rows.push(e); return e;});
+      e.dataset.q=(item+' '+br+' '+line+' '+sup).toLowerCase(); rows.push(e); els.push(e);});});
     out.push(invGroup(gid,'b|'+g,g,null,els,ids));
   });
   out.push(bbCard);
