@@ -1187,6 +1187,12 @@ const SHELVES={
     ['Blue rack · shelf 10','5B 5BG 5K 5MB 5N'],['Blue rack · shelf 11','2A 2N 3N 4BP 4G 4N']]};
 const SHELF_ALIAS={'ASH BLONDING CREAM':'BLONDING CREAM ASH'};
 /* rows in shelf order with a small rack/shelf label; shades not on the photos go last */
+const SEQ_ORDER=('10T 10NA 10P 10NP 10NV 10N 10AG 10NB 10VG 10NW 10GI 10G 10WG 10AA 10GRO 10VV '+
+  '9T 9B 9NA 9P 9M 9N 9AG 9NB 9VG 9NW 9GI 9GB 9G 9AA 9RB 9GRO 9CR 9VRO 9V 9VV 9HC '+
+  '8T 8GN 8VB 8NA 8NP 8NV 8N 8VG 8GI 8GG 8WG 8C 8CR 8VRO 8V 8HC '+
+  '7T 7VB 7NA 7P 7M 7NCH 7N 7AG 7NB 7NW 7GB 7G 7C 7AA 7CB 7GRO 7CC 7RR 7V '+
+  '6T 6GN 6ABN 6VB 6NA 6NCH 6N 6NB 6GI 6GB 6G 6GG 6WG 6AA 6CB 6RB 6CR 6R 6RR 6VRO 6HC '+
+  '5NA 5N 5NW 5G 5C 5RB 5CC 5RV 5V 4ABN 4NA 4M 4NCH 4N 4NB 4WG 4CB 4RV 4VRO 3N 3NB 3NW 3G 3A 3RB 3R 3RV 3V 2ABN 2M 1B').split(' ');
 function shelfOrder(g,list){
   const sh=SHELVES[g], name=r=>String(r[3]).toUpperCase();
   if(sh){
@@ -1197,12 +1203,14 @@ function shelfOrder(g,list){
     return out;
   }
   if(g==='Redken Shades EQ'){
-    const lvl=r=>{const m=name(r).match(/^0?(\d{1,2})/);return m?+m[1]:99}, fam=r=>{const m=name(r).match(/^0?\d{1,2}([A-Z]*)/);return m?m[1]:'~'};
-    /* lightest to darkest (Alexandra, Oct 12): level 10 first down to level 1; within a level N shades first, then A to Z */
-    const bins=[['Bin 010',10,10],['Bin 09',9,9],['Bin 08',8,8],['Bin 07',7,7],['Bin 05–06',5,6],['Bin 01–04',1,4]], out=[];
-    const key=r=>{const f=fam(r);return (f[0]==='N'?'0':'1')+f};
-    bins.forEach(([lbl,a,b])=>{const got=list.filter(r=>lvl(r)>=a&&lvl(r)<=b).sort((x,y)=>lvl(y)-lvl(x)||key(x).localeCompare(key(y))); if(got.length) out.push([lbl,got])});
-    const rest=list.filter(r=>!(lvl(r)>=1&&lvl(r)<=10)); if(rest.length) out.push(['Clear, pastel, kickers, bonder and solution',rest]);
+    /* lightest to darkest, one heading per level, left to right as on the Redken chart (shades_eq_order.md, Oct 12) */
+    const code=r=>{const m=name(r).match(/^0*(\d{1,2})([A-Z]*)/);return m?m[1]+m[2]:''};
+    const lvl=r=>{const m=name(r).match(/^0*(\d{1,2})[A-Z]/);return m?+m[1]:0};
+    const at=r=>{const i=SEQ_ORDER.indexOf(code(r));return i<0?999:i};
+    const out=[];
+    for(let L=10;L>=1;L--){const got=list.filter(r=>lvl(r)===L).sort((x,y)=>at(x)-at(y)||name(x).localeCompare(name(y))); if(got.length) out.push(['Level '+String(L).padStart(2,'0'),got])}
+    const rk=r=>/PASTEL/.test(name(r))?0:/KICKER/.test(name(r))?1:/CLEAR/.test(name(r))?2:3;
+    const rest=list.filter(r=>!(lvl(r)>=1&&lvl(r)<=10)).sort((x,y)=>rk(x)-rk(y)); if(rest.length) out.push(['Pastels, kickers, clear, bonder and solution',rest]);
     return out;
   }
   return [[null,list]];
