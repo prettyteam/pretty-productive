@@ -1198,9 +1198,10 @@ function shelfOrder(g,list){
   }
   if(g==='Redken Shades EQ'){
     const lvl=r=>{const m=name(r).match(/^0?(\d{1,2})/);return m?+m[1]:99}, fam=r=>{const m=name(r).match(/^0?\d{1,2}([A-Z]*)/);return m?m[1]:'~'};
-    const bins=[['Bin 01–04',1,4],['Bin 05–06',5,6],['Bin 07',7,7],['Bin 08',8,8],['Bin 09',9,9],['Bin 010',10,10]], out=[];
+    /* lightest to darkest (Alexandra, Oct 12): level 10 first down to level 1; within a level N shades first, then A to Z */
+    const bins=[['Bin 010',10,10],['Bin 09',9,9],['Bin 08',8,8],['Bin 07',7,7],['Bin 05–06',5,6],['Bin 01–04',1,4]], out=[];
     const key=r=>{const f=fam(r);return (f[0]==='N'?'0':'1')+f};
-    bins.forEach(([lbl,a,b])=>{const got=list.filter(r=>lvl(r)>=a&&lvl(r)<=b).sort((x,y)=>key(x).localeCompare(key(y))); if(got.length) out.push([lbl,got])});
+    bins.forEach(([lbl,a,b])=>{const got=list.filter(r=>lvl(r)>=a&&lvl(r)<=b).sort((x,y)=>lvl(y)-lvl(x)||key(x).localeCompare(key(y))); if(got.length) out.push([lbl,got])});
     const rest=list.filter(r=>lvl(r)>10); if(rest.length) out.push(['Clear, bonder and solution',rest]);
     return out;
   }
