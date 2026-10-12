@@ -195,6 +195,16 @@ details.tryd summary::-webkit-details-marker{display:none}
 .tplus{margin-left:auto;font-family:var(--display);font-size:22px;line-height:1;color:var(--gold)}
 details.tryd[open] .tplus{transform:rotate(45deg)}
 details.tryd .try{padding:4px 0 6px}
+details.invg{border:1px solid var(--line);border-radius:14px;padding:0 14px;background:var(--card,transparent)}
+details.invg>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:10px;padding:14px 0;min-height:44px}
+details.invg>summary::-webkit-details-marker{display:none}
+details.invg:not([open]){gap:0}
+details.invg>summary h2{margin:0;flex:1;min-width:0;font-size:20px}
+details.invg>summary .invc{font-size:12.5px;white-space:nowrap}
+details.invg[open]>summary .tplus{transform:rotate(45deg)}
+details.invg>.sec2{padding-bottom:12px}
+.invall{display:flex;gap:8px;justify-content:flex-end;margin:-6px 0 0}
+.invall button{padding:4px 12px;font-size:12px;flex:none}
 ul.triplist{margin:0;padding:2px 0 6px 20px;display:flex;flex-direction:column;gap:5px}ul.triplist li{line-height:1.4}
 .tico{background:no-repeat center/contain url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 2l1.9 6.1L20 10l-6.1 1.9L12 18l-1.9-6.1L4 10l6.1-1.9z' fill='%23b4925b'/%3E%3Cpath d='M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z' fill='%23b4925b'/%3E%3C/svg%3E")}
 /* ---- Team app look (Oct 2026): light cream, black outlines, small chocolate touches ---- */
@@ -1099,7 +1109,7 @@ const stockOf=(id,dflt)=>{const x=HUB.data&&HUB.data.stock&&HUB.data.stock[id];r
 async function stockSave(inp,id,item,n){
   const st=S.mine.staff; inp.classList.remove('ok','err');
   try{const r=await fetch(API(),{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({type:'stock',id,item,n,slug:st.slug,t:st.t})});
-    const j=await r.json(); if(!j.ok) throw new Error(); (HUB.data.stock||={})[id]={n}; inp.classList.add('ok');}
+    const j=await r.json(); if(!j.ok) throw new Error(); (HUB.data.stock||={})[id]={n}; inp.classList.add('ok'); const g=inp.closest('details.invg'); if(g) g.dispatchEvent(new Event('recount'));}
   catch(e){inp.classList.add('err'); const m=inp.parentNode.querySelector('small'); if(m) m.textContent=HUB.data&&HUB.data.stockEdit?'didn’t save, try again':'not saved yet (sheet update needed)'}
 }
 function stockBox(id,item,dflt){
@@ -1113,9 +1123,26 @@ function invSearch(placeholder,rows){
   inp.addEventListener('input',()=>{const q=inp.value.trim().toLowerCase();
     rows.forEach(r=>{r.style.display=(q&&!r.dataset.q.includes(q))?'none':''});
     const seen={};rows.forEach(r=>{const g=r.dataset.grp;if(g)seen[g]=seen[g]||r.style.display!=='none'});
-    Object.entries(seen).forEach(([g,v])=>{const el=document.getElementById(g);if(el)el.style.display=v?'':'none'});
+    Object.entries(seen).forEach(([g,v])=>{const el=document.getElementById(g);if(!el) return;el.style.display=v?'':'none';
+      if(el.tagName==='DETAILS'){el.dataset.auto='1'; if(q){if(el.dataset.was==null) el.dataset.was=el.open?'1':''; el.open=v} else if(el.dataset.was!=null){el.open=!!el.dataset.was; delete el.dataset.was} setTimeout(()=>delete el.dataset.auto,0)}});
     document.querySelectorAll('[data-nosearch]').forEach(el=>el.style.display=q?'none':'')});
   return h('label',{class:'fld'},inp);
+}
+/* one product line or category as a tap-to-open section, so counting isn't one endless list. Open/closed is remembered per tab. */
+const INVOPEN={}, invN=n=>n+(n===1?' item':' items');
+function invGroup(gid,key,title,sub,els,ids){
+  const counted=()=>ids.filter(id=>HUB.data&&HUB.data.stock&&HUB.data.stock[id]).length;
+  const cnt=h('span',{class:'invc soft'},invN(els.length)+(ids.length?' · '+counted()+' counted':''));
+  const d=h('details',{class:'section invg',id:gid,'data-key':key},h('summary',{},h('h2',{},title),cnt,h('span',{class:'tplus','aria-hidden':'true'},'+')),
+    sub?h('small',{class:'soft',style:'margin-top:-8px'},sub):null,h('div',{class:'sec2'},els));
+  if(INVOPEN[key]) d.open=true;
+  d.addEventListener('recount',()=>{cnt.textContent=invN(els.length)+(ids.length?' · '+counted()+' counted':'')});
+  d.addEventListener('toggle',()=>{if(!d.dataset.auto) INVOPEN[key]=d.open; if(d.open) cnt.textContent=invN(els.length)+(ids.length?' · '+counted()+' counted':'')});
+  return d;
+}
+function invAll(){
+  const set=v=>()=>document.querySelectorAll('details.invg').forEach(d=>{if(d.style.display!=='none'){d.open=v}});
+  return h('div',{class:'invall','data-nosearch':'1'},h('button',{class:'tab',onclick:set(true)},'Open all'),h('button',{class:'tab',onclick:set(false)},'Close all'));
 }
 const invPct=v=>v==null?'—':(v>0?'+':'')+v+'%';
 const cpgTxt=v=>v==null?'—':'$'+(v<0.1?v.toFixed(3):v.toFixed(2))+'/g';
@@ -1152,35 +1179,38 @@ function invBackbar(B){
     h('small',{class:'soft'},'12 oz solution $'+bb.price+' from Paramount = '+money(bb.perOz)+'/oz. '+bb.promo+'.')));
   Object.entries(groups).forEach(([g,list],gi)=>{
     const gid='invg'+gi;
+    const ids=[];
     const els=list.map(([cat,br,line,item,size,sup,cost,date,cpg,used,note])=>{
+      ids.push('b:'+br+'|'+line+'|'+item);
       const e=h('div',{class:'lrow','data-grp':gid},h('span',{},h('b',{},item),h('small',{},br+' '+line+' · '+(sup||'?')+(size?' · '+size:'')+(note?' · '+note:'')),stockBox('b:'+br+'|'+line+'|'+item,item,null)),
         h('span',{style:'text-align:right;white-space:nowrap'},cost!=null?h('b',{},money(cost)):h('span',{class:'soft'},'—'),h('small',{},cpgTxt(cpg))));
       e.dataset.q=(item+' '+br+' '+line+' '+sup).toLowerCase(); rows.push(e); return e;});
-    out.push(h('section',{class:'section',id:gid},h('h2',{},g+' · '+list.length),h('div',{class:'sec2'},els)));
+    out.push(invGroup(gid,'b|'+g,g,null,els,ids));
   });
   out.push(bbCard);
-  out.push(h('section',{class:'section','data-nosearch':'1'},h('h2',{},'Supplies'),h('div',{class:'sec2'},B.supplies.map(([i,s,sz,c,u])=>h('div',{class:'lrow'},h('span',{},h('b',{},i),h('small',{},s+' · '+sz+(u?' · '+u:'')),stockBox('s:'+i,i,null)),h('b',{},money(c)))))));
+  { const d=invGroup('invsup','b|Supplies','Supplies',null,B.supplies.map(([i,s,sz,c,u])=>h('div',{class:'lrow'},h('span',{},h('b',{},i),h('small',{},s+' · '+sz+(u?' · '+u:'')),stockBox('s:'+i,i,null)),h('b',{},money(c)))),B.supplies.map(([i])=>'s:'+i)); d.dataset.nosearch='1'; out.push(d); }
   out.push(h('section',{class:'section','data-nosearch':'1'},h('h2',{},'Shipping'),h('div',{class:'sec2'},Object.entries(B.ship).map(([s,x])=>h('div',{class:'lrow'},h('span',{},h('b',{},s),h('small',{},x)))))));
-  return [invSearch('Search a shade, brand or supplier',rows),...out];
+  return [invSearch('Search a shade, brand or supplier',rows),invAll(),...out];
 }
 function invRetail(R,merged,check){
   const groups={}; R.forEach(r=>(groups[r[0]]||=[]).push(r));
   const rows=[], out=[];
   Object.entries(groups).forEach(([b,list],gi)=>{
     const gid='invr'+gi;
+    const ids=list.map(([br,item])=>'r:'+br+'|'+item);
     const els=list.map(([br,item,sup,cost,src,retail,oh,ytd])=>{
       const est=/^est/.test(src||'');
       const e=h('div',{class:'lrow','data-grp':gid},h('span',{},h('b',{},item),h('small',{},(retail?'retail '+money(retail):'no retail price')+(ytd?' · '+ytd+' sold':'')),stockBox('r:'+br+'|'+item,item,oh)),
         h('span',{style:'text-align:right;white-space:nowrap'},cost?h('b',{},money(cost)):h('span',{class:'soft',style:'font-size:13px'},'no cost'),h('small',{},cost?(est?'cost · est.':'cost'):'not found')));
       e.dataset.q=(item+' '+br+' '+sup).toLowerCase(); rows.push(e); return e;});
-    out.push(h('section',{class:'section',id:gid},h('h2',{},b),h('small',{class:'soft',style:'margin-top:-8px'},list[0][2]),h('div',{class:'sec2'},els)));
+    out.push(invGroup(gid,'r|'+b,b,list[0][2],els,ids));
   });
   if((merged&&merged.length)||(check&&check.length)) out.push(h('section',{class:'section','data-nosearch':'1'},h('h2',{},'Duplicates'),
     h('p',{class:'soft',style:'font-size:13px;margin:0'},'Merged on this list. Delete the extra SKU in Paired Plus when you can.'),
     h('div',{class:'sec2'},(merged||[]).map(([br,k,ks,d,ds])=>h('div',{class:'lrow'},h('span',{},h('b',{},k),h('small',{},'SKU '+ks+' + '+d+' (SKU '+ds+')'))))),
     check&&check.length?h('details',{class:'tryd'},h('summary',{},h('span',{class:'tlabel'},'Maybe the same · '+check.length),h('span',{class:'tplus','aria-hidden':'true'},'+')),
       h('div',{class:'sec2'},check.map(([br,x,why])=>h('div',{class:'lrow'},h('span',{},h('b',{},x),h('small',{},br+' · '+why)))))):null));
-  return [invSearch('Search a product or brand',rows),...out];
+  return [invSearch('Search a product or brand',rows),invAll(),...out];
 }
 /* Hi Pretty merch: Taffeta apparel and accessories from the retail list, with on-hand counts (same counts as the Retail list) */
 const MERCH_RE=/tee|tank|hoodie|crewneck|fleece|hat\b|shirt|pillowcase|hair ties|ornament|brush/i;
@@ -1217,11 +1247,12 @@ function spaLoad(p){
 }
 function spaSupplies(list,edit,withCost){
   const groups={}; list.forEach(x=>(groups[x.cat]||=[]).push(x));
-  return Object.entries(groups).map(([cat,xs])=>h('section',{class:'section'},h('h2',{},cat),h('div',{class:'sec2'},xs.map(x=>{
+  return Object.entries(groups).map(([cat,xs],gi)=>{const els=xs.map(x=>{
     const id='spa:'+x.item, n=stockOf(id,null);
     const right=withCost?h('span',{style:'text-align:right;white-space:nowrap'},x.cost!=null?h('b',{},money(x.cost)):h('span',{class:'soft',style:'font-size:13px'},'no price'),h('small',{},x.cost!=null?(x.src||'cost'):'not found'))
       :edit?null:n==null?h('span',{class:'soft',style:'font-size:13px'},'—'):n<=0?h('span',{class:'chip add',style:'white-space:nowrap'},'Out'):h('b',{},String(n));
-    return h('div',{class:'lrow'},h('span',{},h('b',{},x.item),x.unit?h('small',{},x.unit):null,edit?stockBox(id,x.item,null):null),right);}))));
+    return h('div',{class:'lrow'},h('span',{},h('b',{},x.item),x.unit?h('small',{},x.unit):null,edit?stockBox(id,x.item,null):null),right);});
+    return withCost?h('section',{class:'section'},h('h2',{},cat),h('div',{class:'sec2'},els)):invGroup('spag'+gi,'spa|'+cat,cat,null,els,xs.map(x=>'spa:'+x.item));});
 }
 function invSpa(){
   spaLoad(S.mine.spa);
@@ -1249,11 +1280,12 @@ function skinView(){
     const id='r:'+br+'|'+item, n=stockOf(id,oh);
     const right=edit?null:n==null?h('span',{class:'soft',style:'font-size:13px'},'—'):n<=0?h('span',{class:'chip add',style:'white-space:nowrap'},'Out'):h('b',{},String(n));
     const e=h('div',{class:'lrow','data-grp':n>0?'skin1':'skin0'},h('span',{},h('b',{},item),h('small',{},retail?'retail '+money(retail):''),edit?stockBox(id,item,oh!=null&&oh>=0?oh:null):null),right);
-    e.dataset.q=item.toLowerCase(); rows.push(e); (n>0?inS:outS).push(e);});
+    e.dataset.q=item.toLowerCase(); e.dataset.id=id; rows.push(e); (n>0?inS:outS).push(e);});
   return [h('div',{class:'hub'},head,h('p',{class:'soft',style:'font-size:13px;margin:-14px 0 0'},edit?'Type the count you see on the shelf. It saves for the whole spa team.':'On hand right now. Tell Carolyn, Alexandra or Rose when something runs low.'),
     invSearch('Search a product',rows),
-    h('section',{class:'section',id:'skin1'},h('h2',{},'In stock · '+inS.length),h('div',{class:'sec2'},inS.length?inS:h('p',{class:'soft'},'Nothing in stock yet.'))),
-    h('section',{class:'section',id:'skin0'},h('h2',{},'Out of stock · '+outS.length),h('div',{class:'sec2'},outS)),
+    invAll(),
+    invGroup('skin1','skin|in','In stock',null,inS,inS.map(e=>e.dataset.id)),
+    invGroup('skin0','skin|out','Out of stock',null,outS,outS.map(e=>e.dataset.id)),
     ...skinSpa(edit))];
 }
 
