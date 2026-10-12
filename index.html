@@ -1202,7 +1202,7 @@ function shelfOrder(g,list){
     const bins=[['Bin 010',10,10],['Bin 09',9,9],['Bin 08',8,8],['Bin 07',7,7],['Bin 05–06',5,6],['Bin 01–04',1,4]], out=[];
     const key=r=>{const f=fam(r);return (f[0]==='N'?'0':'1')+f};
     bins.forEach(([lbl,a,b])=>{const got=list.filter(r=>lvl(r)>=a&&lvl(r)<=b).sort((x,y)=>lvl(y)-lvl(x)||key(x).localeCompare(key(y))); if(got.length) out.push([lbl,got])});
-    const rest=list.filter(r=>lvl(r)>10); if(rest.length) out.push(['Clear, bonder and solution',rest]);
+    const rest=list.filter(r=>!(lvl(r)>=1&&lvl(r)<=10)); if(rest.length) out.push(['Clear, pastel, kickers, bonder and solution',rest]);
     return out;
   }
   return [[null,list]];
