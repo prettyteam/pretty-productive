@@ -103,49 +103,49 @@
     "angelina-h"
   ],
   "social": {
-    "week": "Week of Oct 5",
+    "week": "Week of Oct 19",
     "hair": [
       [
-        "Why your blonde turns brassy by week three",
-        "Show your toner or gloss and the one at-home product that keeps it fresh."
+        "Color fading in two weeks?",
+        "Film your color-safe shampoo and cool-water rinse routine and why it keeps shine longer."
       ],
       [
-        "Hair snaps every time you go lighter?",
-        "Explain K18 before balayage and why it protects the hair."
+        "Hair feels like straw?",
+        "Show a strand before and after a deep conditioning treatment and what to use at home."
       ],
       [
-        "Flat by noon?",
-        "Show how the right cut plus one volumizer fixes it."
+        "Frizz wins every humid day?",
+        "Demo your anti-frizz blow-dry and the one smoothing product you reach for."
       ],
       [
-        "No time for hair in the morning",
-        "Film a 5-minute routine you’d give any guest."
+        "Growing out a cut and hating it?",
+        "Film a mid-grow-out trim and the styling trick that makes the awkward stage cute."
       ],
       [
-        "Haven’t had a trim in six months?",
-        "Show what split ends do and how often to come back."
+        "Updo falls by the reception?",
+        "Show a quick bridal or formal updo and the pins and spray that keep it all night."
       ]
     ],
     "esti": [
       [
-        "Skin dull and tired by Friday?",
-        "Show one facial or dermaplaning result and the SPF that keeps it glowing."
+        "Skin feels dry and tight?",
+        "Show a hydrating facial step and the moisturizer you'd send her home with."
       ],
       [
-        "Brows never look even?",
-        "Film a brow sculpt before and after and what to avoid between visits."
+        "Lashes disappear by week two?",
+        "Film a lash application and your simple aftercare for making them last."
       ],
       [
-        "Waxing hurts and you dread it?",
-        "Show your gentle prep and aftercare so guests feel at ease."
+        "Peach fuzz making makeup cakey?",
+        "Do a quick dermaplaning demo and show how smoothly foundation goes on after."
       ],
       [
-        "Makeup melts by dinner?",
-        "Show your prep and the setting spray that keeps it in place."
+        "Gel manicure chipping already?",
+        "Show your prep steps and the cuticle oil habit that helps a set last."
       ],
       [
-        "Breakouts after a new product?",
-        "Explain a simple routine and why you add one thing at a time."
+        "Sensitive skin after waxing?",
+        "Film your calming aftercare routine and what to skip for the first 24 hours."
       ]
     ]
   },
@@ -153,8 +153,12 @@
     "alexandra",
     "rose"
   ],
-  "cards": ["adriana"],
-  "spaCost": ["alexandra"],
+  "cards": [
+    "adriana"
+  ],
+  "spaCost": [
+    "alexandra"
+  ],
   "invHide": {
     "rose": [
       "cpb"
