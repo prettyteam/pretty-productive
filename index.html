@@ -1093,7 +1093,7 @@ function meView(){
   out.push(h('div',{class:'gcard'},h('h2',{},gIcon('✧'),'Posting for you'),
     h('span',{class:'lbl'},'Keep your look cohesive'),
     SOCIAL_RULES.map(([t,x])=>h('div',{class:'grule'},h('div',{class:'gn'},'✓'),h('p',{},t,h('small',{},x)))),
-    ...(posts.length?[h('span',{class:'lbl'},(soc.week||'This week')+' · 5 posts · new every Sunday'),
+    ...(posts.length?[h('span',{class:'lbl'},(soc.week||'This week')+' · new every Sunday'),
       ...posts.map(([t,x],i)=>h('div',{class:'grule'},h('div',{class:'gn'},String(i+1)),h('p',{},t,h('small',{},x))))]:[])));
   return [h('div',{class:'hub'},out)];
 }
