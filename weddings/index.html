@@ -382,11 +382,15 @@ textarea.copyfallback{position:fixed;left:-9999px;top:0}
             </label>
             <label class="f">Instagram<input id="pf-instagram" placeholder="@"></label>
           </div>
+          <div class="row" style="align-items:center;margin-top:6px">
+            <button class="btn" id="pf-save2">Save my info</button>
+            <span class="status pf-st"></span>
+          </div>
         </div>
       </div>
       <div class="rail">
         <div class="card">
-          <h2>Work details</h2>
+          <h2 data-open>Work details</h2>
           <div class="row" id="pf-skills"></div>
           <label class="f">Areas you'll travel to<input id="pf-area" placeholder="e.g. South Jersey, shore, Philly"></label>
           <label class="f">Usual availability<textarea id="pf-availability" placeholder="e.g. Saturdays, Fridays after 2"></textarea></label>
@@ -400,7 +404,7 @@ textarea.copyfallback{position:fixed;left:-9999px;top:0}
           <label class="f">Anything else the office should know<textarea id="pf-notes"></textarea></label>
           <div class="row" style="align-items:center">
             <button class="btn" id="pf-save">Save my info</button>
-            <span class="status" id="pf-status"></span>
+            <span class="status pf-st" id="pf-status"></span>
           </div>
           <p class="hint">Never enter your Social Security number here.</p>
         </div>
@@ -1000,16 +1004,35 @@ const PF=["legalName","preferredName","phone","email","address","city","state","
 const SKILLS=["Bridal hair","Bridal makeup","Airbrush","Extensions","Lashes","Barber"];
 $("#pf-skills").innerHTML=SKILLS.map((k,i)=>'<label class="chk"><input type="checkbox" id="pf-sk'+i+'" value="'+k+'"> '+k+'</label>').join("");
 let profiles=[];
-function fillProfile(d){PF.forEach(f=>{$("#pf-"+f).value=(d&&d[f])||""});SKILLS.forEach((k,i)=>{$("#pf-sk"+i).checked=!!(d&&d.skills&&d.skills.includes(k))});if(d&&d.updatedAt)$("#pf-status").textContent="Last updated "+new Date(d.updatedAt).toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"})}
+function fillProfile(d){PF.forEach(f=>{$("#pf-"+f).value=(d&&d[f])||""});SKILLS.forEach((k,i)=>{$("#pf-sk"+i).checked=!!(d&&d.skills&&d.skills.includes(k))});if(d&&d.updatedAt)pfSay("Last updated "+new Date(d.updatedAt).toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"}))}
 $("#pf-save").onclick=async()=>{
-  if(ROLE!=="artist"){$("#pf-status").textContent="Open your private link to save your info.";return}
+  if(ROLE!=="artist"){pfSay("Open your private link to save your info.");return}
   const body={};PF.forEach(f=>body[f]=$("#pf-"+f).value.trim());
   body.skills=SKILLS.filter((k,i)=>$("#pf-sk"+i).checked);
-  if(!body.legalName&&!body.preferredName){$("#pf-status").textContent="Add your name first.";return}
-  $("#pf-status").textContent="Saving…";
-  try{await api("saveProfile",{profile:body});ME=Object.assign(ME||{},body);$("#pf-status").textContent="Saved. Thank you!"}
-  catch(e){$("#pf-status").textContent="That didn't save. Try again."}
+  if(!body.legalName&&!body.preferredName){pfSay("Add your name first.");return}
+  pfSay("Saving…");$("#pf-save").disabled=$("#pf-save2").disabled=true;
+  try{await api("saveProfile",{profile:body});ME=Object.assign(ME||{},body);pfDraftClear();pfSay("Saved. Thank you!")}
+  catch(e){pfSay("That didn't save. Check your connection and tap Save again.")}
+  finally{$("#pf-save").disabled=$("#pf-save2").disabled=false}
 };
+$("#pf-save2").onclick=()=>$("#pf-save").click();
+function pfSay(t){document.querySelectorAll(".pf-st").forEach(el=>el.textContent=t)}
+// keep what an artist types on her phone until it saves, so a slip (sign out, reload) doesn't lose it
+const PF_DRAFT="tw-pf-draft";
+function pfDraftSave(){
+  if(ROLE!=="artist"||!AUTH)return;
+  const v={};PF.forEach(f=>v[f]=$("#pf-"+f).value);v.skills=SKILLS.filter((k,i)=>$("#pf-sk"+i).checked);
+  try{localStorage.setItem(PF_DRAFT,JSON.stringify({member:AUTH.member,v}))}catch(e){}
+}
+function pfDraftClear(){try{localStorage.removeItem(PF_DRAFT)}catch(e){}}
+function pfDraftRestore(){
+  let d=null;try{d=JSON.parse(localStorage.getItem(PF_DRAFT)||"null")}catch(e){}
+  if(!d||!AUTH||d.member!==AUTH.member||!d.v)return;
+  PF.forEach(f=>{if(d.v[f]!=null)$("#pf-"+f).value=d.v[f]});
+  SKILLS.forEach((k,i)=>{$("#pf-sk"+i).checked=(d.v.skills||[]).includes(k)});
+  pfSay("You have info that isn't saved yet. Tap Save my info.");
+}
+$("#view-info").addEventListener("input",pfDraftSave);$("#view-info").addEventListener("change",pfDraftSave);
 const PO_FORM="https://docs.google.com/forms/d/e/1FAIpQLSfrvnrlQWGchpae8CuWPe394rB9Sq5aI1O8yLF_0euXg_kKww/viewform";
 const PO_E={name:378587757,bride:1168606751,date:33237343,type:990129114,loc:1483806607,services:623130993,qty:277197203,travel:1535840962,total:39364533};
 const PO_SERVICES=["Bridal Hair","Bridal Makeup","Bridal Party Formal Hair","Bridal Party Makeup","Flower Girl","Barber","Other"];
@@ -1626,7 +1649,7 @@ function showSignIn(msg){
   if(msg)$("#si-msg").textContent=msg;
 }
 function signOut(msg){AUTH=null;ROLE=null;canWrite=false;previews=[];pvSel=null;pvLoaded=false;pvThumbs={};$("#pv-detail").innerHTML="";try{localStorage.removeItem(SKEY)}catch(e){}showSignIn(msg)}
-$("#signOut").onclick=()=>signOut();
+$("#signOut").onclick=()=>{if(confirm(ROLE==="artist"?"Sign out? You'll need your link to get back in.":"Sign out? You'll need the office code to get back in."))signOut()};
 $("#si-go").onclick=async()=>{
   const code=$("#si-code").value.trim().toUpperCase();if(!code)return;
   $("#si-status").textContent="Checking…";
@@ -1655,7 +1678,7 @@ async function start(){
   $("#calCard").hidden=ROLE!=="office";
   let t=null;try{t=localStorage.getItem("tt-tab")}catch(e){}
   showTab(ROLE==="office"?"booked":(tabs.includes(t)?t:tabs[0]));   // the office always opens on Booked weddings
-  if(ROLE==="artist"){ME=j.me;fillProfile(ME);poPrefill(ME);setStatus("Hi "+(ME.preferredName||ME.legalName||"there"))}
+  if(ROLE==="artist"){ME=j.me;fillProfile(ME);pfDraftRestore();poPrefill(ME);setStatus("Hi "+(ME.preferredName||ME.legalName||"there"))}
   else setStatus("Office");
   applyData(j);
 }
