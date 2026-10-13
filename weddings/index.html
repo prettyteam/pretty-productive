@@ -1079,7 +1079,8 @@ const ADM_COLS=[["preferredName","Name"],["legalName","Legal name"],["role","Doe
 const cell=(d,k)=>k==="skills"?(d.skills||[]).join(", "):k==="updatedAt"?(d.updatedAt?new Date(d.updatedAt).toLocaleDateString("en-US"):""):(d[k]||"");
 const linkFor=m=>location.origin+location.pathname+"#a."+m.id+"."+m.secret;
 function renderAdmin(){
-  const rows=profiles.slice().sort((a,b)=>(a.active==="No")-(b.active==="No")||(b.updatedAt||"").localeCompare(a.updatedAt||""));
+  const nm=d=>(d.preferredName||d.legalName||"").trim();
+  const rows=profiles.slice().sort((a,b)=>(a.active==="No")-(b.active==="No")||nm(a).localeCompare(nm(b),"en",{sensitivity:"base"}));   // A to Z, turned-off people last
   const old=Date.now()-1000*60*60*24*180;
   $("#adm-note").textContent=rows.length?rows.length+" team members. Red dates are over 6 months old.":"No team members yet. Add each artist above and text her the link.";
   $("#adm-table").innerHTML='<thead><tr><th>Link</th>'+ADM_COLS.map(c=>'<th>'+c[1]+'</th>').join("")+'</tr></thead><tbody>'+rows.map(d=>'<tr'+(d.active==="No"?' style="opacity:.45"':'')+'><td><button class="btn ghost small" data-copy="'+esc(d._id)+'">Copy link</button> <button class="btn ghost small" data-new="'+esc(d._id)+'">New link</button> <button class="btn ghost small" data-act="'+esc(d._id)+'">'+(d.active==="No"?"Turn on":"Turn off")+'</button></td>'+ADM_COLS.map(c=>'<td'+(c[0]==="updatedAt"&&d.updatedAt&&Date.parse(d.updatedAt)<old?' class="stale"':'')+'>'+esc(cell(d,c[0]))+'</td>').join("")+'</tr>').join("")+'</tbody>';
