@@ -1447,7 +1447,7 @@ function renderJobs(){
     '<tr><td>'+esc(shortDate(j.date)||"–")+'</td><td><b>'+esc(j.bride)+'</b></td><td>'+esc(j.artist)+'</td><td>'+esc(j.role)+'</td><td style="white-space:normal;min-width:180px">'+esc(jbRange(j).join(" · "))+'</td><td>'
     +(j.status==="Yes"?'<span class="pill">Yes</span><div class="hint">Add her under Team on site on the Timeline.</div>':j.status==="No"?'<span class="pill">No</span>':'<span class="hint">Waiting</span>')+'</td></tr>').join("");
 }
-function jbText(){
+function jbText(link){
   const w=allWeddings.find(x=>x.id===$("#jb-wedding").value);if(!w)return "";
   const role={hair:"Hair",mu:"Makeup",both:"Hair & makeup"}[$("#jb-role").value];
   const L=["Taffeta Weddings job offer","Date: "+(w.d.date?shortDate(w.d.date):"TBD"),"Location: "+([w.d.location,w.d.room].filter(Boolean).join(", ")||"TBD"),"Role: "+role];
@@ -1455,7 +1455,7 @@ function jbText(){
   if($("#jb-travel").value.trim())L.push("Travel minimum: "+$("#jb-travel").value.trim());
   if($("#jb-pay").value.trim())L.push("Payout: "+$("#jb-pay").value.trim());
   if($("#jb-note").value.trim())L.push($("#jb-note").value.trim());
-  L.push("","Open your Taffeta Weddings link and tap Yes or No under Job offers.");
+  L.push("",link?"Tap Yes or No here: "+link:"Open your Taffeta Weddings link and tap Yes or No under Job offers.");
   return L.join("\n");
 }
 $("#jb-copy").onclick=()=>{const t=jbText();if(!t){$("#jb-status").textContent="Choose a wedding first.";return}copy(t)};
@@ -1467,14 +1467,28 @@ $("#jb-send").onclick=async()=>{
   try{
     const j=await api("offerJob",{offer:{weddingId:$("#jb-wedding").value,memberIds:ids,role:$("#jb-role").value,headcount:$("#jb-head").value,travel:$("#jb-travel").value,payout:$("#jb-pay").value,note:$("#jb-note").value}});
     if(j.ok===false){out.textContent=j.message||"That didn't save.";return}
-    jbJobs=j.jobs||jbJobs;renderJobs();out.textContent="Offer created for "+ids.length+" artist"+(ids.length===1?"":"s")+". Copy the text and send it to them.";
+    jbJobs=j.jobs||jbJobs;renderJobs();
+    // the app doesn't text anyone: give the office one button per artist, with her private link in the message
+    const sent=ids.map(id=>profiles.find(p=>p._id===id)).filter(Boolean);
+    jbOut=sent.map(p=>({p,text:jbText(linkFor(p))}));
+    out.innerHTML="Offer saved. It's waiting in "+(sent.length===1?"her":"their")+" app under Job offers. Now text "+(sent.length===1?"her":"each one")+" the offer and link:"
+      +'<div class="row" style="margin-top:6px">'+jbOut.map((o,i)=>'<button class="btn small" data-jbtext="'+i+'">Text '+esc(o.p.preferredName||o.p.legalName||"artist")+'</button>').join("")+'</div>';
+    out.querySelectorAll("[data-jbtext]").forEach(b=>b.onclick=()=>jbSend(jbOut[+b.dataset.jbtext],b));
     $("#jb-team").querySelectorAll("input:checked").forEach(c=>c.checked=false);
   }catch(e){out.textContent="That didn't save. Try again."}
   finally{$("#jb-send").disabled=false}
 };
+let jbOut=[];
+function jbSend(o,b){
+  const phone=String(o.p.phone||"").replace(/[^\d+]/g,"");
+  if(phone&&/iPhone|iPad|Android/i.test(navigator.userAgent)){location.href="sms:"+phone+(/Android/i.test(navigator.userAgent)?"?":"&")+"body="+encodeURIComponent(o.text)}
+  else{copy(o.text);toast("Copied. Paste it into your text to "+(o.p.preferredName||"her")+".")}
+  b.textContent="Sent to "+(o.p.preferredName||o.p.legalName||"artist")+" ✓";
+}
 $("#jb-refresh").onclick=loadJobs;
 function renderMyJobs(){
   const box=$("#jb-mine"),open=jbJobs.filter(j=>j.status==="Waiting").length;
+  if(ROLE==="artist")$("#tab-jobs").textContent=open?"Job offers ("+open+")":"Job offers";
   $("#jb-mine-note").textContent=jbJobs.length?(open?open+" waiting on your answer":"You've answered every offer"):"No job offers right now";
   box.innerHTML=jbJobs.slice().sort((a,b)=>(a.date||"").localeCompare(b.date||"")).map(j=>'<div class="job"><div><b>'+esc(shortDate(j.date)||"Date TBD")+'</b> · '+esc(j.role)+'</div><div class="meta">'+esc(j.location||"Location TBD")+'</div>'
     +(jbRange(j).length?'<div class="meta">'+esc(jbRange(j).join(" · "))+'</div>':'')+(j.note?'<div class="meta">'+esc(j.note)+'</div>':'')
@@ -1682,6 +1696,14 @@ async function start(){
   if(ROLE==="artist"){ME=j.me;fillProfile(ME);pfDraftRestore();poPrefill(ME);setStatus("Hi "+(ME.preferredName||ME.legalName||"there"))}
   else setStatus("Office");
   applyData(j);
+  if(ROLE==="artist")jbCheckNew();
+}
+// artists: open straight to Job offers when one is waiting on her answer
+async function jbCheckNew(){
+  try{const r=await api("myJobs");jbJobs=r.jobs||[];renderMyJobs();
+    const n=jbJobs.filter(x=>x.status==="Waiting").length;
+    if(n&&$("#view-jobs").hidden)showTab("jobs");
+  }catch(e){}
 }
 showTab=function(t){
   const allowed=ROLE==="office"?["booked","pipe","todo","tpl","build","team","cal","jobs","prev","admin","pay"]:["team","jobs","prev","info","pay"];
