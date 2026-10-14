@@ -14,7 +14,7 @@
  * After changing this code later: Deploy > Manage deployments > Edit > New version.
  */
 const TZ = 'America/New_York';
-const BOUND_SHEET_ID = '';   // filled in at deploy time with the id of the "Taffeta Weddings Team App" Sheet
+const BOUND_SHEET_ID = '1RFy8t8UBPdzDwb7lGjNmjHy76TzFzQ01bL-QEZ1V7a4';   // filled in at deploy time with the id of the "Taffeta Weddings Team App" Sheet
 const SALON = 'Taffeta Salon & Spa, 219 Bellevue Ave, Hammonton, NJ 08037';
 
 const TABS = {
@@ -108,6 +108,7 @@ function doPost(e) {
   try {
     lock.waitLock(20000);
     const office = who.role === 'office';
+    try { flushPush_(); } catch (err) { console.warn(err); }
     switch (d.action) {
       case 'load': return json_(Object.assign({ ok: true }, load_(who)));
       case 'saveProfile': return json_(saveProfile_(office ? d.memberId : who.member.id, d.profile));
@@ -119,6 +120,7 @@ function doPost(e) {
       case 'photos': return json_(photos_(who, d.key, d.ids, !!d.full));
       case 'myJobs': return json_(office ? { ok: true, jobs: [] } : myJobs_(who.member));
       case 'answerJob': return json_(office ? { ok: false, error: 'office_only' } : answerJob_(who.member, d.id, !!d.yes));
+      case 'savePushToken': return json_(office ? { ok: false, error: 'office_only' } : savePushToken_(who.member, d.token, d.device, !!d.off));
     }
     if (!office) return json_({ ok: false, error: 'office_only' });
     switch (d.action) {
@@ -167,7 +169,7 @@ function who_(d) {
 function load_(who) {
   const weddings = weddings_();
   if (who.role === 'office') {
-    return { role: 'office', weddings: weddings.map(w => w.d), team: members_().map(m => Object.assign({}, m)) };
+    return { role: 'office', weddings: weddings.map(w => w.d), team: members_().map(m => Object.assign({}, m)), alerts: pushOnIds_() };
   }
   const m = who.member, email = String(m.email || '').toLowerCase();
   const mine = weddings.map(w => w.d).filter(w => (w.artists || []).some(a =>
@@ -211,6 +213,7 @@ function saveWedding_(w) {
   const row = [id, w.date || '', clean_(w.bride, 120), clean_((w.artistNames || []).join(', '), 300), new Date(), JSON.stringify(w)];
   if (found) sh.getRange(found.row, 1, 1, row.length).setValues([row]);
   else sh.appendRow(row);
+  notePushChange_(found ? found.d : null, w);
   return { ok: true, id: id, updatedAt: w.updatedAt, cal: w.cal || null };
 }
 

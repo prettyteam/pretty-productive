@@ -3,6 +3,12 @@
 <title>Taffeta Weddings Team</title>
 <meta name="robots" content="noindex,nofollow">
 <link rel="icon" href="../icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Taffeta Weddings">
+<meta name="theme-color" content="#ffffff">
 <script src="config.js"></script>
 <style>:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;padding:0}img{max-width:100%}</style>
 <script src="/refresh.js" defer></script>
@@ -357,6 +363,16 @@ textarea.copyfallback{position:fixed;left:-9999px;top:0}
   </section>
 
   <section id="view-info" hidden>
+    <div class="card" id="al-card" hidden style="margin-bottom:14px">
+      <h2 data-open>Phone alerts</h2>
+      <p class="hint" id="al-msg" style="margin-top:0">Get a banner and a sound when the office sends you a job offer or changes a wedding you're on.</p>
+      <ol class="hint" id="al-steps" hidden style="margin:0 0 10px;padding-left:18px">
+        <li>In Safari, tap the Share button (the square with the arrow).</li>
+        <li>Tap <b>Add to Home Screen</b>, then <b>Add</b>.</li>
+        <li>Open <b>Taffeta Weddings</b> from your Home Screen, come back to My info and tap <b>Turn on alerts</b>.</li>
+      </ol>
+      <div class="row" style="align-items:center"><button class="btn" id="al-on" style="flex:0 0 auto">Turn on alerts</button><button class="btn ghost" id="al-off" hidden style="flex:0 0 auto">Turn off alerts</button><span class="status" id="al-status"></span></div>
+    </div>
     <div class="grid2">
       <div class="rail">
         <div class="card">
@@ -1075,8 +1091,8 @@ function renderMine(){
   if(!myPayouts.length){box.innerHTML='<p class="hint">Requests you send show here.</p>';return}
   box.innerHTML=myPayouts.slice().sort((a,b)=>(b.sentAt||"").localeCompare(a.sentAt||"")).map(r=>'<div style="border-bottom:1px solid var(--line);padding:8px 0;font-size:13px"><b>'+esc(r.bride)+'</b> · '+esc(r.type)+' · '+esc(poDate(r.date))+'<br><span class="hint">$'+esc(r.total)+' · opened '+esc(new Date(r.sentAt).toLocaleDateString("en-US"))+'</span></div>').join("");
 }
-const ADM_COLS=[["preferredName","Name"],["legalName","Legal name"],["role","Does"],["skills","Specialties"],["phone","Cell"],["email","Email"],["address","Address"],["city","City"],["state","State"],["zip","ZIP"],["area","Travel area"],["availability","Availability"],["square","Square direct deposit"],["emergencyName","Emergency contact"],["emergencyPhone","Emergency phone"],["instagram","Instagram"],["notes","Notes"],["updatedAt","Last updated"]];
-const cell=(d,k)=>k==="skills"?(d.skills||[]).join(", "):k==="updatedAt"?(d.updatedAt?new Date(d.updatedAt).toLocaleDateString("en-US"):""):(d[k]||"");
+const ADM_COLS=[["preferredName","Name"],["legalName","Legal name"],["role","Does"],["skills","Specialties"],["phone","Cell"],["email","Email"],["address","Address"],["city","City"],["state","State"],["zip","ZIP"],["area","Travel area"],["availability","Availability"],["square","Square direct deposit"],["emergencyName","Emergency contact"],["emergencyPhone","Emergency phone"],["instagram","Instagram"],["notes","Notes"],["alerts","Alerts"],["updatedAt","Last updated"]];
+const cell=(d,k)=>k==="alerts"?(d.alerts?"On":""):k==="skills"?(d.skills||[]).join(", "):k==="updatedAt"?(d.updatedAt?new Date(d.updatedAt).toLocaleDateString("en-US"):""):(d[k]||"");
 const linkFor=m=>location.origin+location.pathname+"#a."+m.id+"."+m.secret;
 function renderAdmin(){
   const nm=d=>(d.preferredName||d.legalName||"").trim();
@@ -1655,8 +1671,11 @@ document.querySelectorAll(".card").forEach((card,i)=>{
 const SKEY="tw-auth";
 function readAuth(){
   const h=location.hash.match(/^#a\.([a-z0-9]+)\.([A-Z0-9]+)$/i);
-  if(h){const a={member:h[1],secret:h[2]};try{localStorage.setItem(SKEY,JSON.stringify(a))}catch(e){}history.replaceState(null,"",location.pathname);return a}
-  try{return JSON.parse(localStorage.getItem(SKEY)||"null")}catch(e){return null}
+  if(h){const a={member:h[1],secret:h[2]};try{localStorage.setItem(SKEY,JSON.stringify(a))}catch(e){}return a}
+  // an artist's link stays in the address bar, so Add to Home Screen saves an app that opens signed in
+  let a=null;try{a=JSON.parse(localStorage.getItem(SKEY)||"null")}catch(e){}
+  if(a&&a.member&&a.secret)history.replaceState(null,"",location.pathname+location.search+"#a."+a.member+"."+a.secret);
+  return a
 }
 function showSignIn(msg){
   TABS.forEach(k=>{$("#tab-"+k).hidden=true;$("#view-"+k).hidden=true});
@@ -1675,7 +1694,7 @@ $("#si-go").onclick=async()=>{
 $("#si-code").addEventListener("keydown",e=>{if(e.key==="Enter")$("#si-go").click()});
 function applyData(j){
   allWeddings=(j.weddings||[]).map(d=>({id:d.id,d}));
-  if(ROLE==="office"){profiles=(j.team||[]).map(m=>Object.assign({_id:m.id},m));renderAdmin();renderArtists()}
+  if(ROLE==="office"){const al=j.alerts||[];profiles=(j.team||[]).map(m=>Object.assign({_id:m.id,alerts:al.includes(m.id)},m));renderAdmin();renderArtists()}
   else{myPayouts=j.payouts||[];renderMine()}
   if(docId&&S.cal){const w=allWeddings.find(x=>x.id===docId);if(w&&w.d.cal)S.cal=w.d.cal}
   refreshSavedSelect();poBrides();renderTeam();renderTeamSheet();renderBooked();
@@ -1696,8 +1715,51 @@ async function start(){
   if(ROLE==="artist"){ME=j.me;fillProfile(ME);pfDraftRestore();poPrefill(ME);setStatus("Hi "+(ME.preferredName||ME.legalName||"there"))}
   else setStatus("Office");
   applyData(j);
-  if(ROLE==="artist")jbCheckNew();
+  if(ROLE==="artist"){jbCheckNew();alInit()}
+  const want=new URLSearchParams(location.search).get("tab");   // opened from a phone alert
+  if(want){history.replaceState(null,"",location.pathname+location.hash);showTab(want)}
 }
+/* ---------- phone alerts (artists; Firebase Cloud Messaging web push) ---------- */
+const FCM=window.TW_FCM||null;   // public web config from config.js; alerts stay hidden until it's set
+const FB="https://www.gstatic.com/firebasejs/10.12.2/";
+const alIOS=/iPhone|iPad|iPod/.test(navigator.userAgent)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);
+const alStandalone=()=>(window.matchMedia&&matchMedia("(display-mode: standalone)").matches)||navigator.standalone===true;
+const alCan=()=>"serviceWorker" in navigator&&"PushManager" in window&&"Notification" in window;
+function alShow(on,msg){$("#al-on").hidden=on;$("#al-off").hidden=!on;$("#al-status").textContent=msg||""}
+async function alToken(){
+  const reg=await navigator.serviceWorker.register("sw.js",{scope:"./"});await navigator.serviceWorker.ready;
+  const app=await import(FB+"firebase-app.js"),msg=await import(FB+"firebase-messaging.js");
+  const fb=app.getApps().length?app.getApp():app.initializeApp(FCM.config);
+  return msg.getToken(msg.getMessaging(fb),{vapidKey:FCM.vapidKey,serviceWorkerRegistration:reg});
+}
+async function alSave(off){
+  const token=await alToken();if(!token)throw new Error("no token");
+  await api("savePushToken",{token,device:(alIOS?"iPhone":/Android/i.test(navigator.userAgent)?"Android":"Computer")+(alStandalone()?" app":""),off:!!off});
+}
+function alInit(){
+  if(!FCM||ROLE!=="artist")return;
+  $("#al-card").hidden=false;
+  const steps=alIOS&&!alStandalone();
+  $("#al-steps").hidden=!steps;
+  if(steps){$("#al-on").hidden=true;$("#al-off").hidden=true;$("#al-msg").textContent="To get alerts on your iPhone, add this app to your Home Screen first:";return}
+  if(!alCan()){$("#al-on").hidden=true;$("#al-msg").textContent="This browser can't show alerts. On an iPhone, use Safari and add the app to your Home Screen.";return}
+  if(Notification.permission==="denied"){alShow(false,"Alerts are blocked. Turn them on in your phone's Settings for Taffeta Weddings, then tap Turn on alerts.");return}
+  if(Notification.permission==="granted"){alShow(true,"Alerts are on.");alSave().catch(()=>{})}   // keep this phone's token fresh
+  else alShow(false,"");
+}
+$("#al-on").onclick=async()=>{
+  $("#al-status").textContent="Turning on…";
+  try{
+    const p=await Notification.requestPermission();
+    if(p!=="granted"){alShow(false,p==="denied"?"Alerts are blocked. Turn them on in your phone's Settings, then try again.":"Tap Allow when your phone asks.");return}
+    await alSave();alShow(true,"Alerts are on. You'll get a banner for new offers and schedule changes.");
+  }catch(e){alShow(false,"That didn't work. Check your connection and try again.")}
+};
+$("#al-off").onclick=async()=>{
+  $("#al-status").textContent="Turning off…";
+  try{await alSave(true);alShow(false,"Alerts are off.")}catch(e){$("#al-status").textContent="That didn't work. Try again."}
+};
+if("serviceWorker" in navigator)navigator.serviceWorker.addEventListener("message",e=>{if(e.data&&e.data.tw==="tab"&&ROLE){showTab(e.data.tab);if(e.data.tab==="jobs")loadJobs()}});
 // artists: open straight to Job offers when one is waiting on her answer
 async function jbCheckNew(){
   try{const r=await api("myJobs");jbJobs=r.jobs||[];renderMyJobs();

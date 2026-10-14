@@ -51,6 +51,7 @@ function offerJob_(o) {
   team.forEach(m => sh.appendRow(['j' + code_(10).toLowerCase(), w.d.id, clean_(w.d.bride, 120), w.d.date || '',
     clean_([w.d.location, w.d.room].filter(Boolean).join(', '), 200), m.id, clean_(m.preferredName || m.legalName, 120), role,
     clean_(o.headcount, 60), clean_(o.travel, 60), clean_(o.payout, 60), clean_(o.note, 500), 'Waiting', now, '']));
+  pushJobOffer_(team.map(m => m.id), w.d.date, role);
   return jobs_();
 }
 
