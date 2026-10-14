@@ -16,7 +16,7 @@ const RG_GROUPS={
 const RG_HOW={
   milk:'Smooth over dry face and neck with fingertips and massage for 1–2 minutes. Remove with a damp cloth or cotton pads.',
   p50:'After cleansing, soak a cotton pad and sweep over face and neck, upward and outward. A light tingle is normal. Do not rinse.',
-  serum:'After your lotion, press a few drops between your fingertips and pat into face and neck. Let it sink in before your cream.',
+  serum:'After your P50, press a few drops between your fingertips and pat into face and neck. Let it sink in before your cream.',
   cream:'Warm a pea-size amount between your fingertips and press into face and neck as your last step.',
   eye:'Tap a rice-grain amount around the orbital bone with your ring finger, from the inner corner out.',
   mask:'Apply an even layer to clean skin, avoiding the eyes. Leave on 10–15 minutes, then rinse with lukewarm water.',
