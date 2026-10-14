@@ -24,7 +24,7 @@ function jobRows_() {
   const sh = jobsSheet_();
   if (sh.getLastRow() < 2) return [];
   return sh.getRange(2, 1, sh.getLastRow() - 1, JOBS_HEADERS.length).getValues().map((r, i) => ({
-    row: i + 2, id: String(r[0]), weddingId: String(r[1]), bride: String(r[2]), date: String(r[3]), location: String(r[4]),
+    row: i + 2, id: String(r[0]), weddingId: String(r[1]), bride: String(r[2]), date: r[3] instanceof Date ? Utilities.formatDate(r[3], TZ, 'yyyy-MM-dd') : String(r[3]), location: String(r[4]),
     artistId: String(r[5]), artist: String(r[6]), role: String(r[7]), headcount: String(r[8]), travel: String(r[9]),
     payout: String(r[10]), note: String(r[11]), status: String(r[12]) || 'Waiting', sentAt: String(r[13]), answeredAt: String(r[14])
   })).filter(j => j.id);
