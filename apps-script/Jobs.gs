@@ -71,7 +71,43 @@ function answerJob_(member, id, yes) {
   if (!j) return { ok: false, error: 'not_found' };
   jobsSheet_().getRange(j.row, 13, 1, 3).setValues([[yes ? 'Yes' : 'No', j.sentAt, new Date().toISOString()]]);
   pushOffice_(first_(j.artist) + ' said ' + (yes ? 'Yes' : 'No'), shortDate_(j.date) + ' · ' + first_(j.bride), 'jobs');
+  if (yes) addToWedding_(j, member);
   return myJobs_(member);
+}
+
+/** A Yes puts her on the wedding's Team on site (filling an empty Hair or Makeup slot first), so the office
+ *  Calendar tab and her own My weddings show her without anyone retyping it. */
+function addToWedding_(j, member) {
+  const w = weddings_().find(x => x.d.id === j.weddingId);
+  if (!w) return false;
+  const d = w.d, list = d.artists = Array.isArray(d.artists) ? d.artists : [];
+  const roles = j.role === 'Hair & makeup' ? ['hair', 'mu'] : [j.role === 'Makeup' ? 'mu' : 'hair'];
+  let changed = false;
+  roles.forEach(role => {
+    if (list.some(a => a.uid === member.id && a.role === role)) return;
+    let a = list.find(x => x.role === role && !x.uid && !String(x.name || '').trim());
+    if (!a) { a = { id: Math.random().toString(36).slice(2, 10), role: role }; list.push(a); }
+    a.uid = member.id;
+    a.name = member.preferredName || member.legalName || j.artist;
+    if (member.email) a.email = member.email;
+    if (member.phone && !a.phone) a.phone = member.phone;
+    changed = true;
+  });
+  if (!changed) return false;
+  d.artistNames = list.map(a => String(a.name || '').trim()).filter(Boolean);
+  saveWedding_(d);
+  return true;
+}
+
+/** One-off, run from the editor: put every artist who already said Yes on her wedding. */
+function addYesArtistsToWeddings() {
+  const team = members_();
+  let n = 0;
+  jobRows_().filter(j => j.status === 'Yes').forEach(j => {
+    const m = team.find(x => x.id === j.artistId);
+    if (m && addToWedding_(j, m)) n++;
+  });
+  Logger.log('Added ' + n + ' artist(s) to weddings.');
 }
 
 /** Go-to artists pinned to the top of the Jobs list, in order. Kept in the script property JOB_TOP (member ids). */
