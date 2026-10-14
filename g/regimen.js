@@ -14,7 +14,7 @@ const RG_GROUPS={
 };
 
 const RG_HOW={
-  milk:'Smooth over dry face and neck with fingertips and massage for 1–2 minutes. Remove with a damp cloth or cotton pads.',
+  milk:'With dry hands and a dry face, cleanse with 1 pump in the morning and 2–3 pumps at night. Massage over face and neck for 1–2 minutes. Remove with a wet cloth, then rinse with cool water. At night, if you’re wearing makeup, double cleanse to remove the first layer.',
   p50:'After cleansing, soak a cotton pad and sweep over face and neck, upward and outward. A light tingle is normal. Do not rinse.',
   serum:'After your P50, press a few drops between your fingertips and pat into face and neck. Let it sink in before your cream.',
   cream:'Warm a pea-size amount between your fingertips and press into face and neck as your last step.',
@@ -38,7 +38,7 @@ const RG_LIST={
       ['Biologique Recherche Lait Dermo-S',RG_HOW.milk],
       ['Biologique Recherche Lait E.V.',RG_HOW.milk],
       ['Biologique Recherche Lait U',RG_HOW.milk],
-      ['Biologique Recherche Lait S.R.',RG_HOW.milk],
+      ['Biologique Recherche Lait S.R.','With dry hands and a dry face, cleanse with 1 pump in the morning and 2–3 pumps at night. Massage over face and neck for 2–3 minutes. Remove with a wet cloth, then rinse with cool water. At night, if you’re wearing makeup, double cleanse to remove the first layer.'],
       ['Biologique Recherche Solution Démaquillante',"Soak a cotton pad and hold over closed eyes for a few seconds, then gently wipe away eye makeup."],
       ['Biologique Recherche L’Eauxygénante','Mist over face after cleansing or any time skin feels tight.']]],
     ['Tone (Lotion P50)',[
@@ -48,19 +48,19 @@ const RG_LIST={
       ['Biologique Recherche Lotion P50W',RG_HOW.p50],
       ['Biologique Recherche Lotion P50V',RG_HOW.p50],
       ['Biologique Recherche Lotion P50 PIGM 400',RG_HOW.p50],
-      ['Biologique Recherche Lotion MC 110','After cleansing, apply 1–2 pumps to a cotton pad and sweep over face and neck, upward and outward. A light tingle is normal. Do not rinse.']]],
+      ['Biologique Recherche Lotion MC 110','Use 2–3 times a week. Apply 1–2 pumps to a cotton round and tap onto the affected areas. Also great for fine lines.','2–3x a week']]],
     ['Serums',[
       ['Biologique Recherche Sérum Collagène Originel',RG_HOW.serum],
       ['Biologique Recherche Elastine Sérum',RG_HOW.serum],
       ['Biologique Recherche Sérum Progeskin',RG_HOW.serum],
       ['Biologique Recherche Sérum A-Glyca',RG_HOW.serum],
       ['Biologique Recherche Sérum Biosensible',RG_HOW.serum],
-      ['Biologique Recherche Sérum Vivant',RG_HOW.serum],
+      ['Biologique Recherche Sérum Vivant','Apply 2–3 drops onto blemished areas and pat into skin.','PM'],
       ['Biologique Recherche Sérum Erythros',RG_HOW.serum],
       ['Biologique Recherche Sérum PIGM 400',RG_HOW.serum],
       ['Biologique Recherche Sérum Liposmose',RG_HOW.serum],
       ['Biologique Recherche Iso-Placenta',RG_HOW.serum],
-      ['Biologique Recherche Amniotique',RG_HOW.serum],
+      ['Biologique Recherche Amniotique','After your P50, apply 2–3 drops directly onto skin. Gently pat to spread the product evenly over face and neck.'],
       ['Biologique Recherche Colostrum Sérum Authentique',RG_HOW.serum],
       ['Biologique Recherche Spectral Sérum Authentique',RG_HOW.serum],
       ['Biologique Recherche Complexe Iribiol',RG_HOW.serum],
@@ -70,7 +70,7 @@ const RG_LIST={
       ['Biologique Recherche Le Grand Sérum',RG_HOW.serum],
       ['Cool Cucumber Hydralixir','Pat 2–3 drops into clean skin before your moisturizer.']]],
     ['Moisturize',[
-      ['Biologique Recherche Crème Verte Espoir',RG_HOW.cream],
+      ['Biologique Recherche Crème Verte Espoir','Use a pea-size amount all over face and neck. Emulsify between your fingers and press into skin. Use a little more if needed.'],
       ['Biologique Recherche Crème Elastine',RG_HOW.cream],
       ['Biologique Recherche Crème ADN Elastine Marine Collagène',RG_HOW.cream],
       ['Biologique Recherche Crème Hydravits',RG_HOW.cream],
@@ -243,10 +243,10 @@ function regimenView(){
     if(!shown.length) return null;
     const count=items.filter(([n])=>picked(n)).length;
     const d=h('details',{class:'invg'},h('summary',{},h('h2',{},step),h('span',{class:'soft invc'},count?count+' picked':items.length+''),h('span',{class:'tplus','aria-hidden':'true'},'+')),
-      h('div',{class:'sec2'},shown.map(([n,how])=>{
+      h('div',{class:'sec2'},shown.map(([n,how,w0])=>{
         const p=picked(n);
         return h('button',{type:'button',class:'rgp','aria-pressed':String(!!p),onclick:()=>{
-          if(p) R.picks=R.picks.filter(x=>x!==p); else R.picks.push({n,how,when:whens[0],step});
+          if(p) R.picks=R.picks.filter(x=>x!==p); else R.picks.push({n,how,when:w0&&whens.includes(w0)?w0:whens[0],step});
           RG_OPEN=step; rgSave(); render();}},h('span',{class:'rgbox','aria-hidden':'true'}),h('span',{},n.replace(/^Biologique Recherche /,'')));
       })));
     if(q||RG_OPEN===step) d.open=true;
@@ -364,6 +364,7 @@ async function rgPdf(me,R,kind){
     if(rgBack(R)) para('Come back to see us '+rgBack(R)+'. Call or text '+RG_PHONE+' to book.',9.5,'helvetica','bold',choc,2,12);
     y+=8; doc.setDrawColor(...choc); doc.setLineWidth(.8); doc.line(M,top,M,y); doc.setLineWidth(.2);
   }
+  if(kind==='skin'&&R.picks.some(p=>/^Biologique Recherche/.test(p.n))){y+=10;para('Remember, Biologique Recherche is very concentrated, so only a small amount is needed. If you have questions, reach out any time!',9.5,'helvetica','italic',soft,2)}
   y+=12; need(20);
   doc.setFont('times','italic');doc.setFontSize(13);doc.setTextColor(...choc);doc.text(kind==='skin'?(me?'Pretty Skin by '+rgFirst(me):'Pretty Skin by Taffeta'):'xo, '+(me||'Taffeta')+'  ·  Hi Pretty',W/2,y+12,{align:'center'});
   foot();
