@@ -55,6 +55,7 @@ const RG_LIST={
       ['Biologique Recherche Sérum Progeskin',RG_HOW.serum],
       ['Biologique Recherche Sérum A-Glyca',RG_HOW.serum],
       ['Biologique Recherche Sérum Biosensible',RG_HOW.serum],
+      ['Biologique Recherche Sérum Vivant',RG_HOW.serum],
       ['Biologique Recherche Sérum Erythros',RG_HOW.serum],
       ['Biologique Recherche Sérum PIGM 400',RG_HOW.serum],
       ['Biologique Recherche Sérum Liposmose',RG_HOW.serum],
