@@ -4,6 +4,8 @@
 <meta name="theme-color" content="#f2f1ec"><meta name="robots" content="noindex,nofollow"><meta name="referrer" content="no-referrer">
 <title>Front Desk · Taffeta</title>
 <link rel="icon" href="../icon.png"><link rel="apple-touch-icon" href="../icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Front Desk">
 <link rel="stylesheet" href="../g/base.css">
 <script src="../g/config.js?v=2"></script>
 <style>
@@ -139,6 +141,21 @@ details.acc summary::after{color:var(--gold)}
 </head><body><main id="app">
 <div class="head"><img src="../g/logo.png" alt="Taffeta Salon &amp; Spa"><div><span class="eyebrow">Front Desk</span><h1>Today at Taffeta</h1></div></div>
 <div class="runbar"><button id="runAll">Run all updates</button><span id="runSt">Refreshes the team app and the Pretty Report with today’s Paired Plus numbers.</span></div>
+<details class="more" id="alerts"><summary>Phone alerts +</summary>
+  <div class="list">
+    <p class="sub" id="alMsg" style="margin:0">Get a banner and a sound on this phone or iPad for every guest request, consultation, profile update and new To Do task.</p>
+    <ol id="alSteps" hidden style="margin:0;padding-left:18px;font-size:14px;line-height:1.5">
+      <li>In Safari, tap the Share button (the square with the arrow).</li>
+      <li>Tap <b>Add to Home Screen</b>, then <b>Add</b>.</li>
+      <li>Open <b>Front Desk</b> from the Home Screen, then open Phone alerts here again.</li>
+    </ol>
+    <label id="alNameWrap" style="display:flex;flex-direction:column;gap:6px;font-size:13px">This device is
+      <select id="alName" style="padding:10px;font:inherit"><option>Front desk iPad</option><option>Front desk phone</option><option>Alexandra's phone</option><option>Dom's phone</option><option>Cherish's phone</option></select></label>
+    <button class="btn" id="alOn">Turn on alerts</button>
+    <button class="btn" id="alOff" hidden style="background:transparent;color:var(--brown);border:1px solid var(--brown)">Turn off alerts</button>
+    <p class="status" id="alSt" style="margin:0"></p>
+  </div>
+</details>
 <details class="more send" id="send"><summary>Send a link to a guest +</summary>
   <div class="list" id="sendList"></div>
 </details>
@@ -379,5 +396,43 @@ $('#sendList').addEventListener('click',async e=>{
   const l=LINKS[+b.dataset.c], txt=b.dataset.w==='u'?l.u:l.m+l.u, old=b.textContent;
   try{await navigator.clipboard.writeText(txt)}catch(_){const t=document.createElement('textarea');t.value=txt;document.body.appendChild(t);t.select();try{document.execCommand('copy')}catch(__){}t.remove()}
   b.textContent='Copied ✓';b.classList.add('ok');setTimeout(()=>{b.textContent=old;b.classList.remove('ok')},1800)});
+/* Phone alerts: web push through the "Taffeta Weddings Alerts" Firebase project (info@). The web config and push key are public by design. */
+(()=>{
+  const FCM={config:{apiKey:"AIzaSyAD82Uh-1_ttyRbYHyBOM6T2DDJFzqh08Y",authDomain:"taffeta-weddings-alerts.firebaseapp.com",projectId:"taffeta-weddings-alerts",
+    storageBucket:"taffeta-weddings-alerts.firebasestorage.app",messagingSenderId:"806353558918",appId:"1:806353558918:web:1db6d9a96736e698932007"},
+    vapidKey:"BPpDOUEeFFPDZBmnNYM4Kr9CLdq3LHuOmCmXYBev5jxigZwTvkG2FvnO2oMoJ_OsQcEkw3TC2GVmgnJVMrFCeB8"};
+  const FB="https://www.gstatic.com/firebasejs/10.12.2/";
+  const ios=/iPhone|iPad|iPod/.test(navigator.userAgent)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);
+  const standalone=()=>(window.matchMedia&&matchMedia("(display-mode: standalone)").matches)||navigator.standalone===true;
+  const can=()=>"serviceWorker" in navigator&&"PushManager" in window&&"Notification" in window;
+  const show=(on,msg)=>{$("#alOn").hidden=on;$("#alOff").hidden=!on;$("#alSt").textContent=msg||""};
+  async function token(){
+    const reg=await navigator.serviceWorker.register("sw.js",{scope:"./"});await navigator.serviceWorker.ready;
+    const app=await import(FB+"firebase-app.js"),msg=await import(FB+"firebase-messaging.js");
+    const fb=app.getApps().length?app.getApp():app.initializeApp(FCM.config);
+    return msg.getToken(msg.getMessaging(fb),{vapidKey:FCM.vapidKey,serviceWorkerRegistration:reg});
+  }
+  async function save(off){
+    const t=await token();if(!t)throw new Error("no token");
+    await fetch(window.TAFFETA_ENDPOINT,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain;charset=utf-8"},
+      body:JSON.stringify({type:"push",key:KEY,token:t,name:$("#alName").value,device:(ios?"iPhone/iPad":"Computer")+(standalone()?" app":""),off:!!off})});
+    if(off)store.set("desk-al-on","");else store.set("desk-al-on","1");
+  }
+  const n=store.get("desk-al-name");if(n)$("#alName").value=n;
+  $("#alName").addEventListener("change",()=>store.set("desk-al-name",$("#alName").value));
+  if(!KEY||DEMO||!window.TAFFETA_ENDPOINT){$("#alerts").hidden=true;return}
+  if(ios&&!standalone()){$("#alSteps").hidden=false;$("#alNameWrap").hidden=true;$("#alOn").hidden=true;$("#alMsg").textContent="To get alerts on an iPhone or iPad, add Front Desk to the Home Screen first:";}
+  else if(!can()){$("#alNameWrap").hidden=true;$("#alOn").hidden=true;$("#alMsg").textContent="This browser can't show alerts. On an iPhone or iPad, use Safari and add Front Desk to the Home Screen.";}
+  else if(Notification.permission==="denied")show(false,"Alerts are blocked. Turn them on in Settings for Front Desk, then tap Turn on alerts.");
+  else if(Notification.permission==="granted"&&store.get("desk-al-on")){show(true,"Alerts are on for "+$("#alName").value+".");save().catch(()=>{})}
+  $("#alOn").onclick=async()=>{
+    $("#alSt").textContent="Turning on…";
+    try{const p=await Notification.requestPermission();
+      if(p!=="granted"){show(false,p==="denied"?"Alerts are blocked. Turn them on in Settings, then try again.":"Tap Allow when asked.");return}
+      await save();show(true,"Alerts are on for "+$("#alName").value+".");
+    }catch(e){show(false,"That didn't work. Check the connection and try again.")}
+  };
+  $("#alOff").onclick=async()=>{$("#alSt").textContent="Turning off…";try{await save(true);show(false,"Alerts are off.")}catch(e){$("#alSt").textContent="That didn't work. Try again."}};
+})();
 </script>
 </body></html>

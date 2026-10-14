@@ -74,6 +74,7 @@ function doPost(e) {
     if (d.website) return json_({ ok: true });                       // spam trap
     const now = new Date();
     if (d.type === 'status') return setStatus_(d);
+    if (d.type === 'push') return deskSavePush_(d);
     if (d.type === 'todoAddr') return todoAddr_(d);
     if (d.type === 'concierge') {
       const name = clean_(d.name, 80);
@@ -81,6 +82,7 @@ function doPost(e) {
       const items = [].concat(d.sips || [], d.comforts || [], d.before || []).join(', ') || '(see note)';
       const body = name + ' would love: ' + items + (d.note ? '\nNote: ' + clean_(d.note, 500) : '');
       alert_('Concierge: ' + name, body, 'bellhop_bell');
+      deskPush_('New request', deskFirst_(name) + ' · ' + items.slice(0, 100));
     } else if (d.type === 'consult') {
       const who = clean_(d.first, 60) + ' ' + clean_(d.last, 60);
       const p1 = savePhoto_(d.photoNow, who + ' – today');
@@ -91,6 +93,7 @@ function doPost(e) {
       alert_('New consultation: ' + who,
         who + ' · ' + [].concat(d.hair || [], d.skin || []).join(', ') + '\nReach by: ' + clean_(d.reach, 10) + ' · ' + clean_(d.phone, 30),
         'sparkles');
+      deskPush_('New consultation', deskFirst_(d.first) + ' · ' + [].concat(d.hair || [], d.skin || []).join(', ').slice(0, 100));
     } else if (d.type === 'guestprofile') {
       const who = clean_(d.first, 60) + ' ' + clean_(d.last, 60);
       const psh = tab_(TABS.profile);
@@ -99,6 +102,7 @@ function doPost(e) {
         clean_(d.address, 200), clean_(d.birthday, 20), clean_(d.allergies, 500), clean_(d.notes, 1000),
         clean_(d.changes, 1000), d.texts ? 'Yes' : 'No', 'New', '']);
       alert_('Profile update: ' + who, who + ' sent new details. Update her file in Paired Plus.', 'memo');
+      deskPush_('Profile update', deskFirst_(d.first) + ' sent new details for Paired Plus.');
     }
     return json_({ ok: true });
   } finally { lock.releaseLock(); }
