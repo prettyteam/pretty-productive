@@ -221,7 +221,8 @@ function regimenView(){
   const picked=n=>R.picks.find(p=>p.n===n);
 
   const head=h('div',{},h('span',{class:'lbl'},kind==='skin'?'Spa':'Salon'),h('h1',{style:'font-size:28px'},'At-home regimen'),
-    h('p',{class:'soft',style:'margin-top:6px'},'Tap what you recommend, then text your guest a Taffeta PDF of her routine.'));
+    h('p',{class:'soft',style:'margin-top:6px'},'Tap what you recommend and save. The front desk texts her a Taffeta PDF of her routine.'),
+    RG_TOAST&&/^Saved/.test(RG_TOAST)?h('div',{class:'card2',style:'margin-top:14px;text-align:center;border-color:var(--ink)'},h('p',{},'✓ '+RG_TOAST)):null);
 
   /* 1 · guest */
   const gIn=h('input',{type:'text',value:R.guest,placeholder:'First name',autocomplete:'off',autocapitalize:'words'});
@@ -283,13 +284,12 @@ function regimenView(){
   /* 5 · send */
   const ready=R.picks.length||R.notes.length||R.own.trim();
   const toast=h('p',{class:'toast'},RG_TOAST);
-  const send=h('button',{type:'button',class:'obtn',disabled:ready?null:'',onclick:()=>rgShare(me,toast,send)},'Text her the PDF');
-  const copy=h('button',{type:'button',class:'tab',disabled:ready?null:'',onclick:()=>rgCopy(me,toast)},'Copy as text');
-  const prev=h('button',{type:'button',class:'tab',disabled:ready?null:'',onclick:()=>rgPreview(me,toast)},'Preview PDF');
+  const send=h('button',{type:'button',class:'obtn',disabled:ready?null:'',onclick:()=>rgSave2(me,toast,send)},'Save & send to desk');
+  const prev=h('button',{type:'button',class:'tab',disabled:ready?null:'',onclick:()=>rgPreview(me,toast,RG,kind)},'Preview PDF');
   const clear=h('button',{type:'button',class:'tab',onclick:()=>{if(!confirm('Start a new regimen? This clears the one on screen.'))return;RG=rgBlank();RG_TOAST='';rgSave();render();window.scrollTo(0,0)}},'Start a new one');
-  const out=h('section',{class:'card2',style:'align-items:center;text-align:center'},h('span',{class:'lbl'},'5 · Send it'),
-    send,h('div',{class:'seg',style:'justify-content:center'},prev,copy,clear),toast,
-    h('small',{class:'soft'},'Opens your share sheet. Pick Messages and her name. Nothing is saved anywhere but this phone.'));
+  const out=h('section',{class:'card2',style:'align-items:center;text-align:center'},h('span',{class:'lbl'},'5 · Save it'),
+    send,h('div',{class:'seg',style:'justify-content:center'},prev,clear),toast,
+    h('small',{class:'soft'},'Save sends it to the front desk, and they text it to her. Your screen clears for your next guest.'));
 
   return [h('div',{class:'hub'},head,guest,products,plan,care,out)];
 }
@@ -299,24 +299,6 @@ function rgSections(kind,R){
   return RG_GROUPS[kind].map(([title,ws])=>[title,R.picks.filter(p=>ws.includes(p.when))]).filter(([,a])=>a.length);
 }
 const rgDate=()=>new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
-
-function rgText(me){
-  const kind=rgKind(), R=RG, L=[];
-  L.push('Hi '+(rgFirst(R.guest)||'pretty')+'! Here’s your at-home '+(kind==='skin'?'skincare':'hair care')+' routine from Taffeta Salon & Spa.');
-  if(R.services.length) L.push('Today: '+R.services.join(', '));
-  const seen=new Set();
-  rgSections(kind,R).forEach(([t,a])=>{L.push('',t.toUpperCase());a.forEach((p,i)=>{L.push((i+1)+'. '+p.n+(seen.has(p)?' (same as above)':' — '+p.how));seen.add(p)})});
-  const notes=R.notes.concat(R.own.trim()?[R.own.trim()]:[]);
-  if(notes.length){L.push('','AFTERCARE');notes.forEach(n=>L.push('• '+n))}
-  if(rgBack(R)) L.push('','Come back to see us '+rgBack(R)+'. Call or text '+RG_PHONE+' to book.');
-  if(R.msg.trim()) L.push('',R.msg.trim());
-  L.push('','xo '+(me||'Taffeta'));
-  return L.join('\n');
-}
-async function rgCopy(me,toast){
-  try{await navigator.clipboard.writeText(rgText(me));RG_TOAST='Copied. Paste it into your text to her.'}catch(e){RG_TOAST='Couldn’t copy on this phone. Use Text her the PDF instead.'}
-  toast.textContent=RG_TOAST;
-}
 
 let RG_LIB=null, RG_LOGO=null;
 function rgLib(){
@@ -329,9 +311,10 @@ function rgLogo(){
 }
 
 /* Half-letter page (5.5 × 8.5 in), easy to read on a phone. Cream page, Taffeta wreath, serif headings. */
-async function rgPdf(me){
+async function rgPdf(me,R,kind){
+  R=R||RG; kind=kind||rgKind();
   const [lib,logo]=await Promise.all([rgLib(),rgLogo()]);
-  const kind=rgKind(), R=RG, doc=new lib.jsPDF({unit:'pt',format:[396,612]});
+  const doc=new lib.jsPDF({unit:'pt',format:[396,612]});
   const W=396, H=612, M=34, CW=W-M*2, ink=[18,18,18], soft=[95,91,85], choc=[74,52,38], line=[226,222,213];
   let y=0;
   const bg=()=>{doc.setFillColor(248,246,240);doc.rect(0,0,W,H,'F')};
@@ -381,26 +364,40 @@ async function rgPdf(me){
     y+=8; doc.setDrawColor(...choc); doc.setLineWidth(.8); doc.line(M,top,M,y); doc.setLineWidth(.2);
   }
   y+=12; need(20);
-  doc.setFont('times','italic');doc.setFontSize(13);doc.setTextColor(...choc);doc.text('xo, '+(me||'Taffeta')+'  ·  Hi Pretty',W/2,y+12,{align:'center'});
+  doc.setFont('times','italic');doc.setFontSize(13);doc.setTextColor(...choc);doc.text(kind==='skin'?(me?'Pretty Skin by '+rgFirst(me):'Pretty Skin by Taffeta'):'xo, '+(me||'Taffeta')+'  ·  Hi Pretty',W/2,y+12,{align:'center'});
   foot();
   return doc.output('blob');
 }
-const rgFile=()=>'Taffeta '+(rgKind()==='skin'?'Skincare':'Hair Care')+' Regimen'+(RG.guest.trim()?' - '+rgFirst(RG.guest):'')+'.pdf';
-async function rgShare(me,toast,btn){
-  btn.disabled=true; toast.textContent='Making her PDF…';
+const rgFile=(R,kind)=>'Taffeta '+(kind==='skin'?'Skincare':'Hair Care')+' Regimen'+(R.guest.trim()?' - '+rgFirst(R.guest):'')+'.pdf';
+/* Share sheet (used by the front desk to text it to the guest) */
+async function rgShare(me,R,kind,toast){
+  toast.textContent='Making her PDF…';
   try{
-    const blob=await rgPdf(me), file=new File([blob],rgFile(),{type:'application/pdf'});
+    const blob=await rgPdf(me,R,kind), file=new File([blob],rgFile(R,kind),{type:'application/pdf'});
     if(navigator.canShare&&navigator.canShare({files:[file]})){
-      try{await navigator.share({files:[file],title:'Your Taffeta at-home regimen'});RG_TOAST='Sent. Tap Start a new one for your next guest.'}
-      catch(e){RG_TOAST=e&&e.name==='AbortError'?'':'Couldn’t open the share sheet. Try Preview PDF.'}
-    } else { rgDownload(blob); RG_TOAST='Saved the PDF. Attach it to your text to her.' }
-  }catch(e){RG_TOAST='Couldn’t make the PDF. Check your signal and try again.'}
-  toast.textContent=RG_TOAST; btn.disabled=false;
+      try{await navigator.share({files:[file],title:'Your Taffeta at-home regimen'});toast.textContent='Sent? Tap Mark sent.'}
+      catch(e){toast.textContent=e&&e.name==='AbortError'?'':'Couldn’t open the share sheet. Try Preview.'}
+    } else {const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=rgFile(R,kind);document.body.appendChild(a);a.click();a.remove();toast.textContent='Saved the PDF. Attach it to your text.'}
+  }catch(e){toast.textContent='Couldn’t make the PDF. Check the Wi-Fi and try again.'}
 }
-async function rgPreview(me,toast){
+async function rgPreview(me,toast,R,kind){
   toast.textContent='Making the preview…';
   const w=window.open('','_blank');
-  try{const url=URL.createObjectURL(await rgPdf(me)); if(w) w.location=url; else location.href=url; toast.textContent=''}
+  try{const url=URL.createObjectURL(await rgPdf(me,R,kind)); if(w) w.location=url; else location.href=url; toast.textContent=''}
   catch(e){if(w) w.close(); toast.textContent='Couldn’t make the PDF. Check your signal and try again.'}
 }
-function rgDownload(blob){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=rgFile();document.body.appendChild(a);a.click();a.remove()}
+/* Artist taps Save PDF: the regimen goes to the Home care list in the front desk app, and her screen clears for the next guest */
+async function rgSave2(me,toast,btn){
+  const st=(S.mine&&S.mine.staff)||{}, kind=rgKind();
+  if(!RG.guest.trim()){toast.textContent='Add her name first so the desk knows who it’s for.';return}
+  btn.disabled=true; toast.textContent='Saving…';
+  try{
+    const r=await fetch(window.TAFFETA_ENDPOINT,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify({type:'regimen',slug:st.slug,t:st.t,artist:me,guest:RG.guest.trim(),kind,data:RG})});
+    const j=await r.json();
+    if(!j.ok) throw new Error(j.error||'no');
+    const who=rgFirst(RG.guest);
+    RG=rgBlank(); RG_Q=''; RG_OPEN=null; rgSave();
+    RG_TOAST='Saved. '+who+'’s PDF is on the front desk list to text her.'; render(); window.scrollTo(0,0);
+  }catch(e){btn.disabled=false; toast.textContent='That didn’t save. Check your signal and try again.'}
+}

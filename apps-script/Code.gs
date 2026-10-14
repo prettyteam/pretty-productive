@@ -33,7 +33,11 @@ const TABS = {
   todo: { name: 'To Do',
     headers: ['Received', 'Task', 'Guest', 'Detail', 'List', 'Status', 'Done at', 'Address'],
     keys:    ['at', 'task', 'guest', 'detail', 'group', 'status', 'doneAt', 'address'],
-    statuses: ['Open', 'Done'] }
+    statuses: ['Open', 'Done'] },
+  regimen: { name: 'Home Care PDFs',
+    headers: ['Received', 'Artist', 'Guest', 'Kind', 'Products', 'Regimen (app data)', 'Status', 'Sent at'],
+    keys:    ['at', 'artist', 'guest', 'kind', 'summary', 'data', 'status', 'sentAt'],
+    statuses: ['New', 'Sent'] }
 };
 
 /** Run once from the editor (▶ Run) to set up both tabs. */
@@ -62,7 +66,7 @@ function doGet(e) {
   if (p.admin) return adminGet_(p);
   if (p.decide) return decide_(p);
   if (p.key !== DESK_KEY) return json_({ ok: false, error: 'key' });
-  return json_({ ok: true, now: Date.now(), concierge: rows_(TABS.concierge, 2), consult: rows_(TABS.consult, 60), profiles: rows_(TABS.profile, 60), todo: todoRows_() });
+  return json_({ ok: true, now: Date.now(), concierge: rows_(TABS.concierge, 2), consult: rows_(TABS.consult, 60), profiles: rows_(TABS.profile, 60), todo: todoRows_(), regimen: rows_(TABS.regimen, 14) });
 }
 
 function doPost(e) {
@@ -70,7 +74,7 @@ function doPost(e) {
   lock.waitLock(20000);
   try {
     const d = JSON.parse(e.postData.contents || '{}');
-    if (['clock', 'timeoff', 'cover', 'take', 'profile', 'sign', 'stock', 'model'].indexOf(d.type) >= 0) return teamPost_(d);
+    if (['clock', 'timeoff', 'cover', 'take', 'profile', 'sign', 'stock', 'model', 'regimen'].indexOf(d.type) >= 0) return teamPost_(d);
     if (d.website) return json_({ ok: true });                       // spam trap
     const now = new Date();
     if (d.type === 'status') return setStatus_(d);
@@ -120,6 +124,7 @@ function setStatus_(d) {
   sh.getRange(row, t.keys.indexOf('status') + 1).setValue(d.status);
   if (d.tab === 'concierge') sh.getRange(row, t.keys.indexOf('handledAt') + 1).setValue(d.status === 'Done' ? new Date() : '');
   if (d.tab === 'todo') sh.getRange(row, t.keys.indexOf('doneAt') + 1).setValue(d.status === 'Done' ? new Date() : '');
+  if (d.tab === 'regimen') sh.getRange(row, t.keys.indexOf('sentAt') + 1).setValue(d.status === 'Sent' ? new Date() : '');
   if (d.tab === 'profile') {   // the Front Desk page hides Updated profiles 2 days after this time
     const c = t.keys.indexOf('updatedAt') + 1;
     if (sh.getRange(1, c).getValue() !== 'Updated at') sh.getRange(1, c).setValue('Updated at').setFontWeight('bold');
@@ -445,6 +450,18 @@ function teamPost_(d) {
       const ts = startHeader_();
       ts.getRange(me.row, 6).setValue(start ? new Date(start + 'T12:00:00') : '').setNumberFormat('mmm d, yyyy');
     }
+    return json_({ ok: true });
+  }
+  if (d.type === 'regimen') {   // an artist saved an at-home regimen: it waits on the Front Desk page's Home care list to be texted
+    const r = d.data || {}, guest = clean_(d.guest, 80), kind = d.kind === 'skin' ? 'skin' : 'hair';
+    const data = JSON.stringify({ guest: guest, services: [].concat(r.services || []).slice(0, 12), type: clean_(r.type, 40),
+      picks: [].concat(r.picks || []).slice(0, 40).map(p => ({ n: clean_(p.n, 120), how: clean_(p.how, 600), when: clean_(p.when, 30), step: clean_(p.step, 40) })),
+      notes: [].concat(r.notes || []).slice(0, 20).map(n => clean_(n, 200)), own: clean_(r.own, 1500), next: clean_(r.next, 20),
+      nextDate: /^\d{4}-\d{2}-\d{2}$/.test(String(r.nextDate || '')) ? r.nextDate : '', msg: clean_(r.msg, 500) });
+    if (!guest) return json_({ ok: false, error: 'guest' });
+    const products = JSON.parse(data).picks.map(p => p.n.replace(/^Biologique Recherche /, '')).join(', ');
+    tab_(TABS.regimen).appendRow([now, me.name, guest, kind === 'skin' ? 'Skincare' : 'Hair care', products, data, 'New', '']);
+    deskPush_('Home care PDF to send', me.name + ' made ' + deskFirst_(guest) + '’s at-home ' + (kind === 'skin' ? 'skincare' : 'hair care') + ' PDF.');
     return json_({ ok: true });
   }
   if (d.type === 'stock') {
