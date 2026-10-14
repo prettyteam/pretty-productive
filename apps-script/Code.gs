@@ -237,7 +237,7 @@ const TZ = 'America/New_York';
 const MAX_SHIFT_HOURS = 14;                 // an open punch older than this is flagged as a missed clock-out
 
 const TT = {
-  team:  { name: 'Team', headers: ['Name', 'App ID', 'Group', 'Clock in/out', 'Active'] },
+  team:  { name: 'Team', headers: ['Name', 'App ID', 'Group', 'Clock in/out', 'Active', 'Taffeta start date'] },
   clock: { name: 'Time Clock', headers: ['Date', 'Name', 'App ID', 'Clock in', 'Clock out', 'Hours', 'Note'] },
   off:   { name: 'Time Off', headers: ['Requested', 'Name', 'App ID', 'First day', 'Last day', 'Note', 'Status', 'Decided by'] },
   cover: { name: 'Shift Coverage', headers: ['Posted', 'Name', 'App ID', 'Group', 'Shift date', 'Shift time', 'Note', 'Status', 'Covered by', 'Covered at'] },
@@ -258,7 +258,7 @@ const ROSTER = [
   ['Carolyn', 'carolyn', 'esthetician', 'Yes'], ['Dominique', 'dominique', 'stylist', 'No'], ['Emily B', 'emily-b', 'stylist', 'No'],
   ['Jen M', 'jen-m', 'stylist', 'No'], ['Jennifer C', 'jennifer-c', 'stylist', 'No'], ['Joanna', 'joanna', 'stylist', 'No'],
   ['Kat', 'kat', 'associate', 'Yes'], ['Kelly', 'kelly', 'esthetician', 'No'], ['Lexi', 'lexi', 'stylist', 'No'],
-  ['Mia', 'mia', 'stylist', 'No'], ['Neva L', 'neva-l', 'stylist', 'No'], ['Rose', 'rose', 'associate', 'Yes'], ['Sara', 'sara', 'stylist', 'No']
+  ['Mia', 'mia', 'stylist', 'No'], ['Neva L', 'neva-l', 'stylist', 'No'], ['Rose', 'rose', 'associate', 'Yes'], ['Sara', 'sara', 'stylist', 'No'], ['Isabella', 'isabella', 'stylist', 'No']
 ];
 
 function tss_() { return SpreadsheetApp.openById(TEAM_SHEET_ID); }
@@ -298,8 +298,23 @@ function sign_(slug) {
 }
 function member_(slug, t) {
   if (!slug || !t || t !== sign_(slug)) return null;
-  const r = tvals_(TT.team).find(r => String(r[1]) === String(slug) && String(r[4]).toLowerCase() !== 'no');
-  return r ? { name: String(r[0]), slug: String(r[1]), group: String(r[2]), clock: String(r[3]).toLowerCase() === 'yes' } : null;
+  const vals = tvals_(TT.team), i = vals.findIndex(r => String(r[1]) === String(slug));
+  if (i < 0) {
+    // A signed link for someone not on the Team tab yet (a new hire): add her so her app works on day one.
+    const name = String(slug).split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+    ttab_(TT.team).appendRow([name, String(slug), 'stylist', 'No', 'Yes', '']);
+    return { name, slug: String(slug), group: 'stylist', clock: false, row: vals.length + 2, start: '' };
+  }
+  const r = vals[i];
+  if (String(r[4]).toLowerCase() === 'no') return null;
+  return { name: String(r[0]), slug: String(r[1]), group: String(r[2]), clock: String(r[3]).toLowerCase() === 'yes', row: i + 2,
+    start: r[5] instanceof Date ? day_(r[5]) : String(r[5] || '') };
+}
+/** Adds the "Taffeta start date" heading to a Team tab made before that column existed. */
+function startHeader_() {
+  const sh = ttab_(TT.team), c = sh.getRange(1, 6);
+  if (!c.getValue()) c.setValue(TT.team.headers[5]).setFontWeight('bold').setBackground('#121212').setFontColor('#f8f6f0');
+  return sh;
 }
 
 const day_ = d => Utilities.formatDate(d, TZ, 'yyyy-MM-dd');
@@ -337,7 +352,7 @@ function staffGet_(p) {
   const myCover = cov.filter(c => c.slug === me.slug || c.by === me.name).slice(-6);
   const myOff = tvals_(TT.off).filter(r => String(r[2]) === me.slug).slice(-6).reverse()
     .map(r => ({ from: r[3] instanceof Date ? day_(r[3]) : String(r[3]), to: r[4] instanceof Date ? day_(r[4]) : String(r[4]), status: String(r[6] || 'Waiting') }));
-  return json_({ ok: true, now: now.getTime(), me: { name: me.name, group: me.group, clock: me.clock },
+  return json_({ ok: true, now: now.getTime(), me: { name: me.name, group: me.group, clock: me.clock, start: me.start },
     clock: { in: !!open, since: open ? open.getTime() : null, sinceLabel: open ? hhmm_(open) : null, todayMin: Math.round(todayMin), weekMin: Math.round(weekMin) },
     shifts, ann, openShifts, myCover, myOff, info: myInfo_(me.slug), signed: mySigs_(me.slug), stock: stock_(), stockEdit: STOCK_EDITORS.indexOf(me.slug) >= 0, models: myModels_(me.slug),
     cardAddr: CARD_WRITERS.indexOf(me.slug) >= 0 ? cardAddr_() : null });
@@ -424,6 +439,12 @@ function teamPost_(d) {
     const sh = ttab_(TT.info), i = tvals_(TT.info).findIndex(r => String(r[1]) === me.slug);
     if (i >= 0) sh.getRange(i + 2, 1, 1, row.length).setValues([row]); else sh.appendRow(row);
     sh.getRange('J2:J').setNumberFormat('ddd mmm d, h:mm am/pm');
+    if ('start' in d) {
+      const start = String(d.start || '');
+      if (start && !/^\d{4}-\d{2}-\d{2}$/.test(start)) return json_({ ok: false, error: 'start' });
+      const ts = startHeader_();
+      ts.getRange(me.row, 6).setValue(start ? new Date(start + 'T12:00:00') : '').setNumberFormat('mmm d, yyyy');
+    }
     return json_({ ok: true });
   }
   if (d.type === 'stock') {
