@@ -645,7 +645,7 @@ let S=starter();
 const toMin=t=>{if(!t)return 480;const[h,m]=t.split(":").map(Number);return h*60+(m||0)};
 function fmt(min){min=((min%1440)+1440)%1440;let h=Math.floor(min/60),m=min%60;const ap=h>=12?"PM":"AM";h=h%12||12;return h+":"+String(m).padStart(2,"0")+" "+ap}
 function fmtDate(d){if(!d)return"";const[y,m,dd]=d.split("-").map(Number);return new Date(y,m-1,dd).toLocaleDateString("en-US",{weekday:"long",month:"long",day:"numeric",year:"numeric"})}
-function shortDate(d){if(!d)return"";const[y,m,dd]=d.split("-");return Number(m)+"/"+Number(dd)+"/"+y.slice(2)}
+function shortDate(d){if(!d)return"";if(!/^\d{4}-\d\d-\d\d/.test(d)){const t=new Date(d);return isNaN(t)?d:(t.getMonth()+1)+"/"+t.getDate()+"/"+String(t.getFullYear()).slice(2)}const[y,m,dd]=d.split("-");return Number(m)+"/"+Number(dd)+"/"+y.slice(2)}
 
 /* ---------- scheduling ---------- */
 function build(s){
@@ -997,7 +997,7 @@ function renderTeam(){
     if(d.date){const[y,m,dd]=d.date.split("-").map(Number);const dt=new Date(y,m-1,dd);mo=dt.toLocaleDateString("en-US",{month:"short"});day=dd}
     const b=document.createElement("button");b.className="wed";b.setAttribute("aria-current",teamSel===w.id);
     const mine=af.value?(d.artists||[]).filter(a=>a.name.trim()===af.value).map(a=>a.role==="hair"?"Hair":"Makeup").join(" + "):"";
-    b.innerHTML='<div class="d"><small>'+esc(mo)+'</small><b>'+esc(day||"–")+'</b></div><div><div class="who">'+esc(d.bride||"Untitled")+'</div><div class="sub">'+esc([d.location,d.room].filter(Boolean).join(" · "))+'</div><div class="sub">Arrive '+(d.startMin!=null?fmt(d.startMin-(Number(d.arrival)||0)):"–")+' · Start '+(d.startMin!=null?fmt(d.startMin):"–")+(mine?' · You: '+esc(mine):'')+'</div><div>'+(d.artistNames||[]).map(n=>'<span class="pill">'+esc(n)+'</span>').join("")+'</div></div>';
+    b.innerHTML='<div class="d"><small>'+esc(mo)+'</small><b>'+esc(day||"–")+'</b></div><div><div class="who">'+esc(d.bride||"Untitled")+'</div><div class="sub">'+esc([d.location,d.room].filter(Boolean).join(" · "))+'</div><div class="sub">'+(d.startMin==null&&d.calTime?'Calendar: '+esc(d.calTime):'Arrive '+(d.startMin!=null?fmt(d.startMin-(Number(d.arrival)||0)):"–")+' · Start '+(d.startMin!=null?fmt(d.startMin):"–"))+(mine?' · You: '+esc(mine):'')+'</div><div>'+(d.artistNames||[]).map(n=>'<span class="pill">'+esc(n)+'</span>').join("")+'</div></div>';
     b.onclick=()=>{teamSel=w.id;renderTeam();renderTeamSheet()};
     box.appendChild(b);
   });
@@ -1508,6 +1508,7 @@ function renderMyJobs(){
   if(ROLE==="artist")$("#tab-jobs").textContent=open?"Job offers ("+open+")":"Job offers";
   $("#jb-mine-note").textContent=jbJobs.length?(open?open+" waiting on your answer":"You've answered every offer"):"No job offers right now";
   box.innerHTML=jbJobs.slice().sort((a,b)=>(a.date||"").localeCompare(b.date||"")).map(j=>'<div class="job"><div><b>'+esc(shortDate(j.date)||"Date TBD")+'</b> · '+esc(j.role)+'</div><div class="meta">'+esc(j.location||"Location TBD")+'</div>'
+    +(j.calTime?'<div class="meta">Calendar: '+esc(j.calTime)+'</div>':'')
     +(jbRange(j).length?'<div class="meta">'+esc(jbRange(j).join(" · "))+'</div>':'')+(j.note?'<div class="meta">'+esc(j.note)+'</div>':'')
     +'<div class="row" style="align-items:center">'+(j.status==="Waiting"?'<button class="btn small" data-yes="'+esc(j.id)+'">Yes, I can</button><button class="btn ghost small" data-no="'+esc(j.id)+'">No</button>':'<span class="pill">You said '+esc(j.status)+'</span>')+'</div></div>').join("");
   box.querySelectorAll("[data-yes],[data-no]").forEach(b=>b.onclick=async()=>{

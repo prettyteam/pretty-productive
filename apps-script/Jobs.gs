@@ -24,7 +24,7 @@ function jobRows_() {
   const sh = jobsSheet_();
   if (sh.getLastRow() < 2) return [];
   return sh.getRange(2, 1, sh.getLastRow() - 1, JOBS_HEADERS.length).getValues().map((r, i) => ({
-    row: i + 2, id: String(r[0]), weddingId: String(r[1]), bride: String(r[2]), date: String(r[3]), location: String(r[4]),
+    row: i + 2, id: String(r[0]), weddingId: String(r[1]), bride: String(r[2]), date: r[3] instanceof Date ? Utilities.formatDate(r[3], TZ, 'yyyy-MM-dd') : String(r[3]), location: String(r[4]),
     artistId: String(r[5]), artist: String(r[6]), role: String(r[7]), headcount: String(r[8]), travel: String(r[9]),
     payout: String(r[10]), note: String(r[11]), status: String(r[12]) || 'Waiting', sentAt: String(r[13]), answeredAt: String(r[14])
   })).filter(j => j.id);
@@ -35,7 +35,8 @@ const jobPublic_ = j => { const o = Object.assign({}, j); delete o.row; return o
 /** Office: every offer for weddings from 30 days ago on. */
 function jobs_() {
   const since = Utilities.formatDate(new Date(Date.now() - 30 * 864e5), TZ, 'yyyy-MM-dd');
-  return { ok: true, jobs: jobRows_().filter(j => !j.date || j.date >= since).map(jobPublic_), top: jobTop_() };
+  const ct = calTimes_();
+  return { ok: true, jobs: jobRows_().filter(j => !j.date || j.date >= since).map(j => Object.assign(jobPublic_(j), { calTime: ct[j.weddingId] || '' })), top: jobTop_() };
 }
 
 /** Office: one offer row per chosen artist. */
@@ -58,8 +59,9 @@ function offerJob_(o) {
 /** Artist: her own offers, upcoming only. */
 function myJobs_(member) {
   const today = Utilities.formatDate(new Date(), TZ, 'yyyy-MM-dd');
+  const ct = calTimes_();
   return { ok: true, jobs: jobRows_().filter(j => j.artistId === member.id && (!j.date || j.date >= today)).map(j => {
-    const o = jobPublic_(j); delete o.artistId; return o;
+    const o = jobPublic_(j); delete o.artistId; o.calTime = ct[j.weddingId] || ''; return o;
   }) };
 }
 
