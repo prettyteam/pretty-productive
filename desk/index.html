@@ -10,7 +10,7 @@
 <script src="../g/config.js?v=2"></script>
 <script src="../g/aftercare.js?v=1"></script>
 <script>window.RG_BASE='../'</script>
-<script src="../g/regimen.js?v=6"></script>
+<script src="../g/regimen.js?v=7"></script>
 <style>
 main{max-width:640px;gap:20px;padding-bottom:110px}
 .head{display:flex;align-items:center;gap:14px}
@@ -413,7 +413,7 @@ function demo(){const n=Date.now(),m=60000;return{concierge:[
  {row:2,at:n-62*m,first:'Lauren',last:'Kim',phone:'(609) 555-0198',email:'',hair:'',skin:'Signature facial, Brows',story:'Skin: Dry patches and redness, using retinol at night. Sensitive to fragrance.',sameBudget:'',budget:'',reach:'Call',photoNow:'',photoGoal:'',status:'New'}],
  todo:[['Sample Guest A','Sep 18'],['Sample Guest B','Sep 1'],['Sample Guest C','Sep 16'],['Sample Guest D','Sep 24']].map((x,i)=>({row:i+2,at:n-90*m,task:'September first-time guests with no address in Paired Plus. Text them the profile form or ask at check-in, add it in Paired Plus, then tap the circle.',guest:x[0],detail:'First visit '+x[1]+' · needs a mailing address',group:'Addresses for thank-you cards',status:i===1?'Done':'Open',address:''})),
  regimen:[{row:2,at:n-6*m,artist:'Carolyn',guest:'Jessica Smith',kind:'Skincare',summary:'Lait VIP O2, Lotion P50W, Sérum Biosensible, Crème Hydravits, Masque VIP O2',
-   data:JSON.stringify({guest:'Jessica Smith',services:['Facial','Dermaplaning'],type:'Rosacea / sensitive',picks:[{n:'Biologique Recherche Lait VIP O2',how:'Smooth over dry face and neck with fingertips and massage for about a minute. Remove with a damp cloth or cotton pads.',when:'AM & PM'},{n:'Biologique Recherche Lotion P50W',how:'After cleansing, soak a cotton pad and sweep over face, neck and chest, upward and outward. A light tingle is normal. Do not rinse.',when:'AM & PM'},{n:'Biologique Recherche Masque VIP O2',how:'Apply an even layer to clean skin, avoiding the eyes. Leave on 10–15 minutes, then rinse with lukewarm water.',when:'Once a week'}],notes:['Wear SPF 30+ every morning and reapply every 2 hours outdoors'],own:'',next:'4 weeks',nextDate:'',msg:'Your skin did so well today!'}),status:'New'}],
+   data:JSON.stringify({guest:'Jessica Smith',services:['Facial','Dermaplaning'],type:'Rosacea / sensitive',picks:[{n:'Biologique Recherche Lait VIP O2',how:'Smooth over dry face and neck with fingertips and massage for 1–2 minutes. Remove with a damp cloth or cotton pads.',when:'AM & PM'},{n:'Biologique Recherche Lotion P50W',how:'After cleansing, soak a cotton pad and sweep over face, neck and chest, upward and outward. A light tingle is normal. Do not rinse.',when:'AM & PM'},{n:'Biologique Recherche Masque VIP O2',how:'Apply an even layer to clean skin, avoiding the eyes. Leave on 10–15 minutes, then rinse with lukewarm water.',when:'Once a week'}],notes:['Wear SPF 30+ every morning and reapply every 2 hours outdoors'],own:'',next:'4 weeks',nextDate:'',msg:'Your skin did so well today!'}),status:'New'}],
  profiles:[{row:3,at:n-20*m,first:'Maya',last:'Patel',phone:'(609) 555-0117',email:'maya@example.com',birthday:'March 14',address:'12 Maple Ave, Hammonton, NJ 08037',allergies:'Sensitive to ammonia',notes:'Prefers a quiet visit',changes:'New address and email',texts:'Yes',status:'New'}]}}
 
 const LINKS=[
