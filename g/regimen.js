@@ -389,11 +389,11 @@ async function rgPreview(me,toast,R,kind){
   catch(e){if(w) w.close(); toast.textContent='Couldn’t make the PDF. Check your signal and try again.'}
 }
 /* Artist taps Save PDF: the regimen goes to the Home care list in the front desk app, and her screen clears for the next guest */
-/* Off until the Front Desk Apps Script has the Home care handler. The old script answers ok to any post,
-   so saving before then would clear the artist's screen without anything reaching the desk. */
-const RG_DESK_ON=false;
+/* On once the live Apps Script has the Home care handler: its staff reply carries regimen:true. The old script answers ok
+   to any post, so saving before then would clear the artist's screen without anything reaching the desk. */
+const rgDeskOn=()=>typeof HUB!=='undefined'&&!!(HUB.data&&HUB.data.regimen);
 async function rgSave2(me,toast,btn){
-  if(!RG_DESK_ON){toast.textContent='The front desk list isn’t switched on yet. Your regimen stays saved on this screen, so tap again once it is.';return}
+  if(!rgDeskOn()){toast.textContent='The front desk list isn’t switched on yet. Your regimen stays saved on this screen, so tap again once it is.';return}
   const st=(S.mine&&S.mine.staff)||{}, kind=rgKind();
   if(!RG.guest.trim()){toast.textContent='Add her name first so the desk knows who it’s for.';return}
   btn.disabled=true; toast.textContent='Saving…';

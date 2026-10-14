@@ -360,7 +360,8 @@ function staffGet_(p) {
   return json_({ ok: true, now: now.getTime(), me: { name: me.name, group: me.group, clock: me.clock, start: me.start },
     clock: { in: !!open, since: open ? open.getTime() : null, sinceLabel: open ? hhmm_(open) : null, todayMin: Math.round(todayMin), weekMin: Math.round(weekMin) },
     shifts, ann, openShifts, myCover, myOff, info: myInfo_(me.slug), signed: mySigs_(me.slug), stock: stock_(), stockEdit: STOCK_EDITORS.indexOf(me.slug) >= 0, models: myModels_(me.slug),
-    cardAddr: CARD_WRITERS.indexOf(me.slug) >= 0 ? cardAddr_() : null });
+    cardAddr: CARD_WRITERS.indexOf(me.slug) >= 0 ? cardAddr_() : null,
+    regimen: true });   // tells the team app this version takes Home care PDFs (type 'regimen')
 }
 
 /** Private: only the person's own row is ever returned. */
