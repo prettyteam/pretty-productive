@@ -1076,6 +1076,8 @@ function meView(){
   const info=(HUB.data&&HUB.data.info)||{};
   const F=[['ecName','Emergency contact name'],['ecRel','Relationship'],['ecPhone','Emergency contact phone','tel'],['address','Current home address'],['email','Email','email'],['venmo','Venmo account name'],['instagram','Instagram page name']];
   const ins=F.map(([k,l,ty])=>[k,l,h('input',{type:ty||'text',value:info[k]||'',autocomplete:'off'})]);
+  const st0=(HUB.data&&HUB.data.me&&HUB.data.me.start)||'';
+  ins.push(['start','Taffeta start date',h('input',{type:'date',value:/^\d{4}-\d{2}-\d{2}$/.test(st0)?st0:'',autocomplete:'off'})]);
   const soc=S.mine.social, posts=(soc&&soc.posts)||[];
   const fileIn=h('input',{type:'file',accept:'image/*',style:'display:none',onchange:e=>pickPhoto(e.target.files[0])});
   const out=[h('div',{style:'display:flex;align-items:center;gap:16px'},
@@ -1086,7 +1088,7 @@ function meView(){
   if(HUB.toast&&!HUB.data) out.push(h('p',{class:'toast'},HUB.toast));
   out.push(h('div',{class:'gcard'},h('h2',{},gIcon('👸'),'My info'),
     h('p',{class:'soft',style:'font-size:13px;margin:0'},'Only Alexandra and her dad can see this. You only ever see your own.'),
-    !HUB.data?h('p',{class:'dmsg'},HUB.err?'Can’t reach the form right now. Check your signal.':'Loading…'):null,
+    !HUB.data?h('p',{class:'dmsg'},HUB.err==='link'?'Your info page isn’t set up yet. Ask Alexandra.':HUB.err?'Can’t reach the form right now. Check your signal.':'Loading…'):null,
     ...(HUB.data?[...ins.map(([k,l,i])=>h('label',{class:'fld'},l,i)),
      h('button',{class:'obtn',disabled:HUB.busy?'':null,onclick:()=>{const o={type:'profile'};ins.forEach(([k,l,i])=>o[k]=i.value);hubPost(o,'Saved. Thank you!')}},HUB.busy?'One moment…':'Save'),
      HUB.toast?h('p',{class:'toast'},HUB.toast):null]:[])));
