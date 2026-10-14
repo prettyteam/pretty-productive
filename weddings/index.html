@@ -1822,11 +1822,24 @@ showTab=function(t){
   try{localStorage.setItem("tt-tab",t)}catch(e){}
 };
 // keep the team schedule fresh for everyone (the office's own edits stay put)
-setInterval(async()=>{
-  if(!ROLE||document.hidden)return;
+// keep weddings and job offers current while the app is open, and catch up as soon as it comes back on screen
+// (a Home Screen app on a phone resumes with whatever it had loaded before)
+let liveBusy=false,hiddenAt=0;
+async function liveRefresh(){
+  if(!ROLE||document.hidden||liveBusy)return;liveBusy=true;
   try{applyData(await api("load"))}catch(e){}
+  try{
+    if(ROLE==="artist"){const r=await api("myJobs");jbJobs=r.jobs||[];renderMyJobs()}
+    else{const r=await api("jobs");jbJobs=r.jobs||[];renderJobs()}
+  }catch(e){}
   if(pvLoaded&&!$("#view-prev").hidden)loadPreviews(true);
-},90000);
+  liveBusy=false;
+}
+setInterval(liveRefresh,90000);
+document.addEventListener("visibilitychange",()=>{
+  if(document.hidden){hiddenAt=Date.now();return}
+  if(hiddenAt&&Date.now()-hiddenAt>20000)liveRefresh();
+});
 fillForm();
 (async()=>{
   if(!API){showSignIn("This app isn't connected to the office sheet yet.");$("#si-go").disabled=true;return}
