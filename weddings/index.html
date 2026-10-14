@@ -521,7 +521,7 @@ textarea.copyfallback{position:fixed;left:-9999px;top:0}
         <p class="status" id="jb-status"></p>
       </div>
       <div class="toolbar" style="margin-top:18px"><div class="status" id="jb-note2">Offers</div><button class="btn ghost" id="jb-refresh">Refresh</button></div>
-      <div style="overflow-x:auto"><table class="adm" id="jb-table"></table></div>
+      <div id="jb-table" style="display:grid;gap:10px"></div>
     </div>
     <div id="jb-artist" hidden>
       <div class="toolbar"><div class="status" id="jb-mine-note">Loading…</div><button class="btn ghost" id="jb-mine-refresh">Refresh</button></div>
@@ -990,8 +990,10 @@ function renderTeam(){
   if(af.value)list=list.filter(w=>(w.d.artistNames||[]).includes(af.value));
   list.sort((a,b)=>(a.d.date||"9").localeCompare(b.d.date||"9"));
   const box=$("#wedList");
-  if(!list.length){box.innerHTML='<div class="empty-state">'+(allWeddings.length?"No weddings match this filter.":"Nothing here yet. Weddings you're booked on show up here once the office adds you.")+'</div>';return}
+  if(!list.length){box.innerHTML='<div class="empty-state">'+(allWeddings.length?"No weddings match this filter.":($("#showPast").checked?"No past or upcoming weddings with you on the team yet. ":"")+"Nothing here yet. Weddings you're booked on show up here once the office adds you.")+'</div>';return}
   box.innerHTML="";
+  // "Include past weddings" with nothing past to show: say so, instead of looking like the tap did nothing
+  if($("#showPast").checked&&!list.some(w=>w.d.date&&w.d.date<iso))box.innerHTML='<p class="hint" style="margin:0 0 8px">'+(ROLE==="office"?"No past weddings match this filter.":"No past weddings with you on the team yet. A wedding shows here after you've worked it through the app.")+'</p>';
   list.forEach(w=>{
     const d=w.d;let mo="",day="";
     if(d.date){const[y,m,dd]=d.date.split("-").map(Number);const dt=new Date(y,m-1,dd);mo=dt.toLocaleDateString("en-US",{month:"short"});day=dd}
@@ -1220,8 +1222,9 @@ function renderPreviews(){
   const who=ROLE==="office"?$("#pv-filter").value:"",past=$("#pv-past").checked,today=new Date();today.setHours(0,0,0,0);
   const list=previews.filter(p=>(past||pvDay(p)>=today)&&(!who||(p.artists||[]).includes(who)));
   const box=$("#pv-list");
+  const pvNoPast=past&&!list.some(p=>pvDay(p)<today);
   if(!list.length){box.innerHTML='<div class="empty-state">'+(ROLE==="office"?"No previews on the calendar yet.":"No previews on your calendar yet. When the office invites you to one, it shows up here.")+'</div>';return}
-  box.innerHTML="";
+  box.innerHTML=pvNoPast?'<p class="hint" style="margin:0 0 8px">No previews in the last 30 days.</p>':"";
   list.forEach(p=>{
     const d=pvDay(p),i=p.info||{},b=document.createElement("button");
     b.className="wed";b.type="button";if(p.key===pvSel)b.setAttribute("aria-current","true");
@@ -1460,9 +1463,16 @@ function renderJobs(){
   const t=$("#jb-table");
   $("#jb-note2").textContent=jbJobs.length?jbJobs.filter(j=>j.status==="Waiting").length+" waiting on an answer":"No offers yet";
   if(!jbJobs.length){t.innerHTML="";return}
-  t.innerHTML='<tr><th>Wedding</th><th>Bride</th><th>Artist</th><th>Role</th><th>Ranges</th><th>Answer</th></tr>'+jbJobs.slice().sort((a,b)=>(a.date||"").localeCompare(b.date||"")||a.artist.localeCompare(b.artist)).map(j=>
-    '<tr><td>'+esc(shortDate(j.date)||"–")+'</td><td><b>'+esc(j.bride)+'</b></td><td>'+esc(j.artist)+'</td><td>'+esc(j.role)+'</td><td style="white-space:normal;min-width:180px">'+esc(jbRange(j).join(" · "))+'</td><td>'
-    +(j.status==="Yes"?'<span class="pill">Yes</span><div class="hint">Add her under Team on site on the Timeline.</div>':j.status==="No"?'<span class="pill">No</span>':'<span class="hint">Waiting</span>')+'</td></tr>').join("");
+  // one card per wedding, one line per artist, so it reads on a phone without scrolling sideways
+  const groups=[];
+  jbJobs.slice().sort((a,b)=>(a.date||"").localeCompare(b.date||"")||a.artist.localeCompare(b.artist)).forEach(j=>{
+    const k=j.weddingId||j.date+"|"+j.bride;let g=groups.find(x=>x.k===k);if(!g)groups.push(g={k,j,list:[]});g.list.push(j)});
+  t.innerHTML=groups.map(g=>'<div class="job"><div><b>'+esc(shortDate(g.j.date)||"Date TBD")+' · '+esc(g.j.bride||"Bride")+'</b></div>'
+    +(g.j.location?'<div class="meta">'+esc(g.j.location)+'</div>':'')
+    +g.list.map(j=>'<div style="border-top:1px solid var(--line);padding-top:6px"><div><b>'+esc(j.artist)+'</b> · '+esc(j.role)+' · '
+      +(j.status==="Yes"?'<span class="pill">Said yes</span>':j.status==="No"?'<span class="pill">Said no</span>':'<span class="hint">Waiting on her answer</span>')+'</div>'
+      +(jbRange(j).length?'<div class="meta">'+esc(jbRange(j).join(" · "))+'</div>':'')
+      +(j.status==="Yes"?'<div class="meta">She&rsquo;s on this wedding&rsquo;s team now.</div>':'')+'</div>').join("")+'</div>').join("");
 }
 function jbText(link){
   const w=allWeddings.find(x=>x.id===$("#jb-wedding").value);if(!w)return "";
