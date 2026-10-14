@@ -1469,7 +1469,7 @@ function renderJobs(){
     +g.list.map(j=>'<div style="border-top:1px solid var(--line);padding-top:6px"><div><b>'+esc(j.artist)+'</b> · '+esc(j.role)+' · '
       +(j.status==="Yes"?'<span class="pill">Said yes</span>':j.status==="No"?'<span class="pill">Said no</span>':'<span class="hint">Waiting on her answer</span>')+'</div>'
       +(jbRange(j).length?'<div class="meta">'+esc(jbRange(j).join(" · "))+'</div>':'')
-      +(j.status==="Yes"?'<div class="meta">Next: add her under Team on site on the Timeline tab.</div>':'')+'</div>').join("")+'</div>').join("");
+      +(j.status==="Yes"?'<div class="meta">She&rsquo;s on this wedding&rsquo;s team now.</div>':'')+'</div>').join("")+'</div>').join("");
 }
 function jbText(link){
   const w=allWeddings.find(x=>x.id===$("#jb-wedding").value);if(!w)return "";
