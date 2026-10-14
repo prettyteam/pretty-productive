@@ -1,0 +1,97 @@
+/* Aftercare PDFs for the front desk (Alexandra, Oct 2026): brow lamination, lash lift & tint and hair extensions.
+   The desk types the guest's first name, taps Text the PDF, and the share sheet opens with a Taffeta-branded PDF
+   ready for Messages. Made on the device with jsPDF (loaded on first use). Mounts into #afterList. */
+
+const AC_PHONE='(609) 383-5504', AC_SITE='taffetadesign.com';
+const AC_SHEETS=[
+  {id:'brow',name:'Brow lamination',title:'Your brow lamination aftercare',
+   intro:'Your brows are freshly set. These first 24 hours decide how long the shape lasts, so be gentle with them.',
+   sections:[
+    ['First 24 hours',['Keep your brows completely dry: no washing your face over them, steam, saunas, swimming or sweaty workouts.','No makeup, brow gel, oils or skincare on your brows.','Don’t rub or touch your brows, and try not to sleep face-down tonight.']],
+    ['Every day after',['Brush your brows into shape each morning with a clean spoolie.','After the first 24 hours, smooth a nourishing brow oil or serum through them each night to keep the hairs healthy.','Keep retinol, acids and exfoliants away from the brow area.']],
+    ['Good to know',['Your lamination lasts about 6–8 weeks.','Please wait at least 6 weeks between laminations.','If you notice redness, swelling or irritation that doesn’t settle, call or text us.']]]},
+  {id:'lash',name:'Lash lift & tint',title:'Your lash lift & tint aftercare',
+   intro:'Your lashes are lifted and tinted. Keep them dry and oil-free for the first day so the curl sets.',
+   sections:[
+    ['First 24 hours',['Keep your lashes completely dry: no water on your eyes, steam, saunas, swimming or sweaty workouts.','No mascara or eye makeup.','Don’t rub your eyes, and try not to sleep face-down tonight.']],
+    ['Every day after',['Brush your lashes up gently with a clean spoolie each morning.','Skip oil-based cleansers and eye makeup removers around your eyes. Oil relaxes the lift.','No lash curler, and skip waterproof mascara. It is hard to remove without tugging.','A lash conditioning serum after the first 24 hours keeps them strong.']],
+    ['Good to know',['Your lift lasts about 6–8 weeks, and the tint fades gradually over 4–6 weeks.','If your eyes feel irritated or look red after today, call or text us.']]]},
+  {id:'ext',name:'Hair extensions',title:'Your hair extension aftercare',
+   intro:'Your extensions are an investment. A few simple habits keep them looking beautiful and your own hair healthy.',
+   sections:[
+    ['First 48 hours',['Wait 48 hours before your first wash so the bonds and tapes can set.','Avoid heavy sweating, steam and swimming.']],
+    ['Washing',['Wash 2–3 times a week with a sulfate-free shampoo.','Wash standing upright in the shower, never upside down over a sink or tub.','Keep conditioner, masks and oils on your mid-lengths and ends, away from the bonds or tapes.','Dry your roots and bonds completely. Never go to bed with wet hair.']],
+    ['Brushing & sleeping',['Brush 2–3 times a day with your extension brush. Hold your hair at the root and start from the ends.','Sleep with your hair in a loose braid or low ponytail, ideally on a silk pillowcase.']],
+    ['Styling & swimming',['Use heat protectant every time, and keep hot tools away from the bonds or tapes.','Keep dry shampoo and alcohol-based products off the bonds.','Before the pool or ocean, wet your hair, add leave-in conditioner and braid it. Rinse right after. Skip hot tubs.']],
+    ['Good to know',['Keep up with your maintenance appointments, about every 6–8 weeks, so your extensions stay comfortable and secure.','If anything feels tight, itchy or starts to slip, call or text us and we’ll take care of it.']]]}
+];
+
+let AC_LIB=null, AC_LOGO=null;
+function acLib(){
+  if(window.jspdf) return Promise.resolve(window.jspdf);
+  return AC_LIB||(AC_LIB=new Promise((ok,no)=>{const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';s.onload=()=>ok(window.jspdf);s.onerror=()=>{AC_LIB=null;no(new Error('lib'))};document.head.appendChild(s)}));
+}
+function acLogo(){
+  if(AC_LOGO) return Promise.resolve(AC_LOGO);
+  return fetch(window.AC_LOGO_URL||'../g/logo.png').then(r=>r.blob()).then(b=>new Promise(ok=>{const f=new FileReader();f.onload=()=>ok(AC_LOGO=f.result);f.readAsDataURL(b)})).catch(()=>null);
+}
+
+/* Half-letter page (5.5 × 8.5 in), cream ground, wreath, serif headings: same look as the artists' regimen PDF */
+async function acPdf(sheet,guest){
+  const [lib,logo]=await Promise.all([acLib(),acLogo()]);
+  const doc=new lib.jsPDF({unit:'pt',format:[396,612]});
+  const W=396,H=612,M=34,CW=W-M*2,ink=[18,18,18],soft=[95,91,85],choc=[74,52,38],line=[226,222,213];
+  let y=0;
+  const bg=()=>{doc.setFillColor(248,246,240);doc.rect(0,0,W,H,'F')};
+  const foot=()=>{doc.setDrawColor(...line);doc.line(M,H-40,W-M,H-40);doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.setTextColor(...soft);
+    doc.text('Taffeta Salon & Spa  ·  219 Bellevue Ave, Hammonton NJ  ·  '+AC_PHONE+'  ·  '+AC_SITE,W/2,H-26,{align:'center'})};
+  const need=n=>{if(y+n>H-52){foot();doc.addPage([396,612]);bg();y=M+6}};
+  const para=(t,size,font,style,color,gap,indent)=>{doc.setFont(font,style);doc.setFontSize(size);doc.setTextColor(...color);
+    const ls=doc.splitTextToSize(t,CW-(indent||0)),lh=size*1.32;ls.forEach(l=>{need(lh);doc.text(l,M+(indent||0),y+size);y+=lh});y+=gap||0};
+  const label=t=>{need(34);y+=6;doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.setTextColor(...choc);doc.setCharSpace(1.6);doc.text(t.toUpperCase(),M,y+8);doc.setCharSpace(0);
+    doc.setDrawColor(...line);doc.line(M,y+13,W-M,y+13);y+=22};
+  bg();
+  if(logo) doc.addImage(logo,'PNG',W/2-34,24,68,68);
+  y=104;
+  doc.setFont('times','italic');doc.setFontSize(21);doc.setTextColor(...ink);
+  doc.text(doc.splitTextToSize(sheet.title,CW),W/2,y+18,{align:'center'});y+=30;
+  doc.setFont('helvetica','normal');doc.setFontSize(9.5);doc.setTextColor(...soft);
+  doc.text([guest?'For '+guest:'',new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})].filter(Boolean).join('  ·  '),W/2,y+10,{align:'center'});y+=24;
+  para(sheet.intro,10.5,'times','italic',ink,6);
+  sheet.sections.forEach(([t,items])=>{label(t);items.forEach(n=>{need(16);doc.setFont('helvetica','normal');doc.setTextColor(...choc);doc.setFontSize(9.5);doc.text('•',M+2,y+9.5);para(n,9.5,'helvetica','normal',ink,4,14)})});
+  y+=10;need(40);
+  para('Questions? Call or text us at '+AC_PHONE+'.',9.5,'helvetica','bold',choc,8);
+  doc.setFont('times','italic');doc.setFontSize(13);doc.setTextColor(...choc);need(20);doc.text('xo, Taffeta  ·  Hi Pretty',W/2,y+12,{align:'center'});
+  foot();
+  return doc.output('blob');
+}
+const acFile=(s,g)=>'Taffeta '+s.name.replace(/&/g,'and')+' Aftercare'+(g?' - '+g:'')+'.pdf';
+
+async function acSend(sheet,guest,st,how,win){
+  st.textContent='Making the PDF…';
+  try{
+    const blob=await acPdf(sheet,guest), file=new File([blob],acFile(sheet,guest),{type:'application/pdf'});
+    if(how==='share'&&navigator.canShare&&navigator.canShare({files:[file]})){
+      try{await navigator.share({files:[file],title:sheet.title});st.textContent='Sent.'}
+      catch(e){st.textContent=e&&e.name==='AbortError'?'':'Couldn’t open the share sheet. Try Preview.'}
+      return;
+    }
+    const url=URL.createObjectURL(blob);
+    if(how==='share'){const a=document.createElement('a');a.href=url;a.download=acFile(sheet,guest);document.body.appendChild(a);a.click();a.remove();st.textContent='Saved the PDF. Attach it to your text.'}
+    else {if(win) win.location=url; else location.href=url; st.textContent=''}
+  }catch(e){if(win) win.close(); st.textContent='Couldn’t make the PDF. Check the Wi-Fi and try again.'}
+}
+
+function acMount(el){
+  if(!el) return;
+  const e=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  el.innerHTML=`<p style="margin:0;font-size:13.5px;color:var(--soft)">Type her first name, then text her the PDF. It opens your share sheet: pick Messages and her name.</p>
+  <input id="acGuest" type="text" placeholder="Guest’s first name" autocomplete="off" autocapitalize="words" style="font:inherit;font-size:16px;height:44px;border:1px solid var(--line);border-radius:6px;padding:0 10px;background:#fbfaf7">`+
+  AC_SHEETS.map((s,i)=>`<div class="item"><b>${e(s.name)}</b><p>${e(s.intro)}</p><div class="b"><button data-ac="${i}" data-w="share">Text the PDF</button><button data-ac="${i}" data-w="view">Preview</button></div><p class="acst" style="min-height:1.2em"></p></div>`).join('');
+  el.addEventListener('click',ev=>{
+    const b=ev.target.closest('button[data-ac]'); if(!b) return;
+    const s=AC_SHEETS[+b.dataset.ac], g=(el.querySelector('#acGuest').value||'').trim().split(/\s+/)[0]||'';
+    const win=b.dataset.w==='view'?window.open('','_blank'):null;   /* opened inside the tap so it isn't blocked */
+    acSend(s,g,b.closest('.item').querySelector('.acst'),b.dataset.w,win);
+  });
+}

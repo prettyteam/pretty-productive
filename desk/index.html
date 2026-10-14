@@ -8,6 +8,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Front Desk">
 <link rel="stylesheet" href="../g/base.css">
 <script src="../g/config.js?v=2"></script>
+<script src="../g/aftercare.js?v=1"></script>
 <style>
 main{max-width:640px;gap:20px;padding-bottom:110px}
 .head{display:flex;align-items:center;gap:14px}
@@ -158,6 +159,9 @@ details.acc summary::after{color:var(--gold)}
 </details>
 <details class="more send" id="send"><summary>Send a link to a guest +</summary>
   <div class="list" id="sendList"></div>
+</details>
+<details class="more send" id="after"><summary>Send aftercare +</summary>
+  <div class="list" id="afterList"></div>
 </details>
 <div class="tabs" role="tablist">
   <button role="tab" id="tC" class="on">Concierge<span class="n" id="nC"></span></button>
@@ -390,6 +394,7 @@ const LINKS=[
  {t:'Customer profile',u:'https://prettyteam.taffetadesign.com/profile/',m:'Hi from Taffeta Salon & Spa! Please take a minute to update your profile so check-in is smooth and we can send you birthday surprises: '},
  {t:'Client experience (concierge)',u:'https://prettyteam.taffetadesign.com/concierge/',m:'Welcome to Taffeta! Settle in and tell us what you would love, like a drink, a snack or something to keep you comfy, and we will bring it right over: '},
  {t:'Complimentary consultation',u:'https://prettyteam.taffetadesign.com/consultation/',m:'Hi from Taffeta Salon & Spa! Share your goals and your artist will send you a personal plan and estimate before your visit: '}];
+acMount($('#afterList'));
 $('#sendList').innerHTML=LINKS.map((l,i)=>`<div class="item"><b>${esc(l.t)}</b><p>${esc(l.m+l.u)}</p><div class="b"><button data-c="${i}" data-w="m">Copy message</button><button data-c="${i}" data-w="u">Copy link only</button></div></div>`).join('');
 $('#sendList').addEventListener('click',async e=>{
   const b=e.target.closest('button[data-c]');if(!b)return;
