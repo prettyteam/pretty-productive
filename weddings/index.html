@@ -85,7 +85,12 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 .tp-card{border:1px solid var(--line);padding:12px;display:flex;flex-direction:column;gap:8px;min-width:0}
 .tp-card b{font-size:13px}
 .tp-text{white-space:pre-wrap;font-size:13px;line-height:1.5;overflow-wrap:anywhere}
-.tp-price{display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap}
+.gcal{border:1px solid var(--line);padding:12px 14px;margin:0 0 14px;font-size:13px;line-height:1.5}
+.gcal h3{font:600 11px var(--sans);letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:0 0 6px}
+.gcal .note{white-space:pre-wrap;margin:6px 0}
+.gcal .who{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.gcal .rsvp-yes{background:#e8efe6}.gcal .rsvp-no{background:#f3e5e2;text-decoration:line-through}
+display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap}
 .tp-price img{width:150px;max-width:100%;height:auto;border:1px solid var(--line);display:block}
 .tp-price .row>*{flex:0 0 auto}
 .tp-price a.btn{text-decoration:none;display:inline-block}
@@ -357,6 +362,7 @@ textarea.copyfallback{position:fixed;left:-9999px;top:0}
             <button class="btn" id="teamImg" disabled>Save image</button>
           </div>
         </div>
+        <div id="teamCal"></div>
         <div class="paperwrap"><div id="teamSheet"><div class="empty-state">Your weddings show up here, and they update as soon as the office changes them.</div></div></div>
       </div>
     </div>
@@ -495,6 +501,7 @@ textarea.copyfallback{position:fixed;left:-9999px;top:0}
       <h2 data-open>Calendar invites</h2>
       <p class="hint">Pick a wedding to send or update each artist's calendar invite. Her Yes is her confirmation. The team and times come from that wedding's timeline.</p>
       <label class="f" style="max-width:360px">Wedding<select id="cal-wedding"></select></label>
+      <div id="cal-gcal"></div>
       <div class="list" id="cal-team"></div>
       <div class="row"><button class="btn" id="calSync">Send / update invites</button><button class="btn ghost" id="calCheck">Check confirmations</button></div>
       <p class="status" id="calStatus"></p>
@@ -857,6 +864,8 @@ function renderCalPicker(){
 }
 function renderCalTeam(){
   const box=$("#cal-team");if(!box)return;
+  const cw=docId&&$("#cal-wedding").value?allWeddings.find(x=>x.id===docId):null;
+  $("#cal-gcal").innerHTML=cw?gcalHTML(cw.d.calInfo):"";
   if(!docId||!$("#cal-wedding").value){box.innerHTML='<p class="hint">Choose a wedding above.</p>';return}
   if(!S.artists.length){box.innerHTML='<p class="hint">No team on this wedding yet. Add the artists on the Timeline tab (Team on site).</p>';return}
   box.innerHTML=S.artists.map(a=>{
@@ -1004,8 +1013,17 @@ function renderTeam(){
     box.appendChild(b);
   });
 }
+// "From Google Calendar": the wedding's event on Weddings at Taffeta (hours, place, note, who's invited). The office sees RSVPs.
+function gcalHTML(c){
+  if(!c)return"";
+  const st={yes:"Yes",no:"No",maybe:"Maybe",waiting:"Waiting"};
+  const team=(c.team||[]).map(t=>'<span class="pill'+(t.status?' rsvp-'+t.status:'')+'">'+esc(t.name||"Guest not in Team records")+(t.status&&ROLE==="office"?' · '+st[t.status]:'')+'</span>').join("");
+  return '<div class="gcal"><h3>From Google Calendar</h3><div><b>'+esc(c.time||"")+'</b>'+(c.place?' · '+esc(c.place):'')+'</div>'
+    +(c.note?'<div class="note">'+esc(c.note)+'</div>':'')+(team?'<div class="who">'+team+'</div>':'')+'</div>';
+}
 function renderTeamSheet(){
   const w=allWeddings.find(x=>x.id===teamSel);
+  $("#teamCal").innerHTML=w?gcalHTML(w.d.calInfo):"";
   if(!w){$("#teamSheet").innerHTML='<div class="empty-state">Pick a wedding to see the timeline.</div>';$("#teamCopy").disabled=true;$("#teamImg").disabled=true;return}
   const s=Object.assign(starter(),w.d);
   $("#teamSheet").innerHTML=sheetHTML(s,"team",false).html;

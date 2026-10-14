@@ -169,14 +169,14 @@ function who_(d) {
 function load_(who) {
   const weddings = weddings_();
   if (who.role === 'office') {
-    const ct = calTimes_();
-    return { role: 'office', weddings: weddings.map(w => Object.assign(w.d, ct[w.d.id] ? { calTime: ct[w.d.id] } : {})), team: members_().map(m => Object.assign({}, m)), alerts: pushOnIds_() };
+    const ci = calInfo_();
+    return { role: 'office', weddings: weddings.map(w => Object.assign(w.d, ci[w.d.id] ? { calTime: ci[w.d.id].time, calInfo: ci[w.d.id] } : {})), team: members_().map(m => Object.assign({}, m)), alerts: pushOnIds_() };
   }
   const m = who.member, email = String(m.email || '').toLowerCase();
   const mine = weddings.map(w => w.d).filter(w => (w.artists || []).some(a =>
     a.uid === m.id || (email && String(a.email || '').toLowerCase() === email)));
-  const ct = calTimes_();
-  mine.forEach(w => { delete w.cal; if (ct[w.id]) w.calTime = ct[w.id]; });
+  const ci = calInfo_();
+  mine.forEach(w => { delete w.cal; if (ci[w.id]) { w.calTime = ci[w.id].time; w.calInfo = calInfoForArtist_(ci[w.id]); } });
   const me = Object.assign({}, m); delete me.secret;
   const payouts = rowsOf_(TABS.payouts.name).filter(r => r[1] === m.id)
     .map(r => ({ sentAt: iso_(r[0]), bride: r[2], date: r[3], type: r[4], total: r[5] }));
@@ -205,7 +205,7 @@ function members_() {
 /* ---------- weddings ---------- */
 function saveWedding_(w) {
   if (!w || typeof w !== 'object') return { ok: false, error: 'bad_request' };
-  delete w.calTime;   // shown from the calendar on each load, never saved
+  delete w.calTime; delete w.calInfo;   // shown from the calendar on each load, never saved
   const sh = sheet_(TABS.weddings.name);
   const list = weddings_();
   const found = w.id && list.find(x => x.d.id === w.id);
