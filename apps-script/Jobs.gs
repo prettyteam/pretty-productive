@@ -68,6 +68,7 @@ function answerJob_(member, id, yes) {
   const j = jobRows_().find(x => x.id === String(id || '') && x.artistId === member.id);
   if (!j) return { ok: false, error: 'not_found' };
   jobsSheet_().getRange(j.row, 13, 1, 3).setValues([[yes ? 'Yes' : 'No', j.sentAt, new Date().toISOString()]]);
+  pushOffice_(first_(j.artist) + ' said ' + (yes ? 'Yes' : 'No'), shortDate_(j.date) + ' · ' + first_(j.bride), 'jobs');
   return myJobs_(member);
 }
 

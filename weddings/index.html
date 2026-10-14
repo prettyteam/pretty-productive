@@ -369,8 +369,9 @@ textarea.copyfallback{position:fixed;left:-9999px;top:0}
       <ol class="hint" id="al-steps" hidden style="margin:0 0 10px;padding-left:18px">
         <li>In Safari, tap the Share button (the square with the arrow).</li>
         <li>Tap <b>Add to Home Screen</b>, then <b>Add</b>.</li>
-        <li>Open <b>Taffeta Weddings</b> from your Home Screen, come back to My info and tap <b>Turn on alerts</b>.</li>
+        <li>Open <b>Taffeta Weddings</b> from your Home Screen, come back to <span id="al-where">My info</span> and tap <b>Turn on alerts</b>.</li>
       </ol>
+      <label class="f" id="al-name-wrap" hidden style="max-width:260px">This phone is<select id="al-name"><option>Alexandra's phone</option><option>Dom's phone</option><option>Cherish's phone</option><option>Office computer</option></select></label>
       <div class="row" style="align-items:center"><button class="btn" id="al-on" style="flex:0 0 auto">Turn on alerts</button><button class="btn ghost" id="al-off" hidden style="flex:0 0 auto">Turn off alerts</button><span class="status" id="al-status"></span></div>
     </div>
     <div class="grid2">
@@ -1715,7 +1716,8 @@ async function start(){
   if(ROLE==="artist"){ME=j.me;fillProfile(ME);pfDraftRestore();poPrefill(ME);setStatus("Hi "+(ME.preferredName||ME.legalName||"there"))}
   else setStatus("Office");
   applyData(j);
-  if(ROLE==="artist"){jbCheckNew();alInit()}
+  if(ROLE==="artist")jbCheckNew();
+  alInit();
   const want=new URLSearchParams(location.search).get("tab");   // opened from a phone alert
   if(want){history.replaceState(null,"",location.pathname+location.hash);showTab(want)}
 }
@@ -1734,17 +1736,26 @@ async function alToken(){
 }
 async function alSave(off){
   const token=await alToken();if(!token)throw new Error("no token");
-  await api("savePushToken",{token,device:(alIOS?"iPhone":/Android/i.test(navigator.userAgent)?"Android":"Computer")+(alStandalone()?" app":""),off:!!off});
+  await api("savePushToken",{token,name:$("#al-name").value,device:(alIOS?"iPhone":/Android/i.test(navigator.userAgent)?"Android":"Computer")+(alStandalone()?" app":""),off:!!off});
+  try{if(off)localStorage.removeItem("tw-al-on");else localStorage.setItem("tw-al-on",ROLE)}catch(e){}
 }
+// the office gets the same box at the top of Booked weddings, with a name for this phone (the office shares one code)
+const AL_OFFICE_MSG="Get a banner when an artist answers a job offer, a new bride books, or an artist sends a payout request.";
 function alInit(){
-  if(!FCM||ROLE!=="artist")return;
-  $("#al-card").hidden=false;
+  if(!FCM||!ROLE)return;
+  const office=ROLE==="office",card=$("#al-card");
+  if(office&&card.parentNode!==$("#view-booked")){$("#view-booked").insertBefore(card,$("#view-booked").firstChild);$("#al-msg").textContent=AL_OFFICE_MSG}
+  $("#al-where").textContent=office?"Booked weddings":"My info";
+  $("#al-name-wrap").hidden=!office;
+  try{const n=localStorage.getItem("tw-al-name");if(n)$("#al-name").value=n}catch(e){}
+  card.hidden=false;
   const steps=alIOS&&!alStandalone();
   $("#al-steps").hidden=!steps;
   if(steps){$("#al-on").hidden=true;$("#al-off").hidden=true;$("#al-msg").textContent="To get alerts on your iPhone, add this app to your Home Screen first:";return}
   if(!alCan()){$("#al-on").hidden=true;$("#al-msg").textContent="This browser can't show alerts. On an iPhone, use Safari and add the app to your Home Screen.";return}
   if(Notification.permission==="denied"){alShow(false,"Alerts are blocked. Turn them on in your phone's Settings for Taffeta Weddings, then tap Turn on alerts.");return}
-  if(Notification.permission==="granted"){alShow(true,"Alerts are on.");alSave().catch(()=>{})}   // keep this phone's token fresh
+  let mine=null;try{mine=localStorage.getItem("tw-al-on")}catch(e){}
+  if(Notification.permission==="granted"&&(!office||mine==="office")){alShow(true,"Alerts are on.");alSave().catch(()=>{})}   // keep this phone's token fresh
   else alShow(false,"");
 }
 $("#al-on").onclick=async()=>{
@@ -1752,9 +1763,10 @@ $("#al-on").onclick=async()=>{
   try{
     const p=await Notification.requestPermission();
     if(p!=="granted"){alShow(false,p==="denied"?"Alerts are blocked. Turn them on in your phone's Settings, then try again.":"Tap Allow when your phone asks.");return}
-    await alSave();alShow(true,"Alerts are on. You'll get a banner for new offers and schedule changes.");
+    await alSave();alShow(true,ROLE==="office"?"Alerts are on for "+$("#al-name").value+".":"Alerts are on. You'll get a banner for new offers and schedule changes.");
   }catch(e){alShow(false,"That didn't work. Check your connection and try again.")}
 };
+$("#al-name").addEventListener("change",()=>{try{localStorage.setItem("tw-al-name",$("#al-name").value)}catch(e){}});
 $("#al-off").onclick=async()=>{
   $("#al-status").textContent="Turning off…";
   try{await alSave(true);alShow(false,"Alerts are off.")}catch(e){$("#al-status").textContent="That didn't work. Try again."}

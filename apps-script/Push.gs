@@ -43,7 +43,15 @@ function savePushToken_(member, token, device, off) {
 }
 
 /** Office: member ids with alerts turned on. */
-function pushOnIds_() { return [...new Set(pushRows_().map(t => t.memberId))]; }
+function pushOnIds_() { return [...new Set(pushRows_().map(t => t.memberId).filter(id => id !== 'office'))]; }
+
+/* ---------- office alerts: the office shares one code, so each office phone is saved with a name ("Dom's phone") ---------- */
+function saveOfficePushToken_(name, token, device, off) {
+  return savePushToken_({ id: 'office', preferredName: clean_(name, 60) || 'Office' }, token, device, off);
+}
+function pushOffice_(title, body, tab) { try { pushTo_('office', title, body, tab); } catch (e) { console.warn(e); } }
+const first_ = s => String(s || '').trim().split(/\s+/)[0] || '';
+const fullDate_ = d => { const m = String(d || '').match(/^(\d{4})-(\d{2})-(\d{2})/); return m ? Number(m[2]) + '/' + Number(m[3]) + '/' + m[1].slice(2) : ''; };
 
 /** Send one alert to every phone the artist turned alerts on for. */
 function pushTo_(memberId, title, body, tab) {

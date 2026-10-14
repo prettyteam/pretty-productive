@@ -120,7 +120,7 @@ function doPost(e) {
       case 'photos': return json_(photos_(who, d.key, d.ids, !!d.full));
       case 'myJobs': return json_(office ? { ok: true, jobs: [] } : myJobs_(who.member));
       case 'answerJob': return json_(office ? { ok: false, error: 'office_only' } : answerJob_(who.member, d.id, !!d.yes));
-      case 'savePushToken': return json_(office ? { ok: false, error: 'office_only' } : savePushToken_(who.member, d.token, d.device, !!d.off));
+      case 'savePushToken': return json_(office ? saveOfficePushToken_(d.name, d.token, d.device, !!d.off) : savePushToken_(who.member, d.token, d.device, !!d.off));
     }
     if (!office) return json_({ ok: false, error: 'office_only' });
     switch (d.action) {
@@ -265,6 +265,7 @@ function setActive_(id, on) {
 function logPayout_(who, r) {
   if (who.role !== 'artist' || !r) return { ok: true };
   sheet_(TABS.payouts.name).appendRow([new Date(), who.member.id, clean_(r.bride, 120), clean_(r.date, 20), clean_(r.type, 60), clean_(r.total, 20)]);
+  pushOffice_('Payout request', first_(who.member.preferredName || who.member.legalName) + ' · ' + first_(r.bride) + (r.date ? ' · ' + clean_(r.date, 20) : ''), 'booked');
   return { ok: true };
 }
 

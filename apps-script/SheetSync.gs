@@ -70,6 +70,7 @@ function syncFromWeddingsSheet_(dryRun) {
         saveWedding_({ id: 'wsync' + date.replace(/-/g, '') + last, bride: bride, date: date, location: loc,
           notes: 'Added automatically from the TAFFETA WEDDINGS sheet (' + sh.getName().trim() + ' tab). Fill in the party, team and times here.' });
         have.push({ date: date, bride: bride });
+        pushOffice_('New booking', bride + ' · ' + fullDate_(date), 'booked');
       });
       if (!dryRun) props.setProperty(seenKey, JSON.stringify([...seen]));
     });
