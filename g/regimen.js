@@ -14,7 +14,7 @@ const RG_GROUPS={
 };
 
 const RG_HOW={
-  milk:'Smooth over dry face, neck and chest with fingertips and massage for about a minute. Remove with a damp cloth or cotton pads.',
+  milk:'Smooth over dry face and neck with fingertips and massage for about a minute. Remove with a damp cloth or cotton pads.',
   p50:'After cleansing, soak a cotton pad and sweep over face, neck and chest, upward and outward. A light tingle is normal. Do not rinse.',
   serum:'After your lotion, press a few drops between your fingertips and pat into face and neck. Let it sink in before your cream.',
   cream:'Warm a pea-size amount between your fingertips and press into face and neck as your last step.',
