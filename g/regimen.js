@@ -202,7 +202,12 @@ const RG_PHONE='(609) 383-5504', RG_SITE='taffetadesign.com';
 
 const rgKind=()=>(S.mine&&S.mine.role==='esthetician')?'skin':'hair';
 const rgKey=()=>'pp-regimen:'+((S.mine&&S.mine.staff&&S.mine.staff.slug)||(typeof ID!=='undefined'?ID:'x'));
-const rgBlank=()=>({guest:'',services:[],type:'',picks:[],notes:[],own:'',next:'',msg:''});
+const rgBlank=()=>({guest:'',services:[],type:'',picks:[],notes:[],own:'',next:'',nextDate:'',msg:''});
+/* "Come back to see us …" line for the PDF and text, from a picked date or an "in about" chip */
+function rgBack(R){
+  if(R.nextDate){const [y,m,d]=R.nextDate.split('-').map(Number);return 'on '+new Date(y,m-1,d).toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'})}
+  return R.next?'in about '+R.next:'';
+}
 let RG=null, RG_Q='', RG_OPEN=null, RG_TOAST='';
 function rgLoad(){ if(RG) return RG; try{RG=Object.assign(rgBlank(),JSON.parse(store.get(rgKey())||'{}'))}catch(e){RG=rgBlank()} return RG }
 function rgSave(){ store.set(rgKey(),JSON.stringify(RG)) }
@@ -270,7 +275,9 @@ function regimenView(){
   const care=h('section',{class:'card2'},h('span',{class:'lbl'},'4 · Aftercare & next visit'),
     h('div',{class:'fld'},'Aftercare',h('div',{class:'rgnotes'},RG_NOTES[kind].map(t=>h('button',{type:'button',class:'rgp','aria-pressed':String(R.notes.includes(t)),onclick:()=>{rgToggle(R.notes,t);rgSave();render()}},h('span',{class:'rgbox','aria-hidden':'true'}),h('span',{},t))))),
     h('label',{class:'fld'},'Other notes',own),
-    h('div',{class:'fld'},'Next visit in about',chips(RG_NEXT,o=>R.next===o,o=>{R.next=R.next===o?'':o})),
+    h('div',{class:'fld'},'When should she come back?',chips(RG_NEXT,o=>R.next===o,o=>{R.next=R.next===o?'':o;R.nextDate=''})),
+    (()=>{const di=h('input',{type:'date',value:R.nextDate||''});di.addEventListener('change',()=>{R.nextDate=di.value;if(di.value)R.next='';rgSave();render()});
+      return h('label',{class:'fld'},h('small',{class:'soft'},'Or pick an exact date'),di)})(),
     h('label',{class:'fld'},'Note from you',msg));
 
   /* 5 · send */
@@ -301,7 +308,7 @@ function rgText(me){
   rgSections(kind,R).forEach(([t,a])=>{L.push('',t.toUpperCase());a.forEach((p,i)=>{L.push((i+1)+'. '+p.n+(seen.has(p)?' (same as above)':' — '+p.how));seen.add(p)})});
   const notes=R.notes.concat(R.own.trim()?[R.own.trim()]:[]);
   if(notes.length){L.push('','AFTERCARE');notes.forEach(n=>L.push('• '+n))}
-  if(R.next) L.push('','Book your next visit in about '+R.next+': '+RG_PHONE);
+  if(rgBack(R)) L.push('','Come back to see us '+rgBack(R)+'. Call or text '+RG_PHONE+' to book.');
   if(R.msg.trim()) L.push('',R.msg.trim());
   L.push('','xo '+(me||'Taffeta'));
   return L.join('\n');
@@ -366,11 +373,11 @@ async function rgPdf(me){
   const notes=R.notes.concat(R.own.trim()?R.own.trim().split(/\n+/):[]);
   if(notes.length){label('Aftercare');notes.forEach(n=>{need(16);doc.setTextColor(...choc);doc.setFontSize(9.5);doc.text('•',M+2,y+9.5);para(n,9.5,'helvetica','normal',ink,3,14)})}
 
-  if(R.next||R.msg.trim()){
+  if(rgBack(R)||R.msg.trim()){
     y+=10; need(70);
     const top=y; y+=12;
     if(R.msg.trim()) para('“'+R.msg.trim()+'”',11,'times','italic',ink,6,12);
-    if(R.next) para('Book your next visit in about '+R.next+'. Call or text '+RG_PHONE+'.',9.5,'helvetica','bold',choc,2,12);
+    if(rgBack(R)) para('Come back to see us '+rgBack(R)+'. Call or text '+RG_PHONE+' to book.',9.5,'helvetica','bold',choc,2,12);
     y+=8; doc.setDrawColor(...choc); doc.setLineWidth(.8); doc.line(M,top,M,y); doc.setLineWidth(.2);
   }
   y+=12; need(20);
