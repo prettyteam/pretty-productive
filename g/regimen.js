@@ -15,7 +15,7 @@ const RG_GROUPS={
 
 const RG_HOW={
   milk:'With dry hands and a dry face, cleanse with 1 pump in the morning and 2–3 pumps at night. Massage over face and neck for 1–2 minutes. Remove with a wet cloth, then rinse with cool water. At night, if you’re wearing makeup, double cleanse to remove the first layer.',
-  p50:'After cleansing, soak a cotton pad and sweep over face and neck, upward and outward. A light tingle is normal. Do not rinse.',
+  p50:'After cleansing, put 1–2 pumps of P50 on a cotton pad and sweep over face and neck, upward and outward. A light tingle is normal. Do not rinse.',
   serum:'After your P50, press a few drops between your fingertips and pat into face and neck. Let it sink in before your cream.',
   cream:'Warm a pea-size amount between your fingertips and press into face and neck as your last step.',
   eye:'Tap a rice-grain amount around the orbital bone with your ring finger, from the inner corner out.',
@@ -38,7 +38,7 @@ const RG_LIST={
       ['Biologique Recherche Lait Dermo-S',RG_HOW.milk],
       ['Biologique Recherche Lait E.V.',RG_HOW.milk],
       ['Biologique Recherche Lait U',RG_HOW.milk],
-      ['Biologique Recherche Lait S.R.','With dry hands and a dry face, cleanse with 1 pump in the morning and 2–3 pumps at night. Massage over face and neck for 2–3 minutes. Remove with a wet cloth, then rinse with cool water. At night, if you’re wearing makeup, double cleanse to remove the first layer.'],
+      ['Biologique Recherche Lait S.R.','With dry hands and a dry face, cleanse with 1 pump in the morning and 2–3 pumps at night. Massage over face and neck for 1–2 minutes. Remove with a wet cloth, then rinse with cool water. At night, if you’re wearing makeup, double cleanse to remove the first layer.'],
       ['Biologique Recherche Solution Démaquillante',"Soak a cotton pad and hold over closed eyes for a few seconds, then gently wipe away eye makeup."],
       ['Biologique Recherche L’Eauxygénante','Mist over face after cleansing or any time skin feels tight.']]],
     ['Tone (Lotion P50)',[
