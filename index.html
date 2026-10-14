@@ -362,9 +362,25 @@ details.days summary::-webkit-details-marker{display:none}
 .daysgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;font-size:12px;color:var(--muted);text-align:center;padding:6px 0 4px}
 .daysgrid b{display:block;font-family:var(--body);font-weight:400;color:var(--ink);font-size:13px}
 
+/* At-home regimen tab */
+.rgp{display:flex;align-items:flex-start;gap:12px;width:100%;text-align:left;background:none;border:0;border-bottom:1px solid var(--line);padding:11px 0;font:inherit;font-size:15px;color:var(--ink);cursor:pointer}
+.rgp:last-child{border-bottom:0}
+.rgbox{flex:none;width:20px;height:20px;border:1px solid var(--ink);border-radius:4px;margin-top:1px;background:#fff}
+.rgp[aria-pressed="true"] .rgbox{background:var(--ink) no-repeat center/14px url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5' fill='none' stroke='%23f8f6f0' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")}
+.rgnotes{display:flex;flex-direction:column}
+.rgitem{display:flex;flex-direction:column;gap:10px;padding:14px 0;border-bottom:1px solid var(--line)}
+.rgitem:last-child{border-bottom:0;padding-bottom:0}
+.rgitem-h{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.rgitem-h b{font-family:var(--display);font-weight:400;font-size:17px}
+.rgx{flex:none;border:1px solid var(--line);background:#fff;border-radius:50%;width:30px;height:30px;font-size:18px;line-height:1;color:var(--muted);padding:0}
+.rgta{font:inherit;font-size:16px;border:1px solid var(--line);border-radius:4px;background:#fbfaf7;padding:8px 10px;color:var(--ink);width:100%;resize:vertical}
+.card2 .fld input[type=search]{height:44px}
+.obtn[disabled],.tab[disabled]{opacity:.45}
+
 </style>
 
 <script src="g/config.js?v=2"></script>
+<script src="g/regimen.js?v=1"></script>
 <link rel="icon" href="icon.png">
 <link rel="apple-touch-icon" href="icon.png">
 <script src="/refresh.js" defer></script>
@@ -1421,6 +1437,7 @@ function staffTabs(){
   if(p.cards&&p.cards.file) t.push(['cards','Thank-you cards']);
   if(isGoalsPerson(p)) t.push(['today','Today']);
   if(isGoalsPerson(p)) t.push(['tomorrow',st.clock?'Tomorrow':'Schedule']);
+  if(isGoalsPerson(p)) t.push(['reg','Home care']);
   if(isGoalsPerson(p)||p.adv) t.push(['growth',p.adv?'Associate Program':'Growth']);
   if(p.cr&&p.cr.weeks&&p.cr.weeks.length) t.push(['cr','Weekly CR']);
   if(st.slug) t.push(['off','Time off']);
@@ -1484,6 +1501,7 @@ function staffRender(){
   document.querySelector('.mast').hidden=S.tab!=='today';
   if(S.tab==='home') return homeView();
   if(S.tab==='tomorrow') return tomorrowView();
+  if(S.tab==='reg') return regimenView();
   if(S.tab==='growth') return growthView();
   if(S.tab==='cr') return crView();
   if(S.tab==='inv') return invView();
