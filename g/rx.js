@@ -368,7 +368,7 @@ function rxBuild(R,me){
       return h('div',{class:'fld'},q,chips(all,
       o=>multi?[].concat(R.a[key]||[]).includes(o):R.a[key]===o,
       o=>{if(multi){let a=[].concat(R.a[key]||[]);const i=a.indexOf(o);if(i<0)a=o==='Unsure'?['Unsure']:[...a.filter(x=>x!=='Unsure'),o];else a.splice(i,1);R.a[key]=a}else R.a[key]=R.a[key]===o?'':o}),
-      unsure?h('small',{class:'rxfind'},'Please find out, then come back and pick her answer.'):null)}));
+      unsure?h('small',{class:'rxfind'},'You need to know this. Please ask her.'):null)}));
   const s3=h('section',{class:'card2'},h('span',{class:'lbl'},'3 · Right Now'),
     h('p',{class:'soft'},R.kind==='skin'?'Her Skin Instant: what is her skin going through right now, this season?':'What is her hair or scalp going through right now, this season?'),
     chips(RX_NOW[R.kind],o=>R.now.includes(o),o=>{const i=R.now.indexOf(o);i<0?R.now.push(o):R.now.splice(i,1)}));
