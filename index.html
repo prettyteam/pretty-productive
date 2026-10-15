@@ -271,6 +271,8 @@ body{padding-bottom:110px}
 .navscrim{position:fixed;inset:0;background:rgba(18,18,18,.25);z-index:-1}
 .navsheet{width:100%;max-width:560px;max-height:65vh;overflow-y:auto;background:var(--marshmallow);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:10px;display:flex;flex-direction:column;gap:14px;box-shadow:0 -4px 20px rgba(18,18,18,.12)}
 .navgrp{display:flex;flex-direction:column;gap:2px}
+.homenav{display:grid!important;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:18px 12px!important;align-items:start}
+.homenav .navgrp button{border:0;background:none;display:flex;width:100%;text-align:left;cursor:pointer;line-height:1.3}
 .navgrp button{flex-direction:row!important;justify-content:flex-start!important;font-family:var(--display);font-size:19px!important;letter-spacing:0!important;text-transform:none!important;color:var(--ink)!important;padding:8px 4px!important;text-align:left}
 .navgrp button::after{display:none!important}
 /* Menu at the top, Refresh bar at the bottom (Alexandra, Oct 15 2026) */
@@ -771,6 +773,7 @@ function homeView(){
   const st=S.mine.staff||{}, d=HUB.data;
   const out=[hello()];
   const jk=S.daily&&S.daily.joke; if(jk) out.push(h('div',{class:'card2',style:'text-align:center'},h('span',{class:'lbl'},'Today’s giggle'),h('p',{style:'font-family:var(--display);font-style:italic;font-size:19px;margin:6px 0 0'},jk)));
+  const hm=homeMenu(); if(hm) out.push(hm);
   if(st.clock) out.push(clockCard());
   const shifts=(d&&d.shifts)||[];
   if(st.clock||shifts.length) out.push(h('div',{class:'sec2'},h('span',{class:'lbl'},'Next shifts'),
@@ -1511,11 +1514,23 @@ function navGo(k){
   NAV_OPEN=false;S.tab=k;store.set('pp-tab:'+ID,k);render();window.scrollTo(0,0);
   if(k==='home'||k==='off'||k==='inv'||k==='skin'||k==='growth'||k==='cards'||k==='me'||k==='prices'||k==='rx')hubGet();
 }
-function staffNav(){
-  const tabs=staffTabs(); if(tabs.length<2) return null;
-  const label=Object.fromEntries(tabs), cur=label[S.tab]||'';
+function navGroups(tabs){
+  const label=Object.fromEntries(tabs);
   const seen=new Set(), groups=NAV_GROUPS.map(([g,keys])=>[g,keys.filter(k=>label[k]&&!seen.has(k)&&seen.add(k))]).filter(([,k])=>k.length);
   const rest=tabs.map(x=>x[0]).filter(k=>!seen.has(k)); if(rest.length) groups.push(['More',rest]);
+  return {label,groups};
+}
+/* the same menu laid out on Home under Today's giggle, so Home isn't blank (Alexandra, Oct 15 2026) */
+function homeMenu(){
+  const tabs=staffTabs(); if(tabs.length<2) return null;
+  const {label,groups}=navGroups(tabs);
+  const gs=groups.map(([g,keys])=>[g,keys.filter(k=>k!=='home')]).filter(([,k])=>k.length);
+  return h('div',{class:'card2 homenav'},gs.map(([g,keys])=>h('div',{class:'navgrp'},
+    h('span',{class:'lbl'},g),keys.map(k=>h('button',{type:'button',onclick:()=>navGo(k)},label[k])))));
+}
+function staffNav(){
+  const tabs=staffTabs(); if(tabs.length<2) return null;
+  const {label,groups}=navGroups(tabs), cur=label[S.tab]||'';
   const sheet=NAV_OPEN?h('div',{class:'navsheet',id:'navsheet',role:'menu'},groups.map(([g,keys])=>h('div',{class:'navgrp'},
     h('span',{class:'lbl'},g),keys.map(k=>h('button',{type:'button',role:'menuitem','aria-current':S.tab===k?'page':null,onclick:()=>navGo(k)},label[k]))))):null;
   const scrim=NAV_OPEN?h('div',{class:'navscrim',onclick:()=>{NAV_OPEN=false;render()}}):null;
