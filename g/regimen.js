@@ -220,7 +220,7 @@ function regimenView(){
   const chips=(opts,isOn,onTap)=>h('div',{class:'seg'},opts.map(o=>h('button',{type:'button','aria-pressed':String(!!isOn(o)),onclick:()=>{onTap(o);rgSave();render()}},rgTitle(o))));
   const picked=n=>R.picks.find(p=>p.n===n);
 
-  const head=h('div',{},h('span',{class:'lbl'},kind==='skin'?'Spa':'Salon'),h('h1',{style:'font-size:28px'},'At-home regimen'),
+  const head=h('div',{},h('span',{class:'lbl'},kind==='skin'?'Spa':'Salon'),h('h1',{style:'font-size:28px'},'At Home Regimen'),
     h('p',{class:'soft',style:'margin-top:6px'},'Tap what you recommend and save. The front desk texts her a Taffeta PDF of her routine.'),
     RG_TOAST&&/^Saved/.test(RG_TOAST)?h('div',{class:'card2',style:'margin-top:14px;text-align:center;border-color:var(--ink)'},h('p',{},'✓ '+RG_TOAST)):null);
 
