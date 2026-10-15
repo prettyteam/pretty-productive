@@ -7,7 +7,7 @@
 
 /* Service prices: the median price for each service in the salon's own bookings, Oct 2026. */
 const RX_SVC={
-  hair:[['Female Haircut',75],['Male Haircut',45],['Haircut Leaving Wet',45],['Leave Wet (no haircut)',0],['Blow Dry',50],['Blowdry Plus',65],
+  hair:[['Female Haircut',75],['Male Haircut',45],['Haircut Leaving Wet',50],['Leave Wet (no haircut)',0],['Blow Dry',50],['Blowdry Plus',65],
     ['Single Process',70],['Shadow Root',60],['Glaze',45],['Additional Mix',25],['Face Frame/Spot Highlight',100],['Minimum Foil',85],
     ['Half Foil',150],['Full Foil',175],['Minimum Balayage',125],['Half Head Balayage',185],['Full Head Balayage',325],
     ['Base Lightener',55],['K18 Bond Protection',25],['Goldwell Leave-In Treatment',20],['Permanent Wave',100],['Formal Style',105]],
@@ -62,6 +62,11 @@ const RX_PRICES={
     ['Biologique Recherche Sérum TEWL (0.3 oz)',85],['Biologique Recherche Sérum Erythros',140],['Biologique Recherche Dermopore (0.3 oz)',60],
     ['Biologique Recherche Crème MSR-H',330],['BR Skin Box (Youth, Standard or Blemish)',50]]
 };
+/* Retail grouped by brand (Alexandra, Oct 15 2026: a drop-down per brand, less scrolling) */
+const RX_BRANDS=['Taffeta','Oribe','K18','Davines','IGK','Brazilian Blowout','Rossano Ferretti','Aluram','Olaplex','Biologique Recherche','Jolie','T3'];
+const rxBrand=n=>{n=String(n);if(/^BR /.test(n))return 'Biologique Recherche';return RX_BRANDS.find(b=>n.startsWith(b))||'Other'};
+const rxByBrand=items=>{const g={};items.forEach(x=>{const b=rxBrand(x[0]);(g[b]=g[b]||[]).push(x)});
+  return Object.keys(g).sort((a,b)=>(RX_BRANDS.indexOf(a)+1||99)-(RX_BRANDS.indexOf(b)+1||99)).map(b=>[b,g[b]])};
 const rxFavKey=()=>'pp-rxfav:'+rxSlug();
 function rxFavs(){ try{return JSON.parse(store.get(rxFavKey())||'[]')}catch(e){return []} }
 let RX_FAVT=null;
@@ -109,9 +114,13 @@ function rxPriceList(kind){
   const d=h('details',{class:'invg',id:'rxpl'},h('summary',{},h('h2',{},'Home care prices'),h('span',{class:'soft invc'},favs.length?favs.length+' starred':''),h('span',{class:'tplus','aria-hidden':'true'},'+')),
     h('div',{class:'sec2'},h('p',{class:'soft'},'Know what your favorites cost so you can build them into her budget. Star your go-tos and they show first when you add home care.'),
       h('label',{class:'fld'},s),
-      ...items.map(([n,p])=>h('div',{class:'rxl'},
+      ...(()=>{const row=([n,p])=>h('div',{class:'rxl'},
         h('button',{type:'button',class:'rxstar','aria-pressed':String(favs.includes(n)),'aria-label':(favs.includes(n)?'Unstar ':'Star ')+n,onclick:()=>{rxFavToggle(n);render();const x=document.getElementById('rxpl');if(x)x.open=true}},favs.includes(n)?'★':'☆'),
-        h('div',{class:'rxn'},h('b',{},n.replace(/^Biologique Recherche /,'BR '))),h('span',{class:'num'},rxMoney(p)))),
+        h('div',{class:'rxn'},h('b',{},n.replace(/^Biologique Recherche /,'BR '))),h('span',{class:'num'},rxMoney(p)));
+        const mine=items.filter(([n])=>favs.includes(n));
+        return [mine.length?h('div',{},h('span',{class:'lbl'},'★ My go-tos'),...mine.map(row)):null,
+          ...rxByBrand(items.filter(([n])=>!favs.includes(n))).map(([b,L])=>{const d=h('details',{class:'invg'},h('summary',{},h('h2',{style:'font-size:17px'},b),h('span',{class:'soft invc'},String(L.length)),h('span',{class:'tplus','aria-hidden':'true'},'+')),
+            h('div',{class:'sec2'},...L.map(row)));if(q)d.open=true;return d})]})(),
       h('p',{class:'soft'},'Try Me bottle: 1 oz of any backbar product, $3. Prices are brand list prices; ring up from the POS.')));
   if(q) d.open=true;
   return d;
@@ -129,7 +138,7 @@ const RX_GOAL={
     'Lived-in blonde (balayage)':{p:[['Full Head Balayage','Female Haircut'],['Half Head Balayage','Female Haircut'],['Minimum Balayage','Female Haircut'],['Minimum Balayage']],
       m:RX_BAL_M},
     'Brighter blonde (foils)':{p:[['Full Foil','Glaze','Female Haircut'],['Half Foil','Glaze','Female Haircut'],['Minimum Foil','Glaze','Female Haircut'],['Face Frame/Spot Highlight','Glaze'],['Minimum Foil','Glaze']],
-      m:[['Minimum Foil','Glaze','Leave Wet (no haircut)'],'8–10 weeks','Foils around the part and hairline and a glaze. If you get your cut today, skip it next time to save: leave wet, or add a blow dry for $50 instead of a $75+ haircut.']},
+      m:[['Minimum Foil','Glaze','Leave Wet (no haircut)'],'8–10 weeks','Foils around the part and hairline and a glaze. If you get your cut today, skip it next time to save: leave wet, or add a $50 blow dry. Need a trim? A haircut leaving wet is $50 instead of $75+.']},
     'Root touch-up or gray coverage':{p:[['Single Process','Glaze','Female Haircut','Blow Dry'],['Single Process','Glaze','Female Haircut'],['Single Process','Female Haircut'],['Single Process']],
       m:[['Single Process'],'4–6 weeks','Roots only. Add a cut every other visit.']},
     'Shine and tone refresh (glaze)':{p:[['Glaze','Female Haircut','Blow Dry'],['Glaze','Female Haircut'],['Glaze']],
@@ -137,7 +146,7 @@ const RX_GOAL={
     'New cut or shape':{p:[['Female Haircut','Blow Dry'],['Female Haircut'],['Haircut Leaving Wet']],
       m:[['Female Haircut'],'6–8 weeks','A trim to keep the shape.']},
     'Big change (transformation)':{p:[['Full Head Balayage','Female Haircut','Blow Dry'],['Full Foil','Glaze','Female Haircut'],['Half Head Balayage','Female Haircut'],['Half Foil','Glaze','Female Haircut']],
-      m:[['Face Frame/Spot Highlight','Glaze','Leave Wet (no haircut)'],'8–10 weeks','A big change can take more than one visit. Next time: face-framing foils and a glaze. If you get your cut today, skip it next time to save: leave wet, or add a blow dry for $50 instead of a $75+ haircut.']},
+      m:[['Face Frame/Spot Highlight','Glaze','Leave Wet (no haircut)'],'8–10 weeks','A big change can take more than one visit. Next time: face-framing foils and a glaze. If you get your cut today, skip it next time to save: leave wet, or add a $50 blow dry. Need a trim? A haircut leaving wet is $50 instead of $75+.']},
     'Blowout or style':{p:[['Blowdry Plus'],['Blow Dry']],m:[['Blow Dry'],'1–2 weeks','A blowout for your next event.']}
   },
   skin:{
@@ -328,7 +337,7 @@ function rxEditor(R,me){
   const adder=L=>{const sel=h('select',{'aria-label':'Add a service or product'},h('option',{value:''},'+ Add a service or product'),
       favs.length?h('optgroup',{label:'My go-tos'},plist.filter(x=>favs.includes(x[0])).map(([n,p])=>h('option',{value:n},n+' · '+rxMoney(p)))):null,
       h('optgroup',{label:'Services'},RX_SVC[R.kind].filter(([n])=>!(n==='Glaze'&&L.some(l=>RX_BAL.test(l.n)))).map(([n,p])=>h('option',{value:n},n+' · '+rxMoney(p)))),
-      h('optgroup',{label:'Home care'},plist.map(([n,p])=>h('option',{value:n},n+' · '+rxMoney(p)))),
+      ...rxByBrand(plist).map(([b,L])=>h('optgroup',{label:'Home care · '+b},L.map(([n,p])=>h('option',{value:n},n+' · '+rxMoney(p))))),
       h('optgroup',{label:'Try Me'},h('option',{value:'__try'},'Try Me bottle · $3')));
     sel.addEventListener('change',()=>{const n=sel.value;if(!n)return;if(n==='__try'){const what=prompt('Which product goes in the Try Me bottle?');if(what)L.push({n:what.trim(),p:RX_TRY,t:'t'});rxSave();render();return}
       const sv=RX_SVC[R.kind].find(x=>x[0]===n);const pr=plist.find(x=>x[0]===n);const ex=Object.values(RX_PROD).find(x=>x[0]===n);

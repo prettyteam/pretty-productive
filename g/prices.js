@@ -3,7 +3,7 @@
    taffetadesign.com/salon-and-spa-menu (read Oct 15 2026); retail is the home care list in g/rx.js (RX_PRICES).
    Uses the host page's h() and render(). No costs here, only what the guest pays. */
 const PR_MENU=[
-  ['Hair cutting',[['Female haircut','$65+'],['Female haircut, leaving wet','$45+'],['Male haircut','$45+'],['Child haircut','$35+']]],
+  ['Hair cutting',[['Female haircut','$65+'],['Female haircut, leaving wet','$50+'],['Male haircut','$45+'],['Child haircut','$35+']]],
   ['Hair color',[['Single process','$65+'],['Gloss','$45+'],['Base break','$55+'],['Shadow root','$55+'],['Face frame highlight','$55+'],
     ['Minimal highlight','$80+'],['Half highlight','$110+'],['Full highlight','$140+'],['Double process','Upon consultation'],
     ['K18 bond protection, every blonding service','$25 to $50']]],
@@ -47,8 +47,11 @@ function pricesView(){
       onclick:()=>{rxFavToggle(n);render()}},favs.includes(n)?'★':'☆');
     const srow=(n,p)=>h('div',{class:'rxl'},star(n),h('div',{class:'rxn'},h('span',{},n)),h('b',{class:'num',style:'font-weight:500;white-space:nowrap'},fmt(p)));
     const mine=all.filter(([n])=>favs.includes(n)&&hit(n));
-    const lines=[['Hair',RX_PRICES.hair],['Skin',RX_PRICES.skin]].map(([g,items])=>{const shown=items.filter(([n])=>hit(n)&&!favs.includes(n));if(!shown.length)return null;
-      return h('section',{class:'card2'},h('span',{class:'lbl'},g),...shown.map(([n,p])=>srow(n,p)))});
+    /* a drop-down per brand so there's less scrolling (Alexandra, Oct 15 2026); searching opens the matches */
+    const lines=[['Hair',RX_PRICES.hair],['Skin',RX_PRICES.skin]].map(([g,items])=>{const shown=items.filter(([n])=>(hit(n)||hit(rxBrand(n)))&&!favs.includes(n));if(!shown.length)return null;
+      return h('section',{class:'card2'},h('span',{class:'lbl'},g),...rxByBrand(shown).map(([b,L])=>{const d=h('details',{class:'invg'},
+        h('summary',{},h('h2',{style:'font-size:17px'},b),h('span',{class:'soft invc'},String(L.length)),h('span',{class:'tplus','aria-hidden':'true'},'+')),
+        h('div',{class:'sec2'},...L.map(([n,p])=>srow(n,p))));if(q)d.open=true;return d}))});
     body=[mine.length?h('section',{class:'card2'},h('span',{class:'lbl'},'★ Your go-tos'),...mine.map(([n,p])=>srow(n,p))):
         (q?null:h('small',{class:'soft',style:'text-align:center'},'Tap ☆ on the products you reach for most. They move to the top here and in the RX card menu, on your phone and the salon iPad.')),
       h('section',{class:'card2'},h('span',{class:'lbl'},'Try Me bottle'),row('1 oz of any backbar product','$3')),...lines];
