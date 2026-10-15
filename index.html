@@ -406,7 +406,15 @@ details.days summary::-webkit-details-marker{display:none}
 let EDITION='stylist';
 const $main=document.getElementById('main'), $sub=document.getElementById('mastSub');
 const money=n=>'$'+Number(n||0).toLocaleString('en-US',{minimumFractionDigits:n%1?2:0,maximumFractionDigits:2});
-function tipList(c){let a=Array.isArray(c.suggestions)&&c.suggestions.length?c.suggestions:String(c.suggestion||'').split(/(?<=[.!?”"])\s+/).map(x=>x.trim()).filter(Boolean);return h('ul',{class:'try triplist'},a.map(t=>h('li',{},t)))}
+function tipList(c){const raw=Array.isArray(c.suggestions)&&c.suggestions.length?c.suggestions:String(c.suggestion||'').split(/(?<=[.!?”"])\s+/);
+  const a=[];raw.map(x=>String(x).trim()).filter(Boolean).forEach(t=>{
+    if(/\?\s*$/.test(t)) return; // no "Are you okay with that plan?" style questions
+    if(/\bwill (be|feel|look|stay|last)\b/i.test(t)&&!/^(i['’]d|i would|let['’]s|use|add|send|finish|book|try)\b/i.test(t)) return; // drop the "will feel so good" filler
+    t=t.replace(/^(i['’]d (also )?love to|i would (also )?love to|let['’]s|we can|i (can|will|want to|suggest)|i recommend)\s+/i,'');
+    t.split(/\s+and\s+(?=(?:book|pre-book|rebook|add|send|show|finish|use|try|schedule|recommend|offer)\b)/i).forEach(x=>{x=x.trim().replace(/[.!]+$/,'').replace(/^send you home with\b/i,'Send home').replace(/^show you\b/i,'Show').replace(/^style you with\b/i,'Style with').replace(/^send it home with you\b/i,'Send it home');if(x)a.push(x[0].toUpperCase()+x.slice(1))})});
+  return h('ul',{class:'try triplist'},a.map(t=>h('li',{},t)))}
+const CHECKIN=['What brings you in today?','Are we on the same page about today’s plan?','Is there anything with your hair, scalp or skin you need help figuring out?'];
+function checkIn(){return h('details',{class:'tryd'},h('summary',{},h('span',{class:'tico','aria-hidden':'true'}),h('span',{class:'tlabel'},'Check in first'),h('span',{class:'tplus','aria-hidden':'true'},'+')),h('ul',{class:'try triplist'},CHECKIN.map(t=>h('li',{},t))))}
 function h(tag,attrs,...kids){const e=document.createElement(tag);for(const[k,v]of Object.entries(attrs||{})){if(v==null)continue;if(k==='class')e.className=v;else if(k.startsWith('on'))e.addEventListener(k.slice(2),v);else e.setAttribute(k,v)}for(const c of kids.flat()){if(c==null||c===false)continue;e.append(c.nodeType?c:document.createTextNode(String(c)))}return e}
 const pct=(a,g)=>g>0?Math.max(0,Math.min(100,Math.round(a/g*100))):0;
 const store={get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
@@ -457,6 +465,7 @@ function stylistPage(p){
           h('span',{class:'muted num',style:'font-size:14px'},money(c.services.reduce((a,s)=>a+s.price,0)))),
         c.services.length?h('div',{class:'chips'},c.services.map(s=>h('span',{class:'chip'+(s.addon?' add':'')},s.name+(s.addon?' · add-on':'')))):null,
         c.retail.length?h('p',{class:'muted',style:'font-size:14px'},'Took home: '+c.retail.map(r=>r.name).join(', ')):null,
+        c.services.length?checkIn():null,
         (c.suggestion||(c.suggestions&&c.suggestions.length))?h('details',{class:'tryd'},h('summary',{},h('span',{class:'tico','aria-hidden':'true'}),h('span',{class:'tlabel'},'Suggestion'),h('span',{class:'tplus','aria-hidden':'true'},'+')),tipList(c)):null,
         c.services.length?guestChecks(c,p):null)))));
     parts.push(h('section',{class:'section'},
@@ -1491,6 +1500,7 @@ function tomorrowView(){
           h('span',{class:'muted num',style:'font-size:14px'},money((c.services||[]).reduce((a,s)=>a+s.price,0)))),
         (c.services||[]).length?h('div',{class:'chips'},c.services.map(s=>h('span',{class:'chip'+(s.addon?' add':'')},s.name+(s.addon?' · add-on':'')))):null,
         est&&c.needsWaiver?h('p',{class:'muted',style:'font-size:14px'},'Needs a signed waiver before the service.'):null,
+        (c.services||[]).length?checkIn():null,
         (c.suggestion||(c.suggestions&&c.suggestions.length))?h('details',{class:'tryd'},h('summary',{},h('span',{class:'tico','aria-hidden':'true'}),h('span',{class:'tlabel'},'Suggestion'),h('span',{class:'tplus','aria-hidden':'true'},'+')),tipList(c)):null))):
         h('p',{class:'soft'},'No guests booked yet.')),
     h('p',{class:'soft',style:'font-size:13px'},'The schedule can change. Check Today in the morning for the final lineup.'))];
