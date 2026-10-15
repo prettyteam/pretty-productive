@@ -278,14 +278,26 @@ body{padding-bottom:110px}
 .navscrim{position:fixed;inset:0;background:rgba(18,18,18,.25);z-index:-1}
 .navsheet{width:100%;max-width:560px;max-height:65vh;overflow-y:auto;background:var(--marshmallow);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:10px;display:flex;flex-direction:column;gap:14px;box-shadow:0 -4px 20px rgba(18,18,18,.12)}
 .navgrp{display:flex;flex-direction:column;gap:2px}
-.framed{background:#efedea!important;border:12px solid #fff!important;border-radius:0!important;outline:1px solid #7d7770;outline-offset:-20px;padding:30px 26px!important;box-shadow:0 1px 6px rgba(43,38,32,.08)}
-.homenav{grid-template-columns:1fr 1fr!important;gap:10px!important;align-items:stretch!important}
-.homenav .navgrp{background:#fff;outline:1px solid #c9c2b8;outline-offset:-6px;padding:20px 10px 16px;align-items:center;text-align:center;box-shadow:0 1px 4px rgba(43,38,32,.06)}
-.homenav .navgrp>.lbl{font-size:18px!important;padding:0 0 4px!important;text-align:center}
-.homenav .navgrp button{justify-content:center!important;text-align:center;padding:4px!important;width:auto!important}
-/* framed cards like the Hi Pretty tile Alexandra likes: white mat, thin taupe-grey inner line, soft greige ground (Oct 15 2026) */
-.homenav{display:grid!important;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:18px 12px!important;align-items:start}
-.homenav .navgrp button{border:0;background:none;display:flex;width:100%;text-align:left;cursor:pointer;line-height:1.3}
+.hhome{display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center}
+.hhome .crest{position:relative;width:200px;height:200px}
+.hhome .crest img{position:absolute}
+.hhome .crest img.w{inset:0;width:100%;height:100%}
+.hhome .crest img.w.over{-webkit-mask-image:radial-gradient(circle at 100px 92.5px,transparent 0 75px,#000 75.5px);mask-image:radial-gradient(circle at 100px 92.5px,transparent 0 75px,#000 75.5px)}
+.hhome .crest img.me{left:23.3px;top:15.8px;width:153.4px;height:153.4px;border-radius:50%;object-fit:cover}
+.hhi{display:flex;flex-direction:column;align-items:center;font-family:var(--display);color:#423327;line-height:1.15}
+.hhi span:first-child{font-size:28px}
+.hname{font-size:34px;font-style:italic}
+.hgig{display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;padding:0 8px}
+.hgig .lbl{color:#8a7466}
+.hgig p{margin:0;font-family:var(--display);font-style:italic;font-size:18px;line-height:1.5;color:#423327;max-width:440px}
+.hmenu{display:flex;flex-direction:column;gap:14px}
+.mhead{display:flex;align-items:center;gap:14px;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:#8a7466}
+.mhead::before,.mhead::after{content:"";flex:1;height:1px;background:var(--line)}
+.hmenu .cgrid{display:grid;grid-template-columns:repeat(2,128px);gap:8px;justify-content:center}
+.hmenu .cgrid button{background:#2b2a28;color:#f2f1ec;border:0;border-radius:0;aspect-ratio:1/1;font-family:var(--display);font-size:18px;line-height:1.2;padding:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;text-align:center}
+.hmenu .cgrid button[aria-expanded="true"]{outline:1px solid #2b2a28;outline-offset:3px}
+.hpages{display:flex;flex-direction:column;align-items:center;gap:2px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:8px 0;max-width:264px;width:100%;margin:0 auto}
+.hpages button{border:0;background:none;font-family:var(--display);font-size:17px;color:#423327;padding:8px;cursor:pointer}
 .navgrp button{flex-direction:row!important;justify-content:flex-start!important;font-family:var(--display);font-size:19px!important;letter-spacing:0!important;text-transform:none!important;color:var(--ink)!important;padding:8px 4px!important;text-align:left}
 .navgrp button::after{display:none!important}
 /* Menu at the top, Refresh bar at the bottom (Alexandra, Oct 15 2026) */
@@ -766,11 +778,13 @@ async function hubPost(body,ok){
 function liveClock(){const c=HUB.data&&HUB.data.clock; if(!c) return null;
   const extra=c.in?(Date.now()-HUB.at)/6e4:0; return {...c,todayMin:c.todayMin+extra,weekMin:c.weekMin+extra}}
 
+/* Home top (Alexandra, Oct 15 2026): her photo inside the Taffeta wreath and bow, the photo's edge on the wreath's
+   inner circle; "Hi," in the serif and her name under it (the Antoinetta name pictures come next). */
 function hello(){
-  const logo=document.querySelector('.wreath');
-  const today=new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
-  return h('div',{class:'hello'},h('div',{},h('div',{class:'date'},today),h('h1',{},'Hi, ',h('em',{},firstName(S.mine.name)))),
-    myPhoto()?avatarEl(52):(logo?h('img',{src:logo.src,alt:''}):null));
+  const logo=document.querySelector('.wreath'), ph=myPhoto();
+  return h('div',{class:'hhome'},
+    h('div',{class:'crest'},ph?h('img',{class:'me',src:ph,alt:''}):null,logo?h('img',{class:'w'+(ph?' over':''),src:logo.src,alt:''}):null),
+    h('div',{class:'hhi'},h('span',{},'Hi,'),h('span',{class:'hname'},firstName(S.mine.name))));
 }
 function clockCard(){
   const c=liveClock();
@@ -785,7 +799,8 @@ function clockCard(){
 function homeView(){
   const st=S.mine.staff||{}, d=HUB.data;
   const out=[hello()];
-  const jk=S.daily&&S.daily.joke; if(jk) out.push(h('div',{class:'card2 framed',style:'text-align:center'},h('span',{class:'lbl'},'Today’s giggle'),h('p',{style:'font-family:var(--display);font-style:italic;font-size:19px;margin:6px 0 0'},jk)));
+  const jk=S.daily&&S.daily.joke, today=new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
+  out.push(h('div',{class:'hgig'},h('span',{class:'lbl'},today),jk?h('p',{},jk):null));
   const hm=homeMenu(); if(hm) out.push(hm);
   if(st.clock) out.push(clockCard());
   const shifts=(d&&d.shifts)||[];
@@ -1507,7 +1522,7 @@ function staffTabs(){
   if(p.skin&&p.skin.file) t.push(['skin','Skincare Stock']);
   if(p.cards&&p.cards.file) t.push(['cards','Thank-You Cards']);
   if(isGoalsPerson(p)) t.push(['today','Today']);
-  if(isGoalsPerson(p)) t.push(['tomorrow',st.clock?'Tomorrow':'Schedule']);
+  if(isGoalsPerson(p)) t.push(['tomorrow',st.clock?'Tomorrow':'Coming Up']);
   if(isGoalsPerson(p)) t.push(['rx','RX Card']);
   if(isGoalsPerson(p)) t.push(['reg','Home Care']);
   if(isGoalsPerson(p)||p.adv) t.push(['growth',p.adv?'Associate Program':'Growth']);
@@ -1516,12 +1531,12 @@ function staffTabs(){
   if(st.slug) t.push(['prices','Prices']);
   t.push(['guide','Culture']);
   const dc=p.docs||{}; if(dc.hb) t.push(['hb','Handbook']); if(dc.fg) t.push(['fg','Desk Guide']);
-  if(st.slug) t.push(['me','Me']);
+  if(st.slug) t.push(['me','My Profile']);
   return t;
 }
 /* One menu instead of a row of tabs (Alexandra, Oct 2026). Sections are grouped; Customer cards holds RX card and Home care. */
-const NAV_GROUPS=[['My Day',['home','today','tomorrow']],['Customer Cards',['rx','reg']],['Growing',['growth','cr']],
-  ['Salon',['prices','inv','skin','cards','off']],['Taffeta',['guide','hb','fg']],['Just Me',['me']]];
+const NAV_GROUPS=[['Appointments',['home','today','tomorrow']],['Customer Cards',['rx','reg']],['Growing',['growth','cr']],
+  ['Salon & Spa',['prices','inv','skin','cards','off']],['Taffeta',['guide','hb','fg']],['My Profile',['me']]];
 let NAV_OPEN=false;
 function navGo(k){
   NAV_OPEN=false;S.tab=k;store.set('pp-tab:'+ID,k);render();window.scrollTo(0,0);
@@ -1533,14 +1548,18 @@ function navGroups(tabs){
   const rest=tabs.map(x=>x[0]).filter(k=>!seen.has(k)); if(rest.length) groups.push(['More',rest]);
   return {label,groups};
 }
-/* the same menu laid out on Home under Today's giggle, so Home isn't blank (Alexandra, Oct 15 2026) */
+/* Home menu (Alexandra, Oct 15 2026): MENU between two fine lines, then plain charcoal squares, two across.
+   A square with one page opens it; otherwise its pages open just under the squares. */
+let HOME_OPEN='';
 function homeMenu(){
   const tabs=staffTabs(); if(tabs.length<2) return null;
   const {label,groups}=navGroups(tabs);
   const gs=groups.map(([g,keys])=>[g,keys.filter(k=>k!=='home')]).filter(([,k])=>k.length);
-  return h('div',{class:'homemenu'},h('span',{class:'lbl',style:'display:block;text-align:center;margin-bottom:12px'},'Menu'),
-    h('div',{class:'homenav'},gs.map(([g,keys])=>h('div',{class:'navgrp'},
-    h('span',{class:'lbl'},g),keys.map(k=>h('button',{type:'button',onclick:()=>navGo(k)},label[k]))))));
+  const open=gs.find(([g])=>g===HOME_OPEN);
+  return h('div',{class:'hmenu'},h('div',{class:'mhead'},'Menu'),
+    h('div',{class:'cgrid'},gs.map(([g,keys])=>h('button',{type:'button','aria-expanded':keys.length>1?String(HOME_OPEN===g):null,
+      onclick:()=>{if(keys.length===1){HOME_OPEN='';navGo(keys[0])}else{HOME_OPEN=HOME_OPEN===g?'':g;render()}}},g))),
+    open?h('div',{class:'hpages'},open[1].map(k=>h('button',{type:'button',onclick:()=>{HOME_OPEN='';navGo(k)}},label[k]))):null);
 }
 function staffNav(){
   const tabs=staffTabs(); if(tabs.length<2) return null;
