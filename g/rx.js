@@ -101,7 +101,7 @@ function rxPriceList(kind){
   const items=RX_PRICES[kind].filter(([n])=>!q||n.toLowerCase().includes(q)).sort((a,b)=>(favs.includes(b[0])-favs.includes(a[0])));
   const s=h('input',{type:'search',id:'rxpq',value:RX_PQ,placeholder:'Search a product',autocomplete:'off'});
   s.addEventListener('input',()=>{RX_PQ=s.value;const pos=s.selectionStart;render();const n=document.getElementById('rxpq');if(n){n.focus();try{n.setSelectionRange(pos,pos)}catch(e){}}});
-  const d=h('details',{class:'invg',id:'rxpl'},h('summary',{},h('h2',{},'Home care prices'),h('span',{class:'soft invc'},favs.length?favs.length+' starred':''),h('span',{class:'tplus','aria-hidden':'true'},'+')),
+  const d=h('details',{class:'invg',id:'rxpl'},h('summary',{},h('h2',{},'Maintenance'),h('span',{class:'soft invc'},favs.length?favs.length+' starred':''),h('span',{class:'tplus','aria-hidden':'true'},'+')),
     h('div',{class:'sec2'},h('p',{class:'soft'},'Know what your favorites cost so you can build them into her budget. Star your go-tos and they show first when you add home care.'),
       h('label',{class:'fld'},s),
       ...(()=>{const row=([n,p])=>h('div',{class:'rxl'},
