@@ -306,6 +306,14 @@ function rgLib(){
   if(window.jspdf) return Promise.resolve(window.jspdf);
   return RG_LIB||(RG_LIB=new Promise((ok,no)=>{const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';s.onload=()=>ok(window.jspdf);s.onerror=()=>{RG_LIB=null;no(new Error('lib'))};document.head.appendChild(s)}));
 }
+/* daintier script for the PDF headings and sign-off: Cormorant Garamond Light Italic (falls back to Times italic if it can't load) */
+let RG_SCRIPT=null;
+function rgScriptFont(){
+  if(RG_SCRIPT!==null) return Promise.resolve(RG_SCRIPT);
+  return fetch((window.RG_BASE||'')+'g/cormorant-garamond-300-italic.ttf').then(r=>{if(!r.ok)throw 0;return r.arrayBuffer()})
+    .then(b=>{const u=new Uint8Array(b);let s='';for(let i=0;i<u.length;i+=32768)s+=String.fromCharCode.apply(null,u.subarray(i,i+32768));return RG_SCRIPT=btoa(s)})
+    .catch(()=>RG_SCRIPT='');
+}
 function rgLogo(){
   if(RG_LOGO) return Promise.resolve(RG_LOGO);
   return fetch((window.RG_BASE||'')+'g/logo.png').then(r=>r.blob()).then(b=>new Promise(ok=>{const f=new FileReader();f.onload=()=>ok(RG_LOGO=f.result);f.readAsDataURL(b)})).catch(()=>null);
@@ -314,8 +322,11 @@ function rgLogo(){
 /* Half-letter page (5.5 × 8.5 in), easy to read on a phone. Cream page, Taffeta wreath, serif headings. */
 async function rgPdf(me,R,kind){
   R=R||RG; kind=kind||rgKind();
-  const [lib,logo]=await Promise.all([rgLib(),rgLogo()]);
+  const [lib,logo,script]=await Promise.all([rgLib(),rgLogo(),rgScriptFont()]);
   const doc=new lib.jsPDF({unit:'pt',format:[396,612]});
+  let SF='times';
+  if(script){try{doc.addFileToVFS('CormorantLightItalic.ttf',script);doc.addFont('CormorantLightItalic.ttf','CormorantLI','italic');SF='CormorantLI'}catch(e){SF='times'}}
+  const big=SF==='times'?1:1.12;
   const W=396, H=612, M=34, CW=W-M*2, ink=[18,18,18], soft=[95,91,85], choc=[74,52,38], line=[226,222,213];
   let y=0;
   const bg=()=>{doc.setFillColor(248,246,240);doc.rect(0,0,W,H,'F')};
@@ -332,8 +343,8 @@ async function rgPdf(me,R,kind){
   bg();
   if(logo) doc.addImage(logo,'PNG',W/2-34,24,68,68);
   y=104;
-  doc.setFont('times','italic');doc.setFontSize(22);doc.setTextColor(...ink);
-  doc.text('Your at-home '+(kind==='skin'?'skincare':'hair care'),W/2,y+18,{align:'center'});y+=30;
+  doc.setFont(SF,'italic');doc.setFontSize(22*big);doc.setTextColor(...ink);
+  doc.text(kind==='skin'?'Your at-home skincare':'Home Maintenance',W/2,y+18,{align:'center'});y+=30;
   doc.setFont('helvetica','normal');doc.setFontSize(9.5);doc.setTextColor(...soft);
   const who=[R.guest.trim()?'For '+R.guest.trim():'',me?'from '+me:'',rgDate()].filter(Boolean).join('  ·  ');
   doc.text(who,W/2,y+10,{align:'center'});y+=18;
@@ -360,13 +371,13 @@ async function rgPdf(me,R,kind){
   if(rgBack(R)||R.msg.trim()){
     y+=10; need(70);
     const top=y; y+=12;
-    if(R.msg.trim()) para('“'+R.msg.trim()+'”',11,'times','italic',ink,6,12);
+    if(R.msg.trim()) para('“'+R.msg.trim()+'”',11*big,SF,'italic',ink,6,12);
     if(rgBack(R)) para('Come back to see us '+rgBack(R)+'. Call or text '+RG_PHONE+' to book.',9.5,'helvetica','bold',choc,2,12);
     y+=8; doc.setDrawColor(...choc); doc.setLineWidth(.8); doc.line(M,top,M,y); doc.setLineWidth(.2);
   }
   if(kind==='skin'&&R.picks.some(p=>/^Biologique Recherche/.test(p.n))){y+=10;para('Remember, Biologique Recherche is very concentrated, so only a small amount is needed. If you have questions, reach out any time!',9.5,'helvetica','italic',soft,2)}
   y+=12; need(20);
-  doc.setFont('times','italic');doc.setFontSize(13);doc.setTextColor(...choc);doc.text(kind==='skin'?(me?'Pretty Skin by '+rgFirst(me):'Pretty Skin by Taffeta'):'xo, '+(me||'Taffeta')+'  ·  Hi Pretty',W/2,y+12,{align:'center'});
+  doc.setFont(SF,'italic');doc.setFontSize(13*big);doc.setTextColor(...choc);doc.text(kind==='skin'?(me?'Pretty Skin by '+rgFirst(me):'Pretty Skin by Taffeta'):'xo, '+(me||'Taffeta')+'  ·  Pretty Hair',W/2,y+12,{align:'center'});
   foot();
   return doc.output('blob');
 }
