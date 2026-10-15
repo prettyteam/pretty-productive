@@ -173,7 +173,7 @@ const RX_NOW={
 const rxKind=()=>(S.mine&&S.mine.role==='esthetician')?'skin':'hair';
 const rxSlug=()=>(S.mine&&S.mine.staff&&S.mine.staff.slug)||(S.mine&&S.mine.slug)||'x';
 const rxKey=()=>'pp-rx:'+rxSlug(), rxSavedKey=()=>'pp-rxsaved:'+rxSlug();
-const rxBlank=k=>({kind:k||rxKind(),guest:'',budget:'',nob:false,goal:'',a:{},now:[],opts:null,m:null,refresh:'',id:''});
+const rxBlank=k=>({kind:k||rxKind(),guest:'',budget:'',nob:false,goal:[],a:{},now:[],opts:null,m:null,refresh:'',id:''});
 let RX=null, RX_VIEW='build', RX_FIND='', RX_SHOW=null, RX_MSG='';
 function rxLoad(){ if(RX) return RX; try{RX=Object.assign(rxBlank(),JSON.parse(store.get(rxKey())||'{}'))}catch(e){RX=rxBlank()} return RX }
 function rxSave(){ store.set(rxKey(),JSON.stringify(RX)) }
@@ -228,8 +228,29 @@ const rxProdLines=(keys,mode)=>keys.map((k,i)=>{let [n,p,why,alt]=RX_PROD[k];if(
 const rxTotal=L=>L.reduce((s,x)=>s+(Number(x.p)||0),0);
 
 /* Option 1 fits inside the budget (lighter service, or Try Me bottles before dropping home care); Option 2 is the full look. */
+/* She can pick more than one goal (Alexandra, Oct 15 2026): the packages merge tier by tier, without doubles
+   (a full cut wins over leaving wet, Blowdry Plus over Blow Dry). Old cards saved one goal as text. */
+const rxGoalList=R=>Array.isArray(R.goal)?R.goal:(R.goal?[R.goal]:[]);
+function rxMergeSvc(names){
+  let L=[...new Set(names)];
+  if(L.includes('Female Haircut')) L=L.filter(n=>n!=='Haircut Leaving Wet'&&n!=='Leave Wet (no haircut)');
+  else if(L.includes('Haircut Leaving Wet')) L=L.filter(n=>n!=='Leave Wet (no haircut)');
+  if(L.includes('Blowdry Plus')) L=L.filter(n=>n!=='Blow Dry');
+  return L;
+}
+function rxGoalPlan(R){
+  const gs=rxGoalList(R).map(k=>(RX_GOAL[R.kind]||{})[k]).filter(Boolean); if(!gs.length) return null;
+  if(gs.length===1) return gs[0];
+  const n=Math.max(...gs.map(g=>g.p.length));
+  const p=Array.from({length:n},(_,i)=>rxMergeSvc(gs.flatMap(g=>g.p[Math.min(i,g.p.length-1)])));
+  const ms=rxMergeSvc(gs.flatMap(g=>g.m[0]));
+  let mt=gs.map(g=>g.m[2]).join(' ');
+  if(ms.includes('Female Haircut')) mt=mt.replace(/ If you get your cut today[^]*?Need a trim\? A haircut leaving wet is \$50\./,'');
+  const m=[ms,gs[0].m[1],mt];
+  return {p,m};
+}
 function rxGenerate(R){
-  const g=(RX_GOAL[R.kind]||{})[R.goal]; if(!g) return null;
+  const g=rxGoalPlan(R); if(!g) return null;
   const needs=rxNeeds(R), P=g.p, b=R.nob?null:Number(R.budget)||null;
   /* Goldwell leave-in backbar treatment: a no-downtime add-on for color that fades, blonde repair or dry, damaged hair.
      $20, or $10–15 when only half the bottle is used (Alexandra, Oct 2026). Offered in the full look. */
@@ -251,7 +272,7 @@ function rxGenerate(R){
 /* ---- the card in a link: compact JSON → base64url after # ---- */
 function rxPack(R,me,day){
   const o={v:1,k:R.kind,g:rxFirst(R.guest),a:rxFirst(me),d:day||new Date().toISOString().slice(0,10),b:R.nob?null:(Number(R.budget)||null),
-    w:R.goal,n:(R.now||[]).filter(x=>!/^Nothing new/.test(x)),
+    w:rxGoalList(R).join(', '),n:(R.now||[]).filter(x=>!/^Nothing new/.test(x)),
     /* home care shows on her card as one "Maintenance" line, the way Alexandra writes cards by hand,
        so she sees the investment, not a list of products to say no to */
     o:R.opts.map(x=>{const sv=x.lines.filter(l=>l.t==='s').map(l=>[l.n,Number(l.p)||0]), hc=x.lines.filter(l=>l.t!=='s').reduce((a,l)=>a+(Number(l.p)||0),0);
@@ -299,7 +320,7 @@ function rxBuild(R,me){
     h('label',{class:'fld'},'Guest’s first name',gIn),
     h('label',{class:'fld'},'Her budget for today, home care included',bIn),
     chips(['No set budget'],()=>R.nob,()=>{R.nob=!R.nob}),
-    h('div',{class:'fld'},'Her goals for this / future appointments',chips(Object.keys(RX_GOAL[R.kind]),o=>R.goal===o,o=>{R.goal=R.goal===o?'':o})),
+    h('div',{class:'fld'},'Her goals for this / future appointments',chips(Object.keys(RX_GOAL[R.kind]),o=>rxGoalList(R).includes(o),o=>{const L=rxGoalList(R);R.goal=L.includes(o)?L.filter(x=>x!==o):[...L,o]})),
     rxPriceList(R.kind));
   const s2=h('section',{class:'card2'},h('span',{class:'lbl'},'2 · Her routine'),
     ...RX_Q[R.kind].map(([key,q,opts,multi])=>h('div',{class:'fld'},q,chips(opts,
@@ -308,7 +329,7 @@ function rxBuild(R,me){
   const s3=h('section',{class:'card2'},h('span',{class:'lbl'},'3 · Right now'),
     h('p',{class:'soft'},R.kind==='skin'?'Her Skin Instant: what is her skin going through right now, this season?':'What is her hair or scalp going through right now, this season?'),
     chips(RX_NOW[R.kind],o=>R.now.includes(o),o=>{const i=R.now.indexOf(o);i<0?R.now.push(o):R.now.splice(i,1)}));
-  const ready=R.goal&&(R.nob||Number(R.budget)>0)&&R.now.length;
+  const ready=rxGoalList(R).length&&(R.nob||Number(R.budget)>0)&&R.now.length;
   const gen=h('button',{type:'button',class:'obtn',disabled:ready?null:'',onclick:()=>{const g=rxGenerate(R);if(!g)return;Object.assign(R,g);rxSave();render();setTimeout(()=>{const n=document.getElementById('rxopts');if(n)n.scrollIntoView({behavior:'smooth'})},50)}},R.opts?'Suggest again':'Suggest options');
   const s4=h('section',{class:'card2',style:'align-items:center;text-align:center'},gen,
     h('small',{class:'soft'},ready?'Suggestions follow the Taffeta consultation: only what she needs, inside her budget.':'Pick her goals, her budget and what’s going on right now.'));
