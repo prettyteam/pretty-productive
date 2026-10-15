@@ -1025,6 +1025,10 @@ function renderTeamSheet(){
   const w=allWeddings.find(x=>x.id===teamSel);
   $("#teamCal").innerHTML=w?gcalHTML(w.d.calInfo):"";
   if(!w){$("#teamSheet").innerHTML='<div class="empty-state">Pick a wedding to see the timeline.</div>';$("#teamCopy").disabled=true;$("#teamImg").disabled=true;return}
+  // No timeline built yet (a job Yes or a Google Calendar wedding): never fill in made-up default times and people.
+  if(w.d.startMin==null){
+    $("#teamSheet").innerHTML='<div class="empty-state">The detailed timeline for this wedding isn\'t built yet.'+(w.d.calInfo?' Until it is, go by the Google Calendar details above.':' The office will add it here.')+'</div>';
+    $("#teamNote").textContent="";$("#teamCopy").disabled=true;$("#teamImg").disabled=true;return}
   const s=Object.assign(starter(),w.d);
   $("#teamSheet").innerHTML=sheetHTML(s,"team",false).html;
   $("#teamNote").textContent="Updated "+(w.d.updatedAt?new Date(w.d.updatedAt).toLocaleString("en-US",{month:"short",day:"numeric",hour:"numeric",minute:"2-digit"}):"");
