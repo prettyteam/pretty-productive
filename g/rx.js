@@ -237,8 +237,8 @@ function rxGenerate(R){
 }
 
 /* ---- the card in a link: compact JSON → base64url after # ---- */
-function rxPack(R,me){
-  const o={v:1,k:R.kind,g:rxFirst(R.guest),a:rxFirst(me),d:new Date().toISOString().slice(0,10),b:R.nob?null:(Number(R.budget)||null),
+function rxPack(R,me,day){
+  const o={v:1,k:R.kind,g:rxFirst(R.guest),a:rxFirst(me),d:day||new Date().toISOString().slice(0,10),b:R.nob?null:(Number(R.budget)||null),
     w:R.goal,n:(R.now||[]).filter(x=>!/^Nothing new/.test(x)),
     /* home care shows on her card as one "Maintenance" line, the way Alexandra writes cards by hand,
        so she sees the investment, not a list of products to say no to */
@@ -248,8 +248,8 @@ function rxPack(R,me){
   return o;
 }
 /* deflated so the QR stays easy to scan; "z" marks a compressed card */
-async function rxLink(R,me){
-  let bytes=new TextEncoder().encode(JSON.stringify(rxPack(R,me))), pre='';
+async function rxLink(R,me,day){
+  let bytes=new TextEncoder().encode(JSON.stringify(rxPack(R,me,day))), pre='';
   try{ if(window.CompressionStream){bytes=new Uint8Array(await new Response(new Blob([bytes]).stream().pipeThrough(new CompressionStream('deflate-raw'))).arrayBuffer());pre='z'} }catch(e){}
   let s='';bytes.forEach(c=>s+=String.fromCharCode(c));
   return (window.RX_GUEST_URL||'https://prettyteam.taffetadesign.com/rx/')+'#'+pre+btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
@@ -360,11 +360,18 @@ async function rxStore(R,me){
   R.id=id; rxSave(); RX_SHOW={link,guest:row.guest}; RX_VIEW='qr'; render(); window.scrollTo(0,0);
 }
 
+/* a saved card's QR is rebuilt from its draft, so cards saved before a change (like home care showing as one
+   Maintenance line) open the current way; keeps the day it was made */
+async function rxRelink(x,me){
+  const d=x.draft;
+  if(!d||!Array.isArray(d.opts)||!d.m||!d.opts.every(o=>(o.lines||[]).every(l=>l&&l.t))) return x.link;
+  try{return await rxLink(Object.assign(rxBlank(d.kind),d),me,x.date)}catch(e){return x.link}
+}
 function rxQrView(x){
   return h('section',{class:'card2 out',style:'align-items:center;text-align:center'},
     h('h2',{},rxFirst(x.guest)+'’s RX card'),rxQR(x.link),
     h('p',{class:'rxscript'},'Scan with your camera'),
-    h('small',{class:'soft'},'It opens her two options, her home care and her next visit on her own phone.'),
+    h('small',{class:'soft'},'It opens her two options and what her next visit looks like on her own phone.'),
     h('a',{href:x.link,target:'_blank',rel:'noopener',class:'tab'},'Open her card'),
     h('button',{type:'button',class:'obtn',onclick:()=>{RX_VIEW='build';RX_SHOW=null;render()}},'Done'));
 }
@@ -379,6 +386,6 @@ function rxSavedView(me){
     q&&!hits.length?h('p',{class:'soft'},'No saved card for “'+RX_FIND+'”.'):null,
     ...hits.slice(0,20).map(x=>h('div',{class:'rxl'},
       h('div',{class:'rxn'},h('b',{},x.guest),h('small',{class:'soft'},(x.kind==='skin'?'Skin':'Hair')+' · '+new Date(x.date+'T12:00').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'})+(x.budget?' · budget '+rxMoney(x.budget):'')+' · '+x.totals.map(rxMoney).join(' / '))),
-      h('button',{type:'button',class:'tab',onclick:()=>{RX_SHOW={link:x.link,guest:x.guest};RX_VIEW='qr';render();window.scrollTo(0,0)}},'QR'),
+      h('button',{type:'button',class:'tab',onclick:async()=>{RX_SHOW={link:await rxRelink(x,me),guest:x.guest};RX_VIEW='qr';render();window.scrollTo(0,0)}},'QR'),
       h('button',{type:'button',class:'tab',onclick:()=>{RX=Object.assign(rxBlank(x.kind),x.draft);rxSave();RX_VIEW='build';render();window.scrollTo(0,0)}},'Edit'))));
 }
