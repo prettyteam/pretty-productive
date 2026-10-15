@@ -391,7 +391,7 @@ function h(tag,attrs,...kids){const e=document.createElement(tag);for(const[k,v]
 const store={get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
 const TEAM=[['Adriana','stylist'],['Alexandra','stylist'],['Alyssa','stylist'],['Amanda','stylist'],['Ashley B','stylist'],['Dominique','stylist'],['Emily B','stylist'],['Isabella','stylist'],['Jen M','stylist'],['Jennifer C','stylist'],['Joanna','stylist'],['Lexi','stylist'],['Mia','stylist'],['Neva L','stylist'],['Sara','stylist'],['Angelina H','esthetician'],['Carolyn','esthetician'],['Kelly','esthetician']];
 const slugOf=n=>n.toLowerCase().replace(/\s+/g,'-');
-let S={mine:null}, CARD='', UNLOCKED=false;
+let S={mine:null}, CARD='', UNLOCKED=false, SETUP=/[?&]setup\b/.test(location.search);
 try{UNLOCKED=sessionStorage.getItem('pp-cards-ok')==='1'}catch(e){}
 async function sha(t){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(t));return Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join('')}
 function render(){
@@ -399,9 +399,18 @@ function render(){
   const bar=h('div',{class:'ctop'},h('img',{src:'../g/logo.png',alt:'Taffeta'}),
     S.mine?h('button',{type:'button',class:'tab',onclick:()=>{S.mine=null;CARD='';RX=null;RG=null;render();window.scrollTo(0,0)}},'Switch artist'):null);
   app.append(bar);
-  if(!UNLOCKED&&window.CARDS_PIN_HASH){
+  const PIN_HASH=window.CARDS_PIN_HASH||store.get('pp-cards-pin');
+  if(!PIN_HASH&&SETUP){
+    const a=h('input',{type:'password',inputmode:'numeric',autocomplete:'off','aria-label':'New salon PIN'}), b2=h('input',{type:'password',inputmode:'numeric',autocomplete:'off','aria-label':'PIN again'}), msg=h('p',{class:'toast'});
+    const go=async()=>{const x=a.value.trim();if(!/^\d{4,8}$/.test(x)){msg.textContent='Use 4 to 8 numbers.';return}if(x!==b2.value.trim()){msg.textContent='Those didn’t match.';return}store.set('pp-cards-pin',await sha(x));UNLOCKED=true;try{sessionStorage.setItem('pp-cards-ok','1')}catch(e){}SETUP=false;render()};
+    app.append(h('div',{class:'hub'},h('section',{class:'card2',style:'text-align:center'},h('h1',{style:'font-size:28px'},'Set this iPad’s salon PIN'),
+      h('p',{class:'soft'},'Only this iPad keeps it. Do this once on each salon iPad.'),
+      h('label',{class:'fld'},'Salon PIN',a),h('label',{class:'fld'},'Type it again',b2),h('button',{type:'button',class:'obtn',onclick:go},'Save PIN'),msg)));
+    return;
+  }
+  if(!UNLOCKED&&PIN_HASH){
     const pin=h('input',{type:'password',inputmode:'numeric',autocomplete:'off','aria-label':'Salon PIN'}), msg=h('p',{class:'toast'});
-    const go=async()=>{if(await sha(pin.value.trim())===window.CARDS_PIN_HASH){UNLOCKED=true;try{sessionStorage.setItem('pp-cards-ok','1')}catch(e){}render()}else{msg.textContent='That PIN didn’t match.';pin.value=''}};
+    const go=async()=>{if(await sha(pin.value.trim())===PIN_HASH){UNLOCKED=true;try{sessionStorage.setItem('pp-cards-ok','1')}catch(e){}render()}else{msg.textContent='That PIN didn’t match.';pin.value=''}};
     pin.addEventListener('keydown',e=>{if(e.key==='Enter')go()});
     app.append(h('div',{class:'hub'},h('section',{class:'card2',style:'text-align:center'},h('h1',{style:'font-size:28px'},'Customer cards'),
       h('label',{class:'fld'},'Salon PIN',pin),h('button',{type:'button',class:'obtn',onclick:go},'Open'),msg)));
@@ -409,7 +418,7 @@ function render(){
   }
   if(!S.mine){
     app.append(h('div',{class:'hub'},h('h1',{style:'font-size:28px;text-align:center'},'Who’s building a card?'),
-      window.CARDS_PIN_HASH?null:h('p',{class:'soft',style:'text-align:center'},'Test page. The salon PIN switches on before this goes on the iPads.'),
+      PIN_HASH?null:h('p',{class:'soft',style:'text-align:center'},'Test page. No salon PIN on this device yet.'),
       h('div',{class:'who'},TEAM.map(([n,r])=>h('button',{type:'button',onclick:()=>{S.mine={name:n,role:r,staff:{name:n,slug:slugOf(n)}};RX=null;RG=null;render();window.scrollTo(0,0)}},n)))));
     return;
   }
