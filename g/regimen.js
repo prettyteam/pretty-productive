@@ -319,7 +319,7 @@ function rgLogo(){
 }
 
 const rgNamePic=n=>{const k=String(n||'').toLowerCase();if(!k)return Promise.resolve(null);
-  return fetch((window.RG_BASE||'')+'g/names/'+k+'.png').then(r=>r.ok?r.blob():null).then(b=>b?new Promise(ok=>{const f=new FileReader();f.onload=()=>{const im=new Image();im.onload=()=>ok({d:f.result,w:im.width,h:im.height});im.onerror=()=>ok(null);im.src=f.result};f.readAsDataURL(b)}):null).catch(()=>null)};
+  return fetch((window.RG_BASE||'')+'g/names/'+k+'.png').then(r=>r.ok?r.blob():null).then(b=>b?new Promise(ok=>{const f=new FileReader();f.onload=()=>{const im=new Image();im.onload=()=>{/* solid black ink, so the name prints as dark as the text */try{const c=document.createElement('canvas');c.width=im.width;c.height=im.height;const x=c.getContext('2d');x.drawImage(im,0,0);const D=x.getImageData(0,0,c.width,c.height),a=D.data;for(let i=0;i<a.length;i+=4){a[i]=a[i+1]=a[i+2]=18;a[i+3]=Math.min(255,a[i+3]*2)}x.putImageData(D,0,0);ok({d:c.toDataURL('image/png'),w:im.width,h:im.height})}catch(e){ok({d:f.result,w:im.width,h:im.height})}};im.onerror=()=>ok(null);im.src=f.result};f.readAsDataURL(b)}):null).catch(()=>null)};
 /* Half-letter page (5.5 × 8.5 in), easy to read on a phone. Cream page, Taffeta wreath, serif headings. */
 async function rgPdf(me,R,kind){
   R=R||RG; kind=kind||rgKind();
@@ -385,10 +385,11 @@ async function rgPdf(me,R,kind){
   doc.setFont(SF,'italic');doc.setFontSize(13*big);doc.setTextColor(...choc);
   const np=me?await rgNamePic(rgFirst(me)):null;
   if(np){need(38);const nh=30, nw=nh*np.w/np.h;doc.setFont(SF,'italic');doc.setFontSize(13*big);doc.setTextColor(...choc);
-    const pre=kind==='skin'?'':'xo, ', post=kind==='skin'?'  ·  Pretty Skin':'  ·  Pretty Hair';
+    /* "Pretty Hair by [name] xo" */
+    const pre=kind==='skin'?'Pretty Skin by ':'Pretty Hair by ', post=' xo';
     const pw=doc.getTextWidth(pre), qw=doc.getTextWidth(post), x0=W/2-(pw+nw+qw)/2;
     doc.text(pre,x0,y+21);doc.addImage(np.d,'PNG',x0+pw,y+2,nw,nh);doc.text(post,x0+pw+nw,y+21);y+=34}
-  else{doc.text(kind==='skin'?(me?'Pretty Skin by '+rgFirst(me):'Pretty Skin by Taffeta'):'xo, '+(me||'Taffeta')+'  ·  Pretty Hair',W/2,y+12,{align:'center'});y+=20}
+  else{doc.text((kind==='skin'?'Pretty Skin by ':'Pretty Hair by ')+(me?rgFirst(me):'Taffeta')+' xo',W/2,y+12,{align:'center'});y+=20}
   need(14);doc.setFont('helvetica','normal');doc.setFontSize(8.5);doc.setTextColor(...soft);doc.text(rgDate(),W/2,y+8,{align:'center'});
   foot();
   return doc.output('blob');
