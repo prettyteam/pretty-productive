@@ -103,7 +103,6 @@ const RG_LIST={
       ['Oribe Hair Alchemy Resilience Shampoo',RG_HOW.hairsh],
       ['Oribe Serene Scalp Balancing Shampoo',RG_HOW.hairsh],
       ['Oribe Serene Scalp Densifying Shampoo',RG_HOW.hairsh],
-      ['Oribe Bright Blonde Shampoo','Use once or twice a week in place of your regular shampoo. Leave on 1–3 minutes to tone brassiness, then rinse.'],
       ['Oribe Eternal Curl Moisturizing Shampoo',RG_HOW.hairsh],
       ['Oribe Oil Control Shampoo',RG_HOW.hairsh],
       ['Oribe Run-Through Detangling Shampoo',RG_HOW.hairsh],
