@@ -299,7 +299,7 @@ function rxBuild(R,me){
     h('label',{class:'fld'},'Guest’s first name',gIn),
     h('label',{class:'fld'},'Her budget for today, home care included',bIn),
     chips(['No set budget'],()=>R.nob,()=>{R.nob=!R.nob}),
-    h('div',{class:'fld'},'What is she hoping for?',chips(Object.keys(RX_GOAL[R.kind]),o=>R.goal===o,o=>{R.goal=R.goal===o?'':o})),
+    h('div',{class:'fld'},'Her goals for this / future appointments',chips(Object.keys(RX_GOAL[R.kind]),o=>R.goal===o,o=>{R.goal=R.goal===o?'':o})),
     rxPriceList(R.kind));
   const s2=h('section',{class:'card2'},h('span',{class:'lbl'},'2 · Her routine'),
     ...RX_Q[R.kind].map(([key,q,opts,multi])=>h('div',{class:'fld'},q,chips(opts,
@@ -311,7 +311,7 @@ function rxBuild(R,me){
   const ready=R.goal&&(R.nob||Number(R.budget)>0)&&R.now.length;
   const gen=h('button',{type:'button',class:'obtn',disabled:ready?null:'',onclick:()=>{const g=rxGenerate(R);if(!g)return;Object.assign(R,g);rxSave();render();setTimeout(()=>{const n=document.getElementById('rxopts');if(n)n.scrollIntoView({behavior:'smooth'})},50)}},R.opts?'Suggest again':'Suggest options');
   const s4=h('section',{class:'card2',style:'align-items:center;text-align:center'},gen,
-    h('small',{class:'soft'},ready?'Suggestions follow the Taffeta consultation: only what she needs, inside her budget.':'Pick what she’s hoping for, her budget and what’s going on right now.'));
+    h('small',{class:'soft'},ready?'Suggestions follow the Taffeta consultation: only what she needs, inside her budget.':'Pick her goals, her budget and what’s going on right now.'));
   const out=[s1,s2,s3,s4];
   if(R.opts) out.push(...rxEditor(R,me));
   return out;

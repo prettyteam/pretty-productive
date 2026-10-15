@@ -67,7 +67,7 @@ main{padding:14px 12px 40px}
     el('div',{class:'top'},el('img',{src:'../g/logo.png',alt:'Taffeta Salon & Spa'})),
     el('div',{class:'rxh'},el('span',{class:'rx'},'Rx'),el('p',{},'Personal plan from today’s consultation: two options and what your next visit looks like.')),
     el('div',{class:'for'},el('span',{},'For '+(c.g||'you')),el('span',{},(c.a?'with '+c.a+' · ':'')+(isNaN(date)?'':date.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})))),
-    c.w||(c.n&&c.n.length)?el('p',{class:'talk'},c.w?el('b',{},'You’re hoping for: '):null,c.w||'',c.n&&c.n.length?el('br'):null,c.n&&c.n.length?[el('b',{},'Right now: '),c.n.join(', ').toLowerCase()]:null):null,
+    c.w||(c.n&&c.n.length)?el('p',{class:'talk'},c.w?el('b',{},'Your goals for this / future appointments: '):null,c.w||'',c.n&&c.n.length?el('br'):null,c.n&&c.n.length?[el('b',{},'Right now: '),c.n.join(', ').toLowerCase()]:null):null,
     c.b?el('p',{class:'talk'},el('b',{},'Your budget today: '),money(c.b)):null,
     opts,
     el('section',{class:'maint'},el('span',{class:'eyebrow'},'Your next visit'),
