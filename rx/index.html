@@ -45,6 +45,12 @@ html,body{background:#f8f6f0}
 .page{border:1px solid #2b2a28;outline:1px solid #2b2a28;outline-offset:-7px;padding:30px 24px 24px}
 .rxo{border-color:#2b2a28}
 .maint{background:#f8f6f0}
+.rxo .flat{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 0;font-size:17px;font-weight:600;font-variant-numeric:tabular-nums}
+.rxo .flat b{font-size:18px}
+.rxo details+.flat{border-top:1px solid var(--line)}
+.sign{display:flex;align-items:center;justify-content:center;gap:6px;white-space:nowrap;font-size:21px;color:var(--ink)}
+.sign .namepic{height:38px;width:auto;max-width:130px;filter:brightness(0);margin:-6px 0}
+.when{font-size:13px;color:var(--soft);text-align:center;margin:-10px 0 0}
 </style>
 </head><body>
 <main id="app"></main>
@@ -77,19 +83,28 @@ html,body{background:#f8f6f0}
     const cut=/haircut|cut|blow ?dry|style|leave wet|blowdry/.test(names);
     return color&&cut?'Color and haircut or style':color?'Color':cut?'Haircut or style':(m[2]||'');
   }
+  /* goals, "right now" and budget as tap-to-open rows, like the options, so the card isn't all words (Alexandra, Oct 15 2026) */
+  const row=(label,body)=>el('details',{},el('summary',{},el('span',{class:'nm'},label)),el('div',{class:'brk'},el('span',{class:'li'},body)));
+  const aboutRows=[c.w?row('Your Goals For Today',c.w):null,c.n&&c.n.length?row('Right Now',c.n.join(', ').replace(/^./,x=>x.toUpperCase())):null,
+    c.b?el('div',{class:'flat'},el('span',{},'Your Budget Today'),el('b',{},money(c.b))):null].filter(Boolean);
+  const about=aboutRows.length?el('section',{class:'rxo'},el('span',{class:'eyebrow'},'What We Talked About'),aboutRows):null;
+  /* sign-off like the Home Maintenance PDFs: "Pretty Hair by [name in Antoinetta] xo"; the date sits under it */
+  const first=String(c.a||'').trim().split(/\s+/)[0]||'', pre=skin?'Pretty Skin by ':'Pretty Hair by ';
+  const sign=el('p',{class:'sign'},pre,first?el('img',{class:'namepic',src:'../g/names/'+first.toLowerCase()+'.png',alt:first}):'Taffeta',' xo');
+  const pic=sign.querySelector('img');if(pic)pic.onerror=()=>pic.replaceWith(document.createTextNode(first));
   app.append(el('div',{class:'page'},
     el('div',{class:'top'},el('img',{src:'../g/logo.png',alt:'Taffeta Salon & Spa'})),
     el('div',{class:'rxh'},el('span',{class:'rx'},'Rx'),el('p',{},'Personal plan from today’s consultation: two options and what your next visit looks like.')),
-    el('div',{class:'for'},el('span',{},'For '+(c.g||'you')),el('span',{},(c.a?'with '+c.a+' · ':'')+(isNaN(date)?'':date.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})))),
-    c.w||(c.n&&c.n.length)?el('p',{class:'talk'},c.w?el('b',{},'Your goals for today: '):null,c.w||'',c.n&&c.n.length?el('br'):null,c.n&&c.n.length?[el('b',{},'Right now: '),c.n.join(', ').toLowerCase()]:null):null,
-    c.b?el('p',{class:'talk'},el('b',{},'Your budget today: '),money(c.b)):null,
+    el('div',{class:'for'},el('span',{},'For '+(c.g||'you'))),
+    about,
     opts,
     el('section',{class:'maint'},el('span',{class:'eyebrow'},'Your next visit'),
       /* no receipt-style breakdown here: what the visit looks like and about what it costs (Alexandra, Oct 15 2026) */
       el('div',{class:'tot',style:'border-top:0;padding-top:0'},el('span',{},m[1]?'In about '+m[1]:'Your next visit'),el('span',{},money(mt))),
       el('p',{style:'font-size:14px;margin:0'},nextWhat())),
     c.r?el('p',{class:'talk',style:'text-align:center'},el('b',{},'Refresh in '),c.r):null,
-    el('p',{class:'sign'},skin?'Pretty Skin by Taffeta':'xo, '+(c.a||'Taffeta')+' · Pretty Hair'),
+    sign,
+    isNaN(date)?null:el('p',{class:'when'},date.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})),
     el('p',{class:'foot'},'Prices are estimates and can change with time and product used. ',el('br'),'Book your next visit: ',el('a',{href:'tel:+16093835504'},'(609) 383-5504'),' · ',el('a',{href:'https://taffetadesign.com'},'taffetadesign.com'))));
 })();
 </script>
