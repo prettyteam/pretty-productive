@@ -271,8 +271,9 @@ body{padding-bottom:110px}
 .nav button[aria-current="page"]::after{content:"";width:18px;height:1.5px;background:var(--ink)}
 .nav button:not([aria-current="page"])::after{content:"";width:18px;height:1.5px}
 .nav.menu{flex-direction:column;align-items:center;padding:10px 16px calc(12px + env(safe-area-inset-bottom))}
-.navbtn{display:flex!important;flex-direction:row!important;justify-content:space-between!important;align-items:center!important;width:100%;max-width:560px;border:1px solid var(--ink)!important;border-radius:999px;background:#fff!important;padding:12px 20px!important;color:var(--ink)!important;cursor:pointer}
+.navbtn{display:flex!important;flex-direction:row!important;justify-content:space-between!important;align-items:center!important;width:100%;max-width:560px;border:0!important;border-radius:0;background:transparent!important;padding:6px 4px!important;color:var(--ink)!important;cursor:pointer}
 .navbtn::after{display:none!important}
+/* the top bar is plain words, no bubble: the page name on the left, MENU on the right (Alexandra, Oct 15 2026) */
 .navcur{font-family:var(--display);font-size:18px;letter-spacing:0;text-transform:none}
 .navlbl{font-size:11px;letter-spacing:.14em;text-transform:uppercase}
 .navscrim{position:fixed;inset:0;background:rgba(18,18,18,.25);z-index:-1}
