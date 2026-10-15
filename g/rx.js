@@ -348,7 +348,9 @@ function rxView(){
 }
 
 function rxBuild(R,me){
-  const chips=(opts,isOn,onTap)=>h('div',{class:'seg'},opts.map(o=>h('button',{type:'button','aria-pressed':String(!!isOn(o)),onclick:()=>{onTap(o);rxSave();render()}},o)));
+  /* every word starts with a capital, "or" stays lowercase (Alexandra, Oct 15 2026); the saved answers keep their spelling */
+  const rxTitle=o=>String(o).replace(/(^|[\s(\-])([a-z])/g,(m,p,c)=>p+c.toUpperCase()).replace(/ Or /g,' or ');
+  const chips=(opts,isOn,onTap)=>h('div',{class:'seg'},opts.map(o=>h('button',{type:'button','aria-pressed':String(!!isOn(o)),onclick:()=>{onTap(o);rxSave();render()}},rxTitle(o))));
   const kindRow=h('div',{class:'fld'},'Card for',chips(['Hair','Skin'],o=>R.kind===o.toLowerCase(),o=>{const k=o.toLowerCase();if(k!==R.kind){RX=Object.assign(rxBlank(k),{guest:R.guest,budget:R.budget,nob:R.nob})}}));
   const gIn=h('input',{type:'text',value:R.guest,placeholder:'First name',autocomplete:'off',autocapitalize:'words'});
   gIn.addEventListener('input',()=>{R.guest=gIn.value;rxSave()});
