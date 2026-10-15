@@ -984,7 +984,8 @@ $("#saved").onchange=e=>{
   if(!id){docId=null;S=starter();fillForm();setStatus("New wedding");return}
   const w=allWeddings.find(x=>x.id===id);if(!w)return;
   docId=id;
-  S=Object.assign(starter(),JSON.parse(JSON.stringify(w.d)));fillForm();setStatus("Opened");
+  const dr=Array.isArray(w.d.people)?null:calDraft(w.d);
+  S=Object.assign(starter(),JSON.parse(JSON.stringify(w.d)),dr||{});delete S.calDraft;fillForm();setStatus(dr?"Draft from Google Calendar. Check it, then Save.":"Opened");
 };
 
 /* ---------- team view ---------- */
@@ -1021,6 +1022,44 @@ function gcalHTML(c){
   return '<div class="gcal"><h3>From Google Calendar</h3><div><b>'+esc(c.time||"")+'</b>'+(c.place?' · '+esc(c.place):'')+'</div>'
     +(c.note?'<div class="note">'+esc(c.note)+'</div>':'')+(team?'<div class="who">'+team+'</div>':'')+'</div>';
 }
+/* Draft a timeline from the wedding's Google Calendar event when the office hasn't built one yet (Alexandra, Oct 2026).
+   Notes are written like "Bride + 8 MU only / Arrival: 6:30-6:45am / Start: 7 am / Services end: 12 pm" (also "Hair", "Hair & MU",
+   "+ 2 flower girls", "MOB Hair"). Event hours fill in anything the note leaves out. */
+function calHM(t){const m=/(\d{1,2})(?::(\d{2}))?\s*(am|pm|a|p)?/i.exec(String(t||''));if(!m)return "";let h=+m[1];const mi=+(m[2]||0),ap=(m[3]||'').toLowerCase();
+  if(ap.startsWith('p')&&h<12)h+=12;if(ap.startsWith('a')&&h===12)h=0;if(!ap&&h<6)h+=12;return String(h).padStart(2,'0')+':'+String(mi).padStart(2,'0')}
+function calSvc(txt){const t=String(txt||'').toLowerCase(),hair=/hair/.test(t),mu=/\bmu\b|makeup|make up|\dmu/.test(t);return (hair||mu)?{hair,mu}:{hair:true,mu:true}}
+function calDraft(d){
+  const c=d&&d.calInfo;if(!c)return null;
+  const note=String(c.note||''),grab=rx=>{const m=rx.exec(note);return m?m[1]:''};
+  const ev=String(c.time||'').split(/[–-]/);
+  const start=calHM(grab(/start\s*:\s*([^\n]+)/i))||calHM(ev[0])||"08:00";
+  const finishBy=calHM(grab(/services?\s*end\s*:\s*([^\n]+)/i))||calHM(ev[1])||"12:30";
+  const arr=calHM(grab(/arriv\w*\s*:\s*([^\n]+)/i));
+  const arrival=arr?Math.max(0,toMin(start)-toMin(arr)):30;
+  const people=[{id:uid(),name:"",role:"Bride",hair:true,mu:true}];
+  const bm=/bride\s*\+\s*(\d+)\s*([a-z&\s]*)/i.exec(note);
+  if(bm){const sv=calSvc(bm[2]);for(let i=0;i<Math.min(+bm[1],30);i++)people.push({id:uid(),name:"",role:"Bridal party",hair:sv.hair,mu:sv.mu})}
+  note.split('\n').forEach(l=>{
+    if(/bride\s*\+/i.test(l))return;
+    const x=/^\s*\+?\s*(\d+)\s+([a-z ]+?)(?:\s+(hair\s*(?:&|and)\s*mu|mu\s*(?:&|and)\s*hair|hair|mu|makeup))?\s*(?:only)?\s*$/i.exec(l);
+    if(x&&!/arriv|start|end/i.test(l)){const sv=x[3]?calSvc(x[3]):{hair:true,mu:false};const role=x[2].trim().replace(/s$/,'');for(let i=0;i<Math.min(+x[1],20);i++)people.push({id:uid(),name:"",role:role.charAt(0).toUpperCase()+role.slice(1),hair:sv.hair,mu:sv.mu});return}
+    const y=/^\s*(MOB|MOG|mother of the bride|mother of the groom)\b\s*(.*)$/i.exec(l);
+    if(y){const sv=calSvc(y[2]);people.push({id:uid(),name:"",role:/groom|mog/i.test(y[1])?"MOG":"MOB",hair:sv.hair,mu:sv.mu})}
+  });
+  const needHair=people.some(p=>p.hair),needMu=people.some(p=>p.mu);
+  const names=(c.team||[]).map(t=>t.name).filter(Boolean);
+  const artists=names.map((n,i)=>{
+    const pr=(typeof profiles!=="undefined"?profiles:[]).find(x=>(x.preferredName||x.legalName)===n)||(ME&&(ME.preferredName||ME.legalName)===n?ME:null);
+    const sk=(pr&&pr.skills)||[],h=sk.includes("Bridal hair"),m=sk.includes("Bridal makeup");
+    const role=!needHair?"mu":!needMu?"hair":(h&&!m)?"hair":(m&&!h)?"mu":"";
+    return {id:uid(),role,name:n,uid:pr&&(pr._id||pr.id)||"",email:pr&&pr.email||""};
+  });
+  /* artists whose skills don't say: cover whichever service nobody has yet, then alternate */
+  artists.filter(a=>!a.role).forEach((a,i)=>{const hasH=artists.some(x=>x.role==="hair"),hasM=artists.some(x=>x.role==="mu");
+    a.role=needHair&&!hasH?"hair":needMu&&!hasM?"mu":(i%2?"mu":"hair")});
+  if(!artists.length){if(needHair)artists.push({id:uid(),role:"hair",name:""});if(needMu)artists.push({id:uid(),role:"mu",name:""})}
+  return {location:d.location||c.place||"",mode:"start",start,finishBy,arrival,people,artists,calDraft:true};
+}
 function renderTeamSheet(){
   const w=allWeddings.find(x=>x.id===teamSel);
   $("#teamCal").innerHTML=w?gcalHTML(w.d.calInfo):"";
@@ -1031,17 +1070,20 @@ function renderTeamSheet(){
     $("#teamNote").textContent="";$("#teamCopy").disabled=true;$("#teamImg").disabled=true;return}
   /* A wedding added from bookings or a job offer has no timeline yet (no party saved). Don't fill in the sample
      8:00 start and sample bridal party: show what's real (Google Calendar, above) until the office builds it. */
-  if(!Array.isArray(w.d.people)){
-    $("#teamSheet").innerHTML='<div class="empty-state">The office hasn’t built this wedding’s timeline yet.'+(w.d.calInfo?' Use the hours and notes from Google Calendar above.':'')+' Your timeline shows here as soon as it’s ready.</div>';
+  const dr=Array.isArray(w.d.people)?null:calDraft(w.d);
+  if(!Array.isArray(w.d.people)&&!dr){
+    $("#teamSheet").innerHTML='<div class="empty-state">The office hasn’t built this wedding’s timeline yet. Your timeline shows here as soon as it’s ready.</div>';
     $("#teamNote").textContent="";$("#teamCopy").disabled=true;$("#teamImg").disabled=true;return}
-  const s=Object.assign(starter(),w.d);
+  const s=Object.assign(starter(),w.d,dr||{});
+  if(dr){$("#teamSheet").innerHTML='<div class="empty-state" style="margin-bottom:10px">Draft from Google Calendar. The office will confirm names and times.</div>'+sheetHTML(s,"team",false).html;
+    $("#teamNote").textContent="Draft from Google Calendar";$("#teamCopy").disabled=false;$("#teamImg").disabled=false;return}
   $("#teamSheet").innerHTML=sheetHTML(s,"team",false).html;
   $("#teamNote").textContent="Updated "+(w.d.updatedAt?new Date(w.d.updatedAt).toLocaleString("en-US",{month:"short",day:"numeric",hour:"numeric",minute:"2-digit"}):"");
   $("#teamCopy").disabled=false;$("#teamImg").disabled=false;
 }
 $("#artistFilter").onchange=()=>{try{localStorage.setItem("tt-artist",$("#artistFilter").value)}catch(e){}renderTeam()};
 $("#showPast").onchange=renderTeam;
-$("#teamCopy").onclick=()=>{const w=allWeddings.find(x=>x.id===teamSel);if(w)copy(textOf(Object.assign(starter(),w.d)))};
+$("#teamCopy").onclick=()=>{const w=allWeddings.find(x=>x.id===teamSel);if(w)copy(textOf(Object.assign(starter(),w.d,Array.isArray(w.d.people)?{}:(calDraft(w.d)||{}))))};
 $("#teamImg").onclick=()=>{const w=allWeddings.find(x=>x.id===teamSel);if(w)saveImage($("#teamSheet"),((w.d.bride||"wedding").replace(/[^a-z0-9]+/gi,"-")+"-timeline.png").toLowerCase())};
 
 
