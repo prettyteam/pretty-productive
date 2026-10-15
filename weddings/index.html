@@ -11,7 +11,18 @@
 <meta name="theme-color" content="#ffffff">
 <script src="config.js"></script>
 <style>:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;padding:0}img{max-width:100%}</style>
-<script src="/refresh.js?v=2" defer></script>
+<script src="/refresh.js?v=3" defer></script>
+<style>/* match the team app look (Alexandra, Oct 15 2026): black and soft black on ivory, Lora titles, menus as plain words with the
+   chosen one underlined, no bubbles */
+@font-face{font-family:TaffetaJ;src:url(../g/lora-latin-400-normal.woff2) format("woff2");font-weight:400}
+@font-face{font-family:TaffetaJ;src:url(../g/lora-latin-500-normal.woff2) format("woff2");font-weight:500}
+@font-face{font-family:TaffetaJ;src:url(../g/lora-latin-400-italic.woff2) format("woff2");font-weight:400;font-style:italic}
+:root{--serif:"TaffetaJ",Georgia,serif;--ink:#121212;--muted:#555250;--accent:#121212}
+.paper{--serif:"Playfair Display",Georgia,"Times New Roman",serif}
+.tabs{border:0!important;border-bottom:1px solid var(--line)!important}
+.tabs button{background:transparent!important;color:var(--ink)!important;letter-spacing:.18em!important}
+.tabs button[aria-selected="true"]{text-decoration:underline;text-underline-offset:7px;text-decoration-thickness:1px}
+</style>
 </head><body>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400&family=Work+Sans:wght@400;500;600&family=Cormorant+Garamond:ital,wght@1,300&display=swap">

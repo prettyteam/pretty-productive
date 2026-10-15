@@ -140,7 +140,18 @@ details.acc summary::after{color:var(--gold)}
 .td:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 .tdh{margin:4px 0 6px}
 </style>
-<script src="/refresh.js?v=2" defer></script>
+<script src="/refresh.js?v=3" defer></script>
+<style>/* match the team app look (Alexandra, Oct 15 2026): black and soft black on ivory, Lora titles, menus as plain words with the
+   chosen one underlined, no bubbles */
+:root{--brown:#121212;--ink:#121212;--soft:#555250}
+.tabs{gap:18px!important;justify-content:center;border-bottom:1px solid var(--line)!important;padding-bottom:6px}
+.tabs button{border:0!important;background:transparent!important;color:var(--ink)!important;border-radius:0!important;padding:8px 2px!important;font-size:11px;letter-spacing:.18em;text-transform:uppercase}
+.tabs button.on{background:transparent!important;color:var(--ink)!important;text-decoration:underline;text-underline-offset:7px}
+.badge{border-radius:2px!important}
+/* the desk has its own bottom tabs, so the Refresh line sits at the top here */
+.rbar{position:static!important;border-top:0!important;border-bottom:1px solid var(--line)!important;padding:8px 16px!important;background:transparent!important}
+body{padding-bottom:0}
+</style>
 </head><body><main id="app">
 <div class="head"><img src="../g/logo.png" alt="Taffeta Salon &amp; Spa"><div><span class="eyebrow">Front Desk</span><h1>Today at Taffeta</h1></div></div>
 <div class="runbar"><button id="runAll">Run all updates</button><span id="runSt">Refreshes the team app and the Pretty Report with today’s Paired Plus numbers.</span></div>

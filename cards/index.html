@@ -384,6 +384,14 @@ details.days summary::-webkit-details-marker{display:none}
 <script src="../g/regimen.js?v=20"></script>
 <script src="../g/qr.js?v=1"></script>
 <script src="../g/rx.js?v=48"></script>
+<style>/* match the team app look (Alexandra, Oct 15 2026): black and soft black on ivory, Lora titles, menus as plain words with the
+   chosen one underlined, no bubbles */
+:root{--brown:#121212;--ink:#121212;--muted:#555250}
+.tabs{gap:18px!important;justify-content:center;border-bottom:1px solid var(--line);padding-bottom:6px}
+.tab{border:0!important;background:transparent!important;border-radius:0!important;padding:8px 2px!important;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink)}
+.tab[aria-pressed="true"],.tab.on,.tab[aria-selected="true"]{text-decoration:underline;text-underline-offset:7px;background:transparent!important;color:var(--ink)!important}
+.open{border-radius:0!important;border-color:var(--ink)!important}
+</style>
 </head><body>
 <main id="app"></main>
 <script>
@@ -456,7 +464,7 @@ function render(){
     return;
   }
   if(!S.mine){
-    app.append(h('div',{class:'hub'},h('h1',{style:'font-size:28px;text-align:center'},'Who’s building a card?'),
+    app.append(h('div',{class:'hub'},h('h1',{style:'font-size:28px;text-align:center'},'Who’s Building A Card?'),
       PIN_HASH?null:h('p',{class:'soft',style:'text-align:center'},'Test page. No salon PIN on this device yet.'),
       h('div',{class:'who'},TEAM.map(([n,r])=>h('button',{type:'button',onclick:()=>{if(window.TAFFETA_ENDPOINT){PICK=[n,r];AMSG='';render()}else local([n,r])}},n)))));
     return;
