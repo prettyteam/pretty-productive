@@ -381,6 +381,9 @@ details.days summary::-webkit-details-marker{display:none}
 
 <script src="g/config.js?v=2"></script>
 <script src="g/regimen.js?v=15"></script>
+<script src="g/rx.js?v=2"></script>
+<script src="g/prices.js?v=1"></script>
+<link rel="stylesheet" href="g/rx.css?v=2">
 <link rel="icon" href="icon.png">
 <link rel="apple-touch-icon" href="icon.png">
 <script src="/refresh.js" defer></script>
@@ -1450,6 +1453,7 @@ function staffTabs(){
   if(isGoalsPerson(p)||p.adv) t.push(['growth',p.adv?'Associate Program':'Growth']);
   if(p.cr&&p.cr.weeks&&p.cr.weeks.length) t.push(['cr','Weekly CR']);
   if(st.slug) t.push(['off','Time off']);
+  if(st.slug) t.push(['prices','Prices']);
   t.push(['guide','Culture']);
   const dc=p.docs||{}; if(dc.hb) t.push(['hb','Handbook']); if(dc.fg) t.push(['fg','Desk guide']);
   if(st.slug) t.push(['me','Me']);
@@ -1514,6 +1518,7 @@ function staffRender(){
   if(S.tab==='home') return homeView();
   if(S.tab==='tomorrow') return tomorrowView();
   if(S.tab==='reg') return regimenView();
+  if(S.tab==='prices') return pricesView();
   if(S.tab==='growth') return growthView();
   if(S.tab==='cr') return crView();
   if(S.tab==='inv') return invView();

@@ -10,7 +10,7 @@ const RX_SVC={
   hair:[['Female Haircut',70],['Male Haircut',45],['Haircut Leaving Wet',45],['Blow Dry',50],['Blowdry Plus',65],
     ['Single Process',70],['Shadow Root',60],['Glaze',45],['Face Frame/Spot Highlight',100],['Minimum Foil',85],
     ['Half Foil',150],['Full Foil',175],['Minimum Balayage',125],['Half Head Balayage',185],['Full Head Balayage',325],
-    ['Base Lightener',55],['Permanent Wave',100],['Formal Style',105]],
+    ['Base Lightener',55],['K18 Bond Protection',25],['Goldwell Leave-In Treatment',20],['Permanent Wave',100],['Formal Style',105]],
   skin:[['Taffeta Facial',130],['Express Acne Treatment',99],['Hydration Boost',99],['Brightening Mini Facial',99],
     ['Mini Redness Reversal',99],['Anti-Aging Express',99],['Dermaplaning',60],['Dermaplaning Add-On',40],
     ['Nano Needling Facial',199],['Microdermabrasion',150],['Brow Sculpt Maintenance',25],['Brow Tint',25],['Brow Lamination',85],['Lip Wax',15]]
@@ -175,7 +175,12 @@ function rxNeeds(R){
   return out.slice(0,2);
 }
 
-const rxSvcLines=(k,names)=>names.map(n=>({n,p:rxPrice(k,n),t:'s'}));
+/* Every blonding service gets K18 sprayed in before the lightener: a backbar charge from $25 (up to $50 by amount used),
+   and one pump of K18 leave-in after (Alexandra, Oct 2026). */
+const RX_BLOND=/foil|balayage|highlight|lightener/i;
+const rxSvcLines=(k,names)=>{const L=names.map(n=>({n,p:rxPrice(k,n),t:'s'}));
+  if(k==='hair'&&names.some(n=>RX_BLOND.test(n))&&!names.includes('K18 Bond Protection')) L.push({n:'K18 Bond Protection',p:rxPrice('hair','K18 Bond Protection'),t:'s'});
+  return L};
 const rxProdLines=(keys,mode)=>keys.map((k,i)=>{const [n,p,why]=RX_PROD[k];const t=mode==='try'||(mode==='first'&&i>0);return {n,p:t?RX_TRY:p,t:t?'t':'p',why,full:p}});
 const rxTotal=L=>L.reduce((s,x)=>s+(Number(x.p)||0),0);
 
@@ -183,7 +188,10 @@ const rxTotal=L=>L.reduce((s,x)=>s+(Number(x.p)||0),0);
 function rxGenerate(R){
   const g=(RX_GOAL[R.kind]||{})[R.goal]; if(!g) return null;
   const needs=rxNeeds(R), P=g.p, b=R.nob?null:Number(R.budget)||null;
-  const o2=[...rxSvcLines(R.kind,P[0]),...rxProdLines(needs,'full')];
+  /* Goldwell leave-in backbar treatment: a no-downtime add-on for color that fades, blonde repair or dry, damaged hair.
+     $20, or $10–15 when only half the bottle is used (Alexandra, Oct 2026). Offered in the full look. */
+  const now=R.now||[], leave=R.kind==='hair'&&(now.some(x=>/Color fading|Brassiness|Breakage|Dryness/.test(x))||P[0].some(n=>RX_BLOND.test(n)));
+  const o2=[...rxSvcLines(R.kind,P[0]),...(leave?rxSvcLines('hair',['Goldwell Leave-In Treatment']):[]),...rxProdLines(needs,'full')];
   let o1=null;
   const tryPkg=i=>{for(const mode of ['full','first','try']){const L=[...rxSvcLines(R.kind,P[i]),...rxProdLines(needs,mode)];if(rxTotal(L)<=b) return L}return null};
   if(b==null) o1=[...rxSvcLines(R.kind,P[Math.min(1,P.length-1)]),...rxProdLines(needs,'full')];
@@ -285,6 +293,7 @@ function rxEditor(R,me){
     return h('section',{class:'card2 out'},h('span',{class:'lbl'},o.title+(i===0?(b==null?' · a lighter start':t<=b?' · within her budget':' · closest to her budget'):' · the full look')),
       ...o.lines.map(l=>lineRow(o.lines,l)),
       !o.lines.some(l=>l.t!=='s')?h('p',{class:'soft'},'Home care: keep her current routine.'):null,
+      o.lines.some(l=>l.n==='K18 Bond Protection')?h('small',{class:'soft'},'K18 goes on before the lightener ($25 to $50 by amount used). Finish with one pump of K18 leave-in.'):null,
       o.lines.some(l=>l.t!=='s')?h('small',{class:'soft'},'Her card shows home care as one line: Maintenance '+rxMoney(o.lines.filter(l=>l.t!=='s').reduce((a,l)=>a+(Number(l.p)||0),0))+'.'):null,
       adder(o.lines),
       h('div',{class:'rxtot'},badge(t),h('b',{},rxMoney(t))));
