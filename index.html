@@ -278,6 +278,9 @@ body{padding-bottom:110px}
 .navsheet{margin:10px 0 0;max-height:calc(100vh - 160px);box-shadow:0 4px 20px rgba(18,18,18,.12)}
 body:has(.nav.menu){padding-top:calc(78px + env(safe-area-inset-top))}
 body{padding-bottom:calc(84px + env(safe-area-inset-bottom))}
+.navgrp>.lbl{font-family:var(--display);font-size:19px;letter-spacing:0;text-transform:none;color:var(--ink);font-weight:500;padding:2px 4px 0}
+.navgrp button{font-family:var(--body)!important;font-size:15px!important;color:var(--muted)!important;padding:6px 4px 6px 14px!important}
+.navgrp button[aria-current="page"]{color:var(--ink)!important;text-decoration:underline;text-underline-offset:4px}
 body .rbar{position:fixed;left:0;right:0;bottom:calc(10px + env(safe-area-inset-bottom));margin:0 auto;z-index:4;box-shadow:0 2px 12px rgba(18,18,18,.08)}
 .navgrp button[aria-current="page"]{text-decoration:underline;text-underline-offset:5px}
 /* growth stars */
