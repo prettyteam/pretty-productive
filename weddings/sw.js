@@ -8,14 +8,14 @@ self.addEventListener('push', e => {
   try { const p = e.data ? e.data.json() : {}; d = p.data || p.notification || p; } catch (_) {}
   const title = d.title || 'Taffeta Weddings';
   // the app open on screen plays its cha-ching (Alexandra, Oct 2026); phones choose the sound for the banner itself
-  self.clients.matchAll({ type: 'window', includeUncontrolled: true })
+  const ding = self.clients.matchAll({ type: 'window', includeUncontrolled: true })
     .then(ws => ws.forEach(w => w.postMessage({ tw: 'ding', tab: d.tab || 'team' }))).catch(() => {});
-  e.waitUntil(self.registration.showNotification(title, {
+  e.waitUntil(Promise.all([ding, self.registration.showNotification(title, {
     body: d.body || 'Open the app to see what changed.',
     icon: 'icon-192.png', badge: 'icon-192.png',
     tag: (d.tab || 'team') + '-' + title, renotify: true,
     data: { tab: d.tab || 'team' }
-  }));
+  })]));
 });
 
 self.addEventListener('notificationclick', e => {

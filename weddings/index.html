@@ -1855,8 +1855,12 @@ $("#al-off").onclick=async()=>{
 /* "Cha-ching" when an alert lands while the app is open (Alexandra, Oct 2026: like getting paid). Our own sound, made here, no file.
    Phones only allow sound after a tap, so the first tap anywhere wakes it up. */
 let DING=null;
-function dingCtx(){try{DING=DING||new (window.AudioContext||window.webkitAudioContext)();if(DING.state==="suspended")DING.resume()}catch(e){}return DING}
-["pointerdown","keydown"].forEach(ev=>addEventListener(ev,dingCtx,{once:true,capture:true}));
+function dingCtx(){try{DING=DING||new (window.AudioContext||window.webkitAudioContext)();if(DING.state!=="running")DING.resume()}catch(e){}return DING}
+// iPhones put the sound back to sleep when the app leaves the screen, so every tap wakes it again, with a silent blip that unlocks it
+function dingWake(){const c=dingCtx();if(!c)return;try{const s=c.createBufferSource();s.buffer=c.createBuffer(1,1,22050);s.connect(c.destination);s.start(0)}catch(e){}}
+["pointerdown","touchend","keydown"].forEach(ev=>addEventListener(ev,dingWake,{capture:true,passive:true}));
+// pick up the newest alert helper (sw.js) each time the app opens, so phones set up before the cha-ching get it too
+if("serviceWorker" in navigator)navigator.serviceWorker.getRegistration("./").then(r=>r&&r.update()).catch(()=>{});
 function chaChing(){
   const c=dingCtx();if(!c)return;const t0=c.currentTime+0.02;
   const bell=(t,f,len,vol)=>[1,2.76,5.4].forEach((m,i)=>{const o=c.createOscillator(),g=c.createGain();o.type="sine";o.frequency.value=f*m;
