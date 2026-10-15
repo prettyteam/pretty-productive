@@ -1852,7 +1852,22 @@ $("#al-off").onclick=async()=>{
   $("#al-status").textContent="Turning off…";
   try{await alSave(true);alShow(false,"Alerts are off.")}catch(e){$("#al-status").textContent="That didn't work. Try again."}
 };
-if("serviceWorker" in navigator)navigator.serviceWorker.addEventListener("message",e=>{if(e.data&&e.data.tw==="tab"&&ROLE){showTab(e.data.tab);if(e.data.tab==="jobs")loadJobs()}});
+/* "Cha-ching" when an alert lands while the app is open (Alexandra, Oct 2026: like getting paid). Our own sound, made here, no file.
+   Phones only allow sound after a tap, so the first tap anywhere wakes it up. */
+let DING=null;
+function dingCtx(){try{DING=DING||new (window.AudioContext||window.webkitAudioContext)();if(DING.state==="suspended")DING.resume()}catch(e){}return DING}
+["pointerdown","keydown"].forEach(ev=>addEventListener(ev,dingCtx,{once:true,capture:true}));
+function chaChing(){
+  const c=dingCtx();if(!c)return;const t0=c.currentTime+0.02;
+  const bell=(t,f,len,vol)=>[1,2.76,5.4].forEach((m,i)=>{const o=c.createOscillator(),g=c.createGain();o.type="sine";o.frequency.value=f*m;
+    g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol/(i+1),t+0.005);g.gain.exponentialRampToValueAtTime(0.0001,t+len);o.connect(g).connect(c.destination);o.start(t);o.stop(t+len+0.05)});
+  const click=t=>{const b=c.createBuffer(1,c.sampleRate*0.05,c.sampleRate),d=b.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/d.length,3);
+    const s=c.createBufferSource(),g=c.createGain(),f=c.createBiquadFilter();f.type="highpass";f.frequency.value=2500;g.gain.value=0.35;s.buffer=b;s.connect(f).connect(g).connect(c.destination);s.start(t)};
+  click(t0);click(t0+0.07);bell(t0+0.12,1318,0.5,0.18);bell(t0+0.26,1760,1.1,0.22);
+}
+if("serviceWorker" in navigator)navigator.serviceWorker.addEventListener("message",e=>{
+  if(e.data&&e.data.tw==="ding"&&ROLE&&document.visibilityState==="visible")chaChing();
+  if(e.data&&e.data.tw==="tab"&&ROLE){showTab(e.data.tab);if(e.data.tab==="jobs")loadJobs()}});
 // artists: open straight to Job offers when one is waiting on her answer
 async function jbCheckNew(){
   try{const r=await api("myJobs");jbJobs=r.jobs||[];renderMyJobs();
