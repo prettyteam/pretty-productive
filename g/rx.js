@@ -8,7 +8,7 @@
 /* Service prices: the median price for each service in the salon's own bookings, Oct 2026. */
 const RX_SVC={
   hair:[['Female Haircut',70],['Male Haircut',45],['Haircut Leaving Wet',45],['Blow Dry',50],['Blowdry Plus',65],
-    ['Single Process',70],['Shadow Root',60],['Glaze',45],['Face Frame/Spot Highlight',100],['Minimum Foil',85],
+    ['Single Process',70],['Shadow Root',60],['Glaze',45],['Additional Mix',25],['Face Frame/Spot Highlight',100],['Minimum Foil',85],
     ['Half Foil',150],['Full Foil',175],['Minimum Balayage',125],['Half Head Balayage',185],['Full Head Balayage',325],
     ['Base Lightener',55],['K18 Bond Protection',25],['Goldwell Leave-In Treatment',20],['Permanent Wave',100],['Formal Style',105]],
   skin:[['Taffeta Facial',130],['Express Acne Treatment',99],['Hydration Boost',99],['Brightening Mini Facial',99],
@@ -117,11 +117,15 @@ function rxPriceList(kind){
   return d;
 }
 
+/* Balayage (Alexandra, Oct 15 2026): the glaze is already in the balayage price, so it is never added on top (Additional
+   Mix $25 is the add-on instead), and anyone getting a balayage comes back for a balayage: Minimum Balayage. */
+const RX_BAL=/balayage/i;
+const RX_BAL_M=[['Minimum Balayage','Female Haircut'],'10–12 weeks','A minimum balayage and a trim. Your glaze is included.'];
 /* What she's hoping for → service packages, fullest first. */
 const RX_GOAL={
   hair:{
-    'Lived-in blonde (balayage)':{p:[['Full Head Balayage','Glaze','Female Haircut'],['Half Head Balayage','Glaze','Female Haircut'],['Minimum Balayage','Glaze','Female Haircut'],['Minimum Balayage','Glaze']],
-      m:[['Face Frame/Spot Highlight','Glaze','Female Haircut'],'10–12 weeks','A few face-framing foils, a glaze and a trim. Not the full balayage every time.']},
+    'Lived-in blonde (balayage)':{p:[['Full Head Balayage','Female Haircut'],['Half Head Balayage','Female Haircut'],['Minimum Balayage','Female Haircut'],['Minimum Balayage']],
+      m:RX_BAL_M},
     'Brighter blonde (foils)':{p:[['Full Foil','Glaze','Female Haircut'],['Half Foil','Glaze','Female Haircut'],['Minimum Foil','Glaze','Female Haircut'],['Face Frame/Spot Highlight','Glaze'],['Minimum Foil','Glaze']],
       m:[['Minimum Foil','Glaze','Female Haircut'],'8–10 weeks','Foils around the part and hairline, a glaze and a trim.']},
     'Root touch-up or gray coverage':{p:[['Single Process','Glaze','Female Haircut','Blow Dry'],['Single Process','Glaze','Female Haircut'],['Single Process','Female Haircut'],['Single Process']],
@@ -130,7 +134,7 @@ const RX_GOAL={
       m:[['Glaze'],'6–8 weeks','A glaze to bring the shine and tone back.']},
     'New cut or shape':{p:[['Female Haircut','Blow Dry'],['Female Haircut'],['Haircut Leaving Wet']],
       m:[['Female Haircut'],'6–8 weeks','A trim to keep the shape.']},
-    'Big change (transformation)':{p:[['Full Head Balayage','Glaze','Female Haircut','Blow Dry'],['Full Foil','Glaze','Female Haircut'],['Half Head Balayage','Glaze','Female Haircut'],['Half Foil','Glaze','Female Haircut']],
+    'Big change (transformation)':{p:[['Full Head Balayage','Female Haircut','Blow Dry'],['Full Foil','Glaze','Female Haircut'],['Half Head Balayage','Female Haircut'],['Half Foil','Glaze','Female Haircut']],
       m:[['Face Frame/Spot Highlight','Glaze','Female Haircut'],'8–10 weeks','A big change can take more than one visit. Next time: face-framing foils, a glaze and a trim.']},
     'Blowout or style':{p:[['Blowdry Plus'],['Blow Dry']],m:[['Blow Dry'],'1–2 weeks','A blowout for your next event.']}
   },
@@ -212,7 +216,8 @@ function rxNeeds(R){
 /* Every blonding service gets K18 sprayed in before the lightener: a backbar charge from $25 (up to $50 by amount used),
    and one pump of K18 leave-in after (Alexandra, Oct 2026). */
 const RX_BLOND=/foil|balayage|highlight|lightener/i;
-const rxSvcLines=(k,names)=>{const L=names.map(n=>({n,p:rxPrice(k,n),t:'s'}));
+const rxSvcLines=(k,names)=>{if(names.some(n=>RX_BAL.test(n))) names=names.filter(n=>n!=='Glaze');
+  const L=names.map(n=>({n,p:rxPrice(k,n),t:'s'}));
   if(k==='hair'&&names.some(n=>RX_BLOND.test(n))&&!names.includes('K18 Bond Protection')) L.push({n:'K18 Bond Protection',p:rxPrice('hair','K18 Bond Protection'),t:'s'});
   return L};
 const rxProdLines=(keys,mode)=>keys.map((k,i)=>{const [n,p,why]=RX_PROD[k];const t=mode==='try'||(mode==='first'&&i>0);return {n,p:t?RX_TRY:p,t:t?'t':'p',why,full:p}});
@@ -231,7 +236,7 @@ function rxGenerate(R){
   if(b==null) o1=[...rxSvcLines(R.kind,P[Math.min(1,P.length-1)]),...rxProdLines(needs,'full')];
   else{ for(let i=P.length>1?1:0;i<P.length&&!o1;i++) o1=tryPkg(i);
     if(!o1) o1=[...rxSvcLines(R.kind,P[P.length-1]),...rxProdLines(needs,'try')]; }
-  const [ms,mw,mt]=g.m;
+  const [ms,mw,mt]=[o1,o2].some(L=>L.some(l=>RX_BAL.test(l.n)))?RX_BAL_M:g.m;
   return {opts:[{title:'Option 1',lines:o1},{title:'Option 2',lines:o2}],
     m:{lines:rxSvcLines(R.kind,ms),when:mw,text:mt},refresh:mw,keep:!needs.length};
 }
@@ -317,7 +322,7 @@ function rxEditor(R,me){
   };
   const adder=L=>{const sel=h('select',{'aria-label':'Add a service or product'},h('option',{value:''},'+ Add a service or product'),
       favs.length?h('optgroup',{label:'My go-tos'},plist.filter(x=>favs.includes(x[0])).map(([n,p])=>h('option',{value:n},n+' · '+rxMoney(p)))):null,
-      h('optgroup',{label:'Services'},RX_SVC[R.kind].map(([n,p])=>h('option',{value:n},n+' · '+rxMoney(p)))),
+      h('optgroup',{label:'Services'},RX_SVC[R.kind].filter(([n])=>!(n==='Glaze'&&L.some(l=>RX_BAL.test(l.n)))).map(([n,p])=>h('option',{value:n},n+' · '+rxMoney(p)))),
       h('optgroup',{label:'Home care'},plist.map(([n,p])=>h('option',{value:n},n+' · '+rxMoney(p)))),
       h('optgroup',{label:'Try Me'},h('option',{value:'__try'},'Try Me bottle · $3')));
     sel.addEventListener('change',()=>{const n=sel.value;if(!n)return;if(n==='__try'){const what=prompt('Which product goes in the Try Me bottle?');if(what)L.push({n:what.trim(),p:RX_TRY,t:'t'});rxSave();render();return}
