@@ -39,7 +39,11 @@ const RX_PROD={
   frizz:['Brazilian Blowout Daily Smoothing Serum',36,'That just-smoothed feeling wash to wash, with frizz control for medium to thick hair'],
   dry:['Davines NOUNOU Shampoo',30,'Deep moisture for dry hair'],
   breakage:['K18 Leave-In Molecular Repair Mask, 0.5 oz',29,'Repairs breakage from the inside'],
-  flat:['Davines Volume Boosting Mousse',35,'Lift and body that lasts'],
+  /* fine or flat hair, or wants volume (Alexandra, Oct 15 2026): a volume shampoo (Oribe Magnificent Volume or Signature)
+     plus Volume Boosting Mousse or Maximista */
+  flat:['Davines Volume Boosting Mousse',35,'Lift and body that lasts, great for fine hair'],
+  flatSpray:['Oribe Maximista Thickening Spray',42,'Builds volume and thickness in fine hair'],
+  flatWash:['Oribe Shampoo for Magnificent Volume',49,'Volume from the first wash for fine or flat hair'],
   oily:['Oribe Gold Lust Dry Shampoo',52,'Soaks up oil so you can stretch between washes'],
   scalp:['Oribe Serene Scalp Soothing Leave-On',48,'Calms an itchy or flaky scalp'],
   grays:['Oribe Root Touch Up Spray',36,'Covers grays between color visits'],
@@ -216,7 +220,7 @@ function rxNeeds(R){
   if(now.includes('Frizz')) add(a.style==='Air dry'?(feel.includes('Curly or wavy')?'airCurl':'airDry'):'frizz');
   if(now.includes('Dryness')) add('dry');
   if(now.includes('Oily scalp')) add(feel.includes('Flat')?'airWash':'oily');
-  if(now.includes('Flat, no volume')) add('flat');
+  if(now.includes('Flat, no volume')){ add('flatWash'); add(a.style==='Blow-dry with a brush'?'flat':'flatSpray') }
   if(now.includes('Itchy or flaky scalp')) add('scalp');
   if(now.includes('Grays showing')) add('grays');
   if(now.includes('Hard to style')) add(a.style==='Air dry'?(feel.includes('Curly or wavy')?'airCurl':'airDry'):'blowLast');
@@ -225,6 +229,7 @@ function rxNeeds(R){
   if(a.style==='Hot tools daily'||a.style==='Blow-dry with a brush') add('heat');
   if(a.style==='Air dry'&&!out.some(k=>k==='airDry'||k==='airCurl')) add(feel.includes('Curly or wavy')?'airCurl':'airDry');
   if(feel.includes('Oily')&&a.wash==='Daily') add('oily');
+  if(feel.includes('Flat')) add('flatWash');
   if((a.wash==='Every 2–3 days'||a.wash==='Once a week')&&(a.style==='Blow-dry with a brush'||feel.includes('Flat'))) add('airWash');
   return out.slice(0,2);
 }
