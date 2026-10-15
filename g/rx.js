@@ -15,6 +15,9 @@ const RX_SVC={
     ['Mini Redness Reversal',99],['Anti-Aging Express',99],['Dermaplaning',60],['Dermaplaning Add-On',40],
     ['Nano Needling Facial',199],['Microdermabrasion',150],['Brow Sculpt Maintenance',25],['Brow Tint',25],['Brow Lamination',85],['Lip Wax',15]]
 };
+/* Female haircut follows the artist's level (Alexandra, Oct 15 2026): newer artists $65, Alexandra $100, everyone else $75 */
+const RX_CUT={Adriana:65,Ashley:65,Amanda:65,Isabella:65,Alexandra:100};
+function rxSetCut(me){const f=String(me||'').trim().split(/\s+/)[0]||'', r=RX_SVC.hair.find(x=>x[0]==='Female Haircut'); if(r) r[1]=RX_CUT[f]||75}
 const rxPrice=(k,n)=>{const r=RX_SVC[k].find(x=>x[0]===n);return r?r[1]:0};
 
 /* Home care: one product per need, from the Taffeta product guide (brand list prices, Oct 2026; ring up from the POS). */
@@ -125,7 +128,7 @@ const RX_GOAL={
     'Lived-in blonde (balayage)':{p:[['Full Head Balayage','Female Haircut'],['Half Head Balayage','Female Haircut'],['Minimum Balayage','Female Haircut'],['Minimum Balayage']],
       m:RX_BAL_M},
     'Brighter blonde (foils)':{p:[['Full Foil','Glaze','Female Haircut'],['Half Foil','Glaze','Female Haircut'],['Minimum Foil','Glaze','Female Haircut'],['Face Frame/Spot Highlight','Glaze'],['Minimum Foil','Glaze']],
-      m:[['Minimum Foil','Glaze','Leave Wet (no haircut)'],'8–10 weeks','Foils around the part and hairline and a glaze. If you get your cut today, skip it next time to save: leave wet, or add a $50 blow dry. Need a trim? A haircut leaving wet is $50 instead of $75+.']},
+      m:[['Minimum Foil','Glaze','Leave Wet (no haircut)'],'8–10 weeks','Foils around the part and hairline and a glaze. If you get your cut today, skip it next time to save: leave wet, or add a $50 blow dry. Need a trim? A haircut leaving wet is $50.']},
     'Root touch-up or gray coverage':{p:[['Single Process','Glaze','Female Haircut','Blow Dry'],['Single Process','Glaze','Female Haircut'],['Single Process','Female Haircut'],['Single Process']],
       m:[['Single Process'],'4–6 weeks','Roots only. Add a cut every other visit.']},
     'Shine and tone refresh (glaze)':{p:[['Glaze','Female Haircut','Blow Dry'],['Glaze','Female Haircut'],['Glaze']],
@@ -133,7 +136,7 @@ const RX_GOAL={
     'New cut or shape':{p:[['Female Haircut','Blow Dry'],['Female Haircut'],['Haircut Leaving Wet']],
       m:[['Female Haircut'],'6–8 weeks','A trim to keep the shape.']},
     'Big change (transformation)':{p:[['Full Head Balayage','Female Haircut','Blow Dry'],['Full Foil','Glaze','Female Haircut'],['Half Head Balayage','Female Haircut'],['Half Foil','Glaze','Female Haircut']],
-      m:[['Face Frame/Spot Highlight','Glaze','Leave Wet (no haircut)'],'8–10 weeks','A big change can take more than one visit. Next time: face-framing foils and a glaze. If you get your cut today, skip it next time to save: leave wet, or add a $50 blow dry. Need a trim? A haircut leaving wet is $50 instead of $75+.']},
+      m:[['Face Frame/Spot Highlight','Glaze','Leave Wet (no haircut)'],'8–10 weeks','A big change can take more than one visit. Next time: face-framing foils and a glaze. If you get your cut today, skip it next time to save: leave wet, or add a $50 blow dry. Need a trim? A haircut leaving wet is $50.']},
     'Blowout or style':{p:[['Blowdry Plus'],['Blow Dry']],m:[['Blow Dry'],'1–2 weeks','A blowout for your next event.']}
   },
   skin:{
@@ -271,6 +274,7 @@ function rxQR(text){
 function rxView(){
   rxPull();
   const R=rxLoad(), me=(S.mine&&(S.mine.name||(S.mine.staff&&S.mine.staff.name)))||'';
+  rxSetCut(me);
   const tabs=h('div',{class:'seg',style:'justify-content:center'},
     h('button',{type:'button','aria-pressed':String(RX_VIEW!=='saved'),onclick:()=>{RX_VIEW='build';render()}},'Build a card'),
     h('button',{type:'button','aria-pressed':String(RX_VIEW==='saved'),onclick:()=>{RX_VIEW='saved';RX_SHOW=null;render()}},'Saved cards'));
