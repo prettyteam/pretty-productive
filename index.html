@@ -830,7 +830,7 @@ function homeView(){
 }
 
 function offView(){
-  const d=HUB.data||{}, out=[h('h1',{style:'font-size:28px'},'Time off & coverage')];
+  const d=HUB.data||{}, out=[h('h1',{style:'font-size:28px'},'Time Off & Coverage')];
   // need a shift covered
   const cd=h('input',{type:'date',value:ymd(new Date())}), ct=h('input',{type:'text',placeholder:'9 AM – 5 PM'}), by=h('input',{type:'text',placeholder:'Leave blank to ask the team'});
   out.push(h('div',{class:'card2 out'},h('span',{class:'lbl'},'Need a shift covered?'),
@@ -905,7 +905,7 @@ function fullGuideCard(url){
 }
 function guideView(){
   const p=S.mine, g=isEsti(p)?GUIDE_ESTI:GUIDE;
-  return [h('div',{class:'hub'},h('div',{},h('span',{class:'lbl'},'Taffeta basics'),h('h1',{style:'font-size:28px'},'The Taffeta way')),
+  return [h('div',{class:'hub'},h('div',{},h('span',{class:'lbl'},'Taffeta basics'),h('h1',{style:'font-size:28px'},'The Taffeta Way')),
     ...basicsCards(),
     p.fullGuide?fullGuideCard(p.fullGuide):null,
     isGoalsPerson(p)?h('div',{class:'sec2'},h('span',{class:'lbl'},'Every guest, every time'),
@@ -1132,13 +1132,13 @@ function hbView(){
         if(nm.value.trim().length<3){HUB.toast='Type your full name.';render();return}
         hubPost({type:'sign',doc:d.name,name:nm.value.trim()},'Signed. Thank you!')}},HUB.busy?'One moment…':'Sign'),
       HUB.toast?h('p',{class:'toast'},HUB.toast):null);
-  return [h('div',{class:'hub'},h('div',{},h('span',{class:'lbl'},'Read, then sign'),h('h1',{style:'font-size:28px'},'Taffeta handbook')),
+  return [h('div',{class:'hub'},h('div',{},h('span',{class:'lbl'},'Read, then sign'),h('h1',{style:'font-size:28px'},'Taffeta Handbook')),
     h('p',{class:'soft',style:'font-size:13.5px;margin:0'},d.name+' · please don’t share it'),
     ...docTabs(d,d.k,'hb'),sign)];
 }
 function fgView(){
   const d=(S.mine.docs||{}).fg; if(!d) return null;
-  return [h('div',{class:'hub'},h('div',{},h('span',{class:'lbl'},'Pick a topic'),h('h1',{style:'font-size:28px'},'Desk guide')),
+  return [h('div',{class:'hub'},h('div',{},h('span',{class:'lbl'},'Pick a topic'),h('h1',{style:'font-size:28px'},'Desk Guide')),
     h('p',{class:'soft',style:'font-size:13.5px;margin:0'},'Pinch to zoom, scroll to read. Please don’t share it.'),...docTabs(d,d.k,'fg'))];
 }
 const niceDate=s=>{const [y,m,dd]=String(s).split('-').map(Number);return y?new Date(y,m-1,dd).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):''};
@@ -1174,7 +1174,7 @@ function meView(){
   const out=[h('div',{style:'display:flex;align-items:center;gap:16px'},
     h('button',{type:'button','aria-label':'Choose a profile photo',style:'border:0;background:none;padding:0;cursor:pointer;position:relative',onclick:()=>fileIn.click()},avatarEl(88),
       h('span',{style:'position:absolute;right:-2px;bottom:-2px;width:28px;height:28px;border-radius:50%;background:#121212;color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px'},'+')),
-    h('div',{},h('span',{class:'lbl'},'Just for you'),h('h1',{style:'font-size:28px'},'Me'),
+    h('div',{},h('span',{class:'lbl'},'Just for you'),h('h1',{style:'font-size:28px'},'My Profile'),
       h('button',{type:'button',class:'soft',style:'border:0;background:none;padding:0;font-size:13px;text-decoration:underline;cursor:pointer;color:inherit',onclick:()=>myPhoto()?(store.set(PHOTOKEY(),''),render()):fileIn.click()},myPhoto()?'Remove photo':'Add a profile photo')),fileIn)];
   if(HUB.toast&&!HUB.data) out.push(h('p',{class:'toast'},HUB.toast));
   out.push(h('div',{class:'gcard'},h('h2',{},gIcon('👸'),'My info'),
@@ -1469,7 +1469,7 @@ function skinView(){
   const p=S.mine.skin;
   if(p&&!(SKIN.key===p.file&&(SKIN.data||SKIN.loading))){SKIN={data:null,err:null,loading:true,key:p.file};
     docBytes(p.file,p.k).then(b=>{SKIN.data=JSON.parse(new TextDecoder().decode(b));SKIN.loading=false;render()}).catch(()=>{SKIN.err=true;SKIN.loading=false;render()});}
-  const head=h('div',{},h('span',{class:'lbl'},'Spa'),h('h1',{style:'font-size:28px'},'Skincare stock'));
+  const head=h('div',{},h('span',{class:'lbl'},'Spa'),h('h1',{style:'font-size:28px'},'Skincare Stock'));
   if(!SKIN.data) return [h('div',{class:'hub'},head,h('p',{class:'dmsg'},SKIN.err?'Couldn’t open this right now. Check your signal and try again.':'Opening…'))];
   const edit=!!(HUB.data&&HUB.data.stockEdit), rows=[], inS=[], outS=[];
   SKIN.data.skin.forEach(([br,item,retail,oh])=>{
@@ -1507,7 +1507,7 @@ function cardsView(){
   const p=S.mine.cards;
   if(p&&!(CARDS.key===p.file&&(CARDS.data||CARDS.loading))){CARDS={data:null,err:null,loading:true,key:p.file};
     docBytes(p.file,p.k).then(b=>{CARDS.data=JSON.parse(new TextDecoder().decode(b));CARDS.loading=false;render()}).catch(()=>{CARDS.err=true;CARDS.loading=false;render()});}
-  const head=h('div',{},h('span',{class:'lbl'},'New guests'),h('h1',{style:'font-size:28px'},'Thank-you cards'));
+  const head=h('div',{},h('span',{class:'lbl'},'New guests'),h('h1',{style:'font-size:28px'},'Thank-You Cards'));
   if(!CARDS.data) return [h('div',{class:'hub'},head,h('p',{class:'dmsg'},CARDS.err?'Couldn’t open this right now. Check your signal and try again.':'Opening…'))];
   const all=cardsWithDesk(CARDS.data.guests||[]), done=new Set(cdGet()), left=all.filter(g=>!done.has(cardKey(g)));
   const n=all.length-left.length, pc=all.length?Math.round(n/all.length*100):0;
