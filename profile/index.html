@@ -28,6 +28,14 @@ html,body{background:#f8f6f0}
 .btn{background:#fff;color:var(--ink);border:1px solid var(--ink);border-radius:6px}
 .box{border-color:var(--ink)}.opt:has(input:checked) .box{background:var(--ink)}
 .opt.on .box{background:var(--ink)}
+/* matches the team app (Alexandra, Oct 15 2026): app ivory, square corners, black lines, labels between short dashes */
+:root{--ivory:#f2f1ec;--gold:#121212}
+html,body{background:#f2f1ec}
+.card,.input,.btn,.secure,.policy,.box{border-radius:0!important}
+.input{border-color:#2b2a28}
+.sec>.eyebrow{display:flex;align-items:center;justify-content:center;gap:12px;color:#121212;border-bottom:0;padding-bottom:0;text-align:center}
+.sec>.eyebrow::before,.sec>.eyebrow::after{content:"";width:28px;height:1px;background:#2b2a28;flex:none}
+select.input{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%23121212' stroke-width='1.5'/%3E%3C/svg%3E")}
 </style>
 </head><body><main id="app">
 <div class="top">
