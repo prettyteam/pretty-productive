@@ -7,7 +7,7 @@
 
 /* Service prices: the median price for each service in the salon's own bookings, Oct 2026. */
 const RX_SVC={
-  hair:[['Female Haircut',70],['Male Haircut',45],['Haircut Leaving Wet',45],['Blow Dry',50],['Blowdry Plus',65],
+  hair:[['Female Haircut',70],['Male Haircut',45],['Haircut Leaving Wet',45],['Leave Wet (no haircut)',0],['Blow Dry',50],['Blowdry Plus',65],
     ['Single Process',70],['Shadow Root',60],['Glaze',45],['Additional Mix',25],['Face Frame/Spot Highlight',100],['Minimum Foil',85],
     ['Half Foil',150],['Full Foil',175],['Minimum Balayage',125],['Half Head Balayage',185],['Full Head Balayage',325],
     ['Base Lightener',55],['K18 Bond Protection',25],['Goldwell Leave-In Treatment',20],['Permanent Wave',100],['Formal Style',105]],
@@ -121,13 +121,15 @@ function rxPriceList(kind){
    Mix $25 is the add-on instead), and anyone getting a balayage comes back for a balayage: Minimum Balayage. */
 const RX_BAL=/balayage/i;
 const RX_BAL_M=[['Minimum Balayage','Female Haircut'],'10–12 weeks','A minimum balayage and a trim. Your glaze is included.'];
+/* Guests who come every 4 to 8 weeks don't need a cut every visit: the next visit after a cut can be "Leave Wet" to save
+   on cost (Alexandra, Oct 15 2026). Balayage guests (10–12 weeks) keep the trim. */
 /* What she's hoping for → service packages, fullest first. */
 const RX_GOAL={
   hair:{
     'Lived-in blonde (balayage)':{p:[['Full Head Balayage','Female Haircut'],['Half Head Balayage','Female Haircut'],['Minimum Balayage','Female Haircut'],['Minimum Balayage']],
       m:RX_BAL_M},
     'Brighter blonde (foils)':{p:[['Full Foil','Glaze','Female Haircut'],['Half Foil','Glaze','Female Haircut'],['Minimum Foil','Glaze','Female Haircut'],['Face Frame/Spot Highlight','Glaze'],['Minimum Foil','Glaze']],
-      m:[['Minimum Foil','Glaze','Female Haircut'],'8–10 weeks','Foils around the part and hairline, a glaze and a trim.']},
+      m:[['Minimum Foil','Glaze','Leave Wet (no haircut)'],'8–10 weeks','Foils around the part and hairline and a glaze. If you get your cut today, skip it next time and leave wet to save.']},
     'Root touch-up or gray coverage':{p:[['Single Process','Glaze','Female Haircut','Blow Dry'],['Single Process','Glaze','Female Haircut'],['Single Process','Female Haircut'],['Single Process']],
       m:[['Single Process'],'4–6 weeks','Roots only. Add a cut every other visit.']},
     'Shine and tone refresh (glaze)':{p:[['Glaze','Female Haircut','Blow Dry'],['Glaze','Female Haircut'],['Glaze']],
@@ -135,7 +137,7 @@ const RX_GOAL={
     'New cut or shape':{p:[['Female Haircut','Blow Dry'],['Female Haircut'],['Haircut Leaving Wet']],
       m:[['Female Haircut'],'6–8 weeks','A trim to keep the shape.']},
     'Big change (transformation)':{p:[['Full Head Balayage','Female Haircut','Blow Dry'],['Full Foil','Glaze','Female Haircut'],['Half Head Balayage','Female Haircut'],['Half Foil','Glaze','Female Haircut']],
-      m:[['Face Frame/Spot Highlight','Glaze','Female Haircut'],'8–10 weeks','A big change can take more than one visit. Next time: face-framing foils, a glaze and a trim.']},
+      m:[['Face Frame/Spot Highlight','Glaze','Leave Wet (no haircut)'],'8–10 weeks','A big change can take more than one visit. Next time: face-framing foils and a glaze. If you get your cut today, skip it next time and leave wet to save.']},
     'Blowout or style':{p:[['Blowdry Plus'],['Blow Dry']],m:[['Blow Dry'],'1–2 weeks','A blowout for your next event.']}
   },
   skin:{
@@ -236,7 +238,10 @@ function rxGenerate(R){
   if(b==null) o1=[...rxSvcLines(R.kind,P[Math.min(1,P.length-1)]),...rxProdLines(needs,'full')];
   else{ for(let i=P.length>1?1:0;i<P.length&&!o1;i++) o1=tryPkg(i);
     if(!o1) o1=[...rxSvcLines(R.kind,P[P.length-1]),...rxProdLines(needs,'try')]; }
-  const [ms,mw,mt]=[o1,o2].some(L=>L.some(l=>RX_BAL.test(l.n)))?RX_BAL_M:g.m;
+  let [ms,mw,mt]=[o1,o2].some(L=>L.some(l=>RX_BAL.test(l.n)))?RX_BAL_M:g.m;
+  /* no cut today: the next visit keeps the cut instead of leaving wet */
+  if(ms.includes('Leave Wet (no haircut)')&&![o1,o2].some(L=>L.some(l=>/haircut/i.test(l.n)))){
+    ms=ms.map(n=>n==='Leave Wet (no haircut)'?'Female Haircut':n); mt=mt.replace(/ and a glaze\..*$/,', a glaze and a trim.') }
   return {opts:[{title:'Option 1',lines:o1},{title:'Option 2',lines:o2}],
     m:{lines:rxSvcLines(R.kind,ms),when:mw,text:mt},refresh:mw,keep:!needs.length};
 }
