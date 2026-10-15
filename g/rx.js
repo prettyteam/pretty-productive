@@ -44,6 +44,7 @@ const RX_PROD={
   airDry:['Oribe Hair Alchemy Heatless Styling Balm',48,'Smooth, polished air-dried hair with no heat'],
   airCurl:['IGK Rich Kid Wave Enhancing Air Dry Cream',25,'Brings out natural waves and perms as they air dry'],
   flyaway:['IGK Frizz & Flyaway Taming Wand',30,'Smooths flyaways and keeps sleek or slicked-back looks in place'],
+  sleekStick:['Aluram Smoothing Balm Stick',19,'A wax stick for sleek looks and flyaways, easy to keep in your bag'],
   prep:['IGK Good Behavior 4-in-1 Prep Spray',34,'Preps hair before you blow-dry so it styles faster and smoother'],
   frizz:['Brazilian Blowout Daily Smoothing Serum',36,'That just-smoothed feeling wash to wash, with frizz control for medium to thick hair'],
   dry:['Davines NOUNOU Shampoo',30,'Deep moisture for dry hair'],
@@ -212,7 +213,7 @@ const rxFirst=n=>String(n||'').trim().split(/\s+/)[0]||'';
 function rxNeeds(R){
   const a=R.a||{}, now=R.now||[], out=[], add=k=>{if(!out.includes(k)&&RX_PROD[k]) out.push(k)};
   const notHappy=a.prod&&a.prod!=='Professional'||a.love==='No';
-  if(R.kind==='hair'&&rxGoalList(R).some(g=>/^Blowout/.test(g))&&now.includes('Frizz')) add('flyaway');
+  if(R.kind==='hair'&&rxGoalList(R).some(g=>/^Blowout/.test(g))&&(now.includes('Frizz')||now.includes('Flyaways'))) add('sleekStick');
   if(R.kind==='hair'&&rxGoalList(R).some(g=>/^Movement/.test(g))) add(a.style==='Air dry'?'movementAir':'movement');
   if(R.kind==='skin'){
     if(now.includes('Breakouts')||now.includes('Large pores')) add('skBreak');
