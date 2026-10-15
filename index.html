@@ -288,7 +288,7 @@ body{padding-bottom:110px}
 .hhi{display:flex;flex-direction:row;align-items:center;justify-content:center;gap:10px;font-family:var(--display);color:#121212;line-height:1.15}
 .hhi span:first-child{font-size:28px}
 .hname{font-size:34px;font-style:italic}
-.hnamepic{height:76px;width:auto;max-width:230px;margin-top:6px;filter:brightness(0)}
+.hnamepic{height:76px;width:auto;max-width:210px;margin-top:6px;filter:brightness(0)}
 .hgig{display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;padding:0 8px}
 .hgig .lbl{color:#121212}
 .hgig p{margin:0;font-family:var(--display);font-style:italic;font-size:18px;line-height:1.5;color:#555250;max-width:440px}
@@ -795,7 +795,7 @@ function hello(){
   const logo=document.querySelector('.wreath'), ph=myPhoto();
   return h('div',{class:'hhome'},
     h('div',{class:'crest'},ph?h('img',{class:'me',src:ph,alt:''}):null,logo?h('img',{class:'w'+(ph?' over':''),src:logo.src,alt:''}):null),
-    h('div',{class:'hhi'},h('span',{},'Hi,'),(()=>{const fn=firstName(S.mine.name), k=fn.toLowerCase();
+    h('div',{class:'hhi'},h('span',{},'Hello,'),(()=>{const fn=firstName(S.mine.name), k=fn.toLowerCase();
       return NAME_PICS.includes(k)?h('img',{class:'hnamepic',src:'g/names/'+k+'.png',alt:fn}):h('span',{class:'hname'},fn)})()));
 }
 function clockCard(){
