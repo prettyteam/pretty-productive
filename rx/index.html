@@ -16,8 +16,18 @@ main{padding:14px 12px 40px}
 .rxh p{font-size:14px;line-height:1.4}
 .for{display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px;font-size:14px;color:var(--soft)}
 .talk{font-size:15px}
-.rxo{border:1px solid var(--line);padding:14px 16px 12px;display:flex;flex-direction:column;gap:6px}
-.rxo .eyebrow{color:var(--brown)}
+/* both options in one card: "Option 1 ... $total"; tap an option for the breakdown (Alexandra, Oct 15 2026) */
+.rxo{border:1px solid var(--line);padding:4px 16px;display:flex;flex-direction:column}
+.rxo>.eyebrow{color:var(--brown);padding:10px 0 2px}
+.rxo details+details{border-top:1px solid var(--line)}
+.rxo summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 0;font-size:17px;font-variant-numeric:tabular-nums}
+.rxo summary::-webkit-details-marker{display:none}
+.rxo summary .nm{display:flex;align-items:center;gap:8px;font-weight:600}
+.rxo summary .nm::before{content:"";width:7px;height:7px;border-right:1.5px solid var(--soft);border-bottom:1.5px solid var(--soft);transform:rotate(-45deg);transition:transform .15s}
+.rxo details[open] summary .nm::before{transform:rotate(45deg)}
+.rxo summary b{font-size:18px}
+.rxo .brk{display:flex;flex-direction:column;gap:6px;padding:0 0 12px 15px}
+.rxo .brk .badge{align-self:flex-start;margin-top:2px}
 .li{display:flex;justify-content:space-between;gap:12px;font-size:15px;font-variant-numeric:tabular-nums}
 .li small{display:block;color:var(--soft);font-size:12.5px}
 .tot{display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--line);padding-top:6px;font-weight:700;font-variant-numeric:tabular-nums}
@@ -46,15 +56,16 @@ main{padding:14px 12px 40px}
   if(!c||c.v!==1){app.append(el('div',{class:'bad'},el('h1',{},'This card didn’t open'),el('p',{},'Ask your Taffeta artist to show the QR again.')));return}
   const skin=c.k==='skin', date=new Date((c.d||'')+'T12:00');
   document.title=(c.g?c.g+'’s ':'Your ')+'RX · Taffeta Salon & Spa';
-  const opts=(c.o||[]).map(([title,lines],i)=>{const t=lines.reduce((s,l)=>s+l[1],0);
-    return el('section',{class:'rxo'},el('span',{class:'eyebrow'},title),
-      lines.map(([n,p])=>el('div',{class:'li'},el('span',{},n),el('span',{},money(p)))),
-      el('div',{class:'tot'},c.b?el('span',{class:'badge '+(t<=c.b?'ok':'over')},t<=c.b?'Within your budget':money(t-c.b)+' over your budget'):el('span',{}),el('span',{},money(t))));
-  });
+  // one card: each option shows just its name and total; tapping it opens the breakdown that adds up to that total
+  const opts=(c.o||[]).length?el('section',{class:'rxo'},el('span',{class:'eyebrow'},'Your options for today'),(c.o||[]).map(([title,lines])=>{const t=lines.reduce((s,l)=>s+l[1],0);
+    return el('details',{},el('summary',{},el('span',{class:'nm'},title),el('b',{},money(t))),
+      el('div',{class:'brk'},lines.map(([n,p])=>el('div',{class:'li'},el('span',{},n),el('span',{},money(p)))),
+        c.b?el('span',{class:'badge '+(t<=c.b?'ok':'over')},t<=c.b?'Within your budget':money(t-c.b)+' over your budget'):null));
+  })):null;
   const m=c.m||[[],'',''], mt=m[0].reduce((s,l)=>s+l[1],0);
   app.append(el('div',{class:'page'},
     el('div',{class:'top'},el('img',{src:'../g/logo.png',alt:'Taffeta Salon & Spa'})),
-    el('div',{class:'rxh'},el('span',{class:'rx'},'Rx'),el('p',{},'Personal plan from today’s consultation: two options, your home care, and what your next visit looks like.')),
+    el('div',{class:'rxh'},el('span',{class:'rx'},'Rx'),el('p',{},'Personal plan from today’s consultation: two options (tap one to see what’s included), your home care, and what your next visit looks like.')),
     el('div',{class:'for'},el('span',{},'For '+(c.g||'you')),el('span',{},(c.a?'with '+c.a+' · ':'')+(isNaN(date)?'':date.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})))),
     c.w||(c.n&&c.n.length)?el('p',{class:'talk'},c.w?el('b',{},'You’re hoping for: '):null,c.w||'',c.n&&c.n.length?el('br'):null,c.n&&c.n.length?[el('b',{},'Right now: '),c.n.join(', ').toLowerCase()]:null):null,
     c.b?el('p',{class:'talk'},el('b',{},'Your budget today: '),money(c.b)):null,
