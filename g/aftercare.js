@@ -53,7 +53,7 @@ async function acPdf(sheet,guest){
   const big=SF==='times'?1:1.12;
   const W=396,H=612,M=34,CW=W-M*2,ink=[18,18,18],soft=[95,91,85],choc=[74,52,38],line=[226,222,213];
   let y=0;
-  const bg=()=>{doc.setFillColor(248,246,240);doc.rect(0,0,W,H,'F')};
+  const bg=()=>{doc.setFillColor(248,246,240);doc.rect(0,0,W,H,'F');doc.setFillColor(255,255,255);doc.rect(12,12,W-24,H-24,'F')};   /* white page, cream border (Alexandra, Oct 15) */
   const foot=()=>{doc.setDrawColor(...line);doc.line(M,H-40,W-M,H-40);doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.setTextColor(...soft);
     doc.text('Taffeta Salon & Spa  ·  219 Bellevue Ave, Hammonton NJ  ·  '+AC_PHONE+'  ·  '+AC_SITE,W/2,H-26,{align:'center'})};
   const need=n=>{if(y+n>H-52){foot();doc.addPage([396,612]);bg();y=M+6}};
