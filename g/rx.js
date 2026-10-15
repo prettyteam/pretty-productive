@@ -30,6 +30,12 @@ const RX_PROD={
   brassy:['K18 Triple Bright Purple Shampoo',40,'Keeps blonde bright and stops brassiness coming through'],
   /* Alexandra (Oct 15 2026): every big blonding service (half or full balayage, half or full foils) goes home with the
      small K18 leave-in; AirWash for anyone who washes a couple of times a week and refreshes with a dryer and brush, and fine hair */
+  /* clean, vegan guests get Rossano Ferretti, fruity-smelling shampoos and conditioners (Alexandra, Oct 15 2026) */
+  colorSafeRF:['Rossano Ferretti Splendido Colour Protect Shampoo',56,'Clean, vegan color care with a fresh, fruity scent'],
+  glazeKeepRF:['Rossano Ferretti Splendido Colour Protect Shampoo',56,'Clean, vegan and keeps your glaze glossy longer, with a fruity scent'],
+  dryRF:['Rossano Ferretti Dolce Repair Nourish Shampoo',46,'Clean, vegan deep moisture with a fruity scent'],
+  flatWashRF:['Rossano Ferretti Grandioso Extra Volume Shampoo',46,'Clean, vegan volume for fine or flat hair, with a fruity scent'],
+  brassyRF:['Rossano Ferretti Splendido Purple Shampoo',49,'Clean, vegan purple shampoo that keeps blonde bright'],
   k18Home:['K18 Leave-In Molecular Repair Mask, 0.5 oz',29,'Keeps repairing your hair at home after a big blonding service'],
   airWash:['K18 AirWash Dry Shampoo, 4 oz',48,'Freshens your hair between washes with your blow dryer and brush; great for fine hair'],
   movement:['Oribe Après Beach Wave & Shine Spray',46,'Soft, touchable movement and shine at home'],
@@ -177,7 +183,8 @@ const RX_Q={
     ['style','How does she style it?',['Air dry','Blow-dry with a brush','Hot tools daily']],
     ['color','Is it color-treated?',['No','Yes','Yes, with a glaze that fades','Blonde that turns brassy'],1],
     ['prod','What does she use now?',['Professional','Drugstore','Not sure']],
-    ['love','Does she love it?',['Yes','No']]],
+    ['love','Does she love it?',['Yes','No']],
+    ['clean','Does she like clean, vegan products?',['No preference','Yes']]],
   skin:[
     ['feel','How does her skin feel?',['Dry or tight','Oily','Combination','Sensitive','Normal']],
     ['steps','Her routine now',['Nothing','Cleanser only','A few steps','Full routine']],
@@ -236,7 +243,7 @@ function rxNeeds(R){
   if(feel.includes('Oily')&&a.wash==='Daily') add('oily');
   if(feel.includes('Flat')) add('flatWash');
   if((a.wash==='Every 2–3 days'||a.wash==='Once a week')&&(a.style==='Blow-dry with a brush'||feel.includes('Flat'))) add('airWash');
-  return out.slice(0,2);
+  return out.slice(0,2).map(k=>a.clean==='Yes'&&RX_PROD[k+'RF']?k+'RF':k);
 }
 
 /* Every blonding service gets K18 sprayed in before the lightener: a backbar charge from $25 (up to $50 by amount used),
