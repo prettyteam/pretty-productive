@@ -384,6 +384,7 @@ details.days summary::-webkit-details-marker{display:none}
 <script src="../g/regimen.js?v=22"></script>
 <script src="../g/qr.js?v=1"></script>
 <script src="../g/rx.js?v=48"></script>
+<script src="../g/topnav.js?v=1"></script>
 <style>/* match the team app look (Alexandra, Oct 15 2026): black and soft black on ivory, Lora titles, menus as plain words with the
    chosen one underlined, no bubbles */
 :root{--brown:#121212;--ink:#121212;--muted:#555250}
@@ -477,10 +478,10 @@ function render(){
         h('small',{class:'soft',style:'text-align:center'},'RX: two options for today, based on her budget. Home maintenance: her routine at home after the service.'))));
     return;
   }
-  const back=h('button',{type:'button',class:'tab',style:'align-self:center',onclick:()=>{CARD='';render();window.scrollTo(0,0)}},'← Customer cards');
   const parts=CARD==='rx'?rxView():regimenView();
-  app.append(h('div',{class:'hub',style:'margin-bottom:18px'},back),...parts);
+  app.append(...parts);
 }
 render();
+TopNav.init({get:()=>S.mine?'c:'+CARD:null,home:()=>'c:',set:k=>{CARD=k.slice(2);render()}});
 </script>
 </body></html>

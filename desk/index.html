@@ -9,6 +9,7 @@
 <link rel="stylesheet" href="../g/base.css">
 <script src="../g/config.js?v=2"></script>
 <script src="../g/aftercare.js?v=6"></script>
+<script src="../g/topnav.js?v=1"></script>
 <script>window.RG_BASE='../'</script>
 <script src="../g/regimen.js?v=22"></script>
 <style>
@@ -413,6 +414,7 @@ document.addEventListener('click',e=>{const b=e.target.closest('#runAll');if(!b|
 });
 runState();setInterval(runState,20000);
 render();load();loadGuide();
+TopNav.init({get:()=>area+'|'+tab,home:()=>'G|C',set:k=>{[area,tab]=k.split('|');store.set('desk-area',area);store.set('desk-tab',tab);render()}});
 
 function demo(){const n=Date.now(),m=60000;return{concierge:[
  {row:5,at:n-0.3*m,name:'Jess',sips:'Hi Pretty Latte',comforts:'Blanket, Quiet visit',before:'',note:'',status:'New'},

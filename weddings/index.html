@@ -10,6 +10,7 @@
 <meta name="apple-mobile-web-app-title" content="Taffeta Weddings">
 <meta name="theme-color" content="#f8f6f0">
 <script src="config.js"></script>
+<script src="../g/topnav.js?v=1"></script>
 <style>:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;padding:0}img{max-width:100%}</style>
 <script src="/refresh.js?v=3" defer></script>
 <style>/* match the team app look (Alexandra, Oct 15 2026): black and soft black on ivory, Lora titles, menus as plain words with the
@@ -1931,6 +1932,7 @@ showTab=function(t){
   if(t==="jobs")loadJobs();
   if(t==="cal")renderCalPicker();
   try{localStorage.setItem("tt-tab",t)}catch(e){}
+  if(window.TopNav)TopNav.check();
 };
 // keep the team schedule fresh for everyone (the office's own edits stay put)
 // keep weddings and job offers current while the app is open, and catch up as soon as it comes back on screen
@@ -1962,6 +1964,7 @@ fillForm();
     else{showSignIn("Couldn't reach the office right now. Check your connection and refresh.")}
   }
 })();
+TopNav.init({get:()=>ROLE?(TABS.find(k=>$("#tab-"+k).getAttribute("aria-selected")==="true")||null):null,home:()=>ROLE==="office"?"booked":"team",set:t=>showTab(t)});
 })();
 </script>
 
