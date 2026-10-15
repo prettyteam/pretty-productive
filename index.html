@@ -381,8 +381,8 @@ details.days summary::-webkit-details-marker{display:none}
 
 <script src="g/config.js?v=2"></script>
 <script src="g/regimen.js?v=15"></script>
-<script src="g/rx.js?v=2"></script>
-<script src="g/prices.js?v=1"></script>
+<script src="g/rx.js?v=3"></script>
+<script src="g/prices.js?v=2"></script>
 <link rel="stylesheet" href="g/rx.css?v=2">
 <link rel="icon" href="icon.png">
 <link rel="apple-touch-icon" href="icon.png">
@@ -1120,12 +1120,35 @@ function meView(){
     ...(HUB.data?[...ins.map(([k,l,i])=>h('label',{class:'fld'},l,i)),
      h('button',{class:'obtn',disabled:HUB.busy?'':null,onclick:()=>{const o={type:'profile'};ins.forEach(([k,l,i])=>o[k]=i.value);hubPost(o,'Saved. Thank you!')}},HUB.busy?'One moment…':'Save'),
      HUB.toast?h('p',{class:'toast'},HUB.toast):null]:[])));
+  if(HUB.data&&HUB.data.rx) out.push(rxPinCard());
   out.push(h('div',{class:'gcard'},h('h2',{},gIcon('✧'),'Posting for you'),
     h('span',{class:'lbl'},'Keep your look cohesive'),
     SOCIAL_RULES.map(([t,x])=>h('div',{class:'grule'},h('div',{class:'gn'},'✓'),h('p',{},t,h('small',{},x)))),
     ...(posts.length?[h('span',{class:'lbl'},(soc.week||'This week')+' · new every Sunday'),
       ...posts.map(([t,x],i)=>h('div',{class:'grule'},h('div',{class:'gn'},String(i+1)),h('p',{},t,h('small',{},x))))]:[])));
   return [h('div',{class:'hub'},out)];
+}
+
+/* Her iPad PIN: on the salon iPad she taps her name and types it, and her stars and saved RX cards come with her. */
+let PINMSG='', PINOPEN=false;
+function rxPinCard(){
+  const set=HUB.data.rx.pin, a=h('input',{type:'password',inputmode:'numeric',autocomplete:'new-password','aria-label':'New iPad PIN'}),
+    b=h('input',{type:'password',inputmode:'numeric',autocomplete:'new-password','aria-label':'Type it again'});
+  const save=async()=>{const x=a.value.trim();
+    if(!/^\d{4,8}$/.test(x)){PINMSG='Use 4 to 8 numbers.';render();return}
+    if(x!==b.value.trim()){PINMSG='Those didn’t match.';render();return}
+    PINMSG='One moment…';render();
+    try{const r=await fetch(API(),{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({type:'rxpin',pin:x,slug:S.mine.staff.slug,t:S.mine.staff.t})});
+      const j=await r.json(); PINMSG=j.ok?'Saved. Use it on the salon iPad.':'That didn’t go through. Try again.'; if(j.ok){PINOPEN=false;HUB.data.rx.pin=true}}
+    catch(e){PINMSG='Can’t connect right now. Check your signal and try again.'}
+    render(); setTimeout(()=>{PINMSG='';render()},5000)};
+  return h('div',{class:'gcard'},h('h2',{},gIcon('★'),'Salon iPad PIN'),
+    h('p',{class:'soft',style:'font-size:13px;margin:0'},set?'Your PIN is set. On the salon iPad, tap your name and type it. Your starred products and saved RX cards come with you.':
+      'Set a PIN for the salon iPad. You’ll tap your name there and type it, and your starred products and saved RX cards come with you.'),
+    set&&!PINOPEN?h('button',{type:'button',class:'tab',style:'align-self:flex-start',onclick:()=>{PINOPEN=true;render()}},'Change my PIN'):
+      [h('label',{class:'fld'},'New PIN (4 to 8 numbers)',a),h('label',{class:'fld'},'Type it again',b),h('button',{type:'button',class:'obtn',onclick:save},'Save PIN')],
+    PINMSG?h('p',{class:'toast'},PINMSG):null,
+    h('small',{class:'soft'},'Only you know it. Don’t use your phone or bank PIN.'));
 }
 
 /* owner-only: Inventory (color report, backbar list, retail list) */

@@ -75,6 +75,7 @@ function doPost(e) {
   try {
     const d = JSON.parse(e.postData.contents || '{}');
     if (['clock', 'timeoff', 'cover', 'take', 'profile', 'sign', 'stock', 'model', 'regimen'].indexOf(d.type) >= 0) return teamPost_(d);
+    if (['rxpin', 'rxlogin', 'rxsync'].indexOf(d.type) >= 0) return rxPost_(d);
     if (d.website) return json_({ ok: true });                       // spam trap
     const now = new Date();
     if (d.type === 'status') return setStatus_(d);
@@ -251,7 +252,9 @@ const TT = {
   info:  { name: 'Team Info', headers: ['Name', 'App ID', 'Emergency contact name', 'Emergency contact phone', 'Relationship', 'Home address', 'Email', 'Venmo name', 'Instagram', 'Updated'] },
   sigs:  { name: 'Handbook Signatures', headers: ['Signed', 'Name', 'App ID', 'Typed signature', 'Document'] },
   stock: { name: 'Stock Counts', headers: ['Updated', 'Name', 'App ID', 'Item ID', 'Item', 'On hand'] },
-  models: { name: 'Model Log', headers: ['Logged', 'Name', 'App ID', 'Skill ID', 'Skill', 'Model date'] }
+  models: { name: 'Model Log', headers: ['Logged', 'Name', 'App ID', 'Skill ID', 'Skill', 'Model date'] },
+  rxme:  { name: 'RX Artists', headers: ['Updated', 'Name', 'App ID', 'iPad PIN (scrambled)', 'Starred products', 'Wrong tries', 'Locked until'] },
+  rxcard: { name: 'RX Saved Cards', headers: ['Saved', 'Name', 'App ID', 'Card ID', 'Guest', 'Card'] }
 };
 const STOCK_EDITORS = ['alexandra', 'rose', 'carolyn'];   // who can change stock counts in the app (everyone else only sees them)
 
@@ -361,7 +364,8 @@ function staffGet_(p) {
     clock: { in: !!open, since: open ? open.getTime() : null, sinceLabel: open ? hhmm_(open) : null, todayMin: Math.round(todayMin), weekMin: Math.round(weekMin) },
     shifts, ann, openShifts, myCover, myOff, info: myInfo_(me.slug), signed: mySigs_(me.slug), stock: stock_(), stockEdit: STOCK_EDITORS.indexOf(me.slug) >= 0, models: myModels_(me.slug),
     cardAddr: CARD_WRITERS.indexOf(me.slug) >= 0 ? cardAddr_() : null,
-    regimen: true });   // tells the team app this version takes Home care PDFs (type 'regimen')
+    regimen: true,      // tells the team app this version takes Home care PDFs (type 'regimen')
+    rx: { pin: !!rxMe_(me.slug).pin } });   // tells the team app this version syncs stars and RX cards, and whether her iPad PIN is set
 }
 
 /** Private: only the person's own row is ever returned. */
@@ -384,6 +388,72 @@ function mySigs_(slug) {
   const o = {};
   tvals_(TT.sigs).forEach(r => { if (String(r[2]) === slug) o[String(r[4])] = { name: String(r[3]), at: r[0] instanceof Date ? day_(r[0]) : String(r[0]) }; });
   return o;
+}
+
+/* ---- RX cards and starred products follow each artist (Alexandra, Oct 2026) ----
+   She sets an iPad PIN once from her own app. On the salon iPad she taps her name and types it; the iPad gets a
+   key for her that works until midnight. Her stars and saved RX cards live here, so her phone and the iPad match. */
+const RX_TRIES = 5, RX_LOCK_MIN = 15, RX_MAX_CARDS = 300;
+function rxMe_(slug) {
+  const vals = tvals_(TT.rxme), i = vals.findIndex(r => String(r[2]) === String(slug)), r = i >= 0 ? vals[i] : null;
+  let favs = [];
+  try { favs = r ? JSON.parse(String(r[4]) || '[]') : []; } catch (e) { favs = []; }
+  return { row: i >= 0 ? i + 2 : 0, pin: r ? String(r[3]) : '', favs: favs, tries: r ? Number(r[5]) || 0 : 0,
+    until: r && r[6] instanceof Date ? r[6].getTime() : 0 };
+}
+function rxMeSet_(slug, name, o) {
+  const sh = ttab_(TT.rxme), cur = rxMe_(slug), v = Object.assign({ pin: cur.pin, favs: cur.favs, tries: cur.tries, until: cur.until }, o);
+  const row = [new Date(), name, String(slug), v.pin, JSON.stringify(v.favs), v.tries || '', v.until ? new Date(v.until) : ''];
+  if (cur.row) sh.getRange(cur.row, 1, 1, row.length).setValues([row]); else sh.appendRow(row);
+}
+const rxPinHash_ = (slug, pin) => sign_('pin:' + slug + ':' + pin);
+const rxTok_ = slug => sign_('rx:' + slug + ':' + day_(new Date()));   // the iPad's key for her, good until midnight
+function rxCards_(slug) {
+  return tvals_(TT.rxcard).filter(r => String(r[2]) === slug && r[3] !== '').reverse()
+    .map(r => { try { return JSON.parse(String(r[5])); } catch (e) { return null; } }).filter(Boolean).slice(0, RX_MAX_CARDS);
+}
+function rxPost_(d) {
+  const slug = String(d.slug || '');
+  if (d.type === 'rxlogin') {
+    const r = tvals_(TT.team).find(x => String(x[1]) === slug);
+    if (!r || String(r[4]).toLowerCase() === 'no') return json_({ ok: false, error: 'who' });
+    const m = rxMe_(slug), now = Date.now();
+    if (!m.pin) return json_({ ok: false, error: 'nopin' });
+    if (m.until > now) return json_({ ok: false, error: 'locked', mins: Math.ceil((m.until - now) / 6e4) });
+    if (!/^\d{4,8}$/.test(String(d.pin || '')) || rxPinHash_(slug, String(d.pin)) !== m.pin) {
+      const tries = m.tries + 1, lock = tries >= RX_TRIES;
+      rxMeSet_(slug, String(r[0]), { tries: lock ? 0 : tries, until: lock ? now + RX_LOCK_MIN * 6e4 : 0 });
+      return json_({ ok: false, error: lock ? 'locked' : 'pin', mins: lock ? RX_LOCK_MIN : 0 });
+    }
+    if (m.tries || m.until) rxMeSet_(slug, String(r[0]), { tries: 0, until: 0 });
+    return json_({ ok: true, tk: rxTok_(slug), name: String(r[0]), group: String(r[2]), favs: m.favs, cards: rxCards_(slug) });
+  }
+  // rxpin needs her own app's link; rxsync takes her app's link or the iPad key from rxlogin
+  let me = member_(slug, d.t);
+  if (!me && d.type === 'rxsync' && d.tk && d.tk === rxTok_(slug)) {
+    const r = tvals_(TT.team).find(x => String(x[1]) === slug);
+    if (r && String(r[4]).toLowerCase() !== 'no') me = { name: String(r[0]), slug: slug };
+  }
+  if (!me) return json_({ ok: false, error: 'link' });
+  if (d.type === 'rxpin') {
+    const pin = String(d.pin || '');
+    if (!/^\d{4,8}$/.test(pin)) return json_({ ok: false, error: 'pin' });
+    rxMeSet_(me.slug, me.name, { pin: rxPinHash_(me.slug, pin), tries: 0, until: 0 });
+    return json_({ ok: true });
+  }
+  // rxsync: replace her stars when sent; add or update the cards sent (by card ID); always answer with both
+  if (Array.isArray(d.favs)) rxMeSet_(me.slug, me.name, { favs: d.favs.slice(0, 200).map(x => clean_(x, 160)).filter(Boolean) });
+  if (Array.isArray(d.cards) && d.cards.length) {
+    const sh = ttab_(TT.rxcard), vals = tvals_(TT.rxcard), now = new Date();
+    d.cards.slice(0, 50).forEach(c => {
+      const id = clean_(c && c.id, 40), body = JSON.stringify(c || {});
+      if (!id || body.length > 45000) return;
+      const i = vals.findIndex(r => String(r[2]) === me.slug && String(r[3]) === id);
+      const row = [now, me.name, me.slug, id, clean_(c.guest, 60), body];
+      if (i >= 0) sh.getRange(i + 2, 1, 1, row.length).setValues([row]); else { sh.appendRow(row); vals.push(row); }
+    });
+  }
+  return json_({ ok: true, favs: rxMe_(me.slug).favs, cards: rxCards_(me.slug) });
 }
 
 function teamPost_(d) {

@@ -64,7 +64,41 @@ const RX_PRICES={
 };
 const rxFavKey=()=>'pp-rxfav:'+rxSlug();
 function rxFavs(){ try{return JSON.parse(store.get(rxFavKey())||'[]')}catch(e){return []} }
-function rxFavToggle(n){ const f=rxFavs(), i=f.indexOf(n); i<0?f.push(n):f.splice(i,1); store.set(rxFavKey(),JSON.stringify(f)) }
+let RX_FAVT=null;
+function rxFavToggle(n){ const f=rxFavs(), i=f.indexOf(n); i<0?f.push(n):f.splice(i,1); store.set(rxFavKey(),JSON.stringify(f));
+  clearTimeout(RX_FAVT); RX_FAVT=setTimeout(()=>rxSync({favs:rxFavs()}),800) }
+
+/* Her stars and saved cards follow her (Alexandra, Oct 2026): the team app signs in with her link, the salon iPad with
+   the key it got from her iPad PIN. Without either (or before the front desk script has it) they stay on this device. */
+function rxAuth(){
+  const st=S.mine&&S.mine.staff; if(!st||!window.TAFFETA_ENDPOINT) return null;
+  if(st.tk) return {slug:st.slug,tk:st.tk};
+  if(st.t&&typeof HUB!=='undefined'&&HUB.data&&HUB.data.rx) return {slug:st.slug,t:st.t};
+  return null;
+}
+function rxTake(j){
+  if(Array.isArray(j.favs)) store.set(rxFavKey(),JSON.stringify(j.favs));
+  if(Array.isArray(j.cards)){
+    const mine=rxSaved(), by={}; mine.forEach(c=>by[c.id]=c); j.cards.forEach(c=>{if(c&&c.id)by[c.id]=Object.assign(c,{up:1})});
+    store.set(rxSavedKey(),JSON.stringify(Object.values(by).sort((a,b)=>String(b.id).localeCompare(String(a.id))).slice(0,300)));
+  }
+}
+async function rxSync(body){
+  const a=rxAuth(); if(!a) return false;
+  try{const r=await fetch(window.TAFFETA_ENDPOINT,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({type:'rxsync',...a,...(body||{})})});
+    const j=await r.json(); if(!j.ok) return false; rxTake(j); return true}
+  catch(e){return false}
+}
+/* Once per artist per visit: send up anything made on this device before, take her stars and cards from the server. */
+let RX_PULLED='';
+async function rxPull(){
+  const a=rxAuth(); if(!a||RX_PULLED===a.slug) return; RX_PULLED=a.slug;
+  const local=rxFavs(), up=rxSaved().filter(c=>!c.up).slice(0,50);
+  if(!await rxSync(up.length?{cards:up}:{})) {RX_PULLED='';return}
+  const both=[...new Set([...rxFavs(),...local])];
+  if(both.length!==rxFavs().length) await rxSync({favs:both});
+  render();
+}
 let RX_PQ='';
 /* Price list with stars: her go-tos float to the top of every "+ Add" menu */
 function rxPriceList(kind){
@@ -229,6 +263,7 @@ function rxQR(text){
 }
 
 function rxView(){
+  rxPull();
   const R=rxLoad(), me=(S.mine&&(S.mine.name||(S.mine.staff&&S.mine.staff.name)))||'';
   const tabs=h('div',{class:'seg',style:'justify-content:center'},
     h('button',{type:'button','aria-pressed':String(RX_VIEW!=='saved'),onclick:()=>{RX_VIEW='build';render()}},'Build a card'),
@@ -321,6 +356,7 @@ async function rxStore(R,me){
     totals:R.opts.map(o=>rxTotal(o.lines)),link,draft:JSON.parse(JSON.stringify(R))};
   const i=list.findIndex(x=>x.id===id); i<0?list.unshift(row):list.splice(i,1,row);
   store.set(rxSavedKey(),JSON.stringify(list.slice(0,300)));
+  rxSync({cards:[row]});
   R.id=id; rxSave(); RX_SHOW={link,guest:row.guest}; RX_VIEW='qr'; render(); window.scrollTo(0,0);
 }
 

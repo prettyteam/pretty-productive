@@ -381,23 +381,47 @@ details.days summary::-webkit-details-marker{display:none}
 <script>window.RG_BASE='../';</script>
 <script src="../g/regimen.js?v=15"></script>
 <script src="../g/qr.js?v=1"></script>
-<script src="../g/rx.js?v=2"></script>
+<script src="../g/rx.js?v=3"></script>
 </head><body>
 <main id="app"></main>
 <script>
 /* Salon iPad link (Alexandra, Oct 2026): only customer cards, nothing else from the team app or front desk.
-   Salon PIN, then the artist taps her name and picks RX or Home maintenance. Cards stay on this iPad. */
+   Salon PIN, then the artist taps her name and types her own iPad PIN (set in her app, Me tab). Her stars and saved
+   RX cards come from the front desk script and leave this iPad when she switches out or walks away for 20 minutes. */
 function h(tag,attrs,...kids){const e=document.createElement(tag);for(const[k,v]of Object.entries(attrs||{})){if(v==null)continue;if(k==='class')e.className=v;else if(k.startsWith('on'))e.addEventListener(k.slice(2),v);else e.setAttribute(k,v)}for(const c of kids.flat()){if(c==null||c===false)continue;e.append(c.nodeType?c:document.createTextNode(String(c)))}return e}
 const store={get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
 const TEAM=[['Adriana','stylist'],['Alexandra','stylist'],['Alyssa','stylist'],['Amanda','stylist'],['Ashley B','stylist'],['Dominique','stylist'],['Emily B','stylist'],['Isabella','stylist'],['Jen M','stylist'],['Jennifer C','stylist'],['Joanna','stylist'],['Lexi','stylist'],['Mia','stylist'],['Neva L','stylist'],['Sara','stylist'],['Angelina H','esthetician'],['Carolyn','esthetician'],['Kelly','esthetician']];
 const slugOf=n=>n.toLowerCase().replace(/\s+/g,'-');
 let S={mine:null}, CARD='', UNLOCKED=false, SETUP=/[?&]setup\b/.test(location.search);
+let PICK=null, AMSG='', ABUSY=false, LAST=Date.now();
+const IDLE_MIN=20;
+function signOut(){
+  const st=S.mine&&S.mine.staff;
+  if(st&&st.tk)['pp-rxfav:','pp-rxsaved:'].forEach(k=>{try{localStorage.removeItem(k+st.slug)}catch(e){}});
+  S.mine=null;PICK=null;AMSG='';CARD='';RX=null;RG=null;RX_PULLED='';
+}
+['pointerdown','keydown'].forEach(ev=>addEventListener(ev,()=>{LAST=Date.now()},true));
+setInterval(()=>{if(S.mine&&Date.now()-LAST>IDLE_MIN*6e4){signOut();render();window.scrollTo(0,0)}},60000);
+async function artistIn(n,r,pin){
+  ABUSY=true;AMSG='';render();
+  let j=null;
+  try{const res=await fetch(window.TAFFETA_ENDPOINT,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({type:'rxlogin',slug:slugOf(n),pin})});j=await res.json()}catch(e){j=null}
+  ABUSY=false;
+  if(j&&j.ok&&j.tk){
+    S.mine={name:j.name||n,role:j.group==='esthetician'?'esthetician':r,staff:{name:j.name||n,slug:slugOf(n),tk:j.tk}};
+    RX=null;RG=null;RX_PULLED=slugOf(n);rxTake(j);PICK=null;render();window.scrollTo(0,0);return;
+  }
+  AMSG=!j?'Can’t reach the salon system right now.':j.error==='nopin'?'You haven’t set your iPad PIN yet. In your Pretty Productive app, open Me and set it under Salon iPad PIN.':
+    j.error==='pin'?'That PIN didn’t match.':j.error==='locked'?'Too many tries. Try again in '+(j.mins||15)+' minutes.':
+    j.error==='who'?'Your name isn’t on the team list. Ask Alexandra.':'Signing in isn’t turned on yet.';
+  render();
+}
 try{UNLOCKED=sessionStorage.getItem('pp-cards-ok')==='1'}catch(e){}
 async function sha(t){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(t));return Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join('')}
 function render(){
   const app=document.getElementById('app'); app.replaceChildren();
   const bar=h('div',{class:'ctop'},h('img',{src:'../g/logo.png',alt:'Taffeta'}),
-    S.mine?h('button',{type:'button',class:'tab',onclick:()=>{S.mine=null;CARD='';RX=null;RG=null;render();window.scrollTo(0,0)}},'Switch artist'):null);
+    S.mine||PICK?h('button',{type:'button',class:'tab',onclick:()=>{signOut();render();window.scrollTo(0,0)}},'Switch artist'):null);
   app.append(bar);
   const PIN_HASH=window.CARDS_PIN_HASH||store.get('pp-cards-pin');
   if(!PIN_HASH&&SETUP){
@@ -416,10 +440,23 @@ function render(){
       h('label',{class:'fld'},'Salon PIN',pin),h('button',{type:'button',class:'obtn',onclick:go},'Open'),msg)));
     return;
   }
+  const local=([n,r])=>{S.mine={name:n,role:r,staff:{name:n,slug:slugOf(n)}};PICK=null;RX=null;RG=null;render();window.scrollTo(0,0)};
+  if(!S.mine&&PICK){
+    const [n,r]=PICK, pin=h('input',{type:'password',inputmode:'numeric',autocomplete:'off','aria-label':'Your iPad PIN'});
+    const go=()=>{const x=pin.value.trim();if(!/^\d{4,8}$/.test(x)){AMSG='Type your 4 to 8 number PIN.';render();return}artistIn(n,r,x)};
+    pin.addEventListener('keydown',e=>{if(e.key==='Enter')go()});
+    const soft=AMSG&&!/match|tries/.test(AMSG);
+    app.append(h('div',{class:'hub'},h('section',{class:'card2',style:'text-align:center'},h('h1',{style:'font-size:28px'},'Hi, '+n),
+      h('label',{class:'fld'},'Your iPad PIN',pin),h('button',{type:'button',class:'obtn',disabled:ABUSY?'':null,onclick:go},ABUSY?'One moment…':'Open my cards'),
+      AMSG?h('p',{class:'toast'},AMSG):null,
+      soft?h('button',{type:'button',class:'tab',style:'align-self:center',onclick:()=>local(PICK)},'Use without my PIN (nothing saves to your app)'):null)));
+    setTimeout(()=>pin.focus(),50);
+    return;
+  }
   if(!S.mine){
     app.append(h('div',{class:'hub'},h('h1',{style:'font-size:28px;text-align:center'},'Who’s building a card?'),
       PIN_HASH?null:h('p',{class:'soft',style:'text-align:center'},'Test page. No salon PIN on this device yet.'),
-      h('div',{class:'who'},TEAM.map(([n,r])=>h('button',{type:'button',onclick:()=>{S.mine={name:n,role:r,staff:{name:n,slug:slugOf(n)}};RX=null;RG=null;render();window.scrollTo(0,0)}},n)))));
+      h('div',{class:'who'},TEAM.map(([n,r])=>h('button',{type:'button',onclick:()=>{if(window.TAFFETA_ENDPOINT){PICK=[n,r];AMSG='';render()}else local([n,r])}},n)))));
     return;
   }
   if(!CARD){

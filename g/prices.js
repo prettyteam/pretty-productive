@@ -28,6 +28,7 @@ const PR_MENU=[
 ];
 let PR_Q='', PR_SIDE='svc';
 function pricesView(){
+  rxPull();
   const q=PR_Q.trim().toLowerCase(), hit=t=>!q||t.toLowerCase().includes(q);
   const s=h('input',{type:'search',id:'prq',value:PR_Q,placeholder:PR_SIDE==='svc'?'Search a service':'Search a product',autocomplete:'off'});
   s.addEventListener('input',()=>{PR_Q=s.value;const pos=s.selectionStart;render();const n=document.getElementById('prq');if(n){n.focus();try{n.setSelectionRange(pos,pos)}catch(e){}}});
@@ -41,10 +42,16 @@ function pricesView(){
     body=groups.some(Boolean)?groups:[h('p',{class:'soft',style:'text-align:center'},'Nothing matches “'+PR_Q+'”.')];
     body.push(h('small',{class:'soft',style:'text-align:center'},'Starting prices from our website menu. “+” means starting at; final price depends on time, length and product.'));
   } else {
-    const fmt=p=>'$'+(Number.isInteger(p)?p:p.toFixed(2));
-    const lines=[['Hair',RX_PRICES.hair],['Skin',RX_PRICES.skin]].map(([g,items])=>{const shown=items.filter(([n])=>hit(n));if(!shown.length)return null;
-      return h('section',{class:'card2'},h('span',{class:'lbl'},g),...shown.map(([n,p])=>row(n,fmt(p))))});
-    body=[h('section',{class:'card2'},h('span',{class:'lbl'},'Try Me bottle'),row('1 oz of any backbar product','$3')),...lines];
+    const fmt=p=>'$'+(Number.isInteger(p)?p:p.toFixed(2)), favs=rxFavs(), all=[...RX_PRICES.hair,...RX_PRICES.skin];
+    const star=n=>h('button',{type:'button',class:'rxstar','aria-pressed':String(favs.includes(n)),'aria-label':(favs.includes(n)?'Unstar ':'Star ')+n,
+      onclick:()=>{rxFavToggle(n);render()}},favs.includes(n)?'★':'☆');
+    const srow=(n,p)=>h('div',{class:'rxl'},star(n),h('div',{class:'rxn'},h('span',{},n)),h('b',{class:'num',style:'font-weight:500;white-space:nowrap'},fmt(p)));
+    const mine=all.filter(([n])=>favs.includes(n)&&hit(n));
+    const lines=[['Hair',RX_PRICES.hair],['Skin',RX_PRICES.skin]].map(([g,items])=>{const shown=items.filter(([n])=>hit(n)&&!favs.includes(n));if(!shown.length)return null;
+      return h('section',{class:'card2'},h('span',{class:'lbl'},g),...shown.map(([n,p])=>srow(n,p)))});
+    body=[mine.length?h('section',{class:'card2'},h('span',{class:'lbl'},'★ Your go-tos'),...mine.map(([n,p])=>srow(n,p))):
+        (q?null:h('small',{class:'soft',style:'text-align:center'},'Tap ☆ on the products you reach for most. They move to the top here and in the RX card menu, on your phone and the salon iPad.')),
+      h('section',{class:'card2'},h('span',{class:'lbl'},'Try Me bottle'),row('1 oz of any backbar product','$3')),...lines];
     body.push(h('small',{class:'soft',style:'text-align:center'},'Brand list prices. Always ring up from the POS.'));
   }
   return [h('div',{class:'hub'},h('div',{},h('span',{class:'lbl'},'Salon & spa'),h('h1',{style:'font-size:28px'},'Prices'),
