@@ -919,6 +919,32 @@ function guideView(){
     isGoalsPerson(p)?h('div',{class:'sec2'},h('span',{class:'lbl'},'Every guest, every time'),
       h('ol',{class:'guide',style:'margin-top:10px'},g.map(([t,x])=>h('li',{},h('strong',{},t),h('span',{},x))))):null)];
 }
+/* Salon iPad PINs set by Alexandra for the team, e.g. their color-scale codes (Oct 15 2026). She types them here; each one is saved
+   through that person's own private link, the same way their Me page does it. Nothing is kept on this page. */
+let IPMSG={};
+function ipadPinsCard(list){
+  const ins=list.map(s=>h('input',{type:'password',inputmode:'numeric',autocomplete:'off','aria-label':s.name+' iPad PIN',style:'width:110px;height:38px;font:inherit;font-size:16px;border:1px solid var(--line);background:#fff;padding:0 8px'}));
+  const save=async btn=>{
+    btn.disabled=true;
+    for(let i=0;i<list.length;i++){
+      const s=list[i], x=ins[i].value.trim(); if(!x) continue;
+      const msg=t=>{IPMSG[s.name]=t;const m=document.getElementById('ipm'+i);if(m)m.textContent=t};
+      if(!/^\d{4,8}$/.test(x)){msg('Use 4 to 8 numbers');continue}
+      msg('Saving…');
+      try{
+        const L=String(s.link||'').split('#')[1].split('.'), st=(await openFile(L[1],L[2],s.pin)).staff||{};
+        const r=await fetch(API(),{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({type:'rxpin',pin:x,slug:st.slug,t:st.t})});
+        const j=await r.json(); msg(j.ok?'Saved':'Didn’t save'); if(j.ok) ins[i].value='';
+      }catch(e){msg('Didn’t save')}
+    }
+    btn.disabled=false;
+  };
+  const b=h('button',{type:'button',class:'obtn',style:'margin-top:12px'},'Save iPad PINs'); b.addEventListener('click',()=>save(b));
+  return h('div',{class:'gcard'},h('span',{class:'lbl'},'Salon iPad PINs'),
+    h('p',{class:'soft',style:'font-size:13px;margin:0'},'Type a 4 to 8 number PIN for anyone you want to set, then save. Leave the rest blank. It replaces their current iPad PIN.'),
+    list.map((s,i)=>h('div',{style:'display:flex;gap:10px;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--line)'},
+      h('div',{style:'font-family:var(--display);font-size:16px'},s.name,h('div',{class:'soft',id:'ipm'+i,style:'font-family:var(--body);font-size:12.5px'},IPMSG[s.name]||'')),ins[i])),b);
+}
 function accessView(){
   const A=S.access;
   if(!A) return [h('div',{class:'empty'},h('h3',{},'Nothing here yet'),h('p',{},'Links and logins appear after the next publish.'))];
@@ -933,6 +959,7 @@ function accessView(){
       A.form?row('Guest profile form',A.form):null),
     h('div',{class:'gcard'},h('span',{class:'lbl'},'Team app · private link and PIN'),
       (A.stylists||[]).map(s=>row(s.name,s.link,'PIN '+s.pin))),
+    (A.stylists||[]).length?ipadPinsCard(A.stylists):null,
     A.logins&&A.logins.length?h('div',{class:'gcard'},h('span',{class:'lbl'},'Logins (same as the desk guide)'),
       A.logins.map(l=>h('div',{style:'padding:10px 0;border-bottom:1px solid var(--line)'},h('div',{style:'font-family:var(--display);font-size:16px'},l.label),
         h('div',{class:'soft',style:'font-size:13px;word-break:break-all'},'User: '+l.user),h('div',{class:'soft',style:'font-size:13px;word-break:break-all'},'Password: '+l.pw)))):null))];
