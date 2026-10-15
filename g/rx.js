@@ -43,9 +43,9 @@ const RX_PROD={
 };
 const RX_TRY=3; /* Try Me bottle: 1 oz of any backbar product */
 /* Home care price list artists learn and star their go-tos from (product guide brand list prices, Oct 2026).
-   Taffeta Refillable is our backbar shampoo + conditioner in Taffeta bottles; $80 is Alexandra's estimate, confirm in the POS. */
+   Taffeta Refillable is our backbar shampoo + conditioner in Taffeta bottles: new bottle or a refill into her own bottle (Paired Plus, Oct 15 2026). */
 const RX_PRICES={
-  hair:[['Taffeta Refillable Shampoo + Conditioner',80],['Oribe Shampoo for Beautiful Color',49],['Oribe Conditioner for Beautiful Color',52],
+  hair:[['Taffeta Refillable Shampoo, new bottle',39],['Taffeta Refillable Shampoo, refill',34],['Taffeta Refillable Conditioner, new bottle',42],['Taffeta Refillable Conditioner, refill',37],['Oribe Shampoo for Beautiful Color',49],['Oribe Conditioner for Beautiful Color',52],
     ['Oribe Bright Blonde Shampoo',49],['Oribe Gold Lust Repair & Restore Shampoo',56],['Oribe Gold Lust Repair & Restore Conditioner',59],
     ['Oribe Gold Lust Masque',72],['Oribe Gold Lust Nourishing Oil',59],['Oribe Invisible Defense Universal Protection Spray',44],
     ['Oribe Royal Blowout Heat Styling Spray',72],['Oribe Imperial Blowout',69],['Oribe Supershine Moisturizing Cream',54],
