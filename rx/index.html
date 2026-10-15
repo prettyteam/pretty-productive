@@ -63,6 +63,14 @@ main{padding:14px 12px 40px}
         c.b?el('span',{class:'badge '+(t<=c.b?'ok':'over')},t<=c.b?'Within your budget':money(t-c.b)+' over your budget'):null));
   })):null;
   const m=c.m||[[],'',''], mt=m[0].reduce((s,l)=>s+l[1],0);
+  /* the next visit in plain words: "Color and haircut or style" (Alexandra, Oct 15 2026), not a list */
+  function nextWhat(){
+    if(skin) return m[2]||m[0].map(([n])=>n).join(', ');
+    const names=m[0].map(([n])=>n).join(' ').toLowerCase();
+    const color=/balayage|foil|highlight|single process|glaze|shadow root|lightener|color|gloss/.test(names);
+    const cut=/haircut|cut|blow ?dry|style|leave wet|blowdry/.test(names);
+    return color&&cut?'Color and haircut or style':color?'Color':cut?'Haircut or style':(m[2]||'');
+  }
   app.append(el('div',{class:'page'},
     el('div',{class:'top'},el('img',{src:'../g/logo.png',alt:'Taffeta Salon & Spa'})),
     el('div',{class:'rxh'},el('span',{class:'rx'},'Rx'),el('p',{},'Personal plan from today’s consultation: two options and what your next visit looks like.')),
@@ -73,7 +81,7 @@ main{padding:14px 12px 40px}
     el('section',{class:'maint'},el('span',{class:'eyebrow'},'Your next visit'),
       /* no receipt-style breakdown here: what the visit looks like and about what it costs (Alexandra, Oct 15 2026) */
       el('div',{class:'tot',style:'border-top:0;padding-top:0'},el('span',{},m[1]?'In about '+m[1]:'Your next visit'),el('span',{},money(mt))),
-      m[2]?el('p',{style:'font-size:14px;margin:0'},m[2]):el('p',{style:'font-size:14px;margin:0'},m[0].map(([n])=>n).join(', '))),
+      el('p',{style:'font-size:14px;margin:0'},nextWhat())),
     c.r?el('p',{class:'talk',style:'text-align:center'},el('b',{},'Refresh in '),c.r):null,
     el('p',{class:'sign'},skin?'Pretty Skin by Taffeta':'xo, '+(c.a||'Taffeta')+' · Pretty Hair'),
     el('p',{class:'foot'},'Prices are estimates and can change with time and product used. ',el('br'),'Book your next visit: ',el('a',{href:'tel:+16093835504'},'(609) 383-5504'),' · ',el('a',{href:'https://taffetadesign.com'},'taffetadesign.com'))));
