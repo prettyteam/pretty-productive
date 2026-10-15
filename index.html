@@ -174,6 +174,9 @@ table.week tr.tot td{border-bottom:0;font-weight:700}
 .rem{display:flex;gap:8px;align-items:center;font-size:14px;color:var(--muted)}
 .rem input{accent-color:var(--brown);width:16px;height:16px}
 .pinerr{min-height:1.5em;font-size:14px;color:var(--brown)}
+/* the lock link sits at the very bottom of the page, not mid-screen (Alexandra, Oct 15 2026) */
+#main{min-height:calc(100vh - 220px)}
+.forgetp{margin-top:auto!important;padding-top:48px}
 .forget{border:0;background:none;color:var(--muted);font-size:13px;text-decoration:underline;text-underline-offset:3px;padding:0}
 .dateline{font-family:var(--pep);font-style:italic;font-size:19px;color:var(--muted)}
 h2.lineup .lfg{font-size:.95em}
@@ -403,7 +406,7 @@ details.days summary::-webkit-details-marker{display:none}
 <script src="g/config.js?v=2"></script>
 <script src="g/regimen.js?v=19"></script>
 <script src="g/qr.js?v=1"></script>
-<script src="g/rx.js?v=39"></script>
+<script src="g/rx.js?v=40"></script>
 <script src="g/prices.js?v=5"></script>
 <link rel="stylesheet" href="g/rx.css?v=2">
 <link rel="icon" href="icon.png">
@@ -1776,7 +1779,7 @@ function apply(P){
       setInterval(()=>{if(document.visibilityState==='visible'&&(S.tab==='home'||S.tab==='off'))hubGet()},90*1000);
       setInterval(()=>{if(S.tab==='home'&&HUB.data&&HUB.data.clock&&HUB.data.clock.in&&!HUB.busy)render()},30*1000);}}
   render();
-  $main.append(h('p',{style:'text-align:center'},h('button',{class:'forget',onclick:()=>{store.set(PINKEY,'');location.reload()}},'Lock this page and forget my PIN on this phone')));
+  $main.append(h('p',{class:'forgetp',style:'text-align:center'},h('button',{class:'forget',onclick:()=>{store.set(PINKEY,'');location.reload()}},'Lock this page and forget my PIN on this phone')));
 }
 async function refresh(){
   try{apply(await openFile(ID,SECRET,PIN))}
