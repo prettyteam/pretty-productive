@@ -358,7 +358,7 @@ function rxBuild(R,me){
   bIn.addEventListener('input',()=>{R.budget=bIn.value;rxSave()});
   const s1=h('section',{class:'card2'},h('span',{class:'lbl'},'1 · Your Guest'),kindRow,
     h('label',{class:'fld'},'Guest’s First Name',gIn),
-    h('label',{class:'fld'},'Her Budget For Today',h('small',{class:'soft',style:'display:block;font-weight:400'},'(Include an Estimated Cost of Maintenance to Bundle With the Services)'),bIn),
+    h('label',{class:'fld'},h('span',{},'Her Budget For Today ',h('small',{class:'soft'},'(include an estimated cost of maintenance to bundle with the services)')),bIn),
     chips(['No set budget'],()=>R.nob,()=>{R.nob=!R.nob}),
     h('div',{class:'fld'},'Her Goals For Today',chips(Object.keys(RX_GOAL[R.kind]),o=>rxGoalList(R).includes(o),o=>{const L=rxGoalList(R);R.goal=L.includes(o)?L.filter(x=>x!==o):[...L,o]})),
     rxPriceList(R.kind));
