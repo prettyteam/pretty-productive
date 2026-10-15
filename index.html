@@ -1501,6 +1501,8 @@ function tomorrowView(){
         (c.services||[]).length?h('div',{class:'chips'},c.services.map(s=>h('span',{class:'chip'+(s.addon?' add':'')},s.name+(s.addon?' · add-on':'')))):null,
         est&&c.needsWaiver?h('p',{class:'muted',style:'font-size:14px'},'Needs a signed waiver before the service.'):null,
         (c.services||[]).length?checkIn():null,
+        c.last?h('p',{class:'muted',style:'font-size:14px'},'Last visit: '+c.last):null,
+        (c.setup&&c.setup.length)?h('p',{class:'muted',style:'font-size:14px'},'Set out on your station: '+c.setup.join(', ')):null,
         (c.suggestion||(c.suggestions&&c.suggestions.length))?h('details',{class:'tryd'},h('summary',{},h('span',{class:'tico','aria-hidden':'true'}),h('span',{class:'tlabel'},'Suggestion'),h('span',{class:'tplus','aria-hidden':'true'},'+')),tipList(c)):null))):
         h('p',{class:'soft'},'No guests booked yet.')),
     h('p',{class:'soft',style:'font-size:13px'},'The schedule can change. Check Today in the morning for the final lineup.'))];
