@@ -1480,24 +1480,24 @@ function staffTabs(){
   const p=S.mine||{}, st=p.staff||{}, t=[];
   if(st.slug) t.push(['home','Home']);
   if(p.inv&&p.inv.file) t.push(['inv','Inventory']);
-  if(p.skin&&p.skin.file) t.push(['skin','Skincare stock']);
-  if(p.cards&&p.cards.file) t.push(['cards','Thank-you cards']);
+  if(p.skin&&p.skin.file) t.push(['skin','Skincare Stock']);
+  if(p.cards&&p.cards.file) t.push(['cards','Thank-You Cards']);
   if(isGoalsPerson(p)) t.push(['today','Today']);
   if(isGoalsPerson(p)) t.push(['tomorrow',st.clock?'Tomorrow':'Schedule']);
   if(isGoalsPerson(p)) t.push(['rx','RX Card']);
-  if(isGoalsPerson(p)) t.push(['reg','Home care']);
+  if(isGoalsPerson(p)) t.push(['reg','Home Care']);
   if(isGoalsPerson(p)||p.adv) t.push(['growth',p.adv?'Associate Program':'Growth']);
   if(p.cr&&p.cr.weeks&&p.cr.weeks.length) t.push(['cr','Weekly CR']);
-  if(st.slug) t.push(['off','Time off']);
+  if(st.slug) t.push(['off','Time Off']);
   if(st.slug) t.push(['prices','Prices']);
   t.push(['guide','Culture']);
-  const dc=p.docs||{}; if(dc.hb) t.push(['hb','Handbook']); if(dc.fg) t.push(['fg','Desk guide']);
+  const dc=p.docs||{}; if(dc.hb) t.push(['hb','Handbook']); if(dc.fg) t.push(['fg','Desk Guide']);
   if(st.slug) t.push(['me','Me']);
   return t;
 }
 /* One menu instead of a row of tabs (Alexandra, Oct 2026). Sections are grouped; Customer cards holds RX card and Home care. */
-const NAV_GROUPS=[['My day',['home','today','tomorrow']],['Customer cards',['rx','reg']],['Growing',['growth','cr']],
-  ['Salon',['prices','inv','skin','cards','off']],['Taffeta',['guide','hb','fg']],['Just me',['me']]];
+const NAV_GROUPS=[['My Day',['home','today','tomorrow']],['Customer Cards',['rx','reg']],['Growing',['growth','cr']],
+  ['Salon',['prices','inv','skin','cards','off']],['Taffeta',['guide','hb','fg']],['Just Me',['me']]];
 let NAV_OPEN=false;
 function navGo(k){
   NAV_OPEN=false;S.tab=k;store.set('pp-tab:'+ID,k);render();window.scrollTo(0,0);
