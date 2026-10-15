@@ -51,28 +51,33 @@ async function acPdf(sheet,guest){
   let SF='times';
   if(script){try{doc.addFileToVFS('CormorantLightItalic.ttf',script);doc.addFont('CormorantLightItalic.ttf','CormorantLI','italic');SF='CormorantLI'}catch(e){SF='times'}}
   const big=SF==='times'?1:1.12;
-  const W=396,H=612,M=34,CW=W-M*2,ink=[18,18,18],soft=[95,91,85],choc=[74,52,38],line=[226,222,213];
+  const W=396,H=612,M=34,CW=W-M*2,ink=[18,18,18],soft=[95,91,85],choc=[18,18,18],line=[226,222,213];
   let y=0;
-  const bg=()=>{doc.setFillColor(248,246,240);doc.rect(0,0,W,H,'F');doc.setFillColor(255,255,255);doc.rect(12,12,W-24,H-24,'F')};   /* white page, cream border (Alexandra, Oct 15) */
+  const bg=()=>{doc.setFillColor(248,246,240);doc.rect(0,0,W,H,'F');doc.setFillColor(255,255,255);doc.rect(12,12,W-24,H-24,'F');
+    /* the app's double frame: a thin black line and a finer charcoal line just inside (Alexandra, Oct 15 2026) */
+    doc.setDrawColor(18,18,18);doc.setLineWidth(.7);doc.rect(12,12,W-24,H-24,'S');doc.setDrawColor(43,42,40);doc.setLineWidth(.3);doc.rect(17,17,W-34,H-34,'S');doc.setLineWidth(.2)};
   const foot=()=>{doc.setDrawColor(...line);doc.line(M,H-40,W-M,H-40);doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.setTextColor(...soft);
     doc.text('Taffeta Salon & Spa  ·  219 Bellevue Ave, Hammonton NJ  ·  '+AC_PHONE+'  ·  '+AC_SITE,W/2,H-26,{align:'center'})};
   const need=n=>{if(y+n>H-52){foot();doc.addPage([396,612]);bg();y=M+6}};
   const para=(t,size,font,style,color,gap,indent)=>{doc.setFont(font,style);doc.setFontSize(size);doc.setTextColor(...color);
     const ls=doc.splitTextToSize(t,CW-(indent||0)),lh=size*1.32;ls.forEach(l=>{need(lh);doc.text(l,M+(indent||0),y+size);y+=lh});y+=gap||0};
-  const label=t=>{need(34);y+=6;doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.setTextColor(...choc);doc.setCharSpace(1.6);doc.text(t.toUpperCase(),M,y+8);doc.setCharSpace(0);
-    doc.setDrawColor(...line);doc.line(M,y+13,W-M,y+13);y+=22};
+  const label=t=>{need(50);y+=4;doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.setTextColor(...ink);doc.setCharSpace(1.6);
+    const T=t.toUpperCase(), tw=doc.getTextWidth(T)+1.6*T.length; doc.text(T,W/2-tw/2,y+8);doc.setCharSpace(0);
+    /* centered label between two short dashes, like MENU in the app */
+    doc.setDrawColor(18,18,18);doc.setLineWidth(.4);doc.line(W/2-tw/2-30,y+5.5,W/2-tw/2-10,y+5.5);doc.line(W/2+tw/2+10,y+5.5,W/2+tw/2+30,y+5.5);doc.setLineWidth(.2);y+=20};
   bg();
   if(logo) doc.addImage(logo,'PNG',W/2-34,24,68,68);
   y=104;
   doc.setFont(SF,'italic');doc.setFontSize(21*big);doc.setTextColor(...ink);
   doc.text(doc.splitTextToSize(sheet.title,CW),W/2,y+18,{align:'center'});y+=30;
   doc.setFont('helvetica','normal');doc.setFontSize(9.5);doc.setTextColor(...soft);
-  doc.text([guest?'For '+guest:'',new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})].filter(Boolean).join('  ·  '),W/2,y+10,{align:'center'});y+=24;
+  y+=6;
   para(sheet.intro,10.5*big,SF,'italic',ink,6);
   sheet.sections.forEach(([t,items])=>{label(t);items.forEach(n=>{need(16);doc.setFont('helvetica','normal');doc.setTextColor(...choc);doc.setFontSize(9.5);doc.text('•',M+2,y+9.5);para(n,9.5,'helvetica','normal',ink,4,14)})});
   y+=10;need(40);
   para('Questions? Call or text us at '+AC_PHONE+'.',9.5,'helvetica','bold',choc,8);
-  doc.setFont(SF,'italic');doc.setFontSize(13*big);doc.setTextColor(...choc);need(20);doc.text(sheet.kind==='hair'?'xo, Taffeta  ·  Pretty Hair':'Pretty Skin by Taffeta',W/2,y+12,{align:'center'});
+  doc.setFont(SF,'italic');doc.setFontSize(13*big);doc.setTextColor(...choc);need(20);doc.text(sheet.kind==='hair'?'xo, Taffeta  ·  Pretty Hair':'Pretty Skin by Taffeta',W/2,y+12,{align:'center'});y+=20;
+  need(14);doc.setFont('helvetica','normal');doc.setFontSize(8.5);doc.setTextColor(...soft);doc.text(new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}),W/2,y+8,{align:'center'});
   foot();
   return doc.output('blob');
 }

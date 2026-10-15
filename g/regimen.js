@@ -318,6 +318,8 @@ function rgLogo(){
   return fetch((window.RG_BASE||'')+'g/logo.png').then(r=>r.blob()).then(b=>new Promise(ok=>{const f=new FileReader();f.onload=()=>ok(RG_LOGO=f.result);f.readAsDataURL(b)})).catch(()=>null);
 }
 
+const rgNamePic=n=>{const k=String(n||'').toLowerCase();if(!k)return Promise.resolve(null);
+  return fetch((window.RG_BASE||'')+'g/names/'+k+'.png').then(r=>r.ok?r.blob():null).then(b=>b?new Promise(ok=>{const f=new FileReader();f.onload=()=>{const im=new Image();im.onload=()=>ok({d:f.result,w:im.width,h:im.height});im.onerror=()=>ok(null);im.src=f.result};f.readAsDataURL(b)}):null).catch(()=>null)};
 /* Half-letter page (5.5 × 8.5 in), easy to read on a phone. Cream page, Taffeta wreath, serif headings. */
 async function rgPdf(me,R,kind){
   R=R||RG; kind=kind||rgKind();
@@ -326,9 +328,11 @@ async function rgPdf(me,R,kind){
   let SF='times';
   if(script){try{doc.addFileToVFS('CormorantLightItalic.ttf',script);doc.addFont('CormorantLightItalic.ttf','CormorantLI','italic');SF='CormorantLI'}catch(e){SF='times'}}
   const big=SF==='times'?1:1.12;
-  const W=396, H=612, M=34, CW=W-M*2, ink=[18,18,18], soft=[95,91,85], choc=[74,52,38], line=[226,222,213];
+  const W=396, H=612, M=34, CW=W-M*2, ink=[18,18,18], soft=[95,91,85], choc=[18,18,18], line=[226,222,213];
   let y=0;
-  const bg=()=>{doc.setFillColor(248,246,240);doc.rect(0,0,W,H,'F');doc.setFillColor(255,255,255);doc.rect(12,12,W-24,H-24,'F')};   /* white page, cream border (Alexandra, Oct 15) */
+  const bg=()=>{doc.setFillColor(248,246,240);doc.rect(0,0,W,H,'F');doc.setFillColor(255,255,255);doc.rect(12,12,W-24,H-24,'F');
+    /* the app's double frame: a thin black line and a finer charcoal line just inside (Alexandra, Oct 15 2026) */
+    doc.setDrawColor(18,18,18);doc.setLineWidth(.7);doc.rect(12,12,W-24,H-24,'S');doc.setDrawColor(43,42,40);doc.setLineWidth(.3);doc.rect(17,17,W-34,H-34,'S');doc.setLineWidth(.2)};
   const foot=()=>{doc.setDrawColor(...line);doc.line(M,H-40,W-M,H-40);doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.setTextColor(...soft);
     doc.text('Taffeta Salon & Spa  ·  219 Bellevue Ave, Hammonton NJ  ·  '+RG_PHONE+'  ·  '+RG_SITE,W/2,H-26,{align:'center'})};
   const page=()=>{foot();doc.addPage([396,612]);bg();y=M+6};
@@ -336,8 +340,10 @@ async function rgPdf(me,R,kind){
   const para=(t,size,font,style,color,gap,indent)=>{doc.setFont(font,style);doc.setFontSize(size);doc.setTextColor(...color);
     const lines=doc.splitTextToSize(t,CW-(indent||0)), lh=size*1.32;
     lines.forEach(l=>{need(lh);doc.text(l,M+(indent||0),y+size);y+=lh});y+=gap||0};
-  const label=t=>{need(30);y+=6;doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.setTextColor(...choc);doc.setCharSpace(1.6);doc.text(t.toUpperCase(),M,y+8);doc.setCharSpace(0);
-    doc.setDrawColor(...line);doc.line(M,y+13,W-M,y+13);y+=22};
+  const label=t=>{need(64);y+=4;doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.setTextColor(...ink);doc.setCharSpace(1.6);
+    const T=t.toUpperCase(), tw=doc.getTextWidth(T)+1.6*T.length; doc.text(T,W/2-tw/2,y+8);doc.setCharSpace(0);
+    /* centered label between two short dashes, like MENU in the app */
+    doc.setDrawColor(18,18,18);doc.setLineWidth(.4);doc.line(W/2-tw/2-30,y+5.5,W/2-tw/2-10,y+5.5);doc.line(W/2+tw/2+10,y+5.5,W/2+tw/2+30,y+5.5);doc.setLineWidth(.2);y+=20};
 
   bg();
   if(logo) doc.addImage(logo,'PNG',W/2-34,24,68,68);
@@ -345,9 +351,8 @@ async function rgPdf(me,R,kind){
   doc.setFont(SF,'italic');doc.setFontSize(22*big);doc.setTextColor(...ink);
   doc.text('Home Maintenance',W/2,y+18,{align:'center'});y+=30;
   doc.setFont('helvetica','normal');doc.setFontSize(9.5);doc.setTextColor(...soft);
-  const who=[R.guest.trim()?'For '+R.guest.trim():'',me?'from '+me:'',rgDate()].filter(Boolean).join('  ·  ');
-  doc.text(who,W/2,y+10,{align:'center'});y+=18;
-  const meta=[R.services.length?'Today: '+R.services.join(', '):'',kind==='skin'&&R.type?'Skin type: '+R.type:''].filter(Boolean).join('  ·  ');
+  /* just what she had (her name, the artist and the date are at the bottom) */
+  const meta=[R.services.length?R.services.join(', '):'',kind==='skin'&&R.type?'Skin type: '+R.type:''].filter(Boolean).join('  ·  ');
   if(meta){doc.text(doc.splitTextToSize(meta,CW),W/2,y+10,{align:'center'});y+=18}
   y+=6;
 
@@ -372,11 +377,19 @@ async function rgPdf(me,R,kind){
     const top=y; y+=12;
     if(R.msg.trim()) para('“'+R.msg.trim()+'”',11*big,SF,'italic',ink,6,12);
     if(rgBack(R)) para('Come back to see us '+rgBack(R)+'. Call or text '+RG_PHONE+' to book.',9.5,'helvetica','bold',choc,2,12);
-    y+=8; doc.setDrawColor(...choc); doc.setLineWidth(.8); doc.line(M,top,M,y); doc.setLineWidth(.2);
+    y+=8; doc.setDrawColor(43,42,40); doc.setLineWidth(.4); doc.rect(M-8,top,CW+16,y-top,'S'); doc.setLineWidth(.2);
   }
   if(kind==='skin'&&R.picks.some(p=>/^Biologique Recherche/.test(p.n))){y+=10;para('Remember, Biologique Recherche is very concentrated, so only a small amount is needed. If you have questions, reach out any time!',9.5,'helvetica','italic',soft,2)}
   y+=12; need(20);
-  doc.setFont(SF,'italic');doc.setFontSize(13*big);doc.setTextColor(...choc);doc.text(kind==='skin'?(me?'Pretty Skin by '+rgFirst(me):'Pretty Skin by Taffeta'):'xo, '+(me||'Taffeta')+'  ·  Pretty Hair',W/2,y+12,{align:'center'});
+  /* sign-off with the artist's first name in Antoinetta (a picture, as the font license allows) */
+  doc.setFont(SF,'italic');doc.setFontSize(13*big);doc.setTextColor(...choc);
+  const np=me?await rgNamePic(rgFirst(me)):null;
+  if(np){need(38);const nh=30, nw=nh*np.w/np.h;doc.setFont(SF,'italic');doc.setFontSize(13*big);doc.setTextColor(...choc);
+    const pre=kind==='skin'?'':'xo, ', post=kind==='skin'?'  ·  Pretty Skin':'  ·  Pretty Hair';
+    const pw=doc.getTextWidth(pre), qw=doc.getTextWidth(post), x0=W/2-(pw+nw+qw)/2;
+    doc.text(pre,x0,y+21);doc.addImage(np.d,'PNG',x0+pw,y+2,nw,nh);doc.text(post,x0+pw+nw,y+21);y+=34}
+  else{doc.text(kind==='skin'?(me?'Pretty Skin by '+rgFirst(me):'Pretty Skin by Taffeta'):'xo, '+(me||'Taffeta')+'  ·  Pretty Hair',W/2,y+12,{align:'center'});y+=20}
+  need(14);doc.setFont('helvetica','normal');doc.setFontSize(8.5);doc.setTextColor(...soft);doc.text(rgDate(),W/2,y+8,{align:'center'});
   foot();
   return doc.output('blob');
 }
