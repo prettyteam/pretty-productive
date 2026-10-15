@@ -360,8 +360,7 @@ function rxBuild(R,me){
     h('label',{class:'fld'},'Guest’s First Name',gIn),
     h('label',{class:'fld'},h('span',{},'Her Budget For Today ',h('small',{class:'soft'},'(include an estimated cost of maintenance to bundle with the services)')),bIn),
     chips(['No set budget'],()=>R.nob,()=>{R.nob=!R.nob}),
-    h('div',{class:'fld'},'Her Goals For Today',chips(Object.keys(RX_GOAL[R.kind]),o=>rxGoalList(R).includes(o),o=>{const L=rxGoalList(R);R.goal=L.includes(o)?L.filter(x=>x!==o):[...L,o]})),
-    rxPriceList(R.kind));
+    h('div',{class:'fld'},'Her Goals For Today',chips(Object.keys(RX_GOAL[R.kind]),o=>rxGoalList(R).includes(o),o=>{const L=rxGoalList(R);R.goal=L.includes(o)?L.filter(x=>x!==o):[...L,o]})));
   const s2=h('section',{class:'card2'},h('span',{class:'lbl'},'2 · Her Routine'),
     ...RX_Q[R.kind].map(([key,q,opts,multi])=>h('div',{class:'fld'},q,chips(opts,
       o=>multi?[].concat(R.a[key]||[]).includes(o):R.a[key]===o,
@@ -373,7 +372,8 @@ function rxBuild(R,me){
   const gen=h('button',{type:'button',class:'obtn',disabled:ready?null:'',onclick:()=>{const g=rxGenerate(R);if(!g)return;Object.assign(R,g);rxSave();render();setTimeout(()=>{const n=document.getElementById('rxopts');if(n)n.scrollIntoView({behavior:'smooth'})},50)}},R.opts?'Suggest Again':'Suggest Options');
   const s4=h('section',{class:'card2',style:'align-items:center;text-align:center'},gen,
     h('small',{class:'soft'},ready?'Suggestions follow the Taffeta consultation: only what she needs, inside her budget.':'Pick her goals, her budget and what’s going on right now.'));
-  const out=[s1,s2,s3,s4];
+  /* Maintenance prices come after her routine and what's going on now, when the artist decides what she goes home with (Alexandra, Oct 15 2026) */
+  const out=[s1,s2,s3,h('section',{class:'card2'},rxPriceList(R.kind)),s4];
   if(R.opts) out.push(...rxEditor(R,me));
   return out;
 }
