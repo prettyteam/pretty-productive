@@ -71,9 +71,9 @@ main{padding:14px 12px 40px}
     c.b?el('p',{class:'talk'},el('b',{},'Your budget today: '),money(c.b)):null,
     opts,
     el('section',{class:'maint'},el('span',{class:'eyebrow'},'Your next visit'),
-      m[0].map(([n,p])=>el('div',{class:'li'},el('span',{},n),el('span',{},money(p)))),
-      el('div',{class:'tot'},el('span',{},m[1]?'In about '+m[1]:''),el('span',{},money(mt))),
-      m[2]?el('p',{style:'font-size:14px'},m[2]):null),
+      /* no receipt-style breakdown here: what the visit looks like and about what it costs (Alexandra, Oct 15 2026) */
+      el('div',{class:'tot',style:'border-top:0;padding-top:0'},el('span',{},m[1]?'In about '+m[1]:'Your next visit'),el('span',{},money(mt))),
+      m[2]?el('p',{style:'font-size:14px;margin:0'},m[2]):el('p',{style:'font-size:14px;margin:0'},m[0].map(([n])=>n).join(', '))),
     c.r?el('p',{class:'talk',style:'text-align:center'},el('b',{},'Refresh in '),c.r):null,
     el('p',{class:'sign'},skin?'Pretty Skin by Taffeta':'xo, '+(c.a||'Taffeta')+' · Pretty Hair'),
     el('p',{class:'foot'},'Prices are estimates and can change with time and product used. ',el('br'),'Book your next visit: ',el('a',{href:'tel:+16093835504'},'(609) 383-5504'),' · ',el('a',{href:'https://taffetadesign.com'},'taffetadesign.com'))));
