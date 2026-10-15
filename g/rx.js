@@ -27,7 +27,11 @@ const RX_PROD={
   /* Alexandra's favorites (Oct 15 2026): Rossano Ferretti UV protect oil, wet or dry: tames flyaways, UV and heat protection */
   uv:['Rossano Ferretti Brillante Protect & Shine Oil',65,'UV and heat protection that tames flyaways, on wet or dry hair, so your tone doesn’t fade'],
   heat:['Rossano Ferretti Brillante Protect & Shine Oil',65,'Heat and UV protection that tames flyaways, on wet or dry hair, before you blow-dry or use hot tools'],
-  brassy:['K18 Triple Bright Purple Shampoo',40,'Keeps blonde bright and cancels brassiness'],
+  brassy:['K18 Triple Bright Purple Shampoo',40,'Keeps blonde bright and stops brassiness coming through'],
+  /* Alexandra (Oct 15 2026): every big blonding service (half or full balayage, half or full foils) goes home with the
+     small K18 leave-in; AirWash for anyone who washes a couple of times a week and refreshes with a dryer and brush, and fine hair */
+  k18Home:['K18 Leave-In Molecular Repair Mask, 0.5 oz',29,'Keeps repairing your hair at home after a big blonding service'],
+  airWash:['K18 AirWash Dry Shampoo, 4 oz',48,'Freshens your hair between washes with your blow dryer and brush; great for fine hair'],
   movement:['Oribe Après Beach Wave & Shine Spray',46,'Soft, touchable movement and shine at home'],
   movementAir:['Oribe Matte Waves Texture Lotion',44,'Effortless movement and soft waves as it air dries'],
   airDry:['Oribe Supershine Moisturizing Cream',54,'Smooth, soft air-dried hair with no blow-dry'],
@@ -211,7 +215,7 @@ function rxNeeds(R){
   if(now.includes('Breakage')) add('breakage');
   if(now.includes('Frizz')) add(a.style==='Air dry'?(feel.includes('Curly or wavy')?'airCurl':'airDry'):'frizz');
   if(now.includes('Dryness')) add('dry');
-  if(now.includes('Oily scalp')) add('oily');
+  if(now.includes('Oily scalp')) add(feel.includes('Flat')?'airWash':'oily');
   if(now.includes('Flat, no volume')) add('flat');
   if(now.includes('Itchy or flaky scalp')) add('scalp');
   if(now.includes('Grays showing')) add('grays');
@@ -221,6 +225,7 @@ function rxNeeds(R){
   if(a.style==='Hot tools daily'||a.style==='Blow-dry with a brush') add('heat');
   if(a.style==='Air dry'&&!out.some(k=>k==='airDry'||k==='airCurl')) add(feel.includes('Curly or wavy')?'airCurl':'airDry');
   if(feel.includes('Oily')&&a.wash==='Daily') add('oily');
+  if((a.wash==='Every 2–3 days'||a.wash==='Once a week')&&(a.style==='Blow-dry with a brush'||feel.includes('Flat'))) add('airWash');
   return out.slice(0,2);
 }
 
@@ -262,18 +267,20 @@ function rxGoalPlan(R){
   const m=[ms,gs[0].m[1],mt];
   return {p,m};
 }
+const RX_BIG_BLOND=/^(Half|Full) Head Balayage$|^(Half|Full) Foil$/;
+const rxNeedsFor=(needs,names)=>names.some(n=>RX_BIG_BLOND.test(n))&&!needs.includes('k18Home')&&!needs.includes('breakage')?[...needs,'k18Home']:needs;
 function rxGenerate(R){
   const g=rxGoalPlan(R); if(!g) return null;
   const needs=rxNeeds(R), P=g.p, b=R.nob?null:Number(R.budget)||null;
   /* Goldwell leave-in backbar treatment: a no-downtime add-on for color that fades, blonde repair or dry, damaged hair.
      $20, or $10–15 when only half the bottle is used (Alexandra, Oct 2026). Offered in the full look. */
   const now=R.now||[], leave=R.kind==='hair'&&(now.some(x=>/Color fading|Brassiness|Breakage|Dryness/.test(x))||P[0].some(n=>RX_BLOND.test(n)));
-  const o2=[...rxSvcLines(R.kind,P[0]),...(leave?rxSvcLines('hair',['Goldwell Leave-In Treatment']):[]),...rxProdLines(needs,'full')];
+  const o2=[...rxSvcLines(R.kind,P[0]),...(leave?rxSvcLines('hair',['Goldwell Leave-In Treatment']):[]),...rxProdLines(rxNeedsFor(needs,P[0]),'full')];
   let o1=null;
-  const tryPkg=i=>{for(const mode of ['full','first','try']){const L=[...rxSvcLines(R.kind,P[i]),...rxProdLines(needs,mode)];if(rxTotal(L)<=b) return L}return null};
-  if(b==null) o1=[...rxSvcLines(R.kind,P[Math.min(1,P.length-1)]),...rxProdLines(needs,'full')];
+  const tryPkg=i=>{for(const mode of ['full','first','try']){const L=[...rxSvcLines(R.kind,P[i]),...rxProdLines(rxNeedsFor(needs,P[i]),mode)];if(rxTotal(L)<=b) return L}return null};
+  if(b==null) o1=[...rxSvcLines(R.kind,P[Math.min(1,P.length-1)]),...rxProdLines(rxNeedsFor(needs,P[Math.min(1,P.length-1)]),'full')];
   else{ for(let i=P.length>1?1:0;i<P.length&&!o1;i++) o1=tryPkg(i);
-    if(!o1) o1=[...rxSvcLines(R.kind,P[P.length-1]),...rxProdLines(needs,'try')]; }
+    if(!o1) o1=[...rxSvcLines(R.kind,P[P.length-1]),...rxProdLines(rxNeedsFor(needs,P[P.length-1]),'try')]; }
   let [ms,mw,mt]=[o1,o2].some(L=>L.some(l=>RX_BAL.test(l.n)))?RX_BAL_M:g.m;
   /* no cut today: the next visit keeps the cut instead of leaving wet */
   if(ms.includes('Leave Wet (no haircut)')&&![o1,o2].some(L=>L.some(l=>/haircut/i.test(l.n)))){
