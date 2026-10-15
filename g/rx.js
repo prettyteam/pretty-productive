@@ -24,13 +24,15 @@ const rxPrice=(k,n)=>{const r=RX_SVC[k].find(x=>x[0]===n);return r?r[1]:0};
 const RX_PROD={
   colorSafe:['Oribe Shampoo for Beautiful Color',49,'Keeps color from fading wash after wash'],
   glazeKeep:['Oribe Shampoo for Beautiful Color',49,'Helps your glaze stay glossy longer'],
-  uv:['Oribe Invisible Defense Universal Protection Spray',44,'Daily heat and UV protection so your tone doesn’t fade'],
-  heat:['Oribe Invisible Defense Universal Protection Spray',44,'Heat protection every time you blow-dry or use hot tools'],
+  /* Alexandra's favorites (Oct 15 2026): Rossano Ferretti UV protect oil, wet or dry: tames flyaways, UV and heat protection */
+  uv:['Rossano Ferretti Brillante Protect & Shine Oil',65,'UV and heat protection that tames flyaways, on wet or dry hair, so your tone doesn’t fade'],
+  heat:['Rossano Ferretti Brillante Protect & Shine Oil',65,'Heat and UV protection that tames flyaways, on wet or dry hair, before you blow-dry or use hot tools'],
   brassy:['K18 Triple Bright Purple Shampoo',40,'Keeps blonde bright and cancels brassiness'],
   movement:['Oribe Après Beach Wave & Shine Spray',46,'Soft, touchable movement and shine at home'],
+  movementAir:['Oribe Matte Waves Texture Lotion',44,'Effortless movement and soft waves as it air dries'],
   airDry:['Oribe Supershine Moisturizing Cream',54,'Smooth, soft air-dried hair with no blow-dry'],
   airCurl:['Oribe Curl Gloss Hydration & Hold',46,'Defines waves and curls as they air dry'],
-  frizz:['Brazilian Blowout Daily Smoothing Serum',36,'Tames frizz and humidity'],
+  frizz:['Brazilian Blowout Daily Smoothing Serum',36,'That just-smoothed feeling wash to wash, with frizz control for medium to thick hair'],
   dry:['Davines NOUNOU Shampoo',30,'Deep moisture for dry hair'],
   breakage:['K18 Leave-In Molecular Repair Mask, 0.5 oz',29,'Repairs breakage from the inside'],
   flat:['Davines Volume Boosting Mousse',35,'Lift and body that lasts'],
@@ -192,7 +194,7 @@ const rxFirst=n=>String(n||'').trim().split(/\s+/)[0]||'';
 function rxNeeds(R){
   const a=R.a||{}, now=R.now||[], out=[], add=k=>{if(!out.includes(k)&&RX_PROD[k]) out.push(k)};
   const notHappy=a.prod&&a.prod!=='Professional'||a.love==='No';
-  if(R.kind==='hair'&&rxGoalList(R).some(g=>/^Movement/.test(g))) add('movement');
+  if(R.kind==='hair'&&rxGoalList(R).some(g=>/^Movement/.test(g))) add(a.style==='Air dry'?'movementAir':'movement');
   if(R.kind==='skin'){
     if(now.includes('Breakouts')||now.includes('Large pores')) add('skBreak');
     if(now.includes('Redness')||a.feel==='Sensitive') add('skSens');
