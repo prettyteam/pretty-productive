@@ -279,6 +279,10 @@ body{padding-bottom:110px}
 .navsheet{width:100%;max-width:560px;max-height:65vh;overflow-y:auto;background:var(--marshmallow);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:10px;display:flex;flex-direction:column;gap:14px;box-shadow:0 -4px 20px rgba(18,18,18,.12)}
 .navgrp{display:flex;flex-direction:column;gap:2px}
 .framed{background:#efedea!important;border:12px solid #fff!important;border-radius:0!important;outline:1px solid #7d7770;outline-offset:-20px;padding:30px 26px!important;box-shadow:0 1px 6px rgba(43,38,32,.08)}
+.homenav{grid-template-columns:1fr 1fr!important;gap:10px!important;align-items:stretch!important}
+.homenav .navgrp{background:#fff;outline:1px solid #c9c2b8;outline-offset:-6px;padding:20px 10px 16px;align-items:center;text-align:center;box-shadow:0 1px 4px rgba(43,38,32,.06)}
+.homenav .navgrp>.lbl{font-size:18px!important;padding:0 0 4px!important;text-align:center}
+.homenav .navgrp button{justify-content:center!important;text-align:center;padding:4px!important;width:auto!important}
 /* framed cards like the Hi Pretty tile Alexandra likes: white mat, thin taupe-grey inner line, soft greige ground (Oct 15 2026) */
 .homenav{display:grid!important;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:18px 12px!important;align-items:start}
 .homenav .navgrp button{border:0;background:none;display:flex;width:100%;text-align:left;cursor:pointer;line-height:1.3}
@@ -1534,7 +1538,7 @@ function homeMenu(){
   const tabs=staffTabs(); if(tabs.length<2) return null;
   const {label,groups}=navGroups(tabs);
   const gs=groups.map(([g,keys])=>[g,keys.filter(k=>k!=='home')]).filter(([,k])=>k.length);
-  return h('div',{class:'card2 framed'},h('span',{class:'lbl',style:'display:block;text-align:center;margin-bottom:12px'},'Menu'),
+  return h('div',{class:'homemenu'},h('span',{class:'lbl',style:'display:block;text-align:center;margin-bottom:12px'},'Menu'),
     h('div',{class:'homenav'},gs.map(([g,keys])=>h('div',{class:'navgrp'},
     h('span',{class:'lbl'},g),keys.map(k=>h('button',{type:'button',onclick:()=>navGo(k)},label[k]))))));
 }
