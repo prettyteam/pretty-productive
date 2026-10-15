@@ -158,7 +158,10 @@ function rxGenerate(R){
 function rxPack(R,me){
   const o={v:1,k:R.kind,g:rxFirst(R.guest),a:rxFirst(me),d:new Date().toISOString().slice(0,10),b:R.nob?null:(Number(R.budget)||null),
     w:R.goal,n:(R.now||[]).filter(x=>!/^Nothing new/.test(x)),
-    o:R.opts.map(x=>[x.title,x.lines.map(l=>[l.n,Number(l.p)||0,l.t])]),
+    /* home care shows on her card as one "Maintenance" line, the way Alexandra writes cards by hand,
+       so she sees the investment, not a list of products to say no to */
+    o:R.opts.map(x=>{const sv=x.lines.filter(l=>l.t==='s').map(l=>[l.n,Number(l.p)||0]), hc=x.lines.filter(l=>l.t!=='s').reduce((a,l)=>a+(Number(l.p)||0),0);
+      return [x.title,hc?[...sv,['Maintenance',hc]]:sv]}),
     m:[R.m.lines.map(l=>[l.n,Number(l.p)||0]),R.m.when,R.m.text],r:R.refresh};
   return o;
 }
@@ -236,13 +239,14 @@ function rxEditor(R,me){
     return h('section',{class:'card2 out'},h('span',{class:'lbl'},o.title+(i===0?(b==null?' · a lighter start':t<=b?' · within her budget':' · closest to her budget'):' · the full look')),
       ...o.lines.map(l=>lineRow(o.lines,l)),
       !o.lines.some(l=>l.t!=='s')?h('p',{class:'soft'},'Home care: keep her current routine.'):null,
+      o.lines.some(l=>l.t!=='s')?h('small',{class:'soft'},'Her card shows home care as one line: Maintenance '+rxMoney(o.lines.filter(l=>l.t!=='s').reduce((a,l)=>a+(Number(l.p)||0),0))+'.'):null,
       adder(o.lines),
       h('div',{class:'rxtot'},badge(t),h('b',{},rxMoney(t))));
   });
   const mw=h('input',{type:'text',value:R.m.when}); mw.addEventListener('input',()=>{R.m.when=mw.value;rxSave()});
   const mt=h('textarea',{class:'rgta',rows:'2'}); mt.value=R.m.text; mt.addEventListener('input',()=>{R.m.text=mt.value;rxSave()});
   const rf=h('input',{type:'text',value:R.refresh}); rf.addEventListener('input',()=>{R.refresh=rf.value;rxSave()});
-  const maint=h('section',{class:'card2'},h('span',{class:'lbl'},'Her maintenance visit'),
+  const maint=h('section',{class:'card2'},h('span',{class:'lbl'},'Her next visit'),
     ...R.m.lines.map(l=>lineRow(R.m.lines,l)),adder(R.m.lines),
     h('div',{class:'rxtot'},h('span',{class:'soft'},'Next visit'),h('b',{},rxMoney(rxTotal(R.m.lines)))),
     h('label',{class:'fld'},'In about',mw),h('label',{class:'fld'},'What it looks like',mt),
