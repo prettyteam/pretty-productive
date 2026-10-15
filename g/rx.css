@@ -14,3 +14,5 @@
 .rxscript{font-family:"Cormorant Garamond",Georgia,serif;font-style:italic;font-size:24px}
 .fld select{font:inherit;font-size:16px;height:44px;border:1px solid var(--line);border-radius:4px;background:#fbfaf7;padding:0 10px;width:100%}
 .rxstar{flex:none;background:none;border:0;font-size:20px;line-height:1;color:var(--gold);padding:4px 6px;cursor:pointer}
+
+.rxfind{color:#9a4a2b;font-size:13.5px;font-style:italic}
