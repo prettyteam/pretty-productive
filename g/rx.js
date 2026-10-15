@@ -27,6 +27,7 @@ const RX_PROD={
   uv:['Oribe Invisible Defense Universal Protection Spray',44,'Daily heat and UV protection so your tone doesn’t fade'],
   heat:['Oribe Invisible Defense Universal Protection Spray',44,'Heat protection every time you blow-dry or use hot tools'],
   brassy:['K18 Triple Bright Purple Shampoo',40,'Keeps blonde bright and cancels brassiness'],
+  movement:['Oribe Après Beach Wave & Shine Spray',46,'Soft, touchable movement and shine at home'],
   airDry:['Oribe Supershine Moisturizing Cream',54,'Smooth, soft air-dried hair with no blow-dry'],
   airCurl:['Oribe Curl Gloss Hydration & Hold',46,'Defines waves and curls as they air dry'],
   frizz:['Brazilian Blowout Daily Smoothing Serum',36,'Tames frizz and humidity'],
@@ -138,8 +139,9 @@ const RX_GOAL={
       m:[['Glaze'],'6–8 weeks','A glaze to bring the shine and tone back.']},
     'New Cut Or Shape':{p:[['Female Haircut','Blow Dry'],['Female Haircut'],['Haircut Leaving Wet']],
       m:[['Female Haircut'],'6–8 weeks','A trim to keep the shape.']},
-    'Movement (Layers & Texture)':{p:[['Female Haircut','Blowdry Plus'],['Female Haircut','Blow Dry'],['Female Haircut']],
-      m:[['Female Haircut'],'6–8 weeks','A trim to keep the layers moving and the shape fresh.']},
+    /* movement comes from both the color (dimension) and the styling and products (Alexandra, Oct 15 2026) */
+    'Movement (Color & Style)':{p:[['Half Head Balayage','Female Haircut','Blowdry Plus'],['Face Frame/Spot Highlight','Glaze','Female Haircut','Blow Dry'],['Face Frame/Spot Highlight','Glaze','Female Haircut'],['Female Haircut','Blow Dry'],['Female Haircut']],
+      m:[['Face Frame/Spot Highlight','Glaze','Female Haircut'],'8–10 weeks','Brightness around the face, a glaze and a trim keep the movement going.']},
     'Big Change (Transformation)':{p:[['Full Head Balayage','Female Haircut','Blow Dry'],['Full Foil','Glaze','Female Haircut'],['Half Head Balayage','Female Haircut'],['Half Foil','Glaze','Female Haircut']],
       m:[['Face Frame/Spot Highlight','Glaze','Leave Wet (no haircut)'],'8–10 weeks','A big change can take more than one visit. Next time: face-framing foils and a glaze. If you get your cut today, skip it next time to save: leave wet, or add a $50 blow dry. Need a trim? A haircut leaving wet is $50.']},
     'Blowout Or Style':{p:[['Blowdry Plus'],['Blow Dry']],m:[['Blow Dry'],'1–2 weeks','A blowout for your next event.']}
@@ -190,6 +192,7 @@ const rxFirst=n=>String(n||'').trim().split(/\s+/)[0]||'';
 function rxNeeds(R){
   const a=R.a||{}, now=R.now||[], out=[], add=k=>{if(!out.includes(k)&&RX_PROD[k]) out.push(k)};
   const notHappy=a.prod&&a.prod!=='Professional'||a.love==='No';
+  if(R.kind==='hair'&&rxGoalList(R).some(g=>/^Movement/.test(g))) add('movement');
   if(R.kind==='skin'){
     if(now.includes('Breakouts')||now.includes('Large pores')) add('skBreak');
     if(now.includes('Redness')||a.feel==='Sensitive') add('skSens');
