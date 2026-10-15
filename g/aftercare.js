@@ -19,11 +19,12 @@ const AC_SHEETS=[
   {id:'ext',kind:'hair',name:'Hair extensions',title:'Your hair extension aftercare',
    intro:'Your extensions are an investment. A few simple habits keep them looking beautiful and your own hair healthy.',
    sections:[
-    ['First 48 hours',['Wait 48 hours before your first wash so the bonds and tapes can set.','Avoid heavy sweating, steam and swimming.']],
-    ['Washing',['Wash 2–3 times a week with a sulfate-free shampoo.','Wash standing upright in the shower, never upside down over a sink or tub.','Keep conditioner, masks and oils on your mid-lengths and ends, away from the bonds or tapes.','Dry your roots and bonds completely. Never go to bed with wet hair.']],
-    ['Brushing & sleeping',['Brush 2–3 times a day with your extension brush. Hold your hair at the root and start from the ends.','Sleep with your hair in a loose braid or low ponytail, ideally on a silk pillowcase.']],
-    ['Styling & swimming',['Use heat protectant every time, and keep hot tools away from the bonds or tapes.','Keep dry shampoo and alcohol-based products off the bonds.','Before the pool or ocean, wet your hair, add leave-in conditioner and braid it. Rinse right after. Skip hot tubs.']],
-    ['Good to know',['Keep up with your maintenance appointments, about every 6–8 weeks, so your extensions stay comfortable and secure.','If anything feels tight, itchy or starts to slip, call or text us and we’ll take care of it.']]]}
+    ['First 48 hours',['No shampooing, no getting your hair wet and no exercise that makes you sweat for 48 hours, no exceptions. The bonds need this time to set.']],
+    ['Washing',['Use conditioner only from mid-shaft down, or from a low ponytail down. Keep it off your scalp and the panels.']],
+    ['Brushing',['Brush often.','When your hair is wet, hold the panels and work from the ends up.','We carry a Premium Boar Detangling Brush and a Wet/Dry Detangling Brush made for extensions.']],
+    ['Sleeping',['Sleep on a silk pillowcase with your hair in a loose ponytail or braid.']],
+    ['Pool & ocean',['Put leave-in conditioner on your mid-lengths and ends and wear a ponytail. No braids while swimming.']],
+    ['Good to know',['Give yourself extra styling time at first while you get used to them.','Pre-book your follow-up and maintenance no later than 6–8 weeks after your application.']]]}
 ];
 
 let AC_LIB=null, AC_LOGO=null;
