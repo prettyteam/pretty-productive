@@ -176,7 +176,7 @@ function load_(who) {
   const mine = weddings.map(w => w.d).filter(w => (w.artists || []).some(a =>
     a.uid === m.id || (email && String(a.email || '').toLowerCase() === email)));
   const ci = calInfo_();
-  mine.forEach(w => { delete w.cal; if (ci[w.id]) { w.calTime = ci[w.id].time; w.calInfo = calInfoForArtist_(ci[w.id]); } });
+  mine.forEach(w => { delete w.cal; if (ci[w.id]) { w.calTime = ci[w.id].time; w.calInfo = calInfoForArtist_(ci[w.id], m.preferredName || m.legalName); } });
   const me = Object.assign({}, m); delete me.secret;
   const payouts = rowsOf_(TABS.payouts.name).filter(r => r[1] === m.id)
     .map(r => ({ sentAt: iso_(r[0]), bride: r[2], date: r[3], type: r[4], total: r[5] }));

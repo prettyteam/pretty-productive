@@ -176,6 +176,7 @@ table.adm{border-collapse:collapse;font-size:13px;min-width:100%}table.adm th,ta
 .pv-desc{white-space:pre-wrap;font-size:13px;color:var(--muted);margin:0}
 textarea.copyfallback{position:fixed;left:-9999px;top:0}
 input,select,textarea{background:#fff;border-radius:0}
+.gcal .mine{border:1px solid #2b2a28;background:#fff;padding:10px 12px;margin:2px 0 10px;font-size:14px;line-height:1.45}.gcal .mine.rsvp-yes{border-color:var(--line);color:var(--muted)}
 </style>
 
 <div class="wrap">
@@ -1032,7 +1033,8 @@ function renderTeam(){
     const b=document.createElement("button");b.className="wed";b.setAttribute("aria-current",teamSel===w.id);
     const mine=af.value?(d.artists||[]).filter(a=>a.name.trim()===af.value).map(a=>a.role==="hair"?"Hair":"Makeup").join(" + "):"";
     b.innerHTML='<div class="d"><small>'+esc(mo)+'</small><b>'+esc(day||"–")+'</b></div><div><div class="who">'+esc(d.bride||"Untitled")+'</div><div class="sub">'+esc([d.location,d.room].filter(Boolean).join(" · "))+'</div><div class="sub">'+(d.startMin==null&&d.calTime?'Calendar: '+esc(d.calTime):'Arrive '+(d.startMin!=null?fmt(d.startMin-(Number(d.arrival)||0)):"–")+' · Start '+(d.startMin!=null?fmt(d.startMin):"–"))+(mine?' · You: '+esc(mine):'')+'</div><div>'+(d.artistNames||[]).map(n=>'<span class="pill">'+esc(n)+'</span>').join("")+'</div></div>';
-    b.onclick=()=>{teamSel=w.id;renderTeam();renderTeamSheet()};
+    if(ROLE!=="office"&&d.calInfo&&(d.calInfo.mine==="waiting"||d.calInfo.mine==="maybe")){const n=document.createElement("div");n.className="sub";n.style.cssText="font-weight:600;color:var(--ink)";n.textContent="Please answer the Google Calendar invite";(b.lastElementChild||b).appendChild(n)}
+    b.onclick=()=>{teamSel=w.id;renderTeam();renderTeamSheet();/* on a phone the details sit under the list: bring them into view so the tap shows something */if(window.innerWidth<900){const t=$("#teamCal").firstChild?$("#teamCal"):$("#teamSheet");t.scrollIntoView({behavior:"smooth",block:"start"})}};
     box.appendChild(b);
   });
 }
@@ -1041,7 +1043,12 @@ function gcalHTML(c){
   if(!c)return"";
   const st={yes:"Yes",no:"No",maybe:"Maybe",waiting:"Waiting"};
   const team=(c.team||[]).map(t=>'<span class="pill'+(t.status?' rsvp-'+t.status:'')+'">'+esc(t.name||"Guest not in Team records")+(t.status&&ROLE==="office"?' · '+st[t.status]:'')+'</span>').join("");
-  return '<div class="gcal"><h3>From Google Calendar</h3><div><b>'+esc(c.time||"")+'</b>'+(c.place?' · '+esc(c.place):'')+'</div>'
+  /* the artist's own answer to the calendar invite (the office sees everyone's) */
+  const ask={waiting:"You haven’t answered this wedding’s Google Calendar invite yet. Open it in Google Calendar (or the invite email) and tap Yes so the office knows you’re in.",
+    maybe:"You answered Maybe on this wedding’s Google Calendar invite. Please change it to Yes or No in Google Calendar when you know.",
+    yes:"You said Yes to this wedding’s Google Calendar invite.",no:"You said No to this wedding’s Google Calendar invite."};
+  const mine=ROLE!=="office"&&c.mine&&ask[c.mine]?'<div class="mine rsvp-'+c.mine+'">'+ask[c.mine]+'</div>':"";
+  return '<div class="gcal"><h3>From Google Calendar</h3>'+mine+'<div><b>'+esc(c.time||"")+'</b>'+(c.place?' · '+esc(c.place):'')+'</div>'
     +(c.note?'<div class="note">'+esc(c.note)+'</div>':'')+(team?'<div class="who">'+team+'</div>':'')+'</div>';
 }
 /* Draft a timeline from the wedding's Google Calendar event when the office hasn't built one yet (Alexandra, Oct 2026).

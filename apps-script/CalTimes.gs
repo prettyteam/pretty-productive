@@ -71,8 +71,9 @@ function calTimes_() {
 }
 
 /** What an artist sees: no RSVPs, no guests who aren't on the team. */
-function calInfoForArtist_(c) {
-  return c && { time: c.time, place: c.place, note: c.note, team: c.team.filter(t => t.known && t.status !== 'no').map(t => ({ name: t.name })) };
+function calInfoForArtist_(c, myName) {
+  const me = c && myName ? c.team.find(t => t.known && t.name === myName) : null;   // her own answer only, never anyone else's
+  return c && { time: c.time, place: c.place, note: c.note, mine: me ? me.status : '', team: c.team.filter(t => t.known && t.status !== 'no').map(t => ({ name: t.name })) };
 }
 
 /** Editor check: how many upcoming weddings got calendar hours, and a few examples. */
