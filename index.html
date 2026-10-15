@@ -297,9 +297,9 @@ body{padding-bottom:110px}
 .mhead::before,.mhead::after{content:"";width:28px;height:1px;background:#2b2a28}
 .hmenu .cgrid{display:grid;grid-template-columns:repeat(2,124px);gap:8px;justify-content:center}
 /* white squares, charcoal thin inner line and titles (Alexandra, Oct 15 2026) */
-.hmenu .cgrid button{background:#fff;color:#121212;border:1px solid #2b2a28;outline:1px solid #2b2a28;outline-offset:-6px;border-radius:0;aspect-ratio:1/1;font-family:var(--display);font-size:15.5px;line-height:1.2;padding:8px;letter-spacing:-.01em;cursor:pointer;display:flex;align-items:center;justify-content:center;text-align:center}
-.hmenu .cgrid button[aria-expanded="true"]{outline-width:2px}
-.hpages{display:flex;flex-direction:column;align-items:center;gap:2px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:8px 0;max-width:300px;width:100%;margin:0 auto}
+.hmenu .cgrid>button{background:#fff;color:#121212;border:1px solid #2b2a28;outline:1px solid #2b2a28;outline-offset:-6px;border-radius:0;aspect-ratio:1/1;font-family:var(--display);font-size:15.5px;line-height:1.2;padding:8px;letter-spacing:-.01em;cursor:pointer;display:flex;align-items:center;justify-content:center;text-align:center}
+.hmenu .cgrid>button[aria-expanded="true"]{outline-width:2px}
+.hpages{grid-column:1/-1;display:flex;flex-direction:column;align-items:center;gap:2px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:8px 0;max-width:300px;width:100%;margin:0 auto}
 .hpages button{border:0;background:none;font-family:var(--display);font-size:17px;color:#555250;padding:8px;cursor:pointer}
 .navgrp button{flex-direction:row!important;justify-content:flex-start!important;font-family:var(--display);font-size:19px!important;letter-spacing:0!important;text-transform:none!important;color:var(--ink)!important;padding:8px 4px!important;text-align:left}
 .navgrp button::after{display:none!important}
@@ -1567,11 +1567,17 @@ function homeMenu(){
   const tabs=staffTabs(); if(tabs.length<2) return null;
   const {label,groups}=navGroups(tabs);
   const gs=groups.map(([g,keys])=>[g,keys.filter(k=>k!=='home')]).filter(([,k])=>k.length);
-  const open=gs.find(([g])=>g===HOME_OPEN);
-  return h('div',{class:'hmenu'},h('div',{class:'mhead'},'Menu'),
-    h('div',{class:'cgrid'},gs.map(([g,keys])=>h('button',{type:'button','aria-expanded':keys.length>1?String(HOME_OPEN===g):null,
-      onclick:()=>{if(keys.length===1){HOME_OPEN='';navGo(keys[0])}else{HOME_OPEN=HOME_OPEN===g?'':g;render()}}},g))),
-    open?h('div',{class:'hpages'},open[1].map(k=>h('button',{type:'button',onclick:()=>{HOME_OPEN='';navGo(k)}},label[k]))):null);
+  const pages=g=>{const o=gs.find(([x])=>x===g);return h('div',{class:'hpages'},o[1].map(k=>h('button',{type:'button',onclick:()=>{HOME_OPEN='';navGo(k)}},label[k])))};
+  /* the pages open right under the row you tapped, and scroll into view (Alexandra, Oct 15 2026: "nothing happens") */
+  const cells=[];
+  gs.forEach(([g,keys],i)=>{
+    cells.push(h('button',{type:'button','aria-expanded':keys.length>1?String(HOME_OPEN===g):null,
+      onclick:()=>{if(keys.length===1){HOME_OPEN='';navGo(keys[0])}else{HOME_OPEN=HOME_OPEN===g?'':g;render();
+        if(HOME_OPEN)setTimeout(()=>{const p=document.querySelector('.hpages');if(p)p.scrollIntoView({behavior:'smooth',block:'center'})},30)}}},g));
+    const rowEnd=i%2===1||i===gs.length-1, row=gs.slice(i-(i%2),i+1).map(([x])=>x);
+    if(rowEnd&&row.includes(HOME_OPEN)) cells.push(pages(HOME_OPEN));
+  });
+  return h('div',{class:'hmenu'},h('div',{class:'mhead'},'Menu'),h('div',{class:'cgrid'},cells));
 }
 function staffNav(){
   const tabs=staffTabs(); if(tabs.length<2) return null;
