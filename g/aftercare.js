@@ -4,19 +4,19 @@
 
 const AC_PHONE='(609) 383-5504', AC_SITE='taffetadesign.com';
 const AC_SHEETS=[
-  {id:'brow',name:'Brow lamination',title:'Your brow lamination aftercare',
+  {id:'brow',kind:'skin',name:'Brow lamination',title:'Your brow lamination aftercare',
    intro:'Your brows are freshly set. These first 24 hours decide how long the shape lasts, so be gentle with them.',
    sections:[
     ['First 24 hours',['Keep your brows completely dry: no washing your face over them, steam, saunas, swimming or sweaty workouts.','No makeup, brow gel, oils or skincare on your brows.','Don’t rub or touch your brows, and try not to sleep face-down tonight.']],
     ['Every day after',['Brush your brows into shape each morning with a clean spoolie.','After the first 24 hours, smooth a nourishing brow oil or serum through them each night to keep the hairs healthy.','Keep retinol, acids and exfoliants away from the brow area.']],
     ['Good to know',['Your lamination lasts about 6–8 weeks.','Please wait at least 6 weeks between laminations.','If you notice redness, swelling or irritation that doesn’t settle, call or text us.']]]},
-  {id:'lash',name:'Lash lift & tint',title:'Your lash lift & tint aftercare',
+  {id:'lash',kind:'skin',name:'Lash lift & tint',title:'Your lash lift & tint aftercare',
    intro:'Your lashes are lifted and tinted. Keep them dry and oil-free for the first day so the curl sets.',
    sections:[
     ['First 24 hours',['Keep your lashes completely dry: no water on your eyes, steam, saunas, swimming or sweaty workouts.','No mascara or eye makeup.','Don’t rub your eyes, and try not to sleep face-down tonight.']],
     ['Every day after',['Brush your lashes up gently with a clean spoolie each morning.','Skip oil-based cleansers and eye makeup removers around your eyes. Oil relaxes the lift.','No lash curler, and skip waterproof mascara. It is hard to remove without tugging.','A lash conditioning serum after the first 24 hours keeps them strong.']],
     ['Good to know',['Your lift lasts about 6–8 weeks, and the tint fades gradually over 4–6 weeks.','If your eyes feel irritated or look red after today, call or text us.']]]},
-  {id:'ext',name:'Hair extensions',title:'Your hair extension aftercare',
+  {id:'ext',kind:'hair',name:'Hair extensions',title:'Your hair extension aftercare',
    intro:'Your extensions are an investment. A few simple habits keep them looking beautiful and your own hair healthy.',
    sections:[
     ['First 48 hours',['Wait 48 hours before your first wash so the bonds and tapes can set.','Avoid heavy sweating, steam and swimming.']],
@@ -31,6 +31,14 @@ function acLib(){
   if(window.jspdf) return Promise.resolve(window.jspdf);
   return AC_LIB||(AC_LIB=new Promise((ok,no)=>{const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';s.onload=()=>ok(window.jspdf);s.onerror=()=>{AC_LIB=null;no(new Error('lib'))};document.head.appendChild(s)}));
 }
+/* daintier script (same as the Home care PDFs): Cormorant Garamond Light Italic, Times italic if it can't load */
+let AC_SCRIPT=null;
+function acScriptFont(){
+  if(AC_SCRIPT!==null) return Promise.resolve(AC_SCRIPT);
+  return fetch((window.AC_LOGO_URL||'../g/logo.png').replace(/logo\.png.*$/,'cormorant-garamond-300-italic.ttf')).then(r=>{if(!r.ok)throw 0;return r.arrayBuffer()})
+    .then(b=>{const u=new Uint8Array(b);let s='';for(let i=0;i<u.length;i+=32768)s+=String.fromCharCode.apply(null,u.subarray(i,i+32768));return AC_SCRIPT=btoa(s)})
+    .catch(()=>AC_SCRIPT='');
+}
 function acLogo(){
   if(AC_LOGO) return Promise.resolve(AC_LOGO);
   return fetch(window.AC_LOGO_URL||'../g/logo.png').then(r=>r.blob()).then(b=>new Promise(ok=>{const f=new FileReader();f.onload=()=>ok(AC_LOGO=f.result);f.readAsDataURL(b)})).catch(()=>null);
@@ -38,8 +46,11 @@ function acLogo(){
 
 /* Half-letter page (5.5 × 8.5 in), cream ground, wreath, serif headings: same look as the artists' regimen PDF */
 async function acPdf(sheet,guest){
-  const [lib,logo]=await Promise.all([acLib(),acLogo()]);
+  const [lib,logo,script]=await Promise.all([acLib(),acLogo(),acScriptFont()]);
   const doc=new lib.jsPDF({unit:'pt',format:[396,612]});
+  let SF='times';
+  if(script){try{doc.addFileToVFS('CormorantLightItalic.ttf',script);doc.addFont('CormorantLightItalic.ttf','CormorantLI','italic');SF='CormorantLI'}catch(e){SF='times'}}
+  const big=SF==='times'?1:1.12;
   const W=396,H=612,M=34,CW=W-M*2,ink=[18,18,18],soft=[95,91,85],choc=[74,52,38],line=[226,222,213];
   let y=0;
   const bg=()=>{doc.setFillColor(248,246,240);doc.rect(0,0,W,H,'F')};
@@ -53,15 +64,15 @@ async function acPdf(sheet,guest){
   bg();
   if(logo) doc.addImage(logo,'PNG',W/2-34,24,68,68);
   y=104;
-  doc.setFont('times','italic');doc.setFontSize(21);doc.setTextColor(...ink);
+  doc.setFont(SF,'italic');doc.setFontSize(21*big);doc.setTextColor(...ink);
   doc.text(doc.splitTextToSize(sheet.title,CW),W/2,y+18,{align:'center'});y+=30;
   doc.setFont('helvetica','normal');doc.setFontSize(9.5);doc.setTextColor(...soft);
   doc.text([guest?'For '+guest:'',new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})].filter(Boolean).join('  ·  '),W/2,y+10,{align:'center'});y+=24;
-  para(sheet.intro,10.5,'times','italic',ink,6);
+  para(sheet.intro,10.5*big,SF,'italic',ink,6);
   sheet.sections.forEach(([t,items])=>{label(t);items.forEach(n=>{need(16);doc.setFont('helvetica','normal');doc.setTextColor(...choc);doc.setFontSize(9.5);doc.text('•',M+2,y+9.5);para(n,9.5,'helvetica','normal',ink,4,14)})});
   y+=10;need(40);
   para('Questions? Call or text us at '+AC_PHONE+'.',9.5,'helvetica','bold',choc,8);
-  doc.setFont('times','italic');doc.setFontSize(13);doc.setTextColor(...choc);need(20);doc.text('xo, Taffeta  ·  Hi Pretty',W/2,y+12,{align:'center'});
+  doc.setFont(SF,'italic');doc.setFontSize(13*big);doc.setTextColor(...choc);need(20);doc.text(sheet.kind==='hair'?'xo, Taffeta  ·  Pretty Hair':'Pretty Skin by Taffeta',W/2,y+12,{align:'center'});
   foot();
   return doc.output('blob');
 }

@@ -344,7 +344,7 @@ async function rgPdf(me,R,kind){
   if(logo) doc.addImage(logo,'PNG',W/2-34,24,68,68);
   y=104;
   doc.setFont(SF,'italic');doc.setFontSize(22*big);doc.setTextColor(...ink);
-  doc.text(kind==='skin'?'Your at-home skincare':'Home Maintenance',W/2,y+18,{align:'center'});y+=30;
+  doc.text('Home Maintenance',W/2,y+18,{align:'center'});y+=30;
   doc.setFont('helvetica','normal');doc.setFontSize(9.5);doc.setTextColor(...soft);
   const who=[R.guest.trim()?'For '+R.guest.trim():'',me?'from '+me:'',rgDate()].filter(Boolean).join('  ·  ');
   doc.text(who,W/2,y+10,{align:'center'});y+=18;
