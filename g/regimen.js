@@ -122,7 +122,6 @@ const RG_LIST={
       ['Oribe Hair Alchemy Resilience Conditioner',RG_HOW.haircond],
       ['Oribe Serene Scalp Balancing Conditioner',RG_HOW.haircond],
       ['Oribe Eternal Curl Intense Conditioner',RG_HOW.haircond],
-      ['Davines Love Conditioner',RG_HOW.haircond],
       ['Davines NouNou Conditioner',RG_HOW.haircond],
       ['Brazilian Blowout Anti-Frizz Conditioner',RG_HOW.haircond],
       ['Aluram Moisture Conditioner',RG_HOW.haircond],
