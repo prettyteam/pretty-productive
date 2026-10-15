@@ -41,7 +41,7 @@ const RX_PROD={
   skClean:['Biologique Recherche Lait VIP O2 (1.7 oz)',35,'A gentle cleansing milk to start a real routine'],
   skMask:['Biologique Recherche Masque VIVANT',95,'Weekly mask for oily, blemish-prone skin']
 };
-const RX_TRY=3; /* Try Me bottle: 1 oz of any backbar product */
+const RX_TRY=6; /* Try Me bottle: 1 oz of any backbar product */
 /* Home care price list artists learn and star their go-tos from: every hair and skin retail product we carry, at the
    retail price in Paired Plus (Retail Price List report, Oct 15 2026). Oribe Bright Blonde is discontinued and gone.
    Taffeta Refillable is our backbar shampoo + conditioner in Taffeta bottles: new bottle or a refill into her own bottle (Paired Plus, Oct 15 2026). */
@@ -108,7 +108,7 @@ function rxPriceList(kind){
         return [mine.length?h('div',{},h('span',{class:'lbl'},'★ My go-tos'),...mine.map(row)):null,
           ...rxByBrand(items.filter(([n])=>!favs.includes(n))).map(([b,L])=>{const d=h('details',{class:'invg'},h('summary',{},h('h2',{style:'font-size:17px'},b),h('span',{class:'soft invc'},String(L.length)),h('span',{class:'tplus','aria-hidden':'true'},'+')),
             h('div',{class:'sec2'},...L.map(row)));if(q)d.open=true;return d})]})(),
-      h('p',{class:'soft'},'Try Me bottle: 1 oz of any backbar product, $3. Prices are brand list prices; ring up from the POS.')));
+      h('p',{class:'soft'},'Try Me bottle: 1 oz of any backbar product, $6. Retail prices from Paired Plus; ring up from the POS.')));
   if(q) d.open=true;
   return d;
 }
@@ -325,7 +325,7 @@ function rxEditor(R,me){
       favs.length?h('optgroup',{label:'My go-tos'},plist.filter(x=>favs.includes(x[0])).map(([n,p])=>h('option',{value:n},n+' · '+rxMoney(p)))):null,
       h('optgroup',{label:'Services'},RX_SVC[R.kind].filter(([n])=>!(n==='Glaze'&&L.some(l=>RX_BAL.test(l.n)))).map(([n,p])=>h('option',{value:n},n+' · '+rxMoney(p)))),
       ...rxByBrand(plist).map(([b,L])=>h('optgroup',{label:'Home care · '+b},L.map(([n,p])=>h('option',{value:n},n+' · '+rxMoney(p))))),
-      h('optgroup',{label:'Try Me'},h('option',{value:'__try'},'Try Me bottle · $3')));
+      h('optgroup',{label:'Try Me'},h('option',{value:'__try'},'Try Me bottle · '+rxMoney(RX_TRY))));
     sel.addEventListener('change',()=>{const n=sel.value;if(!n)return;if(n==='__try'){const what=prompt('Which product goes in the Try Me bottle?');if(what)L.push({n:what.trim(),p:RX_TRY,t:'t'});rxSave();render();return}
       const sv=RX_SVC[R.kind].find(x=>x[0]===n);const pr=plist.find(x=>x[0]===n);const ex=Object.values(RX_PROD).find(x=>x[0]===n);
       L.push(sv?{n,p:sv[1],t:'s'}:{n,p:pr[1],t:'p',why:ex?ex[2]:'',full:pr[1]});rxSave();render()});return h('label',{class:'fld'},sel)};

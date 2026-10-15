@@ -54,7 +54,7 @@ function pricesView(){
         h('div',{class:'sec2'},...L.map(([n,p])=>srow(n,p))));if(q)d.open=true;return d}))});
     body=[mine.length?h('section',{class:'card2'},h('span',{class:'lbl'},'★ Your go-tos'),...mine.map(([n,p])=>srow(n,p))):
         (q?null:h('small',{class:'soft',style:'text-align:center'},'Tap ☆ on the products you reach for most. They move to the top here and in the RX card menu, on your phone and the salon iPad.')),
-      h('section',{class:'card2'},h('span',{class:'lbl'},'Try Me bottle'),row('1 oz of any backbar product','$3')),...lines];
+      h('section',{class:'card2'},h('span',{class:'lbl'},'Try Me bottle'),row('1 oz of any backbar product','$6')),...lines];
     body.push(h('small',{class:'soft',style:'text-align:center'},'Brand list prices. Always ring up from the POS.'));
   }
   return [h('div',{class:'hub'},h('div',{},h('span',{class:'lbl'},'Salon & spa'),h('h1',{style:'font-size:28px'},'Prices'),
