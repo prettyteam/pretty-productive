@@ -125,27 +125,29 @@ const RX_BAL_M=[['Minimum Balayage','Female Haircut'],'10–12 weeks','A minimum
 /* What she's hoping for → service packages, fullest first. */
 const RX_GOAL={
   hair:{
-    'Lived-in blonde (balayage)':{p:[['Full Head Balayage','Female Haircut'],['Half Head Balayage','Female Haircut'],['Minimum Balayage','Female Haircut'],['Minimum Balayage']],
+    'Lived-In Blonde (Balayage)':{p:[['Full Head Balayage','Female Haircut'],['Half Head Balayage','Female Haircut'],['Minimum Balayage','Female Haircut'],['Minimum Balayage']],
       m:RX_BAL_M},
-    'Brighter blonde (foils)':{p:[['Full Foil','Glaze','Female Haircut'],['Half Foil','Glaze','Female Haircut'],['Minimum Foil','Glaze','Female Haircut'],['Face Frame/Spot Highlight','Glaze'],['Minimum Foil','Glaze']],
+    'Brighter Blonde (Foils)':{p:[['Full Foil','Glaze','Female Haircut'],['Half Foil','Glaze','Female Haircut'],['Minimum Foil','Glaze','Female Haircut'],['Face Frame/Spot Highlight','Glaze'],['Minimum Foil','Glaze']],
       m:[['Minimum Foil','Glaze','Leave Wet (no haircut)'],'8–10 weeks','Foils around the part and hairline and a glaze. If you get your cut today, skip it next time to save: leave wet, or add a $50 blow dry. Need a trim? A haircut leaving wet is $50.']},
-    'Root touch-up or gray coverage':{p:[['Single Process','Glaze','Female Haircut','Blow Dry'],['Single Process','Glaze','Female Haircut'],['Single Process','Female Haircut'],['Single Process']],
+    'Root Touch-Up Or Gray Coverage':{p:[['Single Process','Glaze','Female Haircut','Blow Dry'],['Single Process','Glaze','Female Haircut'],['Single Process','Female Haircut'],['Single Process']],
       m:[['Single Process'],'4–6 weeks','Roots only. Add a cut every other visit.']},
-    'Shine and tone refresh (glaze)':{p:[['Glaze','Female Haircut','Blow Dry'],['Glaze','Female Haircut'],['Glaze']],
+    'Shine And Tone Refresh (Glaze)':{p:[['Glaze','Female Haircut','Blow Dry'],['Glaze','Female Haircut'],['Glaze']],
       m:[['Glaze'],'6–8 weeks','A glaze to bring the shine and tone back.']},
-    'New cut or shape':{p:[['Female Haircut','Blow Dry'],['Female Haircut'],['Haircut Leaving Wet']],
+    'New Cut Or Shape':{p:[['Female Haircut','Blow Dry'],['Female Haircut'],['Haircut Leaving Wet']],
       m:[['Female Haircut'],'6–8 weeks','A trim to keep the shape.']},
-    'Big change (transformation)':{p:[['Full Head Balayage','Female Haircut','Blow Dry'],['Full Foil','Glaze','Female Haircut'],['Half Head Balayage','Female Haircut'],['Half Foil','Glaze','Female Haircut']],
+    'Movement (Layers & Texture)':{p:[['Female Haircut','Blowdry Plus'],['Female Haircut','Blow Dry'],['Female Haircut']],
+      m:[['Female Haircut'],'6–8 weeks','A trim to keep the layers moving and the shape fresh.']},
+    'Big Change (Transformation)':{p:[['Full Head Balayage','Female Haircut','Blow Dry'],['Full Foil','Glaze','Female Haircut'],['Half Head Balayage','Female Haircut'],['Half Foil','Glaze','Female Haircut']],
       m:[['Face Frame/Spot Highlight','Glaze','Leave Wet (no haircut)'],'8–10 weeks','A big change can take more than one visit. Next time: face-framing foils and a glaze. If you get your cut today, skip it next time to save: leave wet, or add a $50 blow dry. Need a trim? A haircut leaving wet is $50.']},
-    'Blowout or style':{p:[['Blowdry Plus'],['Blow Dry']],m:[['Blow Dry'],'1–2 weeks','A blowout for your next event.']}
+    'Blowout Or Style':{p:[['Blowdry Plus'],['Blow Dry']],m:[['Blow Dry'],'1–2 weeks','A blowout for your next event.']}
   },
   skin:{
-    'Clear breakouts':{p:[['Taffeta Facial'],['Express Acne Treatment']],m:[['Express Acne Treatment'],'4 weeks','A focused 30-minute treatment to stay clear.']},
-    'Calm redness':{p:[['Taffeta Facial'],['Mini Redness Reversal']],m:[['Mini Redness Reversal'],'4 weeks','A calming 30-minute treatment.']},
-    'Brighten or even tone':{p:[['Taffeta Facial','Dermaplaning Add-On'],['Taffeta Facial'],['Brightening Mini Facial']],m:[['Brightening Mini Facial'],'4 weeks','A 30-minute brightening treatment.']},
+    'Clear Breakouts':{p:[['Taffeta Facial'],['Express Acne Treatment']],m:[['Express Acne Treatment'],'4 weeks','A focused 30-minute treatment to stay clear.']},
+    'Calm Redness':{p:[['Taffeta Facial'],['Mini Redness Reversal']],m:[['Mini Redness Reversal'],'4 weeks','A calming 30-minute treatment.']},
+    'Brighten Or Even Tone':{p:[['Taffeta Facial','Dermaplaning Add-On'],['Taffeta Facial'],['Brightening Mini Facial']],m:[['Brightening Mini Facial'],'4 weeks','A 30-minute brightening treatment.']},
     'Hydrate':{p:[['Taffeta Facial'],['Hydration Boost']],m:[['Hydration Boost'],'4 weeks','A 30-minute moisture boost.']},
-    'Fine lines and firmness':{p:[['Nano Needling Facial'],['Taffeta Facial'],['Anti-Aging Express']],m:[['Anti-Aging Express'],'4 weeks','A 30-minute treatment for firmness and fine lines.']},
-    'Overall glow':{p:[['Taffeta Facial'],['Hydration Boost']],m:[['Taffeta Facial'],'4–6 weeks','Your facial every 4 to 6 weeks keeps skin on track.']}
+    'Fine Lines And Firmness':{p:[['Nano Needling Facial'],['Taffeta Facial'],['Anti-Aging Express']],m:[['Anti-Aging Express'],'4 weeks','A 30-minute treatment for firmness and fine lines.']},
+    'Overall Glow':{p:[['Taffeta Facial'],['Hydration Boost']],m:[['Taffeta Facial'],'4–6 weeks','Your facial every 4 to 6 weeks keeps skin on track.']}
   }
 };
 
@@ -230,7 +232,9 @@ const rxTotal=L=>L.reduce((s,x)=>s+(Number(x.p)||0),0);
 /* Option 1 fits inside the budget (lighter service, or Try Me bottles before dropping home care); Option 2 is the full look. */
 /* She can pick more than one goal (Alexandra, Oct 15 2026): the packages merge tier by tier, without doubles
    (a full cut wins over leaving wet, Blowdry Plus over Blow Dry). Old cards saved one goal as text. */
-const rxGoalList=R=>Array.isArray(R.goal)?R.goal:(R.goal?[R.goal]:[]);
+/* goal names are Title Case (Alexandra, Oct 15 2026); cards saved before still match by spelling, any case */
+const rxGoalKey=(R,g)=>Object.keys((RX_GOAL[R.kind]||{})).find(k=>k.toLowerCase()===String(g).toLowerCase())||g;
+const rxGoalList=R=>(Array.isArray(R.goal)?R.goal:(R.goal?[R.goal]:[])).map(g=>rxGoalKey(R,g));
 function rxMergeSvc(names){
   let L=[...new Set(names)];
   if(L.includes('Female Haircut')) L=L.filter(n=>n!=='Haircut Leaving Wet'&&n!=='Leave Wet (no haircut)');
@@ -320,7 +324,7 @@ function rxBuild(R,me){
     h('label',{class:'fld'},'Guest’s first name',gIn),
     h('label',{class:'fld'},'Her budget for today, home care included',bIn),
     chips(['No set budget'],()=>R.nob,()=>{R.nob=!R.nob}),
-    h('div',{class:'fld'},'Her goals for this / future appointments',chips(Object.keys(RX_GOAL[R.kind]),o=>rxGoalList(R).includes(o),o=>{const L=rxGoalList(R);R.goal=L.includes(o)?L.filter(x=>x!==o):[...L,o]})),
+    h('div',{class:'fld'},'Her goals for today',chips(Object.keys(RX_GOAL[R.kind]),o=>rxGoalList(R).includes(o),o=>{const L=rxGoalList(R);R.goal=L.includes(o)?L.filter(x=>x!==o):[...L,o]})),
     rxPriceList(R.kind));
   const s2=h('section',{class:'card2'},h('span',{class:'lbl'},'2 · Her routine'),
     ...RX_Q[R.kind].map(([key,q,opts,multi])=>h('div',{class:'fld'},q,chips(opts,
