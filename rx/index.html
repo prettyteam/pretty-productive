@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#eae6dd"><meta name="robots" content="noindex">
+<title>Your RX · Taffeta Salon &amp; Spa</title>
+<link rel="icon" href="../icon.png"><link rel="apple-touch-icon" href="../icon.png">
+<link rel="stylesheet" href="../g/base.css">
+<style>
+/* The guest's RX card: white page with a thin cream border, like the Home Maintenance PDF. Everything comes from the link after #. */
+html,body{background:var(--card)}
+main{padding:14px 12px 40px}
+.page{background:#fff;border:10px solid var(--card);outline:1px solid var(--line);padding:26px 22px 22px;display:flex;flex-direction:column;gap:18px}
+.top img{width:70px}
+.rxh{display:flex;align-items:center;gap:14px;border-top:1px solid var(--ink);border-bottom:1px solid var(--ink);padding:10px 0}
+.rxh .rx{font-family:var(--display);font-size:52px;line-height:.85}
+.rxh p{font-size:14px;line-height:1.4}
+.for{display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px;font-size:14px;color:var(--soft)}
+.talk{font-size:15px}
+.rxo{display:flex;flex-direction:column;gap:5px}
+.rxo h2{font-family:var(--pep);font-style:italic;font-weight:500;font-size:25px}
+.li{display:flex;justify-content:space-between;gap:12px;font-size:15px;font-variant-numeric:tabular-nums}
+.li small{display:block;color:var(--soft);font-size:12.5px}
+.tot{display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--line);padding-top:6px;font-weight:700;font-variant-numeric:tabular-nums}
+.badge{font-weight:400;font-size:12.5px;border:1px solid currentColor;border-radius:999px;padding:1px 9px}
+.badge.ok{color:#2f6b3f}.badge.over{color:#9a4a2b}
+.maint{background:var(--ivory);padding:14px 16px;display:flex;flex-direction:column;gap:6px}
+.maint .eyebrow{color:var(--brown)}
+.sign{font-family:var(--pep);font-style:italic;font-weight:500;font-size:24px;text-align:center;color:var(--brown)}
+.foot{font-size:12.5px;color:var(--soft);text-align:center;border-top:1px solid var(--line);padding-top:10px}
+.foot a{color:inherit}
+.bad{text-align:center;padding:60px 10px}
+</style>
+</head><body>
+<main id="app"></main>
+<script>
+(async function(){
+  const app=document.getElementById('app');
+  const el=(t,a,...k)=>{const e=document.createElement(t);for(const[x,v]of Object.entries(a||{}))if(v!=null)x==='class'?e.className=v:e.setAttribute(x,v);for(const c of k.flat())if(c!=null&&c!==false)e.append(c.nodeType?c:document.createTextNode(String(c)));return e};
+  const money=n=>'$'+(Math.round(n*100)/100).toLocaleString('en-US',{maximumFractionDigits:2});
+  let c=null;
+  try{
+  const raw=location.hash.slice(1), z=raw[0]==='z', bin=Uint8Array.from(atob((z?raw.slice(1):raw).replace(/-/g,'+').replace(/_/g,'/')),ch=>ch.charCodeAt(0));
+  if(z) c=JSON.parse(await new Response(new Blob([bin]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).text());
+  else c=JSON.parse(new TextDecoder().decode(bin));
+  }catch(e){c=null}
+  if(!c||c.v!==1){app.append(el('div',{class:'bad'},el('h1',{},'This card didn’t open'),el('p',{},'Ask your Taffeta artist to show the QR again.')));return}
+  const skin=c.k==='skin', date=new Date((c.d||'')+'T12:00');
+  document.title=(c.g?c.g+'’s ':'Your ')+'RX · Taffeta Salon & Spa';
+  const opts=(c.o||[]).map(([title,lines],i)=>{const t=lines.reduce((s,l)=>s+l[1],0);
+    return el('section',{class:'rxo'},el('h2',{},title+(i===0?', today':', the full look')),
+      lines.map(([n,p,k])=>el('div',{class:'li'},el('span',{},k==='t'?'Try Me: '+n:n,k==='s'?null:el('small',{},k==='t'?'1 oz Try Me bottle, home care':'Home care')),el('span',{},money(p)))),
+      lines.some(l=>l[2]!=='s')?null:el('div',{class:'li'},el('span',{},'Home care',el('small',{},'Keep your current routine')),el('span',{},'')),
+      el('div',{class:'tot'},c.b?el('span',{class:'badge '+(t<=c.b?'ok':'over')},t<=c.b?'Within your budget':money(t-c.b)+' over your budget'):el('span',{}),el('span',{},money(t))));
+  });
+  const m=c.m||[[],'',''], mt=m[0].reduce((s,l)=>s+l[1],0);
+  app.append(el('div',{class:'page'},
+    el('div',{class:'top'},el('img',{src:'../g/logo.png',alt:'Taffeta Salon & Spa'})),
+    el('div',{class:'rxh'},el('span',{class:'rx'},'Rx'),el('p',{},'Your personal plan from today’s consultation: two options, your home care, and what your next visit looks like.')),
+    el('div',{class:'for'},el('span',{},'For '+(c.g||'you')),el('span',{},(c.a?'with '+c.a+' · ':'')+(isNaN(date)?'':date.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})))),
+    c.w||(c.n&&c.n.length)?el('p',{class:'talk'},c.w?el('b',{},'You’re hoping for: '):null,c.w||'',c.n&&c.n.length?el('br'):null,c.n&&c.n.length?[el('b',{},'Right now: '),c.n.join(', ').toLowerCase()]:null):null,
+    c.b?el('p',{class:'talk'},el('b',{},'Your budget today: '),money(c.b)):null,
+    opts,
+    el('section',{class:'maint'},el('span',{class:'eyebrow'},'Your maintenance visit'),
+      m[0].map(([n,p])=>el('div',{class:'li'},el('span',{},n),el('span',{},money(p)))),
+      el('div',{class:'tot'},el('span',{},m[1]?'In about '+m[1]:''),el('span',{},money(mt))),
+      m[2]?el('p',{style:'font-size:14px'},m[2]):null),
+    c.r?el('p',{class:'talk',style:'text-align:center'},el('b',{},'Refresh in '),c.r):null,
+    el('p',{class:'sign'},skin?'Pretty Skin by Taffeta':'xo, '+(c.a||'Taffeta')+' · Pretty Hair'),
+    el('p',{class:'foot'},'Prices are estimates and can change with time and product used. ',el('br'),'Book your next visit: ',el('a',{href:'tel:+16093835504'},'(609) 383-5504'),' · ',el('a',{href:'https://taffetadesign.com'},'taffetadesign.com'))));
+})();
+</script>
+</body></html>

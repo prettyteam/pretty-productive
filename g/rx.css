@@ -1,0 +1,15 @@
+/* RX consultation cards (g/rx.js) */
+.rxl{display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--line);padding:8px 0}
+.rxl:last-of-type{border-bottom:0}
+.rxn{flex:1;min-width:0;display:flex;flex-direction:column}
+.rxn b{font-weight:500;font-size:15px}
+.rxn small{font-size:12.5px}
+.rxp{width:76px;flex:none;font:inherit;font-size:16px;height:38px;border:1px solid var(--line);border-radius:4px;background:#fbfaf7;padding:0 8px;text-align:right}
+.rxtry{flex:none;font-size:12px;padding:4px 10px}
+.rxtot{display:flex;justify-content:space-between;align-items:center;gap:10px;border-top:1px solid var(--ink);padding-top:8px}
+.rxtot b{font-family:var(--display);font-weight:400;font-size:22px;margin-left:auto}
+.rxbadge{font-size:12px;border-radius:999px;padding:2px 10px;border:1px solid currentColor;white-space:nowrap}
+.rxbadge.ok{color:#2f6b3f}.rxbadge.over{color:#9a4a2b}
+.rxqr{width:min(380px,82vw);height:auto;image-rendering:pixelated;border:1px solid var(--line)}
+.rxscript{font-family:"Cormorant Garamond",Georgia,serif;font-style:italic;font-size:24px}
+.fld select{font:inherit;font-size:16px;height:44px;border:1px solid var(--line);border-radius:4px;background:#fbfaf7;padding:0 10px;width:100%}
