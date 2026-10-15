@@ -839,11 +839,20 @@ function fillForm(){
   setMode(S.mode,false);
   renderArtists();renderPeople();renderSheet();renderExt();
 }
+/* an artist's answer: the invite the app sent, else her answer on the wedding's own Google Calendar event
+   (artists added straight from the calendar, like Kat on Katie Leyden, Oct 15 2026) */
+function rsvpOf(a){
+  const sent=S.cal&&S.cal["w:"+a.id]&&S.cal["w:"+a.id].status; if(sent) return sent;
+  const w=docId&&allWeddings.find(x=>x.id===docId), team=(w&&w.d.calInfo&&w.d.calInfo.team)||[];
+  const first=n=>String(n||"").trim().toLowerCase().split(/\s+/)[0];
+  const t=team.find(t=>t.name&&a.name&&(t.name.toLowerCase()===a.name.toLowerCase()||first(t.name)===first(a.name)));
+  return t?({yes:"accepted",no:"declined",maybe:"tentative",waiting:"needsAction",invited:"needsAction"}[String(t.status||"").toLowerCase()]||""):"";
+}
 function renderArtists(){
   const box=$("#artists");box.innerHTML="";
   S.artists.forEach(a=>{
     const d=document.createElement("div");d.className="item artist";
-    const st=(S.cal&&S.cal["w:"+a.id]&&S.cal["w:"+a.id].status)||"";
+    const st=rsvpOf(a);
     const chip=st?'<span class="pill rsvp-'+st+'">'+({accepted:"Confirmed",declined:"Declined",tentative:"Maybe",needsAction:"Waiting"}[st]||st)+'</span>':'';
     const opts='<option value="">Pick from team…</option>'+profiles.map(pr=>'<option value="'+esc(pr._id)+'"'+(pr._id===a.uid?' selected':'')+'>'+esc(pr.preferredName||pr.legalName||"Unnamed")+'</option>').join("");
     d.innerHTML='<select aria-label="Role" id="ar-'+a.id+'"><option value="hair">Hair</option><option value="mu">Makeup</option></select><input id="an-'+a.id+'" placeholder="Artist name" value="'+esc(a.name)+'"><button class="x" aria-label="Remove artist">×</button>'
@@ -881,7 +890,7 @@ function renderCalTeam(){
   if(!docId||!$("#cal-wedding").value){box.innerHTML='<p class="hint">Choose a wedding above.</p>';return}
   if(!S.artists.length){box.innerHTML='<p class="hint">No team on this wedding yet. Add the artists on the Timeline tab (Team on site).</p>';return}
   box.innerHTML=S.artists.map(a=>{
-    const st=(S.cal&&S.cal["w:"+a.id]&&S.cal["w:"+a.id].status)||"";
+    const st=rsvpOf(a);
     const chip=st?'<span class="pill rsvp-'+st+'">'+({accepted:"Confirmed",declined:"Declined",tentative:"Maybe",needsAction:"Waiting"}[st]||st)+'</span>':'<span class="hint">Not sent</span>';
     return '<div class="item" style="display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center"><b>'+esc(a.name||"Unnamed")+'</b><span>'+(a.role==="hair"?"Hair":"Makeup")+'</span><span>'+(a.email?esc(a.email):'<span class="hint">No email yet: add it on the Timeline tab</span>')+'</span>'+chip+'</div>';
   }).join("");
