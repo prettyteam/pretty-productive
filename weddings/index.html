@@ -1029,6 +1029,11 @@ function renderTeamSheet(){
   if(w.d.startMin==null){
     $("#teamSheet").innerHTML='<div class="empty-state">The detailed timeline for this wedding isn\'t built yet.'+(w.d.calInfo?' Until it is, go by the Google Calendar details above.':' The office will add it here.')+'</div>';
     $("#teamNote").textContent="";$("#teamCopy").disabled=true;$("#teamImg").disabled=true;return}
+  /* A wedding added from bookings or a job offer has no timeline yet (no party saved). Don't fill in the sample
+     8:00 start and sample bridal party: show what's real (Google Calendar, above) until the office builds it. */
+  if(!Array.isArray(w.d.people)){
+    $("#teamSheet").innerHTML='<div class="empty-state">The office hasn’t built this wedding’s timeline yet.'+(w.d.calInfo?' Use the hours and notes from Google Calendar above.':'')+' Your timeline shows here as soon as it’s ready.</div>';
+    $("#teamNote").textContent="";$("#teamCopy").disabled=true;$("#teamImg").disabled=true;return}
   const s=Object.assign(starter(),w.d);
   $("#teamSheet").innerHTML=sheetHTML(s,"team",false).html;
   $("#teamNote").textContent="Updated "+(w.d.updatedAt?new Date(w.d.updatedAt).toLocaleString("en-US",{month:"short",day:"numeric",hour:"numeric",minute:"2-digit"}):"");
