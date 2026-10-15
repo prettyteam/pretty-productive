@@ -19,7 +19,9 @@
   btn.addEventListener('click',async()=>{
     btn.disabled=true; btn.textContent='Refreshing…';
     try{await fetch(page,{cache:'reload'});await fetch('/refresh.js',{cache:'reload'})}catch(e){}
-    location.reload();
+    /* a plain reload can show the old copy in a Home Screen app, so open the page at a fresh address (keeps the link after #) */
+    const u=new URL(page); u.searchParams.set('_r',Date.now().toString(36));
+    location.replace(u.toString()+location.hash);
   });
   /* the copy on this phone vs. the copy on the site, by Last-Modified */
   const mine=Date.parse(document.lastModified)||0;
