@@ -295,8 +295,9 @@ body{padding-bottom:110px}
 .mhead{display:flex;align-items:center;gap:14px;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:#8a7466}
 .mhead::before,.mhead::after{content:"";flex:1;height:1px;background:var(--line)}
 .hmenu .cgrid{display:grid;grid-template-columns:repeat(2,124px);gap:8px;justify-content:center}
-.hmenu .cgrid button{background:#2b2a28;color:#f2f1ec;border:0;border-radius:0;aspect-ratio:1/1;font-family:var(--display);font-size:19.5px;line-height:1.15;padding:2px;letter-spacing:-.01em;cursor:pointer;display:flex;align-items:center;justify-content:center;text-align:center}
-.hmenu .cgrid button[aria-expanded="true"]{outline:1px solid #2b2a28;outline-offset:3px}
+/* greige squares with a thin inner line and dark text, like the Hi Pretty tile (Alexandra, Oct 15 2026) */
+.hmenu .cgrid button{background:#e4ded5;color:#2b2620;border:0;outline:1px solid #b9b0a4;outline-offset:-6px;border-radius:0;aspect-ratio:1/1;font-family:var(--display);font-size:19.5px;line-height:1.15;padding:2px;letter-spacing:-.01em;cursor:pointer;display:flex;align-items:center;justify-content:center;text-align:center}
+.hmenu .cgrid button[aria-expanded="true"]{outline-color:#2b2620}
 .hpages{display:flex;flex-direction:column;align-items:center;gap:2px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:8px 0;max-width:300px;width:100%;margin:0 auto}
 .hpages button{border:0;background:none;font-family:var(--display);font-size:17px;color:#423327;padding:8px;cursor:pointer}
 .navgrp button{flex-direction:row!important;justify-content:flex-start!important;font-family:var(--display);font-size:19px!important;letter-spacing:0!important;text-transform:none!important;color:var(--ink)!important;padding:8px 4px!important;text-align:left}
@@ -1561,7 +1562,7 @@ function homeMenu(){
   const gs=groups.map(([g,keys])=>[g,keys.filter(k=>k!=='home')]).filter(([,k])=>k.length);
   const open=gs.find(([g])=>g===HOME_OPEN);
   return h('div',{class:'hmenu'},h('div',{class:'mhead'},'Menu'),
-    h('div',{class:'cgrid'},gs.map(([g,keys])=>h('button',{type:'button',style:/\S{11,}/.test(g)?'font-size:17px':null,'aria-expanded':keys.length>1?String(HOME_OPEN===g):null,
+    h('div',{class:'cgrid'},gs.map(([g,keys])=>h('button',{type:'button',style:/\S{11,}/.test(g)?'font-size:15.5px':null,'aria-expanded':keys.length>1?String(HOME_OPEN===g):null,
       onclick:()=>{if(keys.length===1){HOME_OPEN='';navGo(keys[0])}else{HOME_OPEN=HOME_OPEN===g?'':g;render()}}},g))),
     open?h('div',{class:'hpages'},open[1].map(k=>h('button',{type:'button',onclick:()=>{HOME_OPEN='';navGo(k)}},label[k]))):null);
 }
