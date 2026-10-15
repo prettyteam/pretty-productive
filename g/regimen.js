@@ -182,7 +182,6 @@ const RG_LIST={
     ['Tools',[
       ['Ergo Ionic Ceramic Round Brush','Blow-dry in sections, rolling the brush from roots to ends with the dryer nozzle pointed down.'],
       ['EHP Hair Extension Brush','Hold your hair at the root and brush from the ends up, twice a day.'],
-      ['EHP Knotty or Nice Brush Set','Brush gently from the ends up.'],
       ['Jolie Filtered Showerhead','Filters out chlorine and minerals that fade color. Change the filter every 3 months.']]]
   ]
 };
