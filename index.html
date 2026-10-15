@@ -1525,8 +1525,9 @@ function homeMenu(){
   const tabs=staffTabs(); if(tabs.length<2) return null;
   const {label,groups}=navGroups(tabs);
   const gs=groups.map(([g,keys])=>[g,keys.filter(k=>k!=='home')]).filter(([,k])=>k.length);
-  return h('div',{class:'card2 homenav'},gs.map(([g,keys])=>h('div',{class:'navgrp'},
-    h('span',{class:'lbl'},g),keys.map(k=>h('button',{type:'button',onclick:()=>navGo(k)},label[k])))));
+  return h('div',{class:'card2'},h('span',{class:'lbl',style:'display:block;text-align:center;margin-bottom:12px'},'Menu'),
+    h('div',{class:'homenav'},gs.map(([g,keys])=>h('div',{class:'navgrp'},
+    h('span',{class:'lbl'},g),keys.map(k=>h('button',{type:'button',onclick:()=>navGo(k)},label[k]))))));
 }
 function staffNav(){
   const tabs=staffTabs(); if(tabs.length<2) return null;
