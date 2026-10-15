@@ -42,6 +42,46 @@ const RX_PROD={
   skMask:['Biologique Recherche Masque VIVANT',95,'Weekly mask for oily, blemish-prone skin']
 };
 const RX_TRY=3; /* Try Me bottle: 1 oz of any backbar product */
+/* Home care price list artists learn and star their go-tos from (product guide brand list prices, Oct 2026).
+   Taffeta Refillable is our backbar shampoo + conditioner in Taffeta bottles; $80 is Alexandra's estimate, confirm in the POS. */
+const RX_PRICES={
+  hair:[['Taffeta Refillable Shampoo + Conditioner',80],['Oribe Shampoo for Beautiful Color',49],['Oribe Conditioner for Beautiful Color',52],
+    ['Oribe Bright Blonde Shampoo',49],['Oribe Gold Lust Repair & Restore Shampoo',56],['Oribe Gold Lust Repair & Restore Conditioner',59],
+    ['Oribe Gold Lust Masque',72],['Oribe Gold Lust Nourishing Oil',59],['Oribe Invisible Defense Universal Protection Spray',44],
+    ['Oribe Royal Blowout Heat Styling Spray',72],['Oribe Imperial Blowout',69],['Oribe Supershine Moisturizing Cream',54],
+    ['Oribe Curl Gloss Hydration & Hold',46],['Oribe Dry Texturizing Spray',52],['Oribe Gold Lust Dry Shampoo',52],
+    ['Oribe Grandiose Hair Plumping Mousse',42],['Oribe Maximista Thickening Spray',42],['Oribe Superfine Hairspray',46],
+    ['Oribe Root Touch Up Spray',36],['Oribe Serene Scalp Soothing Leave-On',48],
+    ['Davines NOUNOU Shampoo',38],['Davines NOUNOU Conditioner',43],['Davines LOVE Smoothing Shampoo',38],['Davines LOVE Smoothing Conditioner',43],
+    ['Davines Volume Boosting Mousse',37],['K18 Leave-In Repair Mask (mini)',29],['K18 Leave-In Repair Mask',75],['K18 Damage Shield Shampoo',39],
+    ['Brazilian Blowout Anti-Frizz Shampoo + Conditioner',80],['Brazilian Blowout Daily Smoothing Serum',43],['Brazilian Blowout Ionic Bonding Spray',34],
+    ['Rossano Ferretti Vivace Everyday Active Shampoo',36],['Rossano Ferretti Heat Protector Spray',59],['Aluram Daily Shampoo',20.99],['Aluram Daily Conditioner',20.99]],
+  skin:[['Biologique Recherche Lotion P50 (1.7 oz)',45],['Biologique Recherche Lotion P50W (1.7 oz)',45],['Biologique Recherche Lotion P50 PIGM 400 (1.7 oz)',45],
+    ['Biologique Recherche Lotion P50V (1.7 oz)',45],['Biologique Recherche Lait VIP O2 (1.7 oz)',35],['Biologique Recherche Masque VIVANT',95],
+    ['Biologique Recherche Crème Dermopurifiante',135],['Biologique Recherche Sérum Grand Millésime (0.3 oz)',115],['Biologique Recherche Crème Grand Millésime',225],
+    ['Biologique Recherche Sérum TEWL (0.3 oz)',85],['Biologique Recherche Sérum Erythros',140],['Biologique Recherche Dermopore (0.3 oz)',60],
+    ['Biologique Recherche Crème MSR-H',330],['BR Skin Box (Youth, Standard or Blemish)',50]]
+};
+const rxFavKey=()=>'pp-rxfav:'+rxSlug();
+function rxFavs(){ try{return JSON.parse(store.get(rxFavKey())||'[]')}catch(e){return []} }
+function rxFavToggle(n){ const f=rxFavs(), i=f.indexOf(n); i<0?f.push(n):f.splice(i,1); store.set(rxFavKey(),JSON.stringify(f)) }
+let RX_PQ='';
+/* Price list with stars: her go-tos float to the top of every "+ Add" menu */
+function rxPriceList(kind){
+  const favs=rxFavs(), q=RX_PQ.trim().toLowerCase();
+  const items=RX_PRICES[kind].filter(([n])=>!q||n.toLowerCase().includes(q)).sort((a,b)=>(favs.includes(b[0])-favs.includes(a[0])));
+  const s=h('input',{type:'search',id:'rxpq',value:RX_PQ,placeholder:'Search a product',autocomplete:'off'});
+  s.addEventListener('input',()=>{RX_PQ=s.value;const pos=s.selectionStart;render();const n=document.getElementById('rxpq');if(n){n.focus();try{n.setSelectionRange(pos,pos)}catch(e){}}});
+  const d=h('details',{class:'invg',id:'rxpl'},h('summary',{},h('h2',{},'Home care prices'),h('span',{class:'soft invc'},favs.length?favs.length+' starred':''),h('span',{class:'tplus','aria-hidden':'true'},'+')),
+    h('div',{class:'sec2'},h('p',{class:'soft'},'Know what your favorites cost so you can build them into her budget. Star your go-tos and they show first when you add home care.'),
+      h('label',{class:'fld'},s),
+      ...items.map(([n,p])=>h('div',{class:'rxl'},
+        h('button',{type:'button',class:'rxstar','aria-pressed':String(favs.includes(n)),'aria-label':(favs.includes(n)?'Unstar ':'Star ')+n,onclick:()=>{rxFavToggle(n);render();const x=document.getElementById('rxpl');if(x)x.open=true}},favs.includes(n)?'★':'☆'),
+        h('div',{class:'rxn'},h('b',{},n.replace(/^Biologique Recherche /,'BR '))),h('span',{class:'num'},rxMoney(p)))),
+      h('p',{class:'soft'},'Try Me bottle: 1 oz of any backbar product, $3. Prices are brand list prices; ring up from the POS.')));
+  if(q) d.open=true;
+  return d;
+}
 
 /* What she's hoping for → service packages, fullest first. */
 const RX_GOAL={
@@ -203,7 +243,8 @@ function rxBuild(R,me){
     h('label',{class:'fld'},'Guest’s first name',gIn),
     h('label',{class:'fld'},'Her budget for today, home care included',bIn),
     chips(['No set budget'],()=>R.nob,()=>{R.nob=!R.nob}),
-    h('div',{class:'fld'},'What is she hoping for?',chips(Object.keys(RX_GOAL[R.kind]),o=>R.goal===o,o=>{R.goal=R.goal===o?'':o})));
+    h('div',{class:'fld'},'What is she hoping for?',chips(Object.keys(RX_GOAL[R.kind]),o=>R.goal===o,o=>{R.goal=R.goal===o?'':o})),
+    rxPriceList(R.kind));
   const s2=h('section',{class:'card2'},h('span',{class:'lbl'},'2 · Her routine'),
     ...RX_Q[R.kind].map(([key,q,opts,multi])=>h('div',{class:'fld'},q,chips(opts,
       o=>multi?[].concat(R.a[key]||[]).includes(o):R.a[key]===o,
@@ -222,18 +263,23 @@ function rxBuild(R,me){
 
 function rxEditor(R,me){
   const b=R.nob?null:Number(R.budget)||null;
-  const allNames=[...RX_SVC[R.kind].map(x=>x[0]),...Object.values(RX_PROD).filter((x,i,a)=>a.findIndex(y=>y[0]===x[0])===i&&(R.kind==='skin')===/^Biologique/.test(x[0])).map(x=>x[0])];
+  const favs=rxFavs(), plist=RX_PRICES[R.kind];
   const lineRow=(L,l)=>{
     const p=h('input',{type:'number',inputmode:'decimal',min:'0',value:String(l.p),class:'rxp','aria-label':'Price for '+l.n});
     p.addEventListener('change',()=>{l.p=Number(p.value)||0;rxSave();render()});
     return h('div',{class:'rxl'},
       h('div',{class:'rxn'},h('b',{},l.t==='t'?'Try Me: '+l.n:l.n),l.t==='s'?null:h('small',{class:'soft'},l.t==='t'?'1 oz Try Me bottle':'Home care'+(l.why?' · '+l.why:''))),
-      l.t==='s'?null:h('button',{type:'button',class:'tab rxtry',onclick:()=>{if(l.t==='t'){l.t='p';l.p=l.full||l.p}else{l.full=l.full||l.p;l.t='t';l.p=RX_TRY}rxSave();render()}},l.t==='t'?'Full size':'Try Me $3'),
+      l.t==='s'?null:h('button',{type:'button',class:'tab rxtry',onclick:()=>{if(l.t==='t'){l.t='p';l.p=l.full||(RX_PRICES[R.kind].find(x=>x[0]===l.n)||[0,l.p])[1]}else{l.full=l.full||l.p;l.t='t';l.p=RX_TRY}rxSave();render()}},l.t==='t'?'Full size':'Try Me $3'),
       p,h('button',{type:'button',class:'rgx','aria-label':'Remove '+l.n,onclick:()=>{L.splice(L.indexOf(l),1);rxSave();render()}},'×'));
   };
-  const adder=L=>{const sel=h('select',{'aria-label':'Add a service or product'},h('option',{value:''},'+ Add a service or product'),allNames.map(n=>h('option',{value:n},n)));
-    sel.addEventListener('change',()=>{const n=sel.value;if(!n)return;const sv=RX_SVC[R.kind].find(x=>x[0]===n);const pr=Object.values(RX_PROD).find(x=>x[0]===n);
-      L.push(sv?{n,p:sv[1],t:'s'}:{n,p:pr[1],t:'p',why:pr[2],full:pr[1]});rxSave();render()});return h('label',{class:'fld'},sel)};
+  const adder=L=>{const sel=h('select',{'aria-label':'Add a service or product'},h('option',{value:''},'+ Add a service or product'),
+      favs.length?h('optgroup',{label:'My go-tos'},plist.filter(x=>favs.includes(x[0])).map(([n,p])=>h('option',{value:n},n+' · '+rxMoney(p)))):null,
+      h('optgroup',{label:'Services'},RX_SVC[R.kind].map(([n,p])=>h('option',{value:n},n+' · '+rxMoney(p)))),
+      h('optgroup',{label:'Home care'},plist.map(([n,p])=>h('option',{value:n},n+' · '+rxMoney(p)))),
+      h('optgroup',{label:'Try Me'},h('option',{value:'__try'},'Try Me bottle · $3')));
+    sel.addEventListener('change',()=>{const n=sel.value;if(!n)return;if(n==='__try'){const what=prompt('Which product goes in the Try Me bottle?');if(what)L.push({n:what.trim(),p:RX_TRY,t:'t'});rxSave();render();return}
+      const sv=RX_SVC[R.kind].find(x=>x[0]===n);const pr=plist.find(x=>x[0]===n);const ex=Object.values(RX_PROD).find(x=>x[0]===n);
+      L.push(sv?{n,p:sv[1],t:'s'}:{n,p:pr[1],t:'p',why:ex?ex[2]:'',full:pr[1]});rxSave();render()});return h('label',{class:'fld'},sel)};
   const badge=t=>b==null?null:h('span',{class:'rxbadge '+(t<=b?'ok':'over')},t<=b?rxMoney(b-t)+' under budget':rxMoney(t-b)+' over budget');
   const opts=R.opts.map((o,i)=>{const t=rxTotal(o.lines);
     return h('section',{class:'card2 out'},h('span',{class:'lbl'},o.title+(i===0?(b==null?' · a lighter start':t<=b?' · within her budget':' · closest to her budget'):' · the full look')),
