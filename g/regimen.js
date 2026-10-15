@@ -215,7 +215,9 @@ const rgFirst=n=>String(n||'').trim().split(/\s+/)[0]||'';
 function regimenView(){
   const kind=rgKind(), R=rgLoad(), whens=RG_WHEN[kind];
   const me=(S.mine&&(S.mine.name||(S.mine.staff&&S.mine.staff.name)))||'';
-  const chips=(opts,isOn,onTap)=>h('div',{class:'seg'},opts.map(o=>h('button',{type:'button','aria-pressed':String(!!isOn(o)),onclick:()=>{onTap(o);rgSave();render()}},o)));
+  /* each word capitalized, "or" lowercase (Alexandra, Oct 15 2026); saved values keep their spelling */
+  const rgTitle=o=>String(o).replace(/(^|[\s(\-\/])([a-z])/g,(m,p,c)=>p+c.toUpperCase()).replace(/ Or /g,' or ');
+  const chips=(opts,isOn,onTap)=>h('div',{class:'seg'},opts.map(o=>h('button',{type:'button','aria-pressed':String(!!isOn(o)),onclick:()=>{onTap(o);rgSave();render()}},rgTitle(o))));
   const picked=n=>R.picks.find(p=>p.n===n);
 
   const head=h('div',{},h('span',{class:'lbl'},kind==='skin'?'Spa':'Salon'),h('h1',{style:'font-size:28px'},'At-home regimen'),
