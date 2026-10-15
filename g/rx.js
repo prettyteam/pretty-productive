@@ -129,7 +129,7 @@ function rxPriceList(kind){
         h('button',{type:'button',class:'rxstar','aria-pressed':String(favs.includes(n)),'aria-label':(favs.includes(n)?'Unstar ':'Star ')+n,onclick:()=>{rxFavToggle(n);render();const x=document.getElementById('rxpl');if(x)x.open=true}},favs.includes(n)?'★':'☆'),
         h('div',{class:'rxn'},h('b',{},n.replace(/^Biologique Recherche /,'BR '))),h('span',{class:'num'},rxMoney(p)));
         const mine=items.filter(([n])=>favs.includes(n));
-        return [mine.length?h('div',{},h('span',{class:'lbl'},'★ My go-tos'),...mine.map(row)):null,
+        return [mine.length?h('div',{},h('span',{class:'lbl'},'★ My Go-Tos'),...mine.map(row)):null,
           ...rxByBrand(items.filter(([n])=>!favs.includes(n))).map(([b,L])=>{const d=h('details',{class:'invg'},h('summary',{},h('h2',{style:'font-size:17px'},b),h('span',{class:'soft invc'},String(L.length)),h('span',{class:'tplus','aria-hidden':'true'},'+')),
             h('div',{class:'sec2'},...L.map(row)));if(q)d.open=true;return d})]})(),
       h('p',{class:'soft'},'Try Me bottle: 1 oz of any backbar product, $6. Retail prices from Paired Plus; ring up from the POS.')));
@@ -338,9 +338,9 @@ function rxView(){
   const R=rxLoad(), me=(S.mine&&(S.mine.name||(S.mine.staff&&S.mine.staff.name)))||'';
   rxSetCut(me);
   const tabs=h('div',{class:'seg',style:'justify-content:center'},
-    h('button',{type:'button','aria-pressed':String(RX_VIEW!=='saved'),onclick:()=>{RX_VIEW='build';render()}},'Build a card'),
-    h('button',{type:'button','aria-pressed':String(RX_VIEW==='saved'),onclick:()=>{RX_VIEW='saved';RX_SHOW=null;render()}},'Saved cards'));
-  const head=h('div',{},h('span',{class:'lbl'},'Customer cards'),h('h1',{style:'font-size:28px'},'RX consultation card'),
+    h('button',{type:'button','aria-pressed':String(RX_VIEW!=='saved'),onclick:()=>{RX_VIEW='build';render()}},'Build A Card'),
+    h('button',{type:'button','aria-pressed':String(RX_VIEW==='saved'),onclick:()=>{RX_VIEW='saved';RX_SHOW=null;render()}},'Saved Cards'));
+  const head=h('div',{},h('span',{class:'lbl'},'Customer Cards'),h('h1',{style:'font-size:28px'},'RX Consultation Card'),
     h('p',{class:'soft',style:'margin-top:6px'},'For new guests and anyone ready for a big change. Two options for today, home care in both, and what her next visit looks like.'));
   if(RX_VIEW==='saved') return [h('div',{class:'hub'},head,tabs,rxSavedView(me))];
   if(RX_VIEW==='qr'&&RX_SHOW) return [h('div',{class:'hub'},head,rxQrView(RX_SHOW))];
@@ -351,26 +351,26 @@ function rxBuild(R,me){
   /* every word starts with a capital, "or" stays lowercase (Alexandra, Oct 15 2026); the saved answers keep their spelling */
   const rxTitle=o=>String(o).replace(/(^|[\s(\-])([a-z])/g,(m,p,c)=>p+c.toUpperCase()).replace(/ Or /g,' or ');
   const chips=(opts,isOn,onTap)=>h('div',{class:'seg'},opts.map(o=>h('button',{type:'button','aria-pressed':String(!!isOn(o)),onclick:()=>{onTap(o);rxSave();render()}},rxTitle(o))));
-  const kindRow=h('div',{class:'fld'},'Card for',chips(['Hair','Skin'],o=>R.kind===o.toLowerCase(),o=>{const k=o.toLowerCase();if(k!==R.kind){RX=Object.assign(rxBlank(k),{guest:R.guest,budget:R.budget,nob:R.nob})}}));
+  const kindRow=h('div',{class:'fld'},'Card For',chips(['Hair','Skin'],o=>R.kind===o.toLowerCase(),o=>{const k=o.toLowerCase();if(k!==R.kind){RX=Object.assign(rxBlank(k),{guest:R.guest,budget:R.budget,nob:R.nob})}}));
   const gIn=h('input',{type:'text',value:R.guest,placeholder:'First name',autocomplete:'off',autocapitalize:'words'});
   gIn.addEventListener('input',()=>{R.guest=gIn.value;rxSave()});
   const bIn=h('input',{type:'number',inputmode:'decimal',min:'0',step:'5',value:R.budget,placeholder:'$',disabled:R.nob?'':null});
   bIn.addEventListener('input',()=>{R.budget=bIn.value;rxSave()});
-  const s1=h('section',{class:'card2'},h('span',{class:'lbl'},'1 · Your guest'),kindRow,
-    h('label',{class:'fld'},'Guest’s first name',gIn),
-    h('label',{class:'fld'},'Her budget for today, home care included',bIn),
+  const s1=h('section',{class:'card2'},h('span',{class:'lbl'},'1 · Your Guest'),kindRow,
+    h('label',{class:'fld'},'Guest’s First Name',gIn),
+    h('label',{class:'fld'},'Her Budget For Today, Maintenance Included',bIn),
     chips(['No set budget'],()=>R.nob,()=>{R.nob=!R.nob}),
-    h('div',{class:'fld'},'Her goals for today',chips(Object.keys(RX_GOAL[R.kind]),o=>rxGoalList(R).includes(o),o=>{const L=rxGoalList(R);R.goal=L.includes(o)?L.filter(x=>x!==o):[...L,o]})),
+    h('div',{class:'fld'},'Her Goals For Today',chips(Object.keys(RX_GOAL[R.kind]),o=>rxGoalList(R).includes(o),o=>{const L=rxGoalList(R);R.goal=L.includes(o)?L.filter(x=>x!==o):[...L,o]})),
     rxPriceList(R.kind));
-  const s2=h('section',{class:'card2'},h('span',{class:'lbl'},'2 · Her routine'),
+  const s2=h('section',{class:'card2'},h('span',{class:'lbl'},'2 · Her Routine'),
     ...RX_Q[R.kind].map(([key,q,opts,multi])=>h('div',{class:'fld'},q,chips(opts,
       o=>multi?[].concat(R.a[key]||[]).includes(o):R.a[key]===o,
       o=>{if(multi){const a=[].concat(R.a[key]||[]);const i=a.indexOf(o);i<0?a.push(o):a.splice(i,1);R.a[key]=a}else R.a[key]=R.a[key]===o?'':o}))));
-  const s3=h('section',{class:'card2'},h('span',{class:'lbl'},'3 · Right now'),
+  const s3=h('section',{class:'card2'},h('span',{class:'lbl'},'3 · Right Now'),
     h('p',{class:'soft'},R.kind==='skin'?'Her Skin Instant: what is her skin going through right now, this season?':'What is her hair or scalp going through right now, this season?'),
     chips(RX_NOW[R.kind],o=>R.now.includes(o),o=>{const i=R.now.indexOf(o);i<0?R.now.push(o):R.now.splice(i,1)}));
   const ready=rxGoalList(R).length&&(R.nob||Number(R.budget)>0)&&R.now.length;
-  const gen=h('button',{type:'button',class:'obtn',disabled:ready?null:'',onclick:()=>{const g=rxGenerate(R);if(!g)return;Object.assign(R,g);rxSave();render();setTimeout(()=>{const n=document.getElementById('rxopts');if(n)n.scrollIntoView({behavior:'smooth'})},50)}},R.opts?'Suggest again':'Suggest options');
+  const gen=h('button',{type:'button',class:'obtn',disabled:ready?null:'',onclick:()=>{const g=rxGenerate(R);if(!g)return;Object.assign(R,g);rxSave();render();setTimeout(()=>{const n=document.getElementById('rxopts');if(n)n.scrollIntoView({behavior:'smooth'})},50)}},R.opts?'Suggest Again':'Suggest Options');
   const s4=h('section',{class:'card2',style:'align-items:center;text-align:center'},gen,
     h('small',{class:'soft'},ready?'Suggestions follow the Taffeta consultation: only what she needs, inside her budget.':'Pick her goals, her budget and what’s going on right now.'));
   const out=[s1,s2,s3,s4];
@@ -386,7 +386,7 @@ function rxEditor(R,me){
     p.addEventListener('change',()=>{l.p=Number(p.value)||0;rxSave();render()});
     return h('div',{class:'rxl'},
       h('div',{class:'rxn'},h('b',{},l.t==='t'?'Try Me: '+l.n:l.n),l.t==='s'?null:h('small',{class:'soft'},l.t==='t'?'1 oz Try Me bottle':'Maintenance'+(l.why?' · '+l.why:''))),
-      l.t==='s'?null:h('button',{type:'button',class:'tab rxtry',onclick:()=>{if(l.t==='t'){l.t='p';l.p=l.full||(RX_PRICES[R.kind].find(x=>x[0]===l.n)||[0,l.p])[1]}else{l.full=l.full||l.p;l.t='t';l.p=RX_TRY}rxSave();render()}},l.t==='t'?'Full size':'Try Me $3'),
+      l.t==='s'?null:h('button',{type:'button',class:'tab rxtry',onclick:()=>{if(l.t==='t'){l.t='p';l.p=l.full||(RX_PRICES[R.kind].find(x=>x[0]===l.n)||[0,l.p])[1]}else{l.full=l.full||l.p;l.t='t';l.p=RX_TRY}rxSave();render()}},l.t==='t'?'Full Size':'Try Me '+rxMoney(RX_TRY)),
       p,h('button',{type:'button',class:'rgx','aria-label':'Remove '+l.n,onclick:()=>{L.splice(L.indexOf(l),1);rxSave();render()}},'×'));
   };
   const adder=L=>{const sel=h('select',{'aria-label':'Add a service or product'},h('option',{value:''},'+ Add a service or product'),
@@ -410,13 +410,13 @@ function rxEditor(R,me){
   const mw=h('input',{type:'text',value:R.m.when}); mw.addEventListener('input',()=>{R.m.when=mw.value;rxSave()});
   const mt=h('textarea',{class:'rgta',rows:'2'}); mt.value=R.m.text; mt.addEventListener('input',()=>{R.m.text=mt.value;rxSave()});
   const rf=h('input',{type:'text',value:R.refresh}); rf.addEventListener('input',()=>{R.refresh=rf.value;rxSave()});
-  const maint=h('section',{class:'card2'},h('span',{class:'lbl'},'Her next visit'),
+  const maint=h('section',{class:'card2'},h('span',{class:'lbl'},'Her Next Visit'),
     ...R.m.lines.map(l=>lineRow(R.m.lines,l)),adder(R.m.lines),
-    h('div',{class:'rxtot'},h('span',{class:'soft'},'Next visit'),h('b',{},rxMoney(rxTotal(R.m.lines)))),
-    h('label',{class:'fld'},'In about',mw),h('label',{class:'fld'},'What it looks like',mt),
-    h('label',{class:'fld'},'Refresh in',rf));
-  const save=h('button',{type:'button',class:'obtn',onclick:()=>rxStore(R,me)},'Save & show QR');
-  const clear=h('button',{type:'button',class:'tab',onclick:()=>{if(!confirm('Start a new card? This clears the one on screen.'))return;RX=rxBlank(R.kind);rxSave();render();window.scrollTo(0,0)}},'Start a new one');
+    h('div',{class:'rxtot'},h('span',{class:'soft'},'Next Visit'),h('b',{},rxMoney(rxTotal(R.m.lines)))),
+    h('label',{class:'fld'},'In About',mw),h('label',{class:'fld'},'What It Looks Like',mt),
+    h('label',{class:'fld'},'Refresh In',rf));
+  const save=h('button',{type:'button',class:'obtn',onclick:()=>rxStore(R,me)},'Save & Show QR');
+  const clear=h('button',{type:'button',class:'tab',onclick:()=>{if(!confirm('Start a new card? This clears the one on screen.'))return;RX=rxBlank(R.kind);rxSave();render();window.scrollTo(0,0)}},'Start A New One');
   const done=h('section',{class:'card2',style:'align-items:center;text-align:center'},save,clear,
     h('small',{class:'soft'},'She scans the QR with her camera and the card opens on her phone. No texting, no phone number.'));
   const wrap=h('div',{id:'rxopts',style:'display:flex;flex-direction:column;gap:26px'},...opts,maint,done);
@@ -444,9 +444,9 @@ async function rxRelink(x,me){
 function rxQrView(x){
   return h('section',{class:'card2 out',style:'align-items:center;text-align:center'},
     h('h2',{},rxFirst(x.guest)+'’s RX card'),rxQR(x.link),
-    h('p',{class:'rxscript'},'Scan with your camera'),
+    h('p',{class:'rxscript'},'Scan With Your Camera'),
     h('small',{class:'soft'},'It opens her two options and what her next visit looks like on her own phone.'),
-    h('a',{href:x.link,target:'_blank',rel:'noopener',class:'tab'},'Open her card'),
+    h('a',{href:x.link,target:'_blank',rel:'noopener',class:'tab'},'Open Her Card'),
     h('button',{type:'button',class:'obtn',onclick:()=>{RX_VIEW='build';RX_SHOW=null;render()}},'Done'));
 }
 
