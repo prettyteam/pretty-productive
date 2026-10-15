@@ -12,8 +12,7 @@
 <meta name="apple-mobile-web-app-title" content="Employee Experience App">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<style>@font-face{font-family:TaffetaJ;src:url(g/lora-latin-400-normal.woff2) format("woff2");font-weight:400;font-style:normal;unicode-range:U+004A}@font-face{font-family:TaffetaJ;src:url(g/lora-latin-500-normal.woff2) format("woff2");font-weight:500;font-style:normal;unicode-range:U+004A}@font-face{font-family:TaffetaJ;src:url(g/lora-latin-600-normal.woff2) format("woff2");font-weight:600;font-style:normal;unicode-range:U+004A}@font-face{font-family:TaffetaJ;src:url(g/lora-latin-400-italic.woff2) format("woff2");font-weight:400;font-style:italic;unicode-range:U+004A}@font-face{font-family:TaffetaJ;src:url(g/lora-latin-500-italic.woff2) format("woff2");font-weight:500;font-style:italic;unicode-range:U+004A}</style>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..600;1,9..144,300..500&display=swap">
+<style>@font-face{font-family:TaffetaJ;src:url(g/lora-latin-400-normal.woff2) format("woff2");font-weight:400;font-style:normal}@font-face{font-family:TaffetaJ;src:url(g/lora-latin-500-normal.woff2) format("woff2");font-weight:500;font-style:normal}@font-face{font-family:TaffetaJ;src:url(g/lora-latin-600-normal.woff2) format("woff2");font-weight:600;font-style:normal}@font-face{font-family:TaffetaJ;src:url(g/lora-latin-400-italic.woff2) format("woff2");font-weight:400;font-style:italic}@font-face{font-family:TaffetaJ;src:url(g/lora-latin-500-italic.woff2) format("woff2");font-weight:500;font-style:italic}</style>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@1,500;1,600&display=swap">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libertinus+Sans:ital,wght@0,400;0,700;1,400&display=swap">
 <style>
@@ -274,6 +273,12 @@ body{padding-bottom:110px}
 .navgrp{display:flex;flex-direction:column;gap:2px}
 .navgrp button{flex-direction:row!important;justify-content:flex-start!important;font-family:var(--display);font-size:19px!important;letter-spacing:0!important;text-transform:none!important;color:var(--ink)!important;padding:8px 4px!important;text-align:left}
 .navgrp button::after{display:none!important}
+/* Menu at the top, Refresh bar at the bottom (Alexandra, Oct 15 2026) */
+.nav.menu{top:0;bottom:auto;border-top:0;border-bottom:1px solid var(--line);flex-direction:column-reverse;padding:calc(10px + env(safe-area-inset-top)) 16px 10px}
+.navsheet{margin:10px 0 0;max-height:calc(100vh - 160px);box-shadow:0 4px 20px rgba(18,18,18,.12)}
+body:has(.nav.menu){padding-top:calc(78px + env(safe-area-inset-top))}
+body{padding-bottom:calc(84px + env(safe-area-inset-bottom))}
+body .rbar{position:fixed;left:0;right:0;bottom:calc(10px + env(safe-area-inset-bottom));margin:0 auto;z-index:4;box-shadow:0 2px 12px rgba(18,18,18,.08)}
 .navgrp button[aria-current="page"]{text-decoration:underline;text-underline-offset:5px}
 /* growth stars */
 .qrow{display:grid;grid-template-columns:60px 1fr;gap:16px;align-items:center;padding:12px 0;border-bottom:1px solid var(--line)}
@@ -394,7 +399,7 @@ details.days summary::-webkit-details-marker{display:none}
 <script src="g/regimen.js?v=16"></script>
 <script src="g/qr.js?v=1"></script>
 <script src="g/rx.js?v=11"></script>
-<script src="g/prices.js?v=4"></script>
+<script src="g/prices.js?v=5"></script>
 <link rel="stylesheet" href="g/rx.css?v=2">
 <link rel="icon" href="icon.png">
 <link rel="apple-touch-icon" href="icon.png">

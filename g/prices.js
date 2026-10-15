@@ -34,11 +34,13 @@ function pricesView(){
   s.addEventListener('input',()=>{PR_Q=s.value;const pos=s.selectionStart;render();const n=document.getElementById('prq');if(n){n.focus();try{n.setSelectionRange(pos,pos)}catch(e){}}});
   const seg=h('div',{class:'seg',style:'justify-content:center'},
     [['svc','Services'],['ret','Retail']].map(([k,l])=>h('button',{type:'button','aria-pressed':String(PR_SIDE===k),onclick:()=>{PR_SIDE=k;PR_Q='';render()}},l)));
+  // each word of a service starts with a capital (Alexandra, Oct 2026)
+  const prTitle=n=>String(n).replace(/(^|[\s(\/-])([a-z])/g,(m,a,b)=>a+b.toUpperCase());
   const row=(n,p)=>h('div',{class:'rxl'},h('div',{class:'rxn'},h('span',{},n)),h('b',{class:'num',style:'font-weight:500;white-space:nowrap'},p));
   let body;
   if(PR_SIDE==='svc'){
     const groups=PR_MENU.map(([g,items,note])=>{const shown=items.filter(([n])=>hit(n)||hit(g));if(!shown.length)return null;
-      return h('section',{class:'card2'},h('span',{class:'lbl'},g),...shown.map(([n,p])=>row(n,p)),note?h('small',{class:'soft'},note):null)});
+      return h('section',{class:'card2'},h('span',{class:'lbl'},g),...shown.map(([n,p])=>row(prTitle(n),p)),note?h('small',{class:'soft'},note):null)});
     body=groups.some(Boolean)?groups:[h('p',{class:'soft',style:'text-align:center'},'Nothing matches “'+PR_Q+'”.')];
     body.push(h('small',{class:'soft',style:'text-align:center'},'Starting prices from our website menu. “+” means starting at; final price depends on time, length and product.'));
   } else {
