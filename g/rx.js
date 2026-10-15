@@ -34,8 +34,10 @@ const RX_PROD={
   airWash:['K18 AirWash Dry Shampoo, 4 oz',48,'Freshens your hair between washes with your blow dryer and brush; great for fine hair'],
   movement:['Oribe Après Beach Wave & Shine Spray',46,'Soft, touchable movement and shine at home'],
   movementAir:['Oribe Matte Waves Texture Lotion',44,'Effortless movement and soft waves as it air dries'],
-  airDry:['Oribe Supershine Moisturizing Cream',54,'Smooth, soft air-dried hair with no blow-dry'],
-  airCurl:['Oribe Curl Gloss Hydration & Hold',46,'Defines waves and curls as they air dry'],
+  /* air drying, waves and blow-dry prep (Alexandra, Oct 15 2026) */
+  airDry:['Oribe Hair Alchemy Heatless Styling Balm',48,'Smooth, polished air-dried hair with no heat'],
+  airCurl:['IGK Rich Kid Wave Enhancing Air Dry Cream',25,'Brings out natural waves and perms as they air dry'],
+  prep:['IGK Good Behavior 4-in-1 Prep Spray',34,'Preps hair before you blow-dry so it styles faster and smoother'],
   frizz:['Brazilian Blowout Daily Smoothing Serum',36,'That just-smoothed feeling wash to wash, with frizz control for medium to thick hair'],
   dry:['Davines NOUNOU Shampoo',30,'Deep moisture for dry hair'],
   breakage:['K18 Leave-In Molecular Repair Mask, 0.5 oz',29,'Repairs breakage from the inside'],
@@ -223,7 +225,7 @@ function rxNeeds(R){
   if(now.includes('Flat, no volume')){ add('flatWash'); add(a.style==='Blow-dry with a brush'?'flat':'flatSpray') }
   if(now.includes('Itchy or flaky scalp')) add('scalp');
   if(now.includes('Grays showing')) add('grays');
-  if(now.includes('Hard to style')) add(a.style==='Air dry'?(feel.includes('Curly or wavy')?'airCurl':'airDry'):'blowLast');
+  if(now.includes('Hard to style')) add(a.style==='Air dry'?(feel.includes('Curly or wavy')?'airCurl':'airDry'):a.style==='Blow-dry with a brush'?'prep':'blowLast');
   /* from the routine, only when nothing above already covers it */
   if(colored&&notHappy) add('colorSafe');
   if(a.style==='Hot tools daily'||a.style==='Blow-dry with a brush') add('heat');
