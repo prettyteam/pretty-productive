@@ -133,7 +133,7 @@ const RX_GOAL={
     /* soft, grown-out color so she can go longer between visits (Alexandra, Oct 15 2026); balayage already includes shadow root and glaze */
     'Lower Maintenance Hair Color':{p:[['Half Head Balayage','Female Haircut'],['Minimum Balayage','Female Haircut'],['Shadow Root','Glaze','Female Haircut'],['Shadow Root','Glaze']],
       m:[['Shadow Root','Glaze'],'12–16 weeks','A soft root melt and a glaze. It grows out softly, so you can go longer between visits.']},
-    'Root Touch-Up Or Gray Coverage':{p:[['Single Process','Glaze','Female Haircut','Blow Dry'],['Single Process','Glaze','Female Haircut'],['Single Process','Female Haircut'],['Single Process']],
+    'Single Process Or Gray Coverage':{p:[['Single Process','Glaze','Female Haircut','Blow Dry'],['Single Process','Glaze','Female Haircut'],['Single Process','Female Haircut'],['Single Process']],
       m:[['Single Process'],'4–6 weeks','Roots only. Add a cut every other visit.']},
     'Shine And Tone Refresh (Glaze)':{p:[['Glaze','Female Haircut','Blow Dry'],['Glaze','Female Haircut'],['Glaze']],
       m:[['Glaze'],'6–8 weeks','A glaze to bring the shine and tone back.']},
@@ -239,7 +239,8 @@ const rxTotal=L=>L.reduce((s,x)=>s+(Number(x.p)||0),0);
 /* She can pick more than one goal (Alexandra, Oct 15 2026): the packages merge tier by tier, without doubles
    (a full cut wins over leaving wet, Blowdry Plus over Blow Dry). Old cards saved one goal as text. */
 /* goal names are Title Case (Alexandra, Oct 15 2026); cards saved before still match by spelling, any case */
-const rxGoalKey=(R,g)=>Object.keys((RX_GOAL[R.kind]||{})).find(k=>k.toLowerCase()===String(g).toLowerCase())||g;
+const RX_GOAL_OLD={'root touch-up or gray coverage':'Single Process Or Gray Coverage','movement (layers & texture)':'Movement (Color & Style)'};
+const rxGoalKey=(R,g)=>{const l=String(g).toLowerCase();return Object.keys((RX_GOAL[R.kind]||{})).find(k=>k.toLowerCase()===l)||RX_GOAL_OLD[l]||g};
 const rxGoalList=R=>(Array.isArray(R.goal)?R.goal:(R.goal?[R.goal]:[])).map(g=>rxGoalKey(R,g));
 function rxMergeSvc(names){
   let L=[...new Set(names)];
