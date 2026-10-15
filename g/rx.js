@@ -37,9 +37,9 @@ const RX_PROD={
   scalp:['Oribe Serene Scalp Soothing Leave-On',48,'Calms an itchy or flaky scalp'],
   grays:['Oribe Root Touch Up Spray',36,'Covers grays between color visits'],
   blowLast:['Oribe Dry Texturizing Spray',52,'Makes your blowout last longer'],
-  skBreak:['Biologique Recherche Lotion P50 (1.7 oz)',45,'Clears congestion and helps prevent breakouts'],
+  skBreak:['Biologique Recherche Lotion P50 (1.7 oz)',45,'Clears congestion and helps prevent breakouts',['Biologique Recherche Lotion P50 (5.1 oz)',100]],
   skSens:['Biologique Recherche Lotion P50W (5 oz)',100,'Gentle exfoliation for dry or sensitive skin'],
-  skBright:['Biologique Recherche Lotion P50 PIGM 400 (1.7 oz)',45,'Evens tone and brightens dullness'],
+  skBright:['Biologique Recherche Lotion P50 PIGM 400 (1.7 oz)',45,'Evens tone and brightens dullness',['Biologique Recherche Lotion P50 PIGM 400 (5 oz)',100]],
   skAge:['Biologique Recherche Sérum Grand Millésime (0.3 oz)',115,'Firms and softens fine lines'],
   skClean:['Biologique Recherche Lait VIP O2 (1.7 oz)',35,'A gentle cleansing milk to start a real routine'],
   skMask:['Biologique Recherche Masque VIVANT',95,'Weekly mask for oily, blemish-prone skin']
@@ -221,7 +221,10 @@ const rxSvcLines=(k,names)=>{if(names.some(n=>RX_BAL.test(n))) names=names.filte
   const L=names.map(n=>({n,p:rxPrice(k,n),t:'s'}));
   if(k==='hair'&&names.some(n=>RX_BLOND.test(n))&&!names.includes('K18 Bond Protection')) L.push({n:'K18 Bond Protection',p:rxPrice('hair','K18 Bond Protection'),t:'s'});
   return L};
-const rxProdLines=(keys,mode)=>keys.map((k,i)=>{const [n,p,why]=RX_PROD[k];const t=mode==='try'||(mode==='first'&&i>0);return {n,p:t?RX_TRY:p,t:t?'t':'p',why,full:p}});
+/* 1.7 oz P50 lotions are offered only when they're on the shelf (Alexandra, Oct 15 2026); otherwise the full size.
+   Out of stock as of the last Paired Plus count; update this list when the 1.7 oz comes in or sells out. */
+const RX_OUT=['Biologique Recherche Lotion P50 (1.7 oz)'];
+const rxProdLines=(keys,mode)=>keys.map((k,i)=>{let [n,p,why,alt]=RX_PROD[k];if(alt&&RX_OUT.includes(n))[n,p]=alt;const t=mode==='try'||(mode==='first'&&i>0);return {n,p:t?RX_TRY:p,t:t?'t':'p',why,full:p}});
 const rxTotal=L=>L.reduce((s,x)=>s+(Number(x.p)||0),0);
 
 /* Option 1 fits inside the budget (lighter service, or Try Me bottles before dropping home care); Option 2 is the full look. */
