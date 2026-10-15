@@ -183,14 +183,14 @@ const RX_Q={
     ['feel','How does her hair feel?',['Dry','Oily','Frizzy','Flat','Curly or wavy','Normal'],1],
     ['style','How does she style it?',['Air dry','Blow-dry with a brush','Hot tools daily']],
     ['color','Is it color-treated?',['No','Yes','Yes, with a glaze that fades','Blonde that turns brassy'],1],
-    ['prod','What does she use now?',['Professional','Drugstore','Unsure']],
+    ['prod','What does she use now?',['Professional','Drugstore']],
     ['love','Does she love it?',['Yes','No']],
     ['clean','Does she like clean, vegan products?',['No preference','Yes']]],
   skin:[
     ['feel','How does her skin feel?',['Dry or tight','Oily','Combination','Sensitive','Normal']],
     ['steps','Her routine now',['Nothing','Cleanser only','A few steps','Full routine']],
     ['spf','Daily sunscreen?',['Yes','No']],
-    ['prod','What does she use now?',['Professional','Drugstore','Unsure']],
+    ['prod','What does she use now?',['Professional','Drugstore']],
     ['love','Does she love it?',['Yes','No']]]
 };
 const RX_NOW={
@@ -212,7 +212,7 @@ const rxFirst=n=>String(n||'').trim().split(/\s+/)[0]||'';
 /* Genuine needs only, most important first, at most two. "Right now" leads, then her routine. */
 function rxNeeds(R){
   const a=R.a||{}, now=R.now||[], out=[], add=k=>{if(!out.includes(k)&&RX_PROD[k]) out.push(k)};
-  const notHappy=a.prod&&!['Professional','Unsure','Not sure'].includes(a.prod)||a.love==='No';
+  const notHappy=a.prod&&!['Professional','Unsure','Not sure','I don’t know'].includes(a.prod)||a.love==='No';
   if(R.kind==='hair'&&rxGoalList(R).some(g=>/^Blowout/.test(g))&&(now.includes('Frizz')||now.includes('Flyaways'))) add('sleekStick');
   if(R.kind==='hair'&&rxGoalList(R).some(g=>/^Movement/.test(g))) add(a.style==='Air dry'?'movementAir':'movement');
   if(R.kind==='skin'){
@@ -362,12 +362,12 @@ function rxBuild(R,me){
     chips(['No set budget'],()=>R.nob,()=>{R.nob=!R.nob}),
     h('div',{class:'fld'},'Her Goals For Today',chips(Object.keys(RX_GOAL[R.kind]),o=>rxGoalList(R).includes(o),o=>{const L=rxGoalList(R);R.goal=L.includes(o)?L.filter(x=>x!==o):[...L,o]})));
   const s2=h('section',{class:'card2'},h('span',{class:'lbl'},'2 · Her Routine'),
-    /* every question has "Unsure"; tapping it reminds her to find out (Alexandra, Oct 15 2026) */
-    ...RX_Q[R.kind].map(([key,q,opts,multi])=>{const all=opts.includes('Unsure')?opts:[...opts,'Unsure'];
-      const unsure=multi?[].concat(R.a[key]||[]).includes('Unsure'):R.a[key]==='Unsure';
+    /* every question starts with "I don't know" (what the girls say); tapping it tells her to go ask (Alexandra, Oct 15 2026) */
+    ...RX_Q[R.kind].map(([key,q,opts,multi])=>{const IDK='I don’t know', all=[IDK,...opts];
+      const unsure=multi?[].concat(R.a[key]||[]).includes(IDK):R.a[key]===IDK;
       return h('div',{class:'fld'},q,chips(all,
       o=>multi?[].concat(R.a[key]||[]).includes(o):R.a[key]===o,
-      o=>{if(multi){let a=[].concat(R.a[key]||[]);const i=a.indexOf(o);if(i<0)a=o==='Unsure'?['Unsure']:[...a.filter(x=>x!=='Unsure'),o];else a.splice(i,1);R.a[key]=a}else R.a[key]=R.a[key]===o?'':o}),
+      o=>{if(multi){let a=[].concat(R.a[key]||[]);const i=a.indexOf(o);if(i<0)a=o===IDK?[IDK]:[...a.filter(x=>x!==IDK),o];else a.splice(i,1);R.a[key]=a}else R.a[key]=R.a[key]===o?'':o}),
       unsure?h('small',{class:'rxfind'},'You need to know this. Please ask her.'):null)}));
   const s3=h('section',{class:'card2'},h('span',{class:'lbl'},'3 · Right Now'),
     h('p',{class:'soft'},R.kind==='skin'?'Her Skin Instant: what is her skin going through right now, this season?':'What is her hair or scalp going through right now, this season?'),
