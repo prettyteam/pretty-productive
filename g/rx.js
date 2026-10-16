@@ -153,16 +153,18 @@ const RX_GOAL={
     /* soft, grown-out color so she can go longer between visits (Alexandra, Oct 15 2026); balayage already includes shadow root and glaze */
     'Lower Maintenance Hair Color':{p:[['Half Head Balayage','Female Haircut'],['Minimum Balayage','Female Haircut'],['Shadow Root','Glaze','Female Haircut'],['Shadow Root','Glaze']],
       m:[['Shadow Root','Glaze'],'12–16 weeks','A soft root melt and a glaze. It grows out softly, so you can go longer between visits.']},
-    'Single Process or Gray Coverage':{p:[['Single Process','Glaze','Female Haircut','Blow Dry'],['Single Process','Glaze','Female Haircut'],['Single Process','Female Haircut'],['Single Process']],
+    /* a Female Haircut already includes the blow dry, so the two are never listed together; with no cut she leaves wet,
+       no extra service (Alexandra, Oct 16 2026) */
+    'Single Process or Gray Coverage':{p:[['Single Process','Glaze','Female Haircut'],['Single Process','Female Haircut'],['Single Process']],
       m:[['Single Process'],'4–6 weeks','Roots only. Add a cut every other visit.']},
-    'Shine And Tone Refresh (Glaze)':{p:[['Glaze','Female Haircut','Blow Dry'],['Glaze','Female Haircut'],['Glaze']],
+    'Shine And Tone Refresh (Glaze)':{p:[['Glaze','Female Haircut'],['Glaze']],
       m:[['Glaze'],'6–8 weeks','A glaze to bring the shine and tone back.']},
-    'New Cut or Shape':{p:[['Female Haircut','Blow Dry'],['Female Haircut'],['Haircut Leaving Wet']],
+    'New Cut or Shape':{p:[['Female Haircut'],['Haircut Leaving Wet']],
       m:[['Female Haircut'],'6–8 weeks','A trim to keep the shape.']},
     /* movement comes from both the color (dimension) and the styling and products (Alexandra, Oct 15 2026) */
-    'Movement (Color & Style)':{p:[['Half Head Balayage','Female Haircut','Blowdry Plus'],['Face Frame/Spot Highlight','Glaze','Female Haircut','Blow Dry'],['Face Frame/Spot Highlight','Glaze','Female Haircut'],['Female Haircut','Blow Dry'],['Female Haircut']],
+    'Movement (Color & Style)':{p:[['Half Head Balayage','Female Haircut'],['Face Frame/Spot Highlight','Glaze','Female Haircut'],['Face Frame/Spot Highlight','Glaze'],['Female Haircut']],
       m:[['Face Frame/Spot Highlight','Glaze','Female Haircut'],'8–10 weeks','Brightness around the face, a glaze and a trim keep the movement going.']},
-    'Big Change (Transformation)':{p:[['Full Head Balayage','Female Haircut','Blow Dry'],['Full Foil','Glaze','Female Haircut'],['Half Head Balayage','Female Haircut'],['Half Foil','Glaze','Female Haircut']],
+    'Big Change (Transformation)':{p:[['Full Head Balayage','Female Haircut'],['Full Foil','Glaze','Female Haircut'],['Half Head Balayage','Female Haircut'],['Half Foil','Glaze','Female Haircut']],
       m:[['Face Frame/Spot Highlight','Glaze','Leave Wet (no haircut)'],'8–10 weeks','A big change can take more than one visit. Next time: face-framing foils and a glaze. If you get your cut today, skip it next time to save: leave wet, or add a $50 blow dry. Need a trim? A haircut leaving wet is $50.']},
     'Blowout or Style':{p:[['Blowdry Plus'],['Blow Dry']],m:[['Blow Dry'],'1–2 weeks','A blowout for your next event.']}
   },
@@ -250,7 +252,7 @@ function rxNeeds(R){
 /* Every blonding service gets K18 sprayed in before the lightener: a backbar charge from $25 (up to $50 by amount used),
    and one pump of K18 leave-in after (Alexandra, Oct 2026). */
 const RX_BLOND=/foil|balayage|highlight|lightener/i;
-const rxSvcLines=(k,names)=>{if(names.some(n=>RX_BAL.test(n))) names=names.filter(n=>n!=='Glaze');
+const rxSvcLines=(k,names)=>{if(k==='hair') names=rxMergeSvc(names); if(names.some(n=>RX_BAL.test(n))) names=names.filter(n=>n!=='Glaze');
   const L=names.map(n=>({n,p:rxPrice(k,n),t:'s'}));
   if(k==='hair'&&names.some(n=>RX_BLOND.test(n))&&!names.includes('K18 Bond Protection')) L.push({n:'K18 Bond Protection',p:rxPrice('hair','K18 Bond Protection'),t:'s'});
   return L};
@@ -269,9 +271,15 @@ const rxGoalKey=(R,g)=>{const l=String(g).toLowerCase();return Object.keys((RX_G
 const rxGoalList=R=>(Array.isArray(R.goal)?R.goal:(R.goal?[R.goal]:[])).map(g=>rxGoalKey(R,g));
 function rxMergeSvc(names){
   let L=[...new Set(names)];
+  /* a Female Haircut includes the blow dry: a cut plus any blow dry becomes just Female Haircut, and a
+     Haircut Leaving Wet plus a blow dry is really a Female Haircut (Alexandra, Oct 16 2026) */
+  const dry=n=>n==='Blow Dry'||n==='Blowdry Plus';
+  if(L.some(dry)&&(L.includes('Female Haircut')||L.includes('Haircut Leaving Wet'))){
+    L=L.map(n=>n==='Haircut Leaving Wet'?'Female Haircut':n).filter(n=>!dry(n)); L=[...new Set(L)] }
   if(L.includes('Female Haircut')) L=L.filter(n=>n!=='Haircut Leaving Wet'&&n!=='Leave Wet (no haircut)');
   else if(L.includes('Haircut Leaving Wet')) L=L.filter(n=>n!=='Leave Wet (no haircut)');
   if(L.includes('Blowdry Plus')) L=L.filter(n=>n!=='Blow Dry');
+  if(L.some(dry)) L=L.filter(n=>n!=='Leave Wet (no haircut)');
   return L;
 }
 function rxGoalPlan(R){
