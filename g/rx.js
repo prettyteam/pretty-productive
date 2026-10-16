@@ -403,6 +403,22 @@ function rxView(){
   return [h('div',{class:'hub'},head,tabs,...rxBuild(R,me))];
 }
 
+let RX_DD={card:null,kind:null,open:null};
+function rxDDStyle(){if(document.getElementById('rxdd-css'))return;const st=document.createElement('style');st.id='rxdd-css';
+  st.textContent=`.rxdd{border-top:1px solid var(--line)}
+.rxdd>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:10px;padding:10px 0;min-height:44px;-webkit-tap-highlight-color:transparent}
+.rxdd>summary::-webkit-details-marker{display:none}
+.rxdd-q{flex:1;min-width:0;display:flex;flex-direction:column;font-size:14px;color:var(--ink)}
+.rxdd-q small{font-size:13px;color:var(--kelly,var(--ink))}.rxdd-q small.none{color:var(--muted)}
+.rxdd-ok{flex:none;width:22px;height:22px;border-radius:50%;border:1px solid var(--line);display:grid;place-items:center;font-size:12px;color:#fff}
+.rxdd-ok.on{background:var(--kelly,var(--ink));border-color:var(--kelly,var(--ink))}
+.rxdd-chev{flex:none;color:var(--muted);transition:transform .2s}.rxdd[open] .rxdd-chev{transform:rotate(180deg)}
+.rxdd-list{display:flex;flex-direction:column;padding:0 0 10px 32px}
+.rxdd-list label{display:flex;align-items:center;gap:12px;padding:8px 0;font-size:14.5px;cursor:pointer;color:var(--ink)}
+.rxdd-list input{appearance:none;-webkit-appearance:none;width:20px;height:20px;margin:0;flex:none;border:1px solid var(--kelly,var(--ink));border-radius:4px;background:#fff;display:grid;place-items:center}
+.rxdd-list input[type=radio]{border-radius:50%}
+.rxdd-list input:checked{background:var(--kelly,var(--ink))}.rxdd-list input:checked::after{content:"✓";color:#fff;font-size:12px;line-height:1}
+@media (prefers-reduced-motion:reduce){.rxdd-chev{transition:none}}`;document.head.append(st)}
 function rxBuild(R,me){
   /* every word starts with a capital, "or" stays lowercase (Alexandra, Oct 15 2026); the saved answers keep their spelling */
   const rxTitle=o=>String(o).replace(/(^|[\s(\-])([a-z])/g,(m,p,c)=>p+c.toUpperCase()).replace(/ Or /g,' or ');
@@ -415,24 +431,44 @@ function rxBuild(R,me){
   const s1=h('section',{class:'card2'},h('span',{class:'lbl'},'1 · Your Guest'),kindRow,
     h('label',{class:'fld'},'Guest’s First Name',gIn),
     h('label',{class:'fld'},h('span',{},'Her Budget For Today ',h('small',{class:'soft'},'(include an estimated cost of maintenance to bundle with the services)')),bIn),
-    chips(['No set budget'],()=>R.nob,()=>{R.nob=!R.nob}),
-    h('div',{class:'fld'},'Her Goals For Today',chips(Object.keys(RX_GOAL[R.kind]),o=>rxGoalList(R).includes(o),o=>{const L=rxGoalList(R);R.goal=L.includes(o)?L.filter(x=>x!==o):[...L,o]})));
+    chips(['No set budget'],()=>R.nob,()=>{R.nob=!R.nob}));
+  /* Each question is one dropdown row that shows what's picked; tap it to open a checklist (Alexandra, Oct 16 2026).
+     Answering a one-answer question closes it and opens the next unanswered one, so nothing gets skipped; a pick-all
+     question stays open until she taps it closed, then the next one opens. Same colors as the rest of the app. */
+  rxDDStyle();
+  const sk=R.kind==='skin', IDK='I don’t know';
+  const routine=RX_Q[R.kind].map(([key,q,opts,multi])=>({key,q,opts:[IDK,...opts],multi:!!multi,
+    get:()=>[].concat(R.a[key]||[]).filter(Boolean),
+    tap:o=>{if(multi){let a=[].concat(R.a[key]||[]);const i=a.indexOf(o);if(i<0)a=o===IDK?[IDK]:[...a.filter(x=>x!==IDK),o];else a.splice(i,1);R.a[key]=a}else R.a[key]=R.a[key]===o?'':o}}));
+  const goalQ={key:'goal',q:'Her Goals For Today',opts:Object.keys(RX_GOAL[R.kind]),multi:true,get:()=>rxGoalList(R),
+    tap:o=>{const L=rxGoalList(R);R.goal=L.includes(o)?L.filter(x=>x!==o):[...L,o]}};
+  const nowQ={key:'now',q:sk?'What is her skin going through right now, this season?':'What is her hair or scalp going through right now, this season?',
+    opts:RX_NOW[R.kind],multi:true,get:()=>R.now,tap:o=>{const i=R.now.indexOf(o);i<0?R.now.push(o):R.now.splice(i,1)}};
+  const order=[goalQ,...(sk?[nowQ,...routine]:[...routine,nowQ])];
+  const nextOpen=after=>{const i=order.findIndex(x=>x.key===after);const L=[...order.slice(i+1),...order.slice(0,Math.max(i,0))];const n=L.find(x=>!x.get().length);return n?n.key:null};
+  if(RX_DD.card!==R||RX_DD.kind!==R.kind){RX_DD={card:R,kind:R.kind,open:(order.find(x=>!x.get().length)||{}).key||null}}
+  const dd=x=>{const sel=x.get(), isOpen=RX_DD.open===x.key, unsure=sel.includes(IDK);
+    const sum=h('summary',{onclick:e=>{e.preventDefault();RX_DD.open=isOpen?(x.multi?nextOpen(x.key):null):x.key;render()}},
+      h('span',{class:'rxdd-ok'+(sel.length?' on':''),'aria-hidden':'true'},sel.length?'✓':''),
+      h('span',{class:'rxdd-q'},h('span',{},x.q),h('small',{class:sel.length?'':'none'},sel.length?sel.map(rxTitle).join(', '):'Not answered yet')),
+      h('span',{class:'rxdd-chev','aria-hidden':'true'},'⌄'));
+    const list=h('div',{class:'rxdd-list'},x.opts.map((o,i)=>{const id='rxdd_'+x.key+'_'+i;
+      const inp=h('input',{type:x.multi?'checkbox':'radio',name:'rxdd_'+x.key,id});inp.checked=sel.includes(o);
+      inp.addEventListener('change',()=>{x.tap(o);if(!x.multi&&x.get().length)RX_DD.open=nextOpen(x.key);rxSave();render()});
+      return h('label',{for:id},inp,h('span',{},rxTitle(o)))}),
+      x.multi?h('small',{class:'soft'},'Check all that fit, then tap the question to close it.'):null);
+    const d=h('details',{class:'rxdd'},sum,list); if(isOpen) d.open=true;
+    return h('div',{},d,unsure?h('small',{class:'rxfind'},'Is it that she didn’t tell you, or did you not remember to ask? You need to know this, so please ask her and come back with the right answer.'):null)};
+  s1.append(dd(goalQ));
   /* skin: Her Skin Instant comes right after the guest, then her routine (Alexandra, Oct 16 2026) */
-  const sk=R.kind==='skin';
-  const s2=h('section',{class:'card2'},h('span',{class:'lbl'},(sk?'3':'2')+' · Her Routine'),
-    /* every question starts with "I don't know" (what the girls say); tapping it tells her to go ask (Alexandra, Oct 15 2026) */
-    ...RX_Q[R.kind].map(([key,q,opts,multi])=>{const IDK='I don’t know', all=[IDK,...opts];
-      const unsure=multi?[].concat(R.a[key]||[]).includes(IDK):R.a[key]===IDK;
-      return h('div',{class:'fld'},q,chips(all,
-      o=>multi?[].concat(R.a[key]||[]).includes(o):R.a[key]===o,
-      o=>{if(multi){let a=[].concat(R.a[key]||[]);const i=a.indexOf(o);if(i<0)a=o===IDK?[IDK]:[...a.filter(x=>x!==IDK),o];else a.splice(i,1);R.a[key]=a}else R.a[key]=R.a[key]===o?'':o}),
-      unsure?h('small',{class:'rxfind'},'Is it that she didn’t tell you, or did you not remember to ask? You need to know this, so please ask her and come back with the right answer.'):null)}));
-  const s3=h('section',{class:'card2'},h('span',{class:'lbl'},sk?'2 · Her Skin Instant':'3 · Right Now'),
-    h('p',{class:'soft'},R.kind==='skin'?'What is her skin going through right now, this season? Pick all that fit.':'What is her hair or scalp going through right now, this season?'),
-    chips(RX_NOW[R.kind],o=>R.now.includes(o),o=>{const i=R.now.indexOf(o);i<0?R.now.push(o):R.now.splice(i,1)}));
+  /* every question starts with "I don't know" (what the girls say); tapping it tells her to go ask (Alexandra, Oct 15 2026) */
+  const s2=h('section',{class:'card2'},h('span',{class:'lbl'},(sk?'3':'2')+' · Her Routine'),...routine.map(dd));
+  const s3=h('section',{class:'card2'},h('span',{class:'lbl'},sk?'2 · Her Skin Instant':'3 · Right Now'),dd(nowQ));
+  const done=order.filter(x=>x.get().length).length;
   const ready=rxGoalList(R).length&&(R.nob||Number(R.budget)>0)&&R.now.length;
   const gen=h('button',{type:'button',class:'obtn',disabled:ready?null:'',onclick:()=>{const g=rxGenerate(R);if(!g)return;Object.assign(R,g);rxSave();render();setTimeout(()=>{const n=document.getElementById('rxopts');if(n)n.scrollIntoView({behavior:'smooth'})},50)}},R.opts?'Suggest Again':'Suggest Options');
   const s4=h('section',{class:'card2',style:'align-items:center;text-align:center'},gen,
+    h('small',{class:'soft'},done+' of '+order.length+' questions answered'),
     h('small',{class:'soft'},ready?'Suggestions follow the Taffeta consultation: only what she needs, inside her budget.':'Pick her goals, her budget and what’s going on right now.'));
   /* Maintenance prices come after her routine and what's going on now, when the artist decides what she goes home with (Alexandra, Oct 15 2026) */
   const out=[s1,...(sk?[s3,s2]:[s2,s3]),h('section',{class:'card2'},rxPriceList(R.kind)),s4];
