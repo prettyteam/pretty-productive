@@ -77,6 +77,13 @@ const RX_PROD={
   /* when nothing in her answers calls for a specific product, the card still budgets for home care (Alexandra, Oct 16 2026) */
   basicWash:['Taffeta Refillable Shampoo, new bottle',39,'Our salon shampoo in a refillable bottle, so salon hair lasts at home'],
   basicWashRF:['Rossano Ferretti Vivace Everyday Hair & Body Shampoo',36,'Clean, vegan everyday shampoo with a fresh, fruity scent'],
+  skP50V:['Biologique Recherche Lotion P50V (5 oz)',100,'Exfoliates gently while it hydrates, for dry or dull skin'],
+  skSpectral:['Biologique Recherche Spectral Sérum Authentique (0.3 oz)',85,'Brightens dullness and softens fine lines fast'],
+  skSerPigm:['Biologique Recherche Sérum PIGM 400 (0.3 oz)',115,'Fades dark spots and evens tone'],
+  skSerSens:['Biologique Recherche Sérum Erythros',140,'Calms redness and comforts sensitive skin'],
+  skSerPore:['Biologique Recherche Dermopore (0.3 oz)',60,'Tightens pores and keeps breakouts in check'],
+  skLaitO2:['Biologique Recherche Lait VIP O2 (5.1 oz)',60,'The cleansing milk that goes with your P50'],
+  skCreamGM:['Biologique Recherche Crème Grand Millésime',225,'Rich, firming cream for dry skin and fine lines'],
   skClean:['Biologique Recherche Lait VIP O2 (1.7 oz)',35,'A gentle cleansing milk to start a real routine'],
   skMask:['Biologique Recherche Masque VIVANT',95,'Weekly mask for oily, blemish-prone skin']
 };
@@ -235,14 +242,21 @@ function rxNeeds(R){
   const notHappy=a.prod&&!['Professional','Unsure','Not sure','I don’t know'].includes(a.prod)||a.love==='No'||a.love==='It’s okay'; /* "it's okay" means she's open to something better (Alexandra, Oct 16 2026) */
   if(R.kind==='hair'&&rxGoalList(R).some(g=>/^Blowout/.test(g))&&(now.includes('Frizz')||now.includes('Flyaways'))) add('sleekStick');
   if(R.kind==='hair'&&rxGoalList(R).some(g=>/^Movement/.test(g))) add(a.style==='Air dry'?'movementAir':'movement');
+  /* Skin home care the way Carolyn builds it (Oct 16 2026): one P50 matched to her skin plus a serum for the quickest
+     results, then fill the gaps in her routine (the Lait cleanser that goes with the P50, a cream for dry skin or fine
+     lines) so it's a sure sale. In that order: what doesn't fit the budget moves to the full sizes she takes home later.
+     Her example: dry, dull, fine lines -> Lait VIP O2 + Lotion P50V + Spectral Sérum Authentique + Crème Grand Millésime. */
   if(R.kind==='skin'){
-    if(now.includes('Breakouts')||now.includes('Large pores')) add('skBreak');
-    if(now.includes('Redness')||now.includes('Sensitive')||a.feel==='Sensitive') add('skSens');
-    if(now.includes('Dullness or uneven tone')||now.includes('Dark spots')) add('skBright');
-    if(now.includes('Dehydration')||a.feel==='Dry or tight') add('skSens');
-    if(now.includes('Fine lines')) add('skAge');
-    if(!out.length) add('skClean');
-    return out.slice(0,2);
+    const sens=now.includes('Redness')||now.includes('Sensitive')||a.feel==='Sensitive';
+    const brk=now.includes('Breakouts')||now.includes('Large pores')||now.includes('Oily');
+    const spots=now.includes('Dark spots');
+    const dry=now.includes('Dehydration')||a.feel==='Dry or tight', dull=now.includes('Dullness or uneven tone'), lines=now.includes('Fine lines');
+    add(sens?'skSens':brk?'skBreak':spots?'skBright':'skP50V');
+    add(spots?'skSerPigm':(lines||dull||dry)?'skSpectral':sens?'skSerSens':brk?'skSerPore':'skSpectral');
+    const lovesFull=a.steps==='Full routine'&&a.prod==='Professional'&&a.love==='Yes';
+    if(!lovesFull) add('skLaitO2');
+    if(dry||lines||a.steps==='Nothing'||a.steps==='Cleanser only') add('skCreamGM');
+    return out;
   }
   const feel=[].concat(a.feel||[]), color=[].concat(a.color||[]);
   const colored=color.some(c=>c&&c!=='No');
@@ -279,7 +293,7 @@ const rxSvcLines=(k,names)=>{names=k==='hair'?rxMergeSvc(names):rxMergeSkin(name
 /* 1.7 oz P50 lotions are offered only when they're on the shelf (Alexandra, Oct 15 2026); otherwise the full size.
    Out of stock as of the last Paired Plus count; update this list when the 1.7 oz comes in or sells out. */
 const RX_OUT=['Biologique Recherche Lotion P50 (1.7 oz)'];
-const rxProdLines=(keys,mode)=>mode==='none'?[]:keys.map((k,i)=>{let [n,p,why,alt]=RX_PROD[k];if(alt&&RX_OUT.includes(n))[n,p]=alt;const t=mode==='try'||(mode==='first'&&i>0);return {n,p:t?RX_TRY:p,t:t?'t':'p',why,full:p}});
+const rxProdLines=(keys,mode)=>mode==='none'?[]:typeof mode==='number'?rxProdLines(keys.slice(0,mode),'full'):keys.map((k,i)=>{let [n,p,why,alt]=RX_PROD[k];if(alt&&RX_OUT.includes(n))[n,p]=alt;const t=mode==='try'||(mode==='first'&&i>0);return {n,p:t?RX_TRY:p,t:t?'t':'p',why,full:p}});
 const rxTotal=L=>L.reduce((s,x)=>s+(Number(x.p)||0),0);
 
 /* Option 1 fits inside the budget (lighter service, or Try Me bottles before dropping home care); Option 2 is the full look. */
@@ -355,20 +369,22 @@ function rxGenerate(R){
      budget allows can go higher, but home care and the leave-in only ride along while the total stays at $400 or
      under. Past that, the card says she can ask for more and she decides. */
   const okL=L=>rxTotal(L)<=cap&&(rxTotal(L)<=RX_ALLIN||L.every(l=>l.t==='s'&&l.n!=='Goldwell Leave-In Treatment'));
+  /* with more than two home care picks, drop from the end (cream, then cleanser) before going to Try Me bottles */
+  const trimN=[];for(let n=needs.length-1;n>=1;n--)trimN.push(n);
   let o2=null,i2=P.length-1,m2=null;
   /* All In keeps the fullest service her budget allows. Home care rides along with it; it's left off only when the
      $400 extras rule blocks it (the card then invites her to ask), otherwise the service steps down to make room. */
   for(let i=0;i<P.length&&!o2;i++){
-    for(const [mode,lv] of [['full',leave],['first',leave],['try',leave],['try',false]]){const L=pkg(i,mode,lv); if(okL(L)){o2=L;i2=i;m2=[mode,lv];break}}
+    for(const [mode,lv] of [['full',leave],...trimN.map(n=>[n,leave]),['first',leave],['try',leave],['try',false]]){const L=pkg(i,mode,lv); if(okL(L)){o2=L;i2=i;m2=[mode,lv];break}}
     if(!o2&&rxTotal(pkg(i,'try',false))>RX_ALLIN){const L=pkg(i,'none',false); if(okL(L)){o2=L;i2=i;m2=['none',false]}} }
   for(let i=0;i<P.length&&!o2;i++){const L=pkg(i,'none',false); if(okL(L)){o2=L;i2=i;m2=['none',false]}}
   if(!o2){o2=pkg(P.length-1,'none',false);m2=['none',false]}
-  const more=(m2[0]!=='full'&&rxNeedsFor(needs,P[i2]).length>0)||(leave&&!m2[1]);
+  const more=(m2[0]!=='full'&&rxNeedsFor(needs,P[i2]).length>0)||(leave&&!m2[1]);  /* numeric mode = some picks moved to full sizes */
   /* Option 1 is the lighter one: inside her budget and always below Option 2 */
   /* the budget option keeps full-size home care if any service tier allows it, before trimming to Try Me bottles
      (Alexandra, Oct 16 2026: home care is part of the budget) */
   let o1=null; const lim=Math.min(b!=null?b:Infinity,rxTotal(o2)-1);
-  for(const mode of ['full','first','try','none']){ for(let i=Math.min(i2+1,P.length-1);i<P.length&&!o1;i++){
+  for(const mode of ['full',...trimN,'first','try','none']){ for(let i=Math.min(i2+1,P.length-1);i<P.length&&!o1;i++){
     const L=pkg(i,mode,false); if(rxTotal(L)<=lim) o1=L } if(o1) break }
   if(!o1) o1=pkg(P.length-1,'none',false);
   let [ms,mw,mt]=[o1,o2].some(L=>L.some(l=>RX_BAL.test(l.n)))?RX_BAL_M:g.m;
@@ -387,7 +403,7 @@ function rxGenerate(R){
     o1=[...o1.filter(l=>l.t==='s'),bx];
     if(o2.some(l=>l.t==='t')){const o2b=[...o2.filter(l=>l.t==='s'),bx]; if(rxTotal(o2b)<=cap) o2=o2b}
     const last=P[P.length-1], tgt=last.find(n=>RX_FACIAL.test(n)&&rxRegPrice('skin',n)===99)||'Hydration Boost';
-    const hc=needs.length?needs:['skClean'];
+    const hc=needs.length?needs.slice(0,2):['skClean'];  /* next visit: the P50 and serum in full size */
     mLines=[...rxSvcLines('skin',[tgt]),...rxProdLines(hc,'full')];
     mw='4 weeks'; mt='We’ll see how your skin reacted to your Skin Box: a targeted treatment facial, and your home care in full size.' }
   return {opts:[{title:'Option 1',lines:o1},{title:'Option 2',lines:o2}],
