@@ -19,15 +19,18 @@ const RX_SVC={
 const RX_CUT={Adriana:65,Ashley:65,Amanda:65,Isabella:65,Alexandra:100};
 function rxSetCut(me){const f=String(me||'').trim().split(/\s+/)[0]||'', r=RX_SVC.hair.find(x=>x[0]==='Female Haircut'); if(r) r[1]=RX_CUT[f]||75}
 const rxRegPrice=(k,n)=>{const r=RX_SVC[k].find(x=>x[0]===n);return r?r[1]:0};
-/* VIP family pricing: the VIP price list from Paired Plus (Service Pricelist, Oct 16 2026). Services with no VIP price
-   there keep their regular price. Home care is always regular price. */
-const RX_VIP={hair:{'Female Haircut':35,'Male Haircut':22.5,'Haircut Leaving Wet':20,'Blow Dry':50,'Blowdry Plus':29.25,
-    'Single Process':35,'Glaze':25,'Face Frame/Spot Highlight':27,'Minimum Foil':38.25,'Half Foil':57.5,'Full Foil':68.75,
-    'Permanent Wave':50,'Formal Style':60},
-  skin:{'Taffeta Facial':58,'Taffeta Facial with MC 110':58,'Express Acne Treatment':60,'Hydration Boost':60,'Brightening Mini Facial':60,
-    'Mini Redness Reversal':60,'Anti-Aging Express':60}};
-let RX_VIPON=false;
-const rxPrice=(k,n)=>{const v=RX_VIPON&&RX_VIP[k]&&RX_VIP[k][n];return v!=null&&v!==undefined&&v!==false?v:rxRegPrice(k,n)};
+/* VIP family pricing (Alexandra, Oct 16 2026): a VIP service covers the artist's commission and the cost of the
+   service, plus 10% for the house. VIP = (full price x her commission rate + $25 per color bowl) x 1.10, never more
+   than the full price. Each artist's rate comes from her own sealed app data; 45% when it isn't there (salon iPad).
+   Product charges (K18, Goldwell leave-in, Additional Mix) stay at their regular price. Home care is always regular price. */
+const RX_BOWL=25;
+const RX_BOWLS={'Single Process':1,'Shadow Root':1,'Glaze':1,'Face Frame/Spot Highlight':1,'Minimum Foil':1,'Half Foil':2,'Full Foil':2,
+  'Minimum Balayage':1,'Half Head Balayage':2,'Full Head Balayage':2,'Base Lightener':1};
+const RX_VIP_REG=['K18 Bond Protection','Goldwell Leave-In Treatment','Additional Mix','Leave Wet (no haircut)'];
+let RX_VIPON=false, RX_RATE=45;
+const rxVipPrice=(k,n)=>{const reg=rxRegPrice(k,n); if(!reg||RX_VIP_REG.includes(n)) return reg;
+  const v=Math.round(((reg*RX_RATE/100)+(RX_BOWLS[n]||0)*RX_BOWL)*1.10*100)/100; return Math.min(reg,v)};
+const rxPrice=(k,n)=>RX_VIPON?rxVipPrice(k,n):rxRegPrice(k,n);
 
 /* Home care: one product per need, from the Taffeta product guide (brand list prices, Oct 2026; ring up from the POS). */
 const RX_PROD={
@@ -334,7 +337,7 @@ function rxRecFull(o1,o2,keys){
   return rxProdLines([...new Set(keys)],'full').filter(l=>!full.has(l.n)).slice(0,3).map(l=>({n:l.n,p:l.p,why:l.why}));
 }
 function rxGenerate(R){
-  RX_VIPON=!!R.vip;
+  RX_VIPON=!!R.vip; RX_RATE=(typeof S!=='undefined'&&S&&S.mine&&Number(S.mine.rate))||45;
   const g=rxGoalPlan(R); if(!g) return null;
   const needs=rxNeeds(R), P=g.p, b=R.nob?null:Number(R.budget)||null;
   /* Goldwell leave-in backbar treatment: a no-downtime add-on for color that fades, blonde repair or dry, damaged hair.
@@ -457,7 +460,7 @@ function rxBuild(R,me){
   gIn.addEventListener('input',()=>{R.guest=gIn.value;rxSave()});
   const bIn=h('input',{type:'number',inputmode:'decimal',min:'0',step:'5',value:R.budget,placeholder:'$'});
   bIn.addEventListener('input',()=>{const was=Number(R.budget)>0;R.budget=bIn.value;rxSave();if(was!==(Number(R.budget)>0)){render();const n=document.querySelector('.card2 input[type=number]');if(n){n.focus();try{n.setSelectionRange(n.value.length,n.value.length)}catch(e){}}}});
-  RX_VIPON=!!R.vip;
+  RX_VIPON=!!R.vip; RX_RATE=(typeof S!=='undefined'&&S&&S.mine&&Number(S.mine.rate))||45;
   /* family on VIP pricing (Alexandra, Oct 16 2026): options are priced from the VIP list; her card shows the regular price crossed out */
   const vipRow=h('div',{class:'fld'},'Pricing',chips(['Regular','VIP (family)'],o=>(o==='Regular')!==!!R.vip,o=>{const v=o!=='Regular';if(v!==!!R.vip){R.vip=v;R.opts=null;R.m=null}}));
   const s1=h('section',{class:'card2'},h('span',{class:'lbl'},'1 · Your Guest'),kindRow,vipRow,

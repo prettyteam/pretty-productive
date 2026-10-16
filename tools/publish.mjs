@@ -242,6 +242,8 @@ let n = 0;
 for (const p of pages) {
   const k = keys.stylists[p.slug];
   const mine = { ...strip(p), ...(!p.growth && growthMap[p.slug] ? { growth: growthMap[p.slug] } : {}), link: linkFor('s', k), staff: { slug: p.slug, t: teamSign(p.slug), clock: clockSet.has(p.slug) } };
+  /* her own service commission rate, sealed in her page only: the RX card prices VIP family services from it (Oct 16 2026) */
+  { const rt = ((data.team && data.team.commission) || {})[p.slug]; if (rt) mine.rate = Number(rt); }
   if (guideUrl && fullGuideSet.has(p.slug)) mine.fullGuide = guideUrl;
   if (advMap[p.slug]) mine.adv = advMap[p.slug];
   const dd = docsFor(p.slug, false); if (dd) { mine.docs = dd; if (dd.fg) delete mine.fullGuide; }
