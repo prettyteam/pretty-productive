@@ -345,13 +345,20 @@ function rxGenerate(R){
   if(ms.includes('Leave Wet (no haircut)')&&![o1,o2].some(L=>L.some(l=>/haircut/i.test(l.n)))){
     ms=ms.map(n=>n==='Leave Wet (no haircut)'?'Female Haircut':n); mt=mt.replace(/ and a glaze\..*$/,', a glaze and a trim.') }
   let mLines=rxSvcLines(R.kind,ms);
-  /* Skin on a low budget (Alexandra, Oct 16 2026): if today's lighter option only fits with Try Me samples, her next
-     visit is in 4 weeks for a $99 targeted treatment facial, and she takes home a bottle of P50 and a small cleanser. */
+  /* Skin on a tight budget (Alexandra, Oct 16 2026): when full-size home care doesn't fit today, she goes home with a
+     $50 Biologique Recherche Skin Box (about 4 weeks of product) instead of samples. She comes back in 4 weeks so we
+     can see how her skin reacted, for a $99 targeted treatment facial and regular-size home care. */
   if(R.kind==='skin'&&b!=null&&o1.some(l=>l.t==='t')){
+    const nw=R.now||[], gl=rxGoalList(R);
+    const box=nw.includes('Breakouts')||gl.includes('Clear Breakouts')?'Blemish Skin Box':
+      nw.includes('Fine lines')||gl.includes('Fine Lines And Firmness')?'Youth Skin Box':'Standard Skin Box';
+    const bx={n:'Biologique Recherche '+box,p:50,t:'p',why:'About 4 weeks of Biologique Recherche to try at home',full:50};
+    o1=[...o1.filter(l=>l.t==='s'),bx];
+    if(o2.some(l=>l.t==='t')){const o2b=[...o2.filter(l=>l.t==='s'),bx]; if(rxTotal(o2b)<=cap) o2=o2b}
     const last=P[P.length-1], tgt=last.find(n=>RX_FACIAL.test(n)&&rxPrice('skin',n)===99)||'Hydration Boost';
-    const p50=needs.includes('skSens')?'skSens':needs.includes('skBright')?'skBright':'skBreak';
-    mLines=[...rxSvcLines('skin',[tgt]),...rxProdLines([p50,'skClean'],'full')];
-    mw='4 weeks'; mt='A targeted treatment facial, and a bottle of P50 with a small cleanser to start your routine at home.' }
+    const hc=needs.length?needs:['skClean'];
+    mLines=[...rxSvcLines('skin',[tgt]),...rxProdLines(hc,'full')];
+    mw='4 weeks'; mt='We’ll see how your skin reacted to your Skin Box: a targeted treatment facial, and your home care in full size.' }
   return {opts:[{title:'Option 1',lines:o1},{title:'Option 2',lines:o2}],
     m:{lines:mLines,when:mw,text:mt},refresh:mw,keep:!needs.length,more};
 }
