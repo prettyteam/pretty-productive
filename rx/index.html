@@ -118,6 +118,8 @@ html,body{background:#f8f6f0}
     /* date small at the top as 10/15/26 (Alexandra, Oct 15 2026) */
     el('div',{class:'for'},el('span',{},'For '+(c.g||'you')),isNaN(date)?null:el('span',{class:'dt'},(date.getMonth()+1)+'/'+date.getDate()+'/'+String(date.getFullYear()).slice(-2))),
     opts,
+    /* All In stops at a $400 ticket; anything more is her call (Alexandra, Oct 16 2026) */
+    c.x?el('p',{class:'talk',style:'text-align:center;font-size:14px'},'Want home care or a treatment added? Just ask, and we’ll add it to your plan.'):null,
     el('section',{class:'maint'},el('span',{class:'eyebrow'},'Your next visit'),
       /* no receipt-style breakdown here: what the visit looks like and about what it costs (Alexandra, Oct 15 2026) */
       el('div',{class:'tot',style:'border-top:0;padding-top:0'},el('span',{},m[1]?'In about '+m[1]:'Your next visit'),el('span',{},money(mt))),

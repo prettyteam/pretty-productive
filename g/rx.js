@@ -66,6 +66,7 @@ const RX_PROD={
   skMask:['Biologique Recherche Masque VIVANT',95,'Weekly mask for oily, blemish-prone skin']
 };
 const RX_TRY=6; /* Try Me bottle: 1 oz of any backbar product */
+const RX_ALLIN=400; /* All In never adds extras past a $400 ticket (Alexandra, Oct 16 2026) */
 const RX_CAP=400; /* Option 2 tops out here when no budget is given (Alexandra, Oct 16 2026) */
 /* Home care price list artists learn and star their go-tos from: every hair and skin retail product we carry, at the
    retail price in Paired Plus (Retail Price List report, Oct 15 2026). Oribe Bright Blonde is discontinued and gone.
@@ -307,11 +308,15 @@ function rxGenerate(R){
      then the leave-in treatment, before stepping down a service tier. */
   const cap=b!=null?b+100:RX_CAP;
   const pkg=(i,mode,lv)=>[...rxSvcLines(R.kind,P[i]),...(lv?rxSvcLines('hair',['Goldwell Leave-In Treatment']):[]),...rxProdLines(rxNeedsFor(needs,P[i]),mode)];
-  let o2=null,i2=P.length-1;
-  for(let i=0;i<P.length&&!o2;i++) for(const [mode,lv] of [['full',leave],['first',leave],['try',leave],['try',false]]){
-    const L=pkg(i,mode,lv); if(rxTotal(L)<=cap){o2=L;i2=i;break} }
-  if(!o2) o2=pkg(P.length-1,'try',false);
-  if(rxTotal(o2)>cap) o2=pkg(P.length-1,'none',false);
+  /* All In (Option 2) never adds extras that take the ticket over $400 (Alexandra, Oct 16 2026): the services her
+     budget allows can go higher, but home care and the leave-in only ride along while the total stays at $400 or
+     under. Past that, the card says she can ask for more and she decides. */
+  const okL=L=>rxTotal(L)<=cap&&(rxTotal(L)<=RX_ALLIN||L.every(l=>l.t==='s'&&l.n!=='Goldwell Leave-In Treatment'));
+  let o2=null,i2=P.length-1,m2=null;
+  for(let i=0;i<P.length&&!o2;i++) for(const [mode,lv] of [['full',leave],['first',leave],['try',leave],['try',false],['none',false]]){
+    const L=pkg(i,mode,lv); if(okL(L)){o2=L;i2=i;m2=[mode,lv];break} }
+  if(!o2){o2=pkg(P.length-1,'none',false);m2=['none',false]}
+  const more=(m2[0]==='none'&&rxNeedsFor(needs,P[i2]).length>0)||(leave&&!m2[1]);
   /* Option 1 is the lighter one: inside her budget and always below Option 2 */
   let o1=null; const lim=Math.min(b!=null?b:Infinity,rxTotal(o2)-1);
   for(let i=Math.min(i2+1,P.length-1);i<P.length&&!o1;i++) for(const mode of ['full','first','try','none']){
@@ -322,7 +327,7 @@ function rxGenerate(R){
   if(ms.includes('Leave Wet (no haircut)')&&![o1,o2].some(L=>L.some(l=>/haircut/i.test(l.n)))){
     ms=ms.map(n=>n==='Leave Wet (no haircut)'?'Female Haircut':n); mt=mt.replace(/ and a glaze\..*$/,', a glaze and a trim.') }
   return {opts:[{title:'Option 1',lines:o1},{title:'Option 2',lines:o2}],
-    m:{lines:rxSvcLines(R.kind,ms),when:mw,text:mt},refresh:mw,keep:!needs.length};
+    m:{lines:rxSvcLines(R.kind,ms),when:mw,text:mt},refresh:mw,keep:!needs.length,more};
 }
 
 /* ---- the card in a link: compact JSON → base64url after # ---- */
@@ -333,7 +338,7 @@ function rxPack(R,me,day){
        so she sees the investment, not a list of products to say no to */
     o:R.opts.map(x=>{const sv=x.lines.filter(l=>l.t==='s').map(l=>[l.n,Number(l.p)||0]), hc=x.lines.filter(l=>l.t!=='s').reduce((a,l)=>a+(Number(l.p)||0),0);
       return [x.title,hc?[...sv,['Maintenance',hc]]:sv]}),
-    m:[R.m.lines.map(l=>[l.n,Number(l.p)||0]),R.m.when,R.m.text],r:R.refresh};
+    m:[R.m.lines.map(l=>[l.n,Number(l.p)||0]),R.m.when,R.m.text],r:R.refresh,x:R.more?1:0};
   return o;
 }
 /* deflated so the QR stays easy to scan; "z" marks a compressed card */
@@ -424,6 +429,7 @@ function rxEditor(R,me){
     return h('section',{class:'card2 out'},h('span',{class:'lbl'},o.title+(i===0?(b==null?' · a lighter start':t<=b?' · within her budget':' · closest to her budget'):' · the full look')),
       ...o.lines.map(l=>lineRow(o.lines,l)),
       !o.lines.some(l=>l.t!=='s')?h('p',{class:'soft'},'Maintenance: keep her current routine.'):null,
+      i===1&&R.more?h('small',{class:'soft'},'Kept at $400 or under: home care and the leave-in are left off. Her card tells her she can ask to add them.'):null,
       o.lines.some(l=>l.n==='K18 Bond Protection')?h('small',{class:'soft'},'K18 goes on before the lightener ($25 to $50 by amount used). Finish with one pump of K18 leave-in.'):null,
       o.lines.some(l=>l.t!=='s')?h('small',{class:'soft'},'Her card shows these as one line: Maintenance '+rxMoney(o.lines.filter(l=>l.t!=='s').reduce((a,l)=>a+(Number(l.p)||0),0))+'.'):null,
       adder(o.lines),
