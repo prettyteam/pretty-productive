@@ -191,7 +191,7 @@ const RX_Q={
     ['love','Does she love it?',['Yes','No']],
     ['clean','Does she like clean, vegan products?',['No preference','Yes']]],
   skin:[
-    ['feel','How does her skin feel?',['Dry or tight','Oily','Combination','Sensitive','Normal']],
+    /* "How does her skin feel?" is gone: it repeated Her Skin Instant, which now comes first (Alexandra, Oct 16 2026) */
     ['steps','Her routine now',['Nothing','Cleanser only','A few steps','Full routine']],
     ['spf','Daily sunscreen?',['Yes','No']],
     ['prod','What does she use now?',['Professional','Drugstore']],
@@ -199,7 +199,7 @@ const RX_Q={
 };
 const RX_NOW={
   hair:['Color fading','Brassiness','Frizz','Flyaways','Breakage','Dryness','Oily scalp','Flat, no volume','Grays showing','Itchy or flaky scalp','Hard to style','Nothing new, just maintaining'],
-  skin:['Breakouts','Redness','Dullness or uneven tone','Dark spots','Dehydration','Fine lines','Large pores','Nothing new, just maintaining']
+  skin:['Breakouts','Redness','Sensitive','Oily','Dullness or uneven tone','Dark spots','Dehydration','Fine lines','Large pores','Nothing new, just maintaining']
 };
 
 const rxKind=()=>(S.mine&&S.mine.role==='esthetician')?'skin':'hair';
@@ -221,7 +221,7 @@ function rxNeeds(R){
   if(R.kind==='hair'&&rxGoalList(R).some(g=>/^Movement/.test(g))) add(a.style==='Air dry'?'movementAir':'movement');
   if(R.kind==='skin'){
     if(now.includes('Breakouts')||now.includes('Large pores')) add('skBreak');
-    if(now.includes('Redness')||a.feel==='Sensitive') add('skSens');
+    if(now.includes('Redness')||now.includes('Sensitive')||a.feel==='Sensitive') add('skSens');
     if(now.includes('Dullness or uneven tone')||now.includes('Dark spots')) add('skBright');
     if(now.includes('Dehydration')||a.feel==='Dry or tight') add('skSens');
     if(now.includes('Fine lines')) add('skAge');
@@ -386,7 +386,9 @@ function rxBuild(R,me){
     h('label',{class:'fld'},h('span',{},'Her Budget For Today ',h('small',{class:'soft'},'(include an estimated cost of maintenance to bundle with the services)')),bIn),
     chips(['No set budget'],()=>R.nob,()=>{R.nob=!R.nob}),
     h('div',{class:'fld'},'Her Goals For Today',chips(Object.keys(RX_GOAL[R.kind]),o=>rxGoalList(R).includes(o),o=>{const L=rxGoalList(R);R.goal=L.includes(o)?L.filter(x=>x!==o):[...L,o]})));
-  const s2=h('section',{class:'card2'},h('span',{class:'lbl'},'2 · Her Routine'),
+  /* skin: Her Skin Instant comes right after the guest, then her routine (Alexandra, Oct 16 2026) */
+  const sk=R.kind==='skin';
+  const s2=h('section',{class:'card2'},h('span',{class:'lbl'},(sk?'3':'2')+' · Her Routine'),
     /* every question starts with "I don't know" (what the girls say); tapping it tells her to go ask (Alexandra, Oct 15 2026) */
     ...RX_Q[R.kind].map(([key,q,opts,multi])=>{const IDK='I don’t know', all=[IDK,...opts];
       const unsure=multi?[].concat(R.a[key]||[]).includes(IDK):R.a[key]===IDK;
@@ -394,15 +396,15 @@ function rxBuild(R,me){
       o=>multi?[].concat(R.a[key]||[]).includes(o):R.a[key]===o,
       o=>{if(multi){let a=[].concat(R.a[key]||[]);const i=a.indexOf(o);if(i<0)a=o===IDK?[IDK]:[...a.filter(x=>x!==IDK),o];else a.splice(i,1);R.a[key]=a}else R.a[key]=R.a[key]===o?'':o}),
       unsure?h('small',{class:'rxfind'},'Is it that she didn’t tell you, or did you not remember to ask? You need to know this, so please ask her and come back with the right answer.'):null)}));
-  const s3=h('section',{class:'card2'},h('span',{class:'lbl'},'3 · Right Now'),
-    h('p',{class:'soft'},R.kind==='skin'?'Her Skin Instant: what is her skin going through right now, this season?':'What is her hair or scalp going through right now, this season?'),
+  const s3=h('section',{class:'card2'},h('span',{class:'lbl'},sk?'2 · Her Skin Instant':'3 · Right Now'),
+    h('p',{class:'soft'},R.kind==='skin'?'What is her skin going through right now, this season? Pick all that fit.':'What is her hair or scalp going through right now, this season?'),
     chips(RX_NOW[R.kind],o=>R.now.includes(o),o=>{const i=R.now.indexOf(o);i<0?R.now.push(o):R.now.splice(i,1)}));
   const ready=rxGoalList(R).length&&(R.nob||Number(R.budget)>0)&&R.now.length;
   const gen=h('button',{type:'button',class:'obtn',disabled:ready?null:'',onclick:()=>{const g=rxGenerate(R);if(!g)return;Object.assign(R,g);rxSave();render();setTimeout(()=>{const n=document.getElementById('rxopts');if(n)n.scrollIntoView({behavior:'smooth'})},50)}},R.opts?'Suggest Again':'Suggest Options');
   const s4=h('section',{class:'card2',style:'align-items:center;text-align:center'},gen,
     h('small',{class:'soft'},ready?'Suggestions follow the Taffeta consultation: only what she needs, inside her budget.':'Pick her goals, her budget and what’s going on right now.'));
   /* Maintenance prices come after her routine and what's going on now, when the artist decides what she goes home with (Alexandra, Oct 15 2026) */
-  const out=[s1,s2,s3,h('section',{class:'card2'},rxPriceList(R.kind)),s4];
+  const out=[s1,...(sk?[s3,s2]:[s2,s3]),h('section',{class:'card2'},rxPriceList(R.kind)),s4];
   if(R.opts) out.push(...rxEditor(R,me));
   return out;
 }
