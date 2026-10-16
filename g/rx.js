@@ -13,7 +13,7 @@ const RX_SVC={
     ['Base Lightener',55],['K18 Bond Protection',25],['Goldwell Leave-In Treatment',20],['Permanent Wave',100],['Formal Style',105]],
   skin:[['Taffeta Facial',130],['Express Acne Treatment',99],['Hydration Boost',99],['Brightening Mini Facial',99],
     ['Mini Redness Reversal',99],['Anti-Aging Express',99],['Dermaplaning',60],['Dermaplaning Add-On',40],
-    ['Nano Needling Facial',199],['Microdermabrasion',150],['Brow Sculpt Maintenance',25],['Brow Tint',25],['Brow Lamination',85],['Lip Wax',15]]
+    ['Nano Needling Facial',199],['Taffeta Facial with MC 110',130],['Microdermabrasion',150],['Brow Sculpt Maintenance',25],['Brow Tint',25],['Brow Lamination',85],['Lip Wax',15]]
 };
 /* Female haircut follows the artist's level (Alexandra, Oct 15 2026): newer artists $65, Alexandra $100, everyone else $75 */
 const RX_CUT={Adriana:65,Ashley:65,Amanda:65,Isabella:65,Alexandra:100};
@@ -254,7 +254,7 @@ function rxNeeds(R){
 /* Every blonding service gets K18 sprayed in before the lightener: a backbar charge from $25 (up to $50 by amount used),
    and one pump of K18 leave-in after (Alexandra, Oct 2026). */
 const RX_BLOND=/foil|balayage|highlight|lightener/i;
-const rxSvcLines=(k,names)=>{if(k==='hair') names=rxMergeSvc(names); if(names.some(n=>RX_BAL.test(n))) names=names.filter(n=>n!=='Glaze');
+const rxSvcLines=(k,names)=>{names=k==='hair'?rxMergeSvc(names):rxMergeSkin(names); if(names.some(n=>RX_BAL.test(n))) names=names.filter(n=>n!=='Glaze');
   const L=names.map(n=>({n,p:rxPrice(k,n),t:'s'}));
   if(k==='hair'&&names.some(n=>RX_BLOND.test(n))&&!names.includes('K18 Bond Protection')) L.push({n:'K18 Bond Protection',p:rxPrice('hair','K18 Bond Protection'),t:'s'});
   return L};
@@ -284,13 +284,29 @@ function rxMergeSvc(names){
   if(L.some(dry)) L=L.filter(n=>n!=='Leave Wet (no haircut)');
   return L;
 }
+/* Skin: one facial per visit (Alexandra, Oct 16 2026). With several goals the card keeps one facial (the MC 110 facial
+   when it's there, otherwise the fullest) plus any add-ons like dermaplaning, brows or wax. */
+const RX_FACIAL=/Facial|Treatment|Boost|Reversal|Express|Microdermabrasion/;
+function rxMergeSkin(names){
+  let L=[...new Set(names)]; const f=L.filter(n=>RX_FACIAL.test(n)&&!/Add-On/.test(n)); if(f.length<2) return L;
+  const keep=f.find(n=>/MC 110/.test(n))||f.slice().sort((x,y)=>rxPrice('skin',y)-rxPrice('skin',x))[0];
+  return L.filter(n=>n===keep||!f.includes(n));
+}
+/* Fine lines + brighten: a facial with MC 110 sheds the dull skin and plumps into the fine lines, so it brightens
+   and plumps at the same time (Alexandra, Oct 16 2026). It stands in for both goals. */
+const RX_MC110={p:[['Taffeta Facial with MC 110'],['Brightening Mini Facial']],
+  m:[['Taffeta Facial with MC 110'],'4–6 weeks','Your facial with MC 110 brightens and plumps at the same time.']};
 function rxGoalPlan(R){
-  const gs=rxGoalList(R).map(k=>(RX_GOAL[R.kind]||{})[k]).filter(Boolean); if(!gs.length) return null;
+  let keys=rxGoalList(R);
+  const mc=R.kind==='skin'&&keys.includes('Fine Lines And Firmness')&&keys.includes('Brighten or Even Tone');
+  if(mc) keys=keys.filter(k=>k!=='Fine Lines And Firmness'&&k!=='Brighten or Even Tone');
+  const gs=[...(mc?[RX_MC110]:[]),...keys.map(k=>(RX_GOAL[R.kind]||{})[k]).filter(Boolean)]; if(!gs.length) return null;
   if(gs.length===1) return gs[0];
+  const mg=R.kind==='skin'?rxMergeSkin:rxMergeSvc;
   const n=Math.max(...gs.map(g=>g.p.length));
-  const p=Array.from({length:n},(_,i)=>rxMergeSvc(gs.flatMap(g=>g.p[Math.min(i,g.p.length-1)])));
-  const ms=rxMergeSvc(gs.flatMap(g=>g.m[0]));
-  let mt=gs.map(g=>g.m[2]).join(' ');
+  const p=Array.from({length:n},(_,i)=>mg(gs.flatMap(g=>g.p[Math.min(i,g.p.length-1)])));
+  const ms=mg(gs.flatMap(g=>g.m[0]));
+  let mt=R.kind==='skin'?(gs.find(g=>g.m[0].some(x=>ms.includes(x)&&RX_FACIAL.test(x)))||gs[0]).m[2]:gs.map(g=>g.m[2]).join(' ');
   if(ms.includes('Female Haircut')) mt=mt.replace(/ If you get your cut today[^]*?Need a trim\? A haircut leaving wet is \$50\./,'');
   const m=[ms,gs[0].m[1],mt];
   return {p,m};
