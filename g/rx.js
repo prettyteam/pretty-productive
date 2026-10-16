@@ -18,7 +18,16 @@ const RX_SVC={
 /* Female haircut follows the artist's level (Alexandra, Oct 15 2026): newer artists $65, Alexandra $100, everyone else $75 */
 const RX_CUT={Adriana:65,Ashley:65,Amanda:65,Isabella:65,Alexandra:100};
 function rxSetCut(me){const f=String(me||'').trim().split(/\s+/)[0]||'', r=RX_SVC.hair.find(x=>x[0]==='Female Haircut'); if(r) r[1]=RX_CUT[f]||75}
-const rxPrice=(k,n)=>{const r=RX_SVC[k].find(x=>x[0]===n);return r?r[1]:0};
+const rxRegPrice=(k,n)=>{const r=RX_SVC[k].find(x=>x[0]===n);return r?r[1]:0};
+/* VIP family pricing: the VIP price list from Paired Plus (Service Pricelist, Oct 16 2026). Services with no VIP price
+   there keep their regular price. Home care is always regular price. */
+const RX_VIP={hair:{'Female Haircut':35,'Male Haircut':22.5,'Haircut Leaving Wet':20,'Blow Dry':50,'Blowdry Plus':29.25,
+    'Single Process':35,'Glaze':25,'Face Frame/Spot Highlight':27,'Minimum Foil':38.25,'Half Foil':57.5,'Full Foil':68.75,
+    'Permanent Wave':50,'Formal Style':60},
+  skin:{'Taffeta Facial':58,'Taffeta Facial with MC 110':58,'Express Acne Treatment':60,'Hydration Boost':60,'Brightening Mini Facial':60,
+    'Mini Redness Reversal':60,'Anti-Aging Express':60}};
+let RX_VIPON=false;
+const rxPrice=(k,n)=>{const v=RX_VIPON&&RX_VIP[k]&&RX_VIP[k][n];return v!=null&&v!==undefined&&v!==false?v:rxRegPrice(k,n)};
 
 /* Home care: one product per need, from the Taffeta product guide (brand list prices, Oct 2026; ring up from the POS). */
 const RX_PROD={
@@ -261,7 +270,7 @@ function rxNeeds(R){
    and one pump of K18 leave-in after (Alexandra, Oct 2026). */
 const RX_BLOND=/foil|balayage|highlight|lightener/i;
 const rxSvcLines=(k,names)=>{names=k==='hair'?rxMergeSvc(names):rxMergeSkin(names); if(names.some(n=>RX_BAL.test(n))) names=names.filter(n=>n!=='Glaze');
-  const L=names.map(n=>({n,p:rxPrice(k,n),t:'s'}));
+  const L=names.map(n=>{const p=rxPrice(k,n),reg=rxRegPrice(k,n);return reg!==p?{n,p,t:'s',reg}:{n,p,t:'s'}});
   if(k==='hair'&&names.some(n=>RX_BLOND.test(n))&&!names.includes('K18 Bond Protection')) L.push({n:'K18 Bond Protection',p:rxPrice('hair','K18 Bond Protection'),t:'s'});
   return L};
 /* 1.7 oz P50 lotions are offered only when they're on the shelf (Alexandra, Oct 15 2026); otherwise the full size.
@@ -295,7 +304,7 @@ function rxMergeSvc(names){
 const RX_FACIAL=/Facial|Treatment|Boost|Reversal|Express|Microdermabrasion/;
 function rxMergeSkin(names){
   let L=[...new Set(names)]; const f=L.filter(n=>RX_FACIAL.test(n)&&!/Add-On/.test(n)); if(f.length<2) return L;
-  const keep=f.find(n=>/MC 110/.test(n))||f.slice().sort((x,y)=>rxPrice('skin',y)-rxPrice('skin',x))[0];
+  const keep=f.find(n=>/MC 110/.test(n))||f.slice().sort((x,y)=>rxRegPrice('skin',y)-rxRegPrice('skin',x))[0];
   return L.filter(n=>n===keep||!f.includes(n));
 }
 /* Fine lines + brighten: a facial with MC 110 sheds the dull skin and plumps into the fine lines, so it brightens
@@ -325,6 +334,7 @@ function rxRecFull(o1,o2,keys){
   return rxProdLines([...new Set(keys)],'full').filter(l=>!full.has(l.n)).slice(0,3).map(l=>({n:l.n,p:l.p,why:l.why}));
 }
 function rxGenerate(R){
+  RX_VIPON=!!R.vip;
   const g=rxGoalPlan(R); if(!g) return null;
   const needs=rxNeeds(R), P=g.p, b=R.nob?null:Number(R.budget)||null;
   /* Goldwell leave-in backbar treatment: a no-downtime add-on for color that fades, blonde repair or dry, damaged hair.
@@ -373,7 +383,7 @@ function rxGenerate(R){
     const bx={n:'Biologique Recherche '+box,p:50,t:'p',why:'About 4 weeks of Biologique Recherche to try at home',full:50};
     o1=[...o1.filter(l=>l.t==='s'),bx];
     if(o2.some(l=>l.t==='t')){const o2b=[...o2.filter(l=>l.t==='s'),bx]; if(rxTotal(o2b)<=cap) o2=o2b}
-    const last=P[P.length-1], tgt=last.find(n=>RX_FACIAL.test(n)&&rxPrice('skin',n)===99)||'Hydration Boost';
+    const last=P[P.length-1], tgt=last.find(n=>RX_FACIAL.test(n)&&rxRegPrice('skin',n)===99)||'Hydration Boost';
     const hc=needs.length?needs:['skClean'];
     mLines=[...rxSvcLines('skin',[tgt]),...rxProdLines(hc,'full')];
     mw='4 weeks'; mt='We’ll see how your skin reacted to your Skin Box: a targeted treatment facial, and your home care in full size.' }
@@ -387,9 +397,10 @@ function rxPack(R,me,day){
     w:rxGoalList(R).join(', '),n:(R.now||[]).filter(x=>!/^Nothing new/.test(x)),
     /* home care shows on her card as one "Maintenance" line, the way Alexandra writes cards by hand,
        so she sees the investment, not a list of products to say no to */
-    o:R.opts.map(x=>{const sv=x.lines.filter(l=>l.t==='s').map(l=>[l.n,Number(l.p)||0]), hc=x.lines.filter(l=>l.t!=='s').reduce((a,l)=>a+(Number(l.p)||0),0);
+    v:R.vip?1:0,
+    o:R.opts.map(x=>{const sv=x.lines.filter(l=>l.t==='s').map(l=>l.reg&&l.reg!==l.p?[l.n,Number(l.p)||0,l.reg]:[l.n,Number(l.p)||0]), hc=x.lines.filter(l=>l.t!=='s').reduce((a,l)=>a+(Number(l.p)||0),0);
       return [x.title,hc?[...sv,['Maintenance',hc]]:sv]}),
-    m:[R.m.lines.map(l=>[l.n,Number(l.p)||0]),R.m.when,R.m.text],r:R.refresh,x:R.more?1:0,f:(R.rec||[]).map(l=>[l.n,Number(l.p)||0])};
+    m:[R.m.lines.map(l=>l.reg&&l.reg!==l.p?[l.n,Number(l.p)||0,l.reg]:[l.n,Number(l.p)||0]),R.m.when,R.m.text],r:R.refresh,x:R.more?1:0,f:(R.rec||[]).map(l=>[l.n,Number(l.p)||0])};
   return o;
 }
 /* deflated so the QR stays easy to scan; "z" marks a compressed card */
@@ -446,7 +457,10 @@ function rxBuild(R,me){
   gIn.addEventListener('input',()=>{R.guest=gIn.value;rxSave()});
   const bIn=h('input',{type:'number',inputmode:'decimal',min:'0',step:'5',value:R.budget,placeholder:'$'});
   bIn.addEventListener('input',()=>{const was=Number(R.budget)>0;R.budget=bIn.value;rxSave();if(was!==(Number(R.budget)>0)){render();const n=document.querySelector('.card2 input[type=number]');if(n){n.focus();try{n.setSelectionRange(n.value.length,n.value.length)}catch(e){}}}});
-  const s1=h('section',{class:'card2'},h('span',{class:'lbl'},'1 · Your Guest'),kindRow,
+  RX_VIPON=!!R.vip;
+  /* family on VIP pricing (Alexandra, Oct 16 2026): options are priced from the VIP list; her card shows the regular price crossed out */
+  const vipRow=h('div',{class:'fld'},'Pricing',chips(['Regular','VIP (family)'],o=>(o==='Regular')!==!!R.vip,o=>{const v=o!=='Regular';if(v!==!!R.vip){R.vip=v;R.opts=null;R.m=null}}));
+  const s1=h('section',{class:'card2'},h('span',{class:'lbl'},'1 · Your Guest'),kindRow,vipRow,
     h('label',{class:'fld'},'Guest’s First Name',gIn),
     h('label',{class:'fld'},h('span',{},'Her Budget For Today ',h('small',{class:'soft'},'(include an estimated cost of maintenance to bundle with the services)')),bIn));
   /* Each question is one dropdown row that shows what's picked; tap it to open a checklist (Alexandra, Oct 16 2026).
@@ -501,7 +515,7 @@ function rxEditor(R,me){
     const p=h('input',{type:'number',inputmode:'decimal',min:'0',value:String(l.p),class:'rxp','aria-label':'Price for '+l.n});
     p.addEventListener('change',()=>{l.p=Number(p.value)||0;rxSave();render()});
     return h('div',{class:'rxl'},
-      h('div',{class:'rxn'},h('b',{},l.t==='t'?'Try Me: '+l.n:l.n),l.t==='s'?null:h('small',{class:'soft'},l.t==='t'?'1 oz Try Me bottle':'Maintenance'+(l.why?' · '+l.why:''))),
+      h('div',{class:'rxn'},h('b',{},l.t==='t'?'Try Me: '+l.n:l.n),l.t==='s'&&l.reg&&l.reg!==l.p?h('small',{class:'soft'},'VIP · regular ',h('s',{},rxMoney(l.reg))):null,l.t==='s'?null:h('small',{class:'soft'},l.t==='t'?'1 oz Try Me bottle':'Maintenance'+(l.why?' · '+l.why:''))),
       l.t==='s'?null:h('button',{type:'button',class:'tab rxtry',onclick:()=>{if(l.t==='t'){l.t='p';l.p=l.full||(RX_PRICES[R.kind].find(x=>x[0]===l.n)||[0,l.p])[1]}else{l.full=l.full||l.p;l.t='t';l.p=RX_TRY}rxSave();render()}},l.t==='t'?'Full Size':'Try Me '+rxMoney(RX_TRY)),
       p,h('button',{type:'button',class:'rgx','aria-label':'Remove '+l.n,onclick:()=>{L.splice(L.indexOf(l),1);rxSave();render()}},'×'));
   };
@@ -512,7 +526,7 @@ function rxEditor(R,me){
       h('optgroup',{label:'Try Me'},h('option',{value:'__try'},'Try Me bottle · '+rxMoney(RX_TRY))));
     sel.addEventListener('change',()=>{const n=sel.value;if(!n)return;if(n==='__try'){const what=prompt('Which product goes in the Try Me bottle?');if(what)L.push({n:what.trim(),p:RX_TRY,t:'t'});rxSave();render();return}
       const sv=RX_SVC[R.kind].find(x=>x[0]===n);const pr=plist.find(x=>x[0]===n);const ex=Object.values(RX_PROD).find(x=>x[0]===n);
-      L.push(sv?{n,p:sv[1],t:'s'}:{n,p:pr[1],t:'p',why:ex?ex[2]:'',full:pr[1]});rxSave();render()});return h('label',{class:'fld'},sel)};
+      L.push(sv?(()=>{const p=rxPrice(R.kind,n),reg=sv[1];return reg!==p?{n,p,t:'s',reg}:{n,p,t:'s'}})():{n,p:pr[1],t:'p',why:ex?ex[2]:'',full:pr[1]});rxSave();render()});return h('label',{class:'fld'},sel)};
   const badge=t=>b==null?null:h('span',{class:'rxbadge '+(t<=b?'ok':'over')},t<=b?rxMoney(b-t)+' under budget':rxMoney(t-b)+' over budget');
   const opts=R.opts.map((o,i)=>{const t=rxTotal(o.lines);
     return h('section',{class:'card2 out'},h('span',{class:'lbl'},o.title+(i===0?(b==null?' · a lighter start':t<=b?' · within her budget':' · closest to her budget'):' · the full look')),

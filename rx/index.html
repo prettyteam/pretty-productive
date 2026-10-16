@@ -90,7 +90,7 @@ html,body{background:#f8f6f0}
   const opts=(c.o||[]).length?el('section',{class:'rxo'},el('span',{class:'eyebrow'},'Your options for today'),(c.o||[]).map(([title,lines],i)=>{const t=tots[i];
     const nm=hi<0?null:NAMES[i===hi?0:1];
     return el('details',{},el('summary',{},nm?el('span',{class:'nm'},el('span',{class:'nmt'},el('em',{},nm[0]),el('small',{},nm[1]))):el('span',{class:'nm'},title),el('b',{},money(t))),
-      el('div',{class:'brk'},lines.map(([n,p])=>el('div',{class:'li'},el('span',{},n),el('span',{},money(p)))),
+      el('div',{class:'brk'},lines.map(([n,p,r])=>el('div',{class:'li'},el('span',{},n),el('span',{},r?el('s',{style:'opacity:.55;margin-right:6px'},money(r)):null,money(p)))),
         c.b?el('span',{class:'badge '+(t<=c.b?'ok':'over')},t<=c.b?'Within your budget':money(t-c.b)+' over your budget'):null));
   })):null;
   const m=c.m||[[],'',''], mt=m[0].reduce((s,l)=>s+l[1],0);
@@ -116,7 +116,7 @@ html,body{background:#f8f6f0}
     el('div',{class:'top'},el('img',{src:'../g/logo.png',alt:'Taffeta Salon & Spa'})),
     el('div',{class:'rxh'},el('span',{class:'rx'},'Rx'),el('p',{},'Personal plan from today’s consultation: two options and what your next visit looks like.')),
     /* date small at the top as 10/15/26 (Alexandra, Oct 15 2026) */
-    el('div',{class:'for'},el('span',{},'For '+(c.g||'you')),isNaN(date)?null:el('span',{class:'dt'},(date.getMonth()+1)+'/'+date.getDate()+'/'+String(date.getFullYear()).slice(-2))),
+    el('div',{class:'for'},el('span',{},'For '+(c.g||'you'),c.v?el('span',{style:'margin-left:8px;font-size:11px;letter-spacing:.16em;border:1px solid currentColor;border-radius:999px;padding:1px 8px;vertical-align:middle'},'VIP'):null),isNaN(date)?null:el('span',{class:'dt'},(date.getMonth()+1)+'/'+date.getDate()+'/'+String(date.getFullYear()).slice(-2))),
     opts,
     /* All In stops at a $400 ticket; anything more is her call (Alexandra, Oct 16 2026) */
     (c.f&&c.f.length)?el('section',{class:'maint'},el('span',{class:'eyebrow'},'When you’re ready: full sizes'),
