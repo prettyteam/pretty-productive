@@ -344,8 +344,16 @@ function rxGenerate(R){
   /* no cut today: the next visit keeps the cut instead of leaving wet */
   if(ms.includes('Leave Wet (no haircut)')&&![o1,o2].some(L=>L.some(l=>/haircut/i.test(l.n)))){
     ms=ms.map(n=>n==='Leave Wet (no haircut)'?'Female Haircut':n); mt=mt.replace(/ and a glaze\..*$/,', a glaze and a trim.') }
+  let mLines=rxSvcLines(R.kind,ms);
+  /* Skin on a low budget (Alexandra, Oct 16 2026): if today's lighter option only fits with Try Me samples, her next
+     visit is in 4 weeks for a $99 targeted treatment facial, and she takes home a bottle of P50 and a small cleanser. */
+  if(R.kind==='skin'&&b!=null&&o1.some(l=>l.t==='t')){
+    const last=P[P.length-1], tgt=last.find(n=>RX_FACIAL.test(n)&&rxPrice('skin',n)===99)||'Hydration Boost';
+    const p50=needs.includes('skSens')?'skSens':needs.includes('skBright')?'skBright':'skBreak';
+    mLines=[...rxSvcLines('skin',[tgt]),...rxProdLines([p50,'skClean'],'full')];
+    mw='4 weeks'; mt='A targeted treatment facial, and a bottle of P50 with a small cleanser to start your routine at home.' }
   return {opts:[{title:'Option 1',lines:o1},{title:'Option 2',lines:o2}],
-    m:{lines:rxSvcLines(R.kind,ms),when:mw,text:mt},refresh:mw,keep:!needs.length,more};
+    m:{lines:mLines,when:mw,text:mt},refresh:mw,keep:!needs.length,more};
 }
 
 /* ---- the card in a link: compact JSON → base64url after # ---- */
