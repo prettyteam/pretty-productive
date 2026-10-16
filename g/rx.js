@@ -306,7 +306,9 @@ function rxGenerate(R){
   /* Option 2 never goes more than $100 over her budget, and with no budget it stays at $400 or under
      (Alexandra, Oct 16 2026): the fullest package that fits, trimming home care to Try Me bottles,
      then the leave-in treatment, before stepping down a service tier. */
-  const cap=b!=null?b+100:RX_CAP;
+  /* skin: services run about $200, so nothing on a skin card is suggested past a $400 ticket, budget or not; more
+     retail only if she asks (Alexandra, Oct 16 2026) */
+  const cap=R.kind==='skin'?Math.min(b!=null?b+100:RX_CAP,RX_ALLIN):(b!=null?b+100:RX_CAP);
   const pkg=(i,mode,lv)=>[...rxSvcLines(R.kind,P[i]),...(lv?rxSvcLines('hair',['Goldwell Leave-In Treatment']):[]),...rxProdLines(rxNeedsFor(needs,P[i]),mode)];
   /* All In (Option 2) never adds extras that take the ticket over $400 (Alexandra, Oct 16 2026): the services her
      budget allows can go higher, but home care and the leave-in only ride along while the total stays at $400 or
@@ -316,7 +318,7 @@ function rxGenerate(R){
   for(let i=0;i<P.length&&!o2;i++) for(const [mode,lv] of [['full',leave],['first',leave],['try',leave],['try',false],['none',false]]){
     const L=pkg(i,mode,lv); if(okL(L)){o2=L;i2=i;m2=[mode,lv];break} }
   if(!o2){o2=pkg(P.length-1,'none',false);m2=['none',false]}
-  const more=(m2[0]==='none'&&rxNeedsFor(needs,P[i2]).length>0)||(leave&&!m2[1]);
+  const more=(m2[0]!=='full'&&rxNeedsFor(needs,P[i2]).length>0)||(leave&&!m2[1]);
   /* Option 1 is the lighter one: inside her budget and always below Option 2 */
   let o1=null; const lim=Math.min(b!=null?b:Infinity,rxTotal(o2)-1);
   for(let i=Math.min(i2+1,P.length-1);i<P.length&&!o1;i++) for(const mode of ['full','first','try','none']){
@@ -429,7 +431,7 @@ function rxEditor(R,me){
     return h('section',{class:'card2 out'},h('span',{class:'lbl'},o.title+(i===0?(b==null?' · a lighter start':t<=b?' · within her budget':' · closest to her budget'):' · the full look')),
       ...o.lines.map(l=>lineRow(o.lines,l)),
       !o.lines.some(l=>l.t!=='s')?h('p',{class:'soft'},'Maintenance: keep her current routine.'):null,
-      i===1&&R.more?h('small',{class:'soft'},'Kept at $400 or under: home care and the leave-in are left off. Her card tells her she can ask to add them.'):null,
+      i===1&&R.more?h('small',{class:'soft'},'Kept at $400 or under: home care is trimmed or left off. Her card tells her she can ask to add more.'):null,
       o.lines.some(l=>l.n==='K18 Bond Protection')?h('small',{class:'soft'},'K18 goes on before the lightener ($25 to $50 by amount used). Finish with one pump of K18 leave-in.'):null,
       o.lines.some(l=>l.t!=='s')?h('small',{class:'soft'},'Her card shows these as one line: Maintenance '+rxMoney(o.lines.filter(l=>l.t!=='s').reduce((a,l)=>a+(Number(l.p)||0),0))+'.'):null,
       adder(o.lines),
