@@ -62,6 +62,9 @@ const RX_PROD={
   skSens:['Biologique Recherche Lotion P50W (5 oz)',100,'Gentle exfoliation for dry or sensitive skin'],
   skBright:['Biologique Recherche Lotion P50 PIGM 400 (1.7 oz)',45,'Evens tone and brightens dullness',['Biologique Recherche Lotion P50 PIGM 400 (5 oz)',100]],
   skAge:['Biologique Recherche Sérum Grand Millésime (0.3 oz)',115,'Firms and softens fine lines'],
+  /* when nothing in her answers calls for a specific product, the card still budgets for home care (Alexandra, Oct 16 2026) */
+  basicWash:['Taffeta Refillable Shampoo, new bottle',39,'Our salon shampoo in a refillable bottle, so salon hair lasts at home'],
+  basicWashRF:['Rossano Ferretti Vivace Everyday Hair & Body Shampoo',36,'Clean, vegan everyday shampoo with a fresh, fruity scent'],
   skClean:['Biologique Recherche Lait VIP O2 (1.7 oz)',35,'A gentle cleansing milk to start a real routine'],
   skMask:['Biologique Recherche Masque VIVANT',95,'Weekly mask for oily, blemish-prone skin']
 };
@@ -225,7 +228,7 @@ function rxNeeds(R){
     if(now.includes('Dullness or uneven tone')||now.includes('Dark spots')) add('skBright');
     if(now.includes('Dehydration')||a.feel==='Dry or tight') add('skSens');
     if(now.includes('Fine lines')) add('skAge');
-    if(!out.length&&(notHappy||a.steps==='Nothing'||a.steps==='Cleanser only')) add('skClean');
+    if(!out.length) add('skClean');
     return out.slice(0,2);
   }
   const feel=[].concat(a.feel||[]), color=[].concat(a.color||[]);
@@ -248,6 +251,8 @@ function rxNeeds(R){
   if(feel.includes('Oily')&&a.wash==='Daily') add('oily');
   if(feel.includes('Flat')) add('flatWash');
   if((a.wash==='Every 2–3 days'||a.wash==='Once a week')&&(a.style==='Blow-dry with a brush'||feel.includes('Flat'))) add('airWash');
+  /* home care is always budgeted, even before the artist knows exactly what she'll take home (Alexandra, Oct 16 2026) */
+  if(!out.length) add(colored?'colorSafe':'basicWash');
   return out.slice(0,2).map(k=>a.clean==='Yes'&&RX_PROD[k+'RF']?k+'RF':k);
 }
 
@@ -331,14 +336,20 @@ function rxGenerate(R){
      under. Past that, the card says she can ask for more and she decides. */
   const okL=L=>rxTotal(L)<=cap&&(rxTotal(L)<=RX_ALLIN||L.every(l=>l.t==='s'&&l.n!=='Goldwell Leave-In Treatment'));
   let o2=null,i2=P.length-1,m2=null;
-  for(let i=0;i<P.length&&!o2;i++) for(const [mode,lv] of [['full',leave],['first',leave],['try',leave],['try',false],['none',false]]){
-    const L=pkg(i,mode,lv); if(okL(L)){o2=L;i2=i;m2=[mode,lv];break} }
+  /* All In keeps the fullest service her budget allows. Home care rides along with it; it's left off only when the
+     $400 extras rule blocks it (the card then invites her to ask), otherwise the service steps down to make room. */
+  for(let i=0;i<P.length&&!o2;i++){
+    for(const [mode,lv] of [['full',leave],['first',leave],['try',leave],['try',false]]){const L=pkg(i,mode,lv); if(okL(L)){o2=L;i2=i;m2=[mode,lv];break}}
+    if(!o2&&rxTotal(pkg(i,'try',false))>RX_ALLIN){const L=pkg(i,'none',false); if(okL(L)){o2=L;i2=i;m2=['none',false]}} }
+  for(let i=0;i<P.length&&!o2;i++){const L=pkg(i,'none',false); if(okL(L)){o2=L;i2=i;m2=['none',false]}}
   if(!o2){o2=pkg(P.length-1,'none',false);m2=['none',false]}
   const more=(m2[0]!=='full'&&rxNeedsFor(needs,P[i2]).length>0)||(leave&&!m2[1]);
   /* Option 1 is the lighter one: inside her budget and always below Option 2 */
+  /* the budget option keeps full-size home care if any service tier allows it, before trimming to Try Me bottles
+     (Alexandra, Oct 16 2026: home care is part of the budget) */
   let o1=null; const lim=Math.min(b!=null?b:Infinity,rxTotal(o2)-1);
-  for(let i=Math.min(i2+1,P.length-1);i<P.length&&!o1;i++) for(const mode of ['full','first','try','none']){
-    const L=pkg(i,mode,false); if(rxTotal(L)<=lim){o1=L;break} }
+  for(const mode of ['full','first','try','none']){ for(let i=Math.min(i2+1,P.length-1);i<P.length&&!o1;i++){
+    const L=pkg(i,mode,false); if(rxTotal(L)<=lim) o1=L } if(o1) break }
   if(!o1) o1=pkg(P.length-1,'none',false);
   let [ms,mw,mt]=[o1,o2].some(L=>L.some(l=>RX_BAL.test(l.n)))?RX_BAL_M:g.m;
   /* no cut today: the next visit keeps the cut instead of leaving wet */
@@ -502,6 +513,7 @@ function rxEditor(R,me){
       !o.lines.some(l=>l.t!=='s')?h('p',{class:'soft'},'Maintenance: keep her current routine.'):null,
       i===1&&R.more?h('small',{class:'soft'},'Kept at $400 or under: home care is trimmed or left off. Her card tells her she can ask to add more.'):null,
       o.lines.some(l=>l.n==='K18 Bond Protection')?h('small',{class:'soft'},'K18 goes on before the lightener ($25 to $50 by amount used). Finish with one pump of K18 leave-in.'):null,
+      o.lines.some(l=>l.t!=='s')?h('small',{class:'soft'},'Home care is estimated from her answers. Swap in what she’s really taking home once you know.'):null,
       o.lines.some(l=>l.t!=='s')?h('small',{class:'soft'},'Her card shows these as one line: Maintenance '+rxMoney(o.lines.filter(l=>l.t!=='s').reduce((a,l)=>a+(Number(l.p)||0),0))+'.'):null,
       adder(o.lines),
       h('div',{class:'rxtot'},badge(t),h('b',{},rxMoney(t))));
