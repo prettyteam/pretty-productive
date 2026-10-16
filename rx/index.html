@@ -107,7 +107,7 @@ html,body{background:#f8f6f0}
   const line=(label,body)=>el('p',{class:'tline'},el('b',{},label),body);
   const aboutLines=[c.w?line('Your Goals For Today',c.w):null,c.n&&c.n.length?line('Right Now',c.n.join(', ').replace(/^./,x=>x.toUpperCase())):null,
     c.b?line('Your Budget Today',money(c.b)):null].filter(Boolean);
-  const about=aboutLines.length?el('details',{class:'talked'},el('summary',{},'What We Talked About'),el('div',{class:'tbody'},aboutLines)):null;
+  const about=aboutLines.length?el('details',{class:'talked'},el('summary',{},skin?'Skin Goals':'Hair Goals'),el('div',{class:'tbody'},aboutLines)):null;
   /* sign-off like the Home Maintenance PDFs: "Pretty Hair by [name in Antoinetta] xo"; the date sits under it */
   const first=String(c.a||'').trim().split(/\s+/)[0]||'', pre=skin?'Pretty Skin by ':'Pretty Hair by ';
   const sign=el('p',{class:'sign'},pre,first?el('img',{class:'namepic',src:'../g/names/'+first.toLowerCase()+'.png',alt:first}):'Taffeta',' xo');
