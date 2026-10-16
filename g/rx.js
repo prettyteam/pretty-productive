@@ -69,7 +69,8 @@ const RX_PROD={
   skMask:['Biologique Recherche Masque VIVANT',95,'Weekly mask for oily, blemish-prone skin']
 };
 const RX_TRY=6; /* Try Me bottle: 1 oz of any backbar product */
-const RX_ALLIN=400; /* All In never adds extras past a $400 ticket (Alexandra, Oct 16 2026) */
+const RX_ALLIN_SKIN=400; /* skin: nothing suggested past a $400 ticket (Alexandra, Oct 16 2026) */
+const RX_ALLIN_HAIR=450; /* hair All In never adds extras past a $450 ticket; was $400, but a full balayage with a cut is $425 to $450 (Alexandra, Oct 16 2026) */
 const RX_CAP=400; /* Option 2 tops out here when no budget is given (Alexandra, Oct 16 2026) */
 /* Home care price list artists learn and star their go-tos from: every hair and skin retail product we carry, at the
    retail price in Paired Plus (Retail Price List report, Oct 15 2026). Oribe Bright Blonde is discontinued and gone.
@@ -318,6 +319,11 @@ function rxGoalPlan(R){
 }
 const RX_BIG_BLOND=/^(Half|Full) Head Balayage$|^(Half|Full) Foil$/;
 const rxNeedsFor=(needs,names)=>names.some(n=>RX_BIG_BLOND.test(n))&&!needs.includes('k18Home')&&!needs.includes('breakage')?[...needs,'k18Home']:needs;
+/* Full-size versions of the home care that the options only carry as Try Me bottles or left off for the budget */
+function rxRecFull(o1,o2,keys){
+  const full=new Set(o2.filter(l=>l.t==='p').map(l=>l.n)); /* judged on All In: what it only carries as Try Me or leaves off */
+  return rxProdLines([...new Set(keys)],'full').filter(l=>!full.has(l.n)).slice(0,3).map(l=>({n:l.n,p:l.p,why:l.why}));
+}
 function rxGenerate(R){
   const g=rxGoalPlan(R); if(!g) return null;
   const needs=rxNeeds(R), P=g.p, b=R.nob?null:Number(R.budget)||null;
@@ -329,6 +335,7 @@ function rxGenerate(R){
      then the leave-in treatment, before stepping down a service tier. */
   /* skin: services run about $200, so nothing on a skin card is suggested past a $400 ticket, budget or not; more
      retail only if she asks (Alexandra, Oct 16 2026) */
+  const RX_ALLIN=R.kind==='skin'?RX_ALLIN_SKIN:RX_ALLIN_HAIR;
   const cap=R.kind==='skin'?Math.min(b!=null?b+100:RX_CAP,RX_ALLIN):(b!=null?b+100:RX_CAP);
   const pkg=(i,mode,lv)=>[...rxSvcLines(R.kind,P[i]),...(lv?rxSvcLines('hair',['Goldwell Leave-In Treatment']):[]),...rxProdLines(rxNeedsFor(needs,P[i]),mode)];
   /* All In (Option 2) never adds extras that take the ticket over $400 (Alexandra, Oct 16 2026): the services her
@@ -371,7 +378,7 @@ function rxGenerate(R){
     mLines=[...rxSvcLines('skin',[tgt]),...rxProdLines(hc,'full')];
     mw='4 weeks'; mt='We’ll see how your skin reacted to your Skin Box: a targeted treatment facial, and your home care in full size.' }
   return {opts:[{title:'Option 1',lines:o1},{title:'Option 2',lines:o2}],
-    m:{lines:mLines,when:mw,text:mt},refresh:mw,keep:!needs.length,more};
+    m:{lines:mLines,when:mw,text:mt},refresh:mw,keep:!needs.length,more,rec:rxRecFull(o1,o2,[...rxNeedsFor(needs,P[i2]),...needs])};
 }
 
 /* ---- the card in a link: compact JSON → base64url after # ---- */
@@ -382,7 +389,7 @@ function rxPack(R,me,day){
        so she sees the investment, not a list of products to say no to */
     o:R.opts.map(x=>{const sv=x.lines.filter(l=>l.t==='s').map(l=>[l.n,Number(l.p)||0]), hc=x.lines.filter(l=>l.t!=='s').reduce((a,l)=>a+(Number(l.p)||0),0);
       return [x.title,hc?[...sv,['Maintenance',hc]]:sv]}),
-    m:[R.m.lines.map(l=>[l.n,Number(l.p)||0]),R.m.when,R.m.text],r:R.refresh,x:R.more?1:0};
+    m:[R.m.lines.map(l=>[l.n,Number(l.p)||0]),R.m.when,R.m.text],r:R.refresh,x:R.more?1:0,f:(R.rec||[]).map(l=>[l.n,Number(l.p)||0])};
   return o;
 }
 /* deflated so the QR stays easy to scan; "z" marks a compressed card */
@@ -511,7 +518,7 @@ function rxEditor(R,me){
     return h('section',{class:'card2 out'},h('span',{class:'lbl'},o.title+(i===0?(b==null?' · a lighter start':t<=b?' · within her budget':' · closest to her budget'):' · the full look')),
       ...o.lines.map(l=>lineRow(o.lines,l)),
       !o.lines.some(l=>l.t!=='s')?h('p',{class:'soft'},'Maintenance: keep her current routine.'):null,
-      i===1&&R.more?h('small',{class:'soft'},'Kept at $400 or under: home care is trimmed or left off. Her card tells her she can ask to add more.'):null,
+      i===1&&R.more?h('small',{class:'soft'},'Kept at '+rxMoney(R.kind==='skin'?RX_ALLIN_SKIN:RX_ALLIN_HAIR)+' or under: home care is trimmed to Try Me bottles or left off. The full sizes she should end up with show below the options.'):null,
       o.lines.some(l=>l.n==='K18 Bond Protection')?h('small',{class:'soft'},'K18 goes on before the lightener ($25 to $50 by amount used). Finish with one pump of K18 leave-in.'):null,
       o.lines.some(l=>l.t!=='s')?h('small',{class:'soft'},'Home care is estimated from her answers. Swap in what she’s really taking home once you know.'):null,
       o.lines.some(l=>l.t!=='s')?h('small',{class:'soft'},'Her card shows these as one line: Maintenance '+rxMoney(o.lines.filter(l=>l.t!=='s').reduce((a,l)=>a+(Number(l.p)||0),0))+'.'):null,
@@ -530,7 +537,11 @@ function rxEditor(R,me){
   const clear=h('button',{type:'button',class:'tab',onclick:()=>{if(!confirm('Start a new card? This clears the one on screen.'))return;RX=rxBlank(R.kind);rxSave();render();window.scrollTo(0,0)}},'Start A New One');
   const done=h('section',{class:'card2',style:'align-items:center;text-align:center'},save,clear,
     h('small',{class:'soft'},'She scans the QR with her camera and the card opens on her phone. No texting, no phone number.'));
-  const wrap=h('div',{id:'rxopts',style:'display:flex;flex-direction:column;gap:26px'},...opts,maint,done);
+  /* full sizes she should end up with, outside the budget (Alexandra, Oct 16 2026) */
+  const rec=(R.rec&&R.rec.length)?h('section',{class:'card2'},h('span',{class:'lbl'},'Full Sizes To Go Home With'),
+    h('small',{class:'soft'},'Not in her budget or totals. She starts with the Try Me today; these are what she should take home when she’s ready.'),
+    ...R.rec.map(l=>h('div',{style:'display:flex;justify-content:space-between;gap:12px;font-size:14px'},h('span',{},l.n),h('span',{},rxMoney(l.p))))):null;
+  const wrap=h('div',{id:'rxopts',style:'display:flex;flex-direction:column;gap:26px'},...opts,rec,maint,done);
   return [wrap];
 }
 
