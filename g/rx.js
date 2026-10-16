@@ -66,6 +66,7 @@ const RX_PROD={
   skMask:['Biologique Recherche Masque VIVANT',95,'Weekly mask for oily, blemish-prone skin']
 };
 const RX_TRY=6; /* Try Me bottle: 1 oz of any backbar product */
+const RX_CAP=400; /* Option 2 tops out here when no budget is given (Alexandra, Oct 16 2026) */
 /* Home care price list artists learn and star their go-tos from: every hair and skin retail product we carry, at the
    retail price in Paired Plus (Retail Price List report, Oct 15 2026). Oribe Bright Blonde is discontinued and gone.
    Taffeta Refillable is our backbar shampoo + conditioner in Taffeta bottles: new bottle or a refill into her own bottle (Paired Plus, Oct 15 2026). */
@@ -259,7 +260,7 @@ const rxSvcLines=(k,names)=>{if(k==='hair') names=rxMergeSvc(names); if(names.so
 /* 1.7 oz P50 lotions are offered only when they're on the shelf (Alexandra, Oct 15 2026); otherwise the full size.
    Out of stock as of the last Paired Plus count; update this list when the 1.7 oz comes in or sells out. */
 const RX_OUT=['Biologique Recherche Lotion P50 (1.7 oz)'];
-const rxProdLines=(keys,mode)=>keys.map((k,i)=>{let [n,p,why,alt]=RX_PROD[k];if(alt&&RX_OUT.includes(n))[n,p]=alt;const t=mode==='try'||(mode==='first'&&i>0);return {n,p:t?RX_TRY:p,t:t?'t':'p',why,full:p}});
+const rxProdLines=(keys,mode)=>mode==='none'?[]:keys.map((k,i)=>{let [n,p,why,alt]=RX_PROD[k];if(alt&&RX_OUT.includes(n))[n,p]=alt;const t=mode==='try'||(mode==='first'&&i>0);return {n,p:t?RX_TRY:p,t:t?'t':'p',why,full:p}});
 const rxTotal=L=>L.reduce((s,x)=>s+(Number(x.p)||0),0);
 
 /* Option 1 fits inside the budget (lighter service, or Try Me bottles before dropping home care); Option 2 is the full look. */
@@ -301,12 +302,21 @@ function rxGenerate(R){
   /* Goldwell leave-in backbar treatment: a no-downtime add-on for color that fades, blonde repair or dry, damaged hair.
      $20, or $10–15 when only half the bottle is used (Alexandra, Oct 2026). Offered in the full look. */
   const now=R.now||[], leave=R.kind==='hair'&&(now.some(x=>/Color fading|Brassiness|Breakage|Dryness/.test(x))||P[0].some(n=>RX_BLOND.test(n)));
-  const o2=[...rxSvcLines(R.kind,P[0]),...(leave?rxSvcLines('hair',['Goldwell Leave-In Treatment']):[]),...rxProdLines(rxNeedsFor(needs,P[0]),'full')];
-  let o1=null;
-  const tryPkg=i=>{for(const mode of ['full','first','try']){const L=[...rxSvcLines(R.kind,P[i]),...rxProdLines(rxNeedsFor(needs,P[i]),mode)];if(rxTotal(L)<=b) return L}return null};
-  if(b==null) o1=[...rxSvcLines(R.kind,P[Math.min(1,P.length-1)]),...rxProdLines(rxNeedsFor(needs,P[Math.min(1,P.length-1)]),'full')];
-  else{ for(let i=P.length>1?1:0;i<P.length&&!o1;i++) o1=tryPkg(i);
-    if(!o1) o1=[...rxSvcLines(R.kind,P[P.length-1]),...rxProdLines(rxNeedsFor(needs,P[P.length-1]),'try')]; }
+  /* Option 2 never goes more than $100 over her budget, and with no budget it stays at $400 or under
+     (Alexandra, Oct 16 2026): the fullest package that fits, trimming home care to Try Me bottles,
+     then the leave-in treatment, before stepping down a service tier. */
+  const cap=b!=null?b+100:RX_CAP;
+  const pkg=(i,mode,lv)=>[...rxSvcLines(R.kind,P[i]),...(lv?rxSvcLines('hair',['Goldwell Leave-In Treatment']):[]),...rxProdLines(rxNeedsFor(needs,P[i]),mode)];
+  let o2=null,i2=P.length-1;
+  for(let i=0;i<P.length&&!o2;i++) for(const [mode,lv] of [['full',leave],['first',leave],['try',leave],['try',false]]){
+    const L=pkg(i,mode,lv); if(rxTotal(L)<=cap){o2=L;i2=i;break} }
+  if(!o2) o2=pkg(P.length-1,'try',false);
+  if(rxTotal(o2)>cap) o2=pkg(P.length-1,'none',false);
+  /* Option 1 is the lighter one: inside her budget and always below Option 2 */
+  let o1=null; const lim=Math.min(b!=null?b:Infinity,rxTotal(o2)-1);
+  for(let i=Math.min(i2+1,P.length-1);i<P.length&&!o1;i++) for(const mode of ['full','first','try','none']){
+    const L=pkg(i,mode,false); if(rxTotal(L)<=lim){o1=L;break} }
+  if(!o1) o1=pkg(P.length-1,'none',false);
   let [ms,mw,mt]=[o1,o2].some(L=>L.some(l=>RX_BAL.test(l.n)))?RX_BAL_M:g.m;
   /* no cut today: the next visit keeps the cut instead of leaving wet */
   if(ms.includes('Leave Wet (no haircut)')&&![o1,o2].some(L=>L.some(l=>/haircut/i.test(l.n)))){
