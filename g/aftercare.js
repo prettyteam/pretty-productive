@@ -95,8 +95,8 @@ async function acSend(sheet,guest,st,how,win){
     }
     const url=URL.createObjectURL(blob);
     if(how==='share'){const a=document.createElement('a');a.href=url;a.download=acFile(sheet,guest);document.body.appendChild(a);a.click();a.remove();st.textContent='Saved the PDF. Attach it to your text.'}
-    else {if(win) win.location=url; else location.href=url; st.textContent=''}
-  }catch(e){if(win) win.close(); st.textContent='Couldn’t make the PDF. Check the Wi-Fi and try again.'}
+    else {URL.revokeObjectURL(url); st.textContent=''; window.pdfOverlay(blob,acFile(sheet,guest))}  /* Back button, never stuck (Oct 16 2026) */
+  }catch(e){st.textContent='Couldn’t make the PDF. Check the Wi-Fi and try again.'}
 }
 
 function acMount(el){
@@ -108,7 +108,6 @@ function acMount(el){
   el.addEventListener('click',ev=>{
     const b=ev.target.closest('button[data-ac]'); if(!b) return;
     const s=AC_SHEETS[+b.dataset.ac], g=(el.querySelector('#acGuest').value||'').trim().split(/\s+/)[0]||'';
-    const win=b.dataset.w==='view'?window.open('','_blank'):null;   /* opened inside the tap so it isn't blocked */
-    acSend(s,g,b.closest('.item').querySelector('.acst'),b.dataset.w,win);
+    acSend(s,g,b.closest('.item').querySelector('.acst'),b.dataset.w);
   });
 }

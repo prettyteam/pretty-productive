@@ -188,14 +188,14 @@ const RX_Q={
     ['style','How does she style it?',['Air dry','Blow-dry with a brush','Hot tools daily']],
     ['color','Is it color-treated?',['No','Yes','Yes, with a glaze that fades','Blonde that turns brassy'],1],
     ['prod','What does she use now?',['Professional','Drugstore']],
-    ['love','Does she love it?',['Yes','No']],
+    ['love','Does she love it?',['Yes','It’s okay','No']],
     ['clean','Does she like clean, vegan products?',['No preference','Yes']]],
   skin:[
     /* "How does her skin feel?" is gone: it repeated Her Skin Instant, which now comes first (Alexandra, Oct 16 2026) */
     ['steps','Her routine now',['Nothing','Cleanser only','A few steps','Full routine']],
     ['spf','Daily sunscreen?',['Yes','No']],
     ['prod','What does she use now?',['Professional','Drugstore']],
-    ['love','Does she love it?',['Yes','No']]]
+    ['love','Does she love it?',['Yes','It’s okay','No']]]
 };
 const RX_NOW={
   hair:['Color fading','Brassiness','Frizz','Flyaways','Breakage','Dryness','Oily scalp','Flat, no volume','Grays showing','Itchy or flaky scalp','Hard to style','Nothing new, just maintaining'],
@@ -216,7 +216,7 @@ const rxFirst=n=>String(n||'').trim().split(/\s+/)[0]||'';
 /* Genuine needs only, most important first, at most two. "Right now" leads, then her routine. */
 function rxNeeds(R){
   const a=R.a||{}, now=R.now||[], out=[], add=k=>{if(!out.includes(k)&&RX_PROD[k]) out.push(k)};
-  const notHappy=a.prod&&!['Professional','Unsure','Not sure','I don’t know'].includes(a.prod)||a.love==='No';
+  const notHappy=a.prod&&!['Professional','Unsure','Not sure','I don’t know'].includes(a.prod)||a.love==='No'||a.love==='It’s okay'; /* "it's okay" means she's open to something better (Alexandra, Oct 16 2026) */
   if(R.kind==='hair'&&rxGoalList(R).some(g=>/^Blowout/.test(g))&&(now.includes('Frizz')||now.includes('Flyaways'))) add('sleekStick');
   if(R.kind==='hair'&&rxGoalList(R).some(g=>/^Movement/.test(g))) add(a.style==='Air dry'?'movementAir':'movement');
   if(R.kind==='skin'){
@@ -426,16 +426,15 @@ function rxBuild(R,me){
   const kindRow=h('div',{class:'fld'},'Card For',chips(['Hair','Skin'],o=>R.kind===o.toLowerCase(),o=>{const k=o.toLowerCase();if(k!==R.kind){RX=Object.assign(rxBlank(k),{guest:R.guest,budget:R.budget,nob:R.nob})}}));
   const gIn=h('input',{type:'text',value:R.guest,placeholder:'First name',autocomplete:'off',autocapitalize:'words'});
   gIn.addEventListener('input',()=>{R.guest=gIn.value;rxSave()});
-  const bIn=h('input',{type:'number',inputmode:'decimal',min:'0',step:'5',value:R.budget,placeholder:'$',disabled:R.nob?'':null});
-  bIn.addEventListener('input',()=>{R.budget=bIn.value;rxSave()});
+  const bIn=h('input',{type:'number',inputmode:'decimal',min:'0',step:'5',value:R.budget,placeholder:'$'});
+  bIn.addEventListener('input',()=>{const was=Number(R.budget)>0;R.budget=bIn.value;rxSave();if(was!==(Number(R.budget)>0)){render();const n=document.querySelector('.card2 input[type=number]');if(n){n.focus();try{n.setSelectionRange(n.value.length,n.value.length)}catch(e){}}}});
   const s1=h('section',{class:'card2'},h('span',{class:'lbl'},'1 · Your Guest'),kindRow,
     h('label',{class:'fld'},'Guest’s First Name',gIn),
-    h('label',{class:'fld'},h('span',{},'Her Budget For Today ',h('small',{class:'soft'},'(include an estimated cost of maintenance to bundle with the services)')),bIn),
-    chips(['No set budget'],()=>R.nob,()=>{R.nob=!R.nob}));
+    h('label',{class:'fld'},h('span',{},'Her Budget For Today ',h('small',{class:'soft'},'(include an estimated cost of maintenance to bundle with the services)')),bIn));
   /* Each question is one dropdown row that shows what's picked; tap it to open a checklist (Alexandra, Oct 16 2026).
      Answering a one-answer question closes it and opens the next unanswered one, so nothing gets skipped; a pick-all
      question stays open until she taps it closed, then the next one opens. Same colors as the rest of the app. */
-  rxDDStyle();
+  rxDDStyle(); R.nob=false;
   const sk=R.kind==='skin', IDK='I don’t know';
   const routine=RX_Q[R.kind].map(([key,q,opts,multi])=>({key,q,opts:[IDK,...opts],multi:!!multi,
     get:()=>[].concat(R.a[key]||[]).filter(Boolean),
@@ -465,11 +464,12 @@ function rxBuild(R,me){
   const s2=h('section',{class:'card2'},h('span',{class:'lbl'},(sk?'3':'2')+' · Her Routine'),...routine.map(dd));
   const s3=h('section',{class:'card2'},h('span',{class:'lbl'},sk?'2 · Her Skin Instant':'3 · Right Now'),dd(nowQ));
   const done=order.filter(x=>x.get().length).length;
-  const ready=rxGoalList(R).length&&(R.nob||Number(R.budget)>0)&&R.now.length;
+  /* no options until a budget is typed in (Alexandra, Oct 16 2026): "No set budget" is gone */
+  const ready=rxGoalList(R).length&&Number(R.budget)>0&&R.now.length;
   const gen=h('button',{type:'button',class:'obtn',disabled:ready?null:'',onclick:()=>{const g=rxGenerate(R);if(!g)return;Object.assign(R,g);rxSave();render();setTimeout(()=>{const n=document.getElementById('rxopts');if(n)n.scrollIntoView({behavior:'smooth'})},50)}},R.opts?'Suggest Again':'Suggest Options');
   const s4=h('section',{class:'card2',style:'align-items:center;text-align:center'},gen,
     h('small',{class:'soft'},done+' of '+order.length+' questions answered'),
-    h('small',{class:'soft'},ready?'Suggestions follow the Taffeta consultation: only what she needs, inside her budget.':'Pick her goals, her budget and what’s going on right now.'));
+    h('small',{class:'soft'},ready?'Suggestions follow the Taffeta consultation: only what she needs, inside her budget.':(Number(R.budget)>0?'Pick her goals and what’s going on right now.':'Type her budget first. Options only show once there’s a budget.')));
   /* Maintenance prices come after her routine and what's going on now, when the artist decides what she goes home with (Alexandra, Oct 15 2026) */
   const out=[s1,...(sk?[s3,s2]:[s2,s3]),h('section',{class:'card2'},rxPriceList(R.kind)),s4];
   if(R.opts) out.push(...rxEditor(R,me));

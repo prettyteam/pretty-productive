@@ -443,9 +443,10 @@ details.days summary::-webkit-details-marker{display:none}
 </style>
 
 <script src="g/config.js?v=2"></script>
-<script src="g/regimen.js?v=22"></script>
+<script src="g/pdfview.js?v=1"></script>
+<script src="g/regimen.js?v=23"></script>
 <script src="g/qr.js?v=1"></script>
-<script src="g/rx.js?v=57"></script>
+<script src="g/rx.js?v=58"></script>
 <script src="g/prices.js?v=5"></script>
 <link rel="stylesheet" href="g/rx.css?v=4">
 <link rel="icon" href="icon.png">
@@ -1139,8 +1140,8 @@ function crView(){
   const w=c.weeks.find(x=>x.week===S.crw)||c.weeks[0];
   const row=(l,v,strong)=>h('div',{style:'display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--line)'+(strong?';font-weight:600':'')},h('span',{},l),h('span',{},v));
   const openPdf=async()=>{
-    try{const b=await docBytes(w.file,c.k);const u=URL.createObjectURL(new Blob([b],{type:'application/pdf'}));
-      const win=window.open(u,'_blank'); if(!win){const a=document.createElement('a');a.href=u;a.download='Taffeta weekly commission '+w.week+'.pdf';document.body.append(a);a.click();a.remove()}
+    try{const b=await docBytes(w.file,c.k);
+      window.pdfOverlay(new Blob([b],{type:'application/pdf'}),'Taffeta weekly commission '+w.week+'.pdf');
     }catch(e){HUB.toast='Couldn’t open the PDF. Check your signal.';render()}
   };
   return [h('div',{class:'hub'},

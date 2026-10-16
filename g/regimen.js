@@ -408,9 +408,9 @@ async function rgShare(me,R,kind,toast){
 }
 async function rgPreview(me,toast,R,kind){
   toast.textContent='Making the preview…';
-  const w=window.open('','_blank');
-  try{const url=URL.createObjectURL(await rgPdf(me,R,kind)); if(w) w.location=url; else location.href=url; toast.textContent=''}
-  catch(e){if(w) w.close(); toast.textContent='Couldn’t make the PDF. Check your signal and try again.'}
+  /* opens on top of the app with a Back button, so she never gets stuck on the PDF (Alexandra, Oct 16 2026) */
+  try{const blob=await rgPdf(me,R,kind); toast.textContent=''; window.pdfOverlay(blob,rgFile(R,kind))}
+  catch(e){toast.textContent='Couldn’t make the PDF. Check your signal and try again.'}
 }
 /* Artist taps Save PDF: the regimen goes to the Home care list in the front desk app, and her screen clears for the next guest */
 /* On once the live Apps Script has the Home care handler: its staff reply carries regimen:true. The old script answers ok
