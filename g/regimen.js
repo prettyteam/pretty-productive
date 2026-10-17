@@ -207,10 +207,74 @@ function rgBack(R){
   return R.next?'in about '+R.next:'';
 }
 let RG=null, RG_Q='', RG_OPEN=null, RG_TOAST='';
+const RG_SKIN_BRANDS=['Biologique Recherche','Cool Cucumber','Taffeta','Aluram','Oribe'];
+const RX_BRANDS_ORDER=b=>{const L=typeof RX_BRANDS!=='undefined'?RX_BRANDS:[];return L.indexOf(b)+1||99};
 function rgLoad(){ if(RG) return RG; try{RG=Object.assign(rgBlank(),JSON.parse(store.get(rgKey())||'{}'))}catch(e){RG=rgBlank()} return RG }
 function rgSave(){ store.set(rgKey(),JSON.stringify(RG)) }
 const rgToggle=(a,v)=>{const i=a.indexOf(v); i<0?a.push(v):a.splice(i,1)};
 const rgFirst=n=>String(n||'').trim().split(/\s+/)[0]||'';
+
+/* Every retail product we sell (RX_PRICES in g/rx.js, Alexandra Oct 17 2026), merged with the hand-written list above:
+   a product already in RG_LIST keeps its step and wording; the rest get a step and a starter how-to from their name. */
+const rgNorm=n=>String(n).normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/hair ?spray/g,'hairspray').replace(/[^a-z0-9]/g,'');
+const rgBase=n=>String(n).replace(/\s*\([^)]*\)\s*$/,'').replace(/,\s*(new bottle|refill|mini|travel|[\d.]+"?\s*(oz|ml)?)$/i,'').trim();
+function rgGuess(kind,n){
+  const t=n.toLowerCase(), H=RG_HOW;
+  if(kind==='skin'){
+    if(/masque|mask|patch/.test(t)) return ['Masks',/patch/.test(t)?H.eye:H.mask];
+    if(/eye|yeux|concealer/.test(t)) return ['Eyes',H.eye];
+    if(/lait|micellaire|cleans|démaquill/.test(t)) return ['Cleanse',H.milk];
+    if(/mc 110/.test(t)) return ['Tone (Lotion P50)',H.mc110];
+    if(/p50/.test(t)) return ['Tone (Lotion P50)',H.p50];
+    if(/box/.test(t)) return ['Kits & more',''];
+    if(/u\.v\.|spf|teint|kiss|hand|body|oil|tint/.test(t)) return ['Protect & glow',''];
+    if(/crème|creme|émulsion|emulsion/.test(t)) return ['Moisturize',H.cream];
+    if(/sérum|serum|fluide|extraits|tensil|collag|lastine|placenta|eauxyg/.test(t)) return ['Serums',/eauxyg/.test(t)?'Mist over face after cleansing or any time skin feels tight.':H.serum];
+    return ['Kits & more',''];
+  }
+  if(/holiday|\bset\b|collection/.test(t)) return ['Sets & travel',''];
+  if(/hand & nail|parfum/.test(t)) return ['More',''];
+  if(/dry shampoo|airwash|dry volume/.test(t)) return ['Finish',H.dry];
+  if(/pre-shampoo/.test(t)) return ['Treat & repair',H.hairmask];
+  if(/shampoo|cleanse\b|wash/.test(t)) return ['Shampoo',H.hairsh];
+  if(/leave-in/.test(t)) return ['Condition','After washing, spray or smooth through damp mid-lengths and ends. Do not rinse.'];
+  if(/conditioner/.test(t)) return ['Condition',H.haircond];
+  if(/brush|iron|dryer|curl id|curl x|pillowcase|showerhead|filter|kit|wand/.test(t)) return ['Tools',''];
+  if(/oil\b|oil,/.test(t)) return ['Treat & repair',H.oil];
+  if(/heat|protect|primer|blowout spray|defense/.test(t)) return ['Prep & heat protect',H.heat];
+  if(/mask|treatment|drops|repair|scalp|serum/.test(t)) return ['Treat & repair',H.hairmask];
+  if(/foam|mousse|pomade|balm|butter|gelée|cr[eè]me|cream/.test(t)) return ['Style',H.style];
+  if(/spray|shine|gloss|hold/.test(t)) return ['Finish',H.finish];
+  if(/gel|textur|dust|powder/.test(t)) return ['Style',H.style];
+  return ['More',''];
+}
+const RG_CAT={};
+function rgCatalog(kind){
+  if(RG_CAT[kind]) return RG_CAT[kind];
+  const out=[], by=new Map();
+  RG_LIST[kind].forEach(([step,items])=>items.forEach(([n,how,w0])=>{const it={n,how,w0,step,sizes:[]};out.push(it);by.set(rgNorm(n),it)}));
+  const rx=(typeof RX_PRICES!=='undefined'&&RX_PRICES[kind])||[];
+  rx.forEach(([full])=>{
+    const b=rgBase(full).replace(/^Hydralixir/,'Cool Cucumber Hydralixir'), k=rgNorm(b);
+    let it=by.get(k)||[...by.entries()].find(([x])=>x.length>8&&(k.startsWith(x)||x.startsWith(k)))?.[1];
+    if(!it){const [step,how]=rgGuess(kind,b);it={n:b,how,w0:'',step,sizes:[]};out.push(it);by.set(k,it)}
+    it.sizes.push(full);
+  });
+  const steps=[...RG_LIST[kind].map(x=>x[0]),'Sets & travel','Kits & more','More'];
+  out.forEach(it=>{it.brand=typeof rxBrand==='function'?rxBrand(it.n):'More';if(it.brand==='More'&&/^Mineral /.test(it.n))it.brand='Cool Cucumber'});
+  out.sort((a,b)=>(steps.indexOf(a.step)+1||99)-(steps.indexOf(b.step)+1||99));
+  return RG_CAT[kind]=out;
+}
+/* Her stars from the price list and RX cards (stored per size there): any size starred stars the product */
+const rgFavs=()=>typeof rxFavs==='function'?rxFavs():[];
+const rgStarred=(it,f)=>f.includes(it.n)||it.sizes.some(z=>f.includes(z));
+function rgStarToggle(it){
+  if(typeof rxFavToggle!=='function') return;
+  const f=rgFavs();
+  if(rgStarred(it,f)) [it.n,...it.sizes].filter(z=>rgFavs().includes(z)).forEach(z=>rxFavToggle(z));
+  else rxFavToggle(it.sizes[0]||it.n);
+}
+let RG_VIEW=(()=>{try{return store.get('pp-rgview')||'brand'}catch(e){return 'brand'}})();
 
 function regimenView(){
   const kind=rgKind(), R=rgLoad(), whens=RG_WHEN[kind];
@@ -237,26 +301,41 @@ function regimenView(){
   const sIn=h('input',{type:'search',value:RG_Q,placeholder:'Search a product',autocomplete:'off'});
   sIn.addEventListener('input',()=>{RG_Q=sIn.value;const pos=sIn.selectionStart;render();const n=document.getElementById('rgq');if(n){n.focus();try{n.setSelectionRange(pos,pos)}catch(e){}}});
   sIn.id='rgq';
-  const groups=RG_LIST[kind].map(([step,items])=>{
-    const shown=items.filter(([n])=>!q||n.toLowerCase().includes(q));
-    if(!shown.length) return null;
-    const count=items.filter(([n])=>picked(n)).length;
-    const d=h('details',{class:'invg'},h('summary',{},h('h2',{},step),h('span',{class:'soft invc'},count?count+' picked':items.length+''),h('span',{class:'tplus','aria-hidden':'true'},'+')),
-      h('div',{class:'sec2'},shown.map(([n,how,w0])=>{
-        const p=picked(n);
-        return h('button',{type:'button',class:'rgp','aria-pressed':String(!!p),onclick:()=>{
-          if(p) R.picks=R.picks.filter(x=>x!==p); else R.picks.push({n,how,when:w0&&whens.includes(w0)?w0:whens[0],step});
-          RG_OPEN=step; rgSave(); render();}},h('span',{class:'rgbox','aria-hidden':'true'}),h('span',{},n.replace(/^Biologique Recherche /,'')));
-      })));
-    if(q||RG_OPEN===step) d.open=true;
+  const cat=rgCatalog(kind), favs=rgFavs(), hasStar=typeof rxFavToggle==='function';
+  const shown=cat.filter(it=>!q||it.n.toLowerCase().includes(q)||it.brand.toLowerCase().includes(q));
+  const row=it=>{
+    const p=picked(it.n);
+    const pick=h('button',{type:'button',class:'rgp','aria-pressed':String(!!p),style:'flex:1',onclick:()=>{
+      if(p) R.picks=R.picks.filter(x=>x!==p); else R.picks.push({n:it.n,how:it.how,when:it.w0&&whens.includes(it.w0)?it.w0:whens[0],step:it.step});
+      rgSave(); render();}},h('span',{class:'rgbox','aria-hidden':'true'}),h('span',{},it.n.replace(/^Biologique Recherche /,'')));
+    if(!hasStar) return pick;
+    const on=rgStarred(it,favs);
+    return h('div',{style:'display:flex;align-items:center;gap:2px'},
+      h('button',{type:'button',class:'rxstar','aria-pressed':String(on),'aria-label':(on?'Unstar ':'Star ')+it.n,onclick:()=>{rgStarToggle(it);render()}},on?'★':'☆'),pick);
+  };
+  const box=(title,items,key,open)=>{
+    const count=items.filter(it=>picked(it.n)).length;
+    const d=h('details',{class:'invg'},h('summary',{onclick:()=>{RG_OPEN=d.open?(RG_OPEN===key?null:RG_OPEN):key}},h('h2',{},title),h('span',{class:'soft invc'},count?count+' picked':items.length+''),h('span',{class:'tplus','aria-hidden':'true'},'+')),
+      h('div',{class:'sec2'},items.map(row)));
+    if(open||(q&&items.length<=40)||RG_OPEN===key) d.open=true;
     return d;
-  });
+  };
+  const mine=shown.filter(it=>rgStarred(it,favs)), rest=shown.filter(it=>!rgStarred(it,favs));
+  const bucket=f=>{const g=new Map();rest.forEach(it=>{const k=f(it);g.has(k)||g.set(k,[]);g.get(k).push(it)});return [...g]};
+  const lists=RG_VIEW==='brand'
+    ?bucket(it=>it.brand).sort((a,b)=>kind==='skin'?((RG_SKIN_BRANDS.indexOf(a[0])+1||99)-(RG_SKIN_BRANDS.indexOf(b[0])+1||99)):RX_BRANDS_ORDER(a[0])-RX_BRANDS_ORDER(b[0]))
+    :bucket(it=>it.step);
+  const groups=[mine.length?box('★ Your stars',mine,'star',true):null,...lists.map(([t,L])=>box(t,L,RG_VIEW+':'+t,false))];
+  const viewSeg=h('div',{class:'seg'},[['brand','By brand'],['step','By step']].map(([k,l])=>h('button',{type:'button','aria-pressed':String(RG_VIEW===k),
+    onclick:()=>{RG_VIEW=k;RG_OPEN=null;try{store.set('pp-rgview',k)}catch(e){}render()}},l)));
   const products=h('section',{class:'card2'},h('span',{class:'lbl'},'2 · Products'),
-    h('label',{class:'fld'},sIn),...groups,
+    h('label',{class:'fld'},sIn),viewSeg,
+    !mine.length&&!q&&hasStar?h('small',{class:'soft'},'Tap ☆ next to the products you recommend most. They stay at the top here and on your price list.'):null,
+    ...groups,
     q&&!groups.some(Boolean)?h('p',{class:'soft'},'Nothing matches “'+RG_Q+'”. Add it under your own notes below.'):null);
 
   /* 3 · how & when, one card per pick, in the order of the routine */
-  const order=RG_LIST[kind].flatMap(([,items])=>items.map(([n])=>n));
+  const order=cat.map(it=>it.n);
   R.picks.sort((a,b)=>order.indexOf(a.n)-order.indexOf(b.n));
   const plan=h('section',{class:'card2'},h('span',{class:'lbl'},'3 · How & when'),
     R.picks.length?R.picks.map(p=>{
@@ -265,7 +344,7 @@ function regimenView(){
       return h('div',{class:'rgitem'},
         h('div',{class:'rgitem-h'},h('b',{},p.n),h('button',{type:'button',class:'rgx','aria-label':'Remove '+p.n,onclick:()=>{R.picks=R.picks.filter(x=>x!==p);rgSave();render()}},'×')),
         chips(whens,o=>p.when===o,o=>{p.when=o}),
-        h('label',{class:'fld'},h('small',{class:'soft'},'How to use (edit for her if you like)'),ta));
+        h('label',{class:'fld'},h('small',{class:'soft'},p.how?'How to use (edit for her if you like)':'How to use (type it for her)'),ta));
     }):h('p',{class:'soft'},'Tap products above and they show up here with how and when to use them.'));
 
   /* 4 · aftercare & next visit */
