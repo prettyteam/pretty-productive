@@ -381,10 +381,33 @@ function rxGenerateHair(R,g){
   return {opts:[{title:'Option 1',lines:o1},{title:'Option 2',lines:o2}],
     m:{lines:rxSvcLines('hair',ms),when:mw,text:mt},refresh:mw,keep:false,more:false,rec:[]};
 }
+/* Skin home care the same way (Alexandra, Oct 17 2026): All In budgets $60 for the full-size cleanser (Lait VIP O2 5.1 oz),
+   Worth The Wait carries the $50 Biologique Recherche Skin Box. Her matched P50 is highly suggested under All In, not in the total. */
+const RX_SK_HI=60, RX_SK_LO=50;
+function rxGenerateSkin(R,g){
+  const needs=rxNeeds(R), P=g.p, b=R.nob?null:Number(R.budget)||null, cap=Math.min(b!=null?b+100:RX_CAP,RX_ALLIN_SKIN);
+  const nw=R.now||[], gl=rxGoalList(R);
+  const box=nw.includes('Breakouts')||gl.includes('Clear Breakouts')?'Blemish Skin Box':nw.includes('Fine lines')||gl.includes('Fine Lines And Firmness')?'Youth Skin Box':'Standard Skin Box';
+  const hi=()=>({n:'Home Care',p:RX_SK_HI,t:'h',why:'Suggested: Biologique Recherche Lait VIP O2 (5.1 oz), the full-size cleanser',full:RX_SK_HI});
+  const lo=()=>({n:'Home Care',p:RX_SK_LO,t:'h',why:'Suggested: Biologique Recherche '+box+', about 4 weeks of product to try at home',full:RX_SK_LO});
+  const pkg=(i,hc)=>[...rxSvcLines('skin',P[i]),hc()];
+  let o2=null,i2=P.length-1;
+  for(let i=0;i<P.length&&!o2;i++){const L=pkg(i,hi); if(rxTotal(L)<=cap){o2=L;i2=i}}
+  if(!o2) o2=pkg(P.length-1,hi);
+  let o1=null; const lim=Math.min(b!=null?b:Infinity,rxTotal(o2)-1);
+  for(let i=Math.min(i2+1,P.length-1);i<P.length&&!o1;i++){const L=pkg(i,lo); if(rxTotal(L)<=lim) o1=L}
+  if(!o1) o1=pkg(P.length-1,lo);
+  const p50=(needs.find(k=>/^sk(Break|Sens|Bright|P50V)$/.test(k))||'skP50V'); let [n,pr,why,alt]=RX_PROD[p50]; if(alt&&RX_OUT.includes(n))[n,pr]=alt;
+  if(!/5(\.1)? oz/.test(n)&&alt) [n,pr]=alt;   /* the note suggests the full-size P50 */
+  const [ms,mw,mt]=g.m;
+  return {opts:[{title:'Option 1',lines:o1},{title:'Option 2',lines:o2}],
+    m:{lines:rxSvcLines('skin',ms),when:mw,text:mt},refresh:mw,keep:false,more:false,rec:[{n,p:pr,why,hint:'p50'}]};
+}
 function rxGenerate(R){
   RX_VIPON=!!R.vip; RX_RATE=(typeof S!=='undefined'&&S&&S.mine&&Number(S.mine.rate))||45;
   const g=rxGoalPlan(R); if(!g) return null;
   if(R.kind==='hair') return rxGenerateHair(R,g);
+  if(R.kind==='skin') return rxGenerateSkin(R,g);
   const needs=rxNeeds(R), P=g.p, b=R.nob?null:Number(R.budget)||null;
   /* Goldwell leave-in backbar treatment: a no-downtime add-on for color that fades, blonde repair or dry, damaged hair.
      $20, or $10–15 when only half the bottle is used (Alexandra, Oct 2026). Offered in the full look. */
@@ -451,7 +474,7 @@ function rxPack(R,me,day){
     vp:R.vip?1:0,  /* VIP has its own key: it used to be "v" too, which overwrote the card version and broke every non-VIP card */
     o:R.opts.map(x=>{const sv=x.lines.filter(l=>l.t==='s').map(l=>l.reg&&l.reg!==l.p?[l.n,Number(l.p)||0,l.reg]:[l.n,Number(l.p)||0]), hc=x.lines.filter(l=>l.t!=='s').reduce((a,l)=>a+(Number(l.p)||0),0);
       return [x.title,hc?[...sv,['Maintenance',hc]]:sv]}),
-    m:[R.m.lines.map(l=>l.reg&&l.reg!==l.p?[l.n,Number(l.p)||0,l.reg]:[l.n,Number(l.p)||0]),R.m.when,R.m.text],r:R.refresh,x:R.more?1:0,f:(R.rec||[]).map(l=>[l.n,Number(l.p)||0])};
+    m:[R.m.lines.map(l=>l.reg&&l.reg!==l.p?[l.n,Number(l.p)||0,l.reg]:[l.n,Number(l.p)||0]),R.m.when,R.m.text],r:R.refresh,x:R.more?1:0,f:(R.rec||[]).map(l=>[l.n,Number(l.p)||0]),hs:(R.rec||[]).some(l=>l.hint==='p50')?1:0};
   return o;
 }
 /* deflated so the QR stays easy to scan; "z" marks a compressed card */
@@ -603,8 +626,9 @@ function rxEditor(R,me){
   const done=h('section',{class:'card2',style:'align-items:center;text-align:center'},save,clear,
     h('small',{class:'soft'},'She scans the QR with her camera and the card opens on her phone. No texting, no phone number.'));
   /* full sizes she should end up with, outside the budget (Alexandra, Oct 16 2026) */
-  const rec=(R.rec&&R.rec.length)?h('section',{class:'card2'},h('span',{class:'lbl'},'Full Sizes To Go Home With'),
-    h('small',{class:'soft'},'Not in her budget or totals. She starts with the Try Me today; these are what she should take home when she’s ready.'),
+  const hs=(R.rec||[]).some(l=>l.hint==='p50');
+  const rec=(R.rec&&R.rec.length)?h('section',{class:'card2'},h('span',{class:'lbl'},hs?'Highly Suggested: Add Her P50':'Full Sizes To Go Home With'),
+    h('small',{class:'soft'},hs?'Shows under All In on her card. Not in the totals: offer it on top of her cleanser.':'Not in her budget or totals. She starts with the Try Me today; these are what she should take home when she’s ready.'),
     ...R.rec.map(l=>h('div',{style:'display:flex;justify-content:space-between;gap:12px;font-size:14px'},h('span',{},l.n),h('span',{},rxMoney(l.p))))):null;
   const wrap=h('div',{id:'rxopts',style:'display:flex;flex-direction:column;gap:26px'},...opts,rec,maint,done);
   return [wrap];

@@ -125,8 +125,8 @@ html,body{background:#f8f6f0}
     el('div',{class:'for'},el('span',{},'For '+(c.g||'you'),vip?el('span',{style:'margin-left:8px;font-size:11px;letter-spacing:.16em;border:1px solid currentColor;border-radius:999px;padding:1px 8px;vertical-align:middle'},'VIP'):null),isNaN(date)?null:el('span',{class:'dt'},(date.getMonth()+1)+'/'+date.getDate()+'/'+String(date.getFullYear()).slice(-2))),
     opts,
     /* All In stops at a $400 ticket; anything more is her call (Alexandra, Oct 16 2026) */
-    (c.f&&c.f.length)?el('section',{class:'maint'},el('span',{class:'eyebrow'},'When you’re ready: full sizes'),
-      el('p',{style:'font-size:14px;margin:0'},'Start with a Try Me today. These are the full sizes we’d love you to take home. They aren’t in the totals above.'),
+    (c.f&&c.f.length)?el('section',{class:'maint'},el('span',{class:'eyebrow'},c.hs?'Highly suggested':'When you’re ready: full sizes'),
+      el('p',{style:'font-size:14px;margin:0'},c.hs?'Add your P50 to All In. It’s the step that makes your results last, and it isn’t in the totals above.':'Start with a Try Me today. These are the full sizes we’d love you to take home. They aren’t in the totals above.'),
       c.f.map(([n,p])=>el('div',{class:'tot',style:'border-top:0;padding-top:0;font-size:14px'},el('span',{},n),el('span',{},money(p))))):
     c.x?el('p',{class:'talk',style:'text-align:center;font-size:14px'},'Want home care or a treatment added? Just ask, and we’ll add it to your plan.'):null,
     el('section',{class:'maint'},el('span',{class:'eyebrow'},'Your next visit'),
