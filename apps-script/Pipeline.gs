@@ -2,7 +2,8 @@
  * Pipeline tab (office only): brides who haven't paid yet, read from the TAFFETA WEDDINGS sheet.
  *   - PIPELINE tab: a snapshot of HoneyBook leads, rewritten each time "run bride follow-ups" runs
  *     (BRIDE, DATE, LOCATION, STAGE, LAST CONTACT, NEXT STEP, UPDATED, INQUIRED = the day the HoneyBook project was created).
- *   - The list shows the newest inquiries first (Alexandra, Oct 17 2026); leads with no inquiry date go last, soonest wedding first.
+ *   - The list shows the newest inquiries first (Alexandra, Oct 17 2026); a lead with no inquiry date yet is new, so it goes on top.
+ *     Inquiry dates come from the INQUIRED column or the HoneyBook list saved in script properties (HB_INQUIRED).
  *   - HONEYBOOK BOOKINGS rows with no payment yet on HONEYBOOK PAYMENTS show as "Signed, waiting on payment".
  * "Mark paid" in the app adds a row to the PAID IN APP tab and puts an upcoming wedding straight into
  * Booked weddings. HoneyBook itself can't be changed from here: the "mark bride paid" skill on
@@ -50,7 +51,7 @@ function pipeline_() {
     if (!bride || seen.has(bride.toLowerCase()) || (date && date < today) || isPaid(bride, '')) return;
     rows.push({ bride: bride, date: date, location: r.LOCATION || '', stage: r.STAGE || '', lastContact: day(r['LAST CONTACT']), inquired: inq(bride, date), nextStep: r['NEXT STEP'] || '' });
   });
-  rows.sort((a, b) => (b.inquired || '').localeCompare(a.inquired || '') || (a.date || '9999').localeCompare(b.date || '9999'));
+  rows.sort((a, b) => (b.inquired || '9999').localeCompare(a.inquired || '9999') || (a.date || '9999').localeCompare(b.date || '9999'));   // no inquiry date yet = a new lead, so it goes on top
   const cutoff = new Date(Date.now() - 45 * 864e5);
   const marked = tabRows_(book, PAID_IN_APP_TAB).filter(r => r.BRIDE && (!(r['MARKED AT'] instanceof Date) || r['MARKED AT'] > cutoff))
     .map(r => ({ bride: r.BRIDE, date: day(r['WEDDING DATE']), amount: r.AMOUNT, method: r.METHOD, paidOn: day(r['PAID ON']), inHoneyBook: day(r['IN HONEYBOOK']) }))
