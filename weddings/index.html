@@ -1019,7 +1019,7 @@ function homeGroups(){
   return [["My Weddings",["team"]],["Job Offers",["jobs"]],["Add-On Services",["addon"]],["Bridal Preview",["prev"]],["Get Paid",["pay"]],["My Profile",["info"]]];
 }
 const NAME_PICS=['adriana','alexandra','alyssa','amanda','angelina','ashley','carolyn','dominique','emily','isabella','jen','jennifer','joanna','kelly','lexi','mia','neva','sara'];
-const OFFICE_PEOPLE=["Alexandra","Dominique"];
+const OFFICE_PEOPLE=["Alexandra","Dominique","Cherish"];   // Cherish runs payroll (Alexandra, Oct 17 2026)
 let HOME_OPEN="";
 function lsGet(k){try{return localStorage.getItem(k)||""}catch(e){return""}}
 function lsSet(k,v){try{v?localStorage.setItem(k,v):localStorage.removeItem(k)}catch(e){}}
@@ -1084,7 +1084,8 @@ function renderAddon(){
    +'<span class="lbl" style="font-size:11px;letter-spacing:.16em;text-transform:uppercase">'+(AO_SHOW==="card"?"Card or Apple Pay":"Venmo"+(L.venmoName?" · @"+esc(L.venmoName):""))+'</span>';
   if(L.venmo)h+='<button type="button" class="pay" data-s="venmo" aria-pressed="'+(AO_SHOW==="venmo")+'">Pay with Venmo</button>';
   if(L.card)h+='<button type="button" class="pay" data-s="card" aria-pressed="'+(AO_SHOW==="card")+'">Card or Apple Pay</button>';
-  h+='<p style="font-size:14px">Tap a button to show that code. On the guest’s own phone, the code opens it to pay.</p></div>';
+  if(L.venmo&&L.card)h+='<p style="font-size:14px">Tap a button to show that code.</p>';
+  h+='</div>';
   box.innerHTML=h;box.querySelectorAll(".pay").forEach(b=>b.onclick=()=>{AO_SHOW=b.dataset.s;renderAddon()});
 }
 
