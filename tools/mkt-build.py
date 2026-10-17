@@ -4,7 +4,10 @@
 Everything private is encrypted with the marketing passcode before it goes on GitHub (the repo is public):
 the page itself (captions, plans, emails, texts) and every photo and video. The passcode never goes in the repo.
 
-  python3 tools/mkt-build.py <artifact index.html> <artifact files dir> <album photos dir> <photos db dir> <edits.json> <keys.json>
+  MKT_CODE=<passcode> python3 tools/mkt-build.py <artifact index.html> <artifact files dir> <album photos dir> <photos db dir> <edits.json> <cache dir>
+
+Only the passcode is needed (Alexandra has it). The salt is read from mkt/c/meta.json; file names come from the passcode.
+The cache dir (outside the repo) just skips re-encrypting unchanged pictures; an empty folder is fine.
 
 Weekly: replace the artifact files and run this again; approvals, edits and team photos live in Google Drive
 (apps-script/Marketing.gs), so a rebuild never loses them.
@@ -15,15 +18,16 @@ from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from cryptography.hazmat.primitives import hashes
 from PIL import Image, ImageOps
 
-SRC_HTML, SRC_DIR, ALB_DIR, DB_DIR, EDITS, KEYS = sys.argv[1:7]
+SRC_HTML, SRC_DIR, ALB_DIR, DB_DIR, EDITS, CACHE_DIR = sys.argv[1:7]
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = os.path.join(REPO, 'mkt')
-K = json.load(open(KEYS))['mkt']
+CODE = os.environ['MKT_CODE'].strip().lower()
 ITER = 310000
-salt = bytes.fromhex(K['salt'])
-key = PBKDF2HMAC(algorithm=hashes.SHA256(), length=32, salt=salt, iterations=ITER).derive(K['code'].encode())
+META = os.path.join(OUT, 'c', 'meta.json')
+SALT = json.load(open(META))['salt'] if os.path.exists(META) else os.urandom(16).hex()
+key = PBKDF2HMAC(algorithm=hashes.SHA256(), length=32, salt=bytes.fromhex(SALT), iterations=ITER).derive(CODE.encode())
 aes = AESGCM(key)
-namekey = bytes.fromhex(K['names'])
+namekey = hmac.new(key, b'taffeta-mkt-file-names', hashlib.sha256).digest()
 
 def seal(data):
     iv = os.urandom(12)
@@ -50,7 +54,8 @@ for p in list(used):
     if p.startswith('shoot/'): used.add('full/' + p[6:])
 
 files = {}
-CACHE_F = os.path.join(os.path.dirname(os.path.abspath(KEYS)), 'mkt-cache.json')   # kept beside the keys, never in the repo
+os.makedirs(CACHE_DIR, exist_ok=True)
+CACHE_F = os.path.join(CACHE_DIR, 'mkt-cache.json')   # never in the repo
 CACHE = json.load(open(CACHE_F)) if os.path.exists(CACHE_F) else {}
 os.makedirs(os.path.join(OUT, 'c'), exist_ok=True)
 keep = set()
@@ -85,5 +90,5 @@ open(os.path.join(OUT, 'c', 'page.bin'), 'wb').write(seal(payload)); keep.add('p
 for f in os.listdir(os.path.join(OUT, 'c')):   # drop pictures no longer used
     if f not in keep and f != 'meta.json': os.remove(os.path.join(OUT, 'c', f))
 json.dump(CACHE, open(CACHE_F, 'w'))
-open(os.path.join(OUT, 'c', 'meta.json'), 'w').write(json.dumps({'salt': K['salt'], 'iter': ITER}))
+open(os.path.join(OUT, 'c', 'meta.json'), 'w').write(json.dumps({'salt': SALT, 'iter': ITER}))
 print('media', len(files), 'missing', missing[:10], 'page bytes', len(payload))
