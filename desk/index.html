@@ -179,6 +179,13 @@ body.dk-home .head{display:none}
 .whois select{width:100%;padding:12px;font:inherit;font-size:16px;border:1px solid var(--ink);border-radius:0;background:#fff;color:var(--ink)}
 .hgig{display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;padding:14px 8px 4px}
 .hgig .lbl{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:#121212}
+.cfirst{margin:18px auto 0;max-width:440px;width:100%;box-sizing:border-box;border:1px solid #2b2a28;outline:1px solid #2b2a28;outline-offset:-5px;background:#fff;padding:16px 18px;display:flex;flex-direction:column;gap:8px;text-align:left}
+.cfirst p{margin:0;font-size:14px;color:#555250;text-align:center}
+.cfirst .cfl{font-size:11px;letter-spacing:.16em;text-transform:uppercase;margin-top:6px}
+.cfrow{display:flex;gap:10px;align-items:flex-start;font-size:15px;cursor:pointer}
+.cfrow input{width:20px;height:20px;margin-top:2px;flex:0 0 auto;accent-color:#121212}
+.cfrow span{display:flex;flex-direction:column}.cfrow small{color:#555250;font-size:13px}
+.cfrow input:checked+span{text-decoration:line-through;opacity:.55}
 .hgig p{margin:0;font-family:var(--serif,"Lora"),Georgia,serif;font-style:italic;font-size:16px;line-height:1.5;color:#555250;max-width:440px;text-wrap:balance}
 .hmenu{display:flex;flex-direction:column;gap:14px;margin-top:22px;width:100%}
 .mhead{display:flex;align-items:center;justify-content:center;gap:12px;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:#121212}
@@ -411,6 +418,7 @@ function deskHome(){
   else h+=`<div class="hhi"><span>Hello,</span>${NAME_PICS.includes(k)?`<img class="hnamepic" src="../g/names/${k}.png" alt="${esc(first)}">`:`<span class="hname">${esc(first)}</span>`}</div>
     <div class="hlinks"><button type="button" class="hphoto" id="hPhoto">${ph?'Change photo':'Add your photo'}</button><button type="button" class="hphoto" id="hWho">Not ${esc(first)}?</button></div>`;
   h+=`<div class="hgig"><span class="lbl">${esc(today)}</span><p>${esc(window.dayJoke?dayJoke('service'):'')}</p></div>`;
+  h+=consultHome();
   h+=`<div class="hmenu"><div class="mhead">Menu</div><div class="cgrid">`;
   DESK_GROUPS.forEach(([g,keys],i)=>{const c=keys.reduce((a,x)=>a+deskCount(x),0);
     h+=`<button type="button" data-g="${esc(g)}"${keys.length>1?` aria-expanded="${HOME_OPEN===g}"`:''}>${c?`<span class="n">${c}</span>`:''}${esc(g)}</button>`;
@@ -466,7 +474,36 @@ async function loadGuide(){
   }catch(e){$('#st').textContent='The guide couldn’t be opened. Ask Alexandra for a fresh link.'}
 }
 
+/* Consult first (Alexandra, Oct 17 2026): new guests booked for color or a treatment, from the daily Paired Plus update,
+   sealed with the desk guide key (tools/publish.mjs). The desk makes sure each one gets her consultation and RX card. */
+let CONSULT=null, consultAt=0;
+async function loadConsult(){
+  if(DEMO){CONSULT={today:[{time:'10:30 AM',guest:'Sample Guest',artist:'Joanna',services:['Single Process','Glaze']}],tomorrow:[],date:new Date().toISOString().slice(0,10)};return}
+  if(!GKEY||Date.now()-consultAt<5*60000)return; consultAt=Date.now();
+  try{
+    const r=await fetch('../d/desk-consult.dat?t='+Date.now(),{cache:'no-store'}); if(!r.ok)return;
+    const buf=new Uint8Array(await r.arrayBuffer());
+    const raw=Uint8Array.from(atob(GKEY.replace(/-/g,'+').replace(/_/g,'/')+'='.repeat((4-GKEY.length%4)%4)),c=>c.charCodeAt(0));
+    const k=await crypto.subtle.importKey('raw',raw,'AES-GCM',false,['decrypt']);
+    CONSULT=JSON.parse(new TextDecoder().decode(await crypto.subtle.decrypt({name:'AES-GCM',iv:buf.slice(0,12)},k,buf.slice(12))));
+    if(area==='H')render();
+  }catch(e){}
+}
+function consultHome(){
+  const c=CONSULT; if(!c)return '';
+  const now=new Date(), ymd=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
+  const today=c.date===ymd?(c.today||[]):[], tom=(c.tomorrowDate&&c.tomorrowDate>ymd?c.tomorrow:[])||[];
+  if(!today.length&&!tom.length)return '';
+  const done=k=>store.get('consult-done:'+k)==='1';
+  const row=(g,d)=>{const k=d+':'+g.guest+':'+g.time;return `<label class="cfrow"><input type="checkbox" data-cf="${esc(k)}"${done(k)?' checked':''}><span><b>${esc((g.time?g.time+' · ':'')+g.guest)}</b><small>with ${esc(g.artist)} · ${esc((g.services||[]).join(', '))}</small></span></label>`};
+  let h=`<div class="cfirst"><div class="mhead">Consult First</div><p>New guests getting color or a treatment. Make sure each one gets her consultation and RX card before her service starts.</p>`;
+  if(today.length)h+=`<span class="cfl">Today</span>`+today.map(g=>row(g,ymd)).join('');
+  if(tom.length)h+=`<span class="cfl">Tomorrow</span>`+tom.map(g=>row(g,c.tomorrowDate)).join('');
+  return h+'</div>'}
+document.addEventListener('change',e=>{const b=e.target.closest('[data-cf]');if(b)store.set('consult-done:'+b.dataset.cf,b.checked?'1':'')});
+
 async function load(){
+  loadConsult();
   if(DEMO){data=demo();showTodo(true);lastOk=Date.now();render();status();return}
   if(!window.TAFFETA_ENDPOINT){$('#body').innerHTML='';$('#st').textContent='Almost ready: the Google Sheet isn’t connected yet.';return}
   if(!KEY){lockView();return}
