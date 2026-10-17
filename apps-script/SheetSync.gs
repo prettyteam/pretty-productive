@@ -132,7 +132,7 @@ function sheetDate_(v, year) {
 function fixSaxmanDate20261017() {
   const w = weddings_().find(x => x.d.id === 'wsync465080101saxman');
   if (!w) { Logger.log('Not found'); return; }
-  const d = w.d; d.date = '2027-05-01'; d.location = 'Every Note Winery';
+  const d = w.d; d.date = '2027-05-01'; d.location = 'Renault Winery';
   saveWedding_(d);
   Logger.log('Fixed: ' + d.bride + ' ' + d.date + ' ' + d.location + '; sheet date reads as ' + sheetDate_('46508', 2026));
 }
