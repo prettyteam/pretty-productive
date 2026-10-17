@@ -1,7 +1,8 @@
 /**
  * Pipeline tab (office only): brides who haven't paid yet, read from the TAFFETA WEDDINGS sheet.
  *   - PIPELINE tab: a snapshot of HoneyBook leads, rewritten each time "run bride follow-ups" runs
- *     (BRIDE, DATE, LOCATION, STAGE, LAST CONTACT, NEXT STEP, UPDATED).
+ *     (BRIDE, DATE, LOCATION, STAGE, LAST CONTACT, NEXT STEP, UPDATED, INQUIRED = the day the HoneyBook project was created).
+ *   - The list shows the newest inquiries first (Alexandra, Oct 17 2026); leads with no inquiry date go last, soonest wedding first.
  *   - HONEYBOOK BOOKINGS rows with no payment yet on HONEYBOOK PAYMENTS show as "Signed, waiting on payment".
  * "Mark paid" in the app adds a row to the PAID IN APP tab and puts an upcoming wedding straight into
  * Booked weddings. HoneyBook itself can't be changed from here: the "mark bride paid" skill on
@@ -32,26 +33,59 @@ function pipeline_() {
   const paid = paidClients_(book);
   const isPaid = (bride, email) => (email && paid.emails.has(email.toLowerCase())) || paid.names.has(bride.toLowerCase());
   const day = v => v instanceof Date ? Utilities.formatDate(v, TZ, 'yyyy-MM-dd') : String(v || '');
-  const rows = [], seen = new Set();
+  const rows = [], seen = new Set(), inquired = {};
+  tabRows_(book, PIPELINE_TAB).forEach(r => { const b = brideName_(r.BRIDE).toLowerCase(), d = sheetDate_(r.INQUIRED, 0); if (b && d) inquired[b] = d; });
+  const hb = hbInquired_();
+  const inq = (bride, date) => inquired[bride.toLowerCase()] || inquiredFrom_(hb, bride, date);
   tabRows_(book, 'HONEYBOOK BOOKINGS').forEach(r => {
     const bride = brideName_(r.BRIDE), date = sheetDate_(r.DATE, 0);
     if (!bride || (date && date < today) || isPaid(bride, r.EMAIL)) return;
     seen.add(bride.toLowerCase());
-    rows.push({ bride: bride, date: date, location: r.LOCATION || '', stage: 'Signed, waiting on payment', lastContact: day(r['BOOKED ON']), nextStep: 'Remind her the deposit holds her date' });
+    rows.push({ bride: bride, date: date, location: r.LOCATION || '', stage: 'Signed, waiting on payment', lastContact: sheetDate_(r['BOOKED ON'], 0), inquired: inq(bride, date), nextStep: 'Remind her the deposit holds her date' });
   });
   let updated = '';
   tabRows_(book, PIPELINE_TAB).forEach(r => {
     const bride = brideName_(r.BRIDE), date = sheetDate_(r.DATE, 0);
     updated = updated || day(r.UPDATED);
     if (!bride || seen.has(bride.toLowerCase()) || (date && date < today) || isPaid(bride, '')) return;
-    rows.push({ bride: bride, date: date, location: r.LOCATION || '', stage: r.STAGE || '', lastContact: day(r['LAST CONTACT']), nextStep: r['NEXT STEP'] || '' });
+    rows.push({ bride: bride, date: date, location: r.LOCATION || '', stage: r.STAGE || '', lastContact: day(r['LAST CONTACT']), inquired: inq(bride, date), nextStep: r['NEXT STEP'] || '' });
   });
-  rows.sort((a, b) => (a.date || '9999').localeCompare(b.date || '9999'));
+  rows.sort((a, b) => (b.inquired || '').localeCompare(a.inquired || '') || (a.date || '9999').localeCompare(b.date || '9999'));
   const cutoff = new Date(Date.now() - 45 * 864e5);
   const marked = tabRows_(book, PAID_IN_APP_TAB).filter(r => r.BRIDE && (!(r['MARKED AT'] instanceof Date) || r['MARKED AT'] > cutoff))
     .map(r => ({ bride: r.BRIDE, date: day(r['WEDDING DATE']), amount: r.AMOUNT, method: r.METHOD, paidOn: day(r['PAID ON']), inHoneyBook: day(r['IN HONEYBOOK']) }))
     .reverse();
   return { ok: true, rows: rows, marked: marked, updated: updated };
+}
+
+/** HoneyBook inquiry dates (the day each project was created), saved in script properties as [name, inquired, wedding date] rows. */
+function hbInquired_() {
+  try { return JSON.parse(PropertiesService.getScriptProperties().getProperty('HB_INQUIRED') || '[]'); } catch (e) { return []; }
+}
+function inquiredFrom_(list, bride, date) {
+  const w = s => String(s || '').toLowerCase().replace(/['\u2019]s\b.*$/, '').replace(/[^a-z\s]/g, ' ').split(/\s+/).filter(x => x.length >= 2);
+  const b = w(bride);
+  if (!b.length) return '';
+  const first = b[0], last = b[b.length - 1];
+  let best = '';
+  list.forEach(r => {
+    const n = w(r[0]);
+    if (!n.length) return;
+    const same = n.join(' ') === b.join(' ');
+    const both = b.length > 1 && n.indexOf(first) >= 0 && n.indexOf(last) >= 0;
+    const lastAndDate = date && r[2] === date && n.indexOf(last) >= 0 && last.length >= 3;
+    const firstAndDate = date && r[2] === date && n[0] === first && first.length >= 3;   // a misspelled last name (Durolli / Durellari)
+    if ((same || both || lastAndDate || firstAndDate) && r[1] > best) best = r[1];
+  });
+  return best;
+}
+
+/** Saves the HoneyBook inquiry dates sent from Claude (rows of [name, inquired, wedding date]). */
+function saveHbInquired_(rows) {
+  const clean = (rows || []).filter(r => Array.isArray(r) && r[0] && /^\d{4}-\d{2}-\d{2}$/.test(r[1] || ''))
+    .map(r => [String(r[0]).slice(0, 80), r[1], /^\d{4}-\d{2}-\d{2}$/.test(r[2] || '') ? r[2] : '']);
+  PropertiesService.getScriptProperties().setProperty('HB_INQUIRED', JSON.stringify(clean));
+  return clean.length;
 }
 
 function markPaid_(p) {

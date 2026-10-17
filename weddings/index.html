@@ -1933,8 +1933,8 @@ function renderPipeline(j){
   const t=$("#pp-table");
   if(!n){t.innerHTML='<tr><td><div class="empty-state">No unpaid brides right now.</div></td></tr>'}
   else{
-    t.innerHTML='<tr><th>Date</th><th>Bride</th><th>Location</th><th>Stage</th><th>Last contact</th><th>Next step</th><th></th></tr>'+ppRows.map((r,i)=>{
-      const row='<tr><td>'+esc(shortDate(r.date)||"–")+'</td><td><b>'+esc(r.bride)+'</b></td><td>'+esc(r.location)+'</td><td>'+esc(r.stage)+'</td><td>'+esc(shortDate(r.lastContact)||"–")+'</td><td style="white-space:normal;min-width:180px">'+esc(r.nextStep)+'</td><td><button class="btn ghost small" data-pp="'+i+'">Mark paid</button></td></tr>';
+    t.innerHTML='<tr><th>Inquired</th><th>Bride</th><th>Wedding</th><th>Location</th><th>Stage</th><th>Next step</th><th></th></tr>'+ppRows.map((r,i)=>{
+      const row='<tr><td>'+esc(shortDate(r.inquired)||"–")+'</td><td><b>'+esc(r.bride)+'</b></td><td>'+esc(shortDate(r.date)||"–")+'</td><td>'+esc(r.location)+'</td><td>'+esc(r.stage)+'</td><td style="white-space:normal;min-width:180px">'+esc(r.nextStep)+'</td><td><button class="btn ghost small" data-pp="'+i+'">Mark paid</button></td></tr>';
       if(ppOpen!==i)return row;
       const today=new Date().toISOString().slice(0,10);
       return row+'<tr><td colspan="7"><div class="row" style="align-items:flex-end">'+
