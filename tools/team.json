@@ -171,5 +171,97 @@
     "rose": [
       "cpb"
     ]
+  },
+  "pk": {
+    "week": "Oct 17",
+    "groups": [
+      {
+        "name": "Hair Care",
+        "brands": [
+          {
+            "name": "Oribe",
+            "title": "New for curly and coily hair",
+            "blurb": "Four new Moisture & Control products, plus three tips from the launch.",
+            "url": "https://behindthechair.com/articles/3-curly-and-coily-hair-tips-we-learned-at-oribes-new-launch/",
+            "cta": "Read",
+            "week": "Oct 17"
+          },
+          {
+            "name": "K18",
+            "title": "TripleBright purple shampoo",
+            "blurb": "K18’s new shampoo for blondes. Know it before your next blonde guest asks.",
+            "url": "https://behindthechair.com/articles/k18-triplebright-purple-shampoo-debuts-on-blonde-like-new-tour/",
+            "cta": "Read",
+            "week": "Oct 17"
+          },
+          {
+            "name": "Brazilian Blowout",
+            "title": "Why guests love it",
+            "blurb": "10 reasons the service sells. Send every guest home with the aftercare shampoo.",
+            "url": "https://behindthechair.com/articles/10-reasons-why-you-should-be-doing-brazilian-blowouts/",
+            "cta": "Read",
+            "week": "Oct 17"
+          },
+          {
+            "name": "Davines",
+            "title": "Heart of Glass Silkening Shampoo",
+            "blurb": "Brightens blonde and adds shine. A perfect pick after a glaze.",
+            "url": "https://behindthechair.com/product-announcements/heart-of-glass-silkening-shampoo/",
+            "cta": "Read",
+            "week": "Oct 17"
+          },
+          {
+            "name": "Rossano Ferretti",
+            "title": "Five lines, five hair types",
+            "blurb": "Prodigio, Intenso, Vita, Dolce, Grandioso. Learn which one fits each guest.",
+            "url": "https://www.fourseasons.com/philadelphia/spa/rossano-ferretti-hair-care/",
+            "cta": "Read",
+            "week": "Oct 17"
+          },
+          {
+            "name": "IGK",
+            "title": "Meet the lineup",
+            "blurb": "Famous for dry shampoo. Match a spray to every blowout.",
+            "url": "https://spacenk.com/us/brands/i/igk-hair",
+            "cta": "Read",
+            "week": "Oct 17"
+          }
+        ]
+      },
+      {
+        "name": "Skincare",
+        "brands": [
+          {
+            "name": "Cool as a Cucumber",
+            "title": "The calm-skin line",
+            "blurb": "Soothe Operator cleanser and Hydralixir serum: know who each one is for.",
+            "url": "https://shop.advancedderm.com/collections/cool-as-a-cucumber",
+            "cta": "Read",
+            "week": "Oct 17"
+          },
+          {
+            "name": "Biologique Recherche",
+            "title": "Lotion P50 guide",
+            "blurb": "Which P50 fits which skin. The heart of every BR routine.",
+            "url": "https://www.biologique-recherche.com/en-us/pages/choose-a-lotion-p50",
+            "cta": "Read",
+            "week": "Oct 17"
+          }
+        ]
+      },
+      {
+        "name": "Makeup",
+        "brands": [
+          {
+            "name": "Taffeta Makeup",
+            "title": "7 looks guests want this fall",
+            "blurb": "Toasted monochrome and smudgy shadow are easy with our palettes.",
+            "url": "https://www.whowhatwear.com/beauty/makeup/fall-makeup-trends-2026",
+            "cta": "Read",
+            "week": "Oct 17"
+          }
+        ]
+      }
+    ]
   }
 }

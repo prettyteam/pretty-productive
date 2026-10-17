@@ -347,6 +347,7 @@ body .rbar.new button{background:none;color:#2b2a28;font-weight:700;text-decorat
 .worth .ic{width:40px;height:40px;border-radius:50%;border:1px solid var(--ink);display:grid;place-items:center;font-family:var(--display);font-size:14px}
 .worth b{font-family:var(--display);font-weight:400;font-size:22px;color:var(--choc)}
 /* guide basics + advancement */
+.pkg{display:flex;flex-direction:column;gap:12px}.pkh{display:flex;align-items:center;justify-content:space-between;gap:10px}.pkt{font-family:var(--display);font-size:17px;line-height:1.3}.pkgo{display:inline-flex;align-items:center;text-decoration:none;align-self:flex-start}
 .gcard{background:#fff;border:1px solid var(--ink);border-radius:6px;padding:20px;display:flex;flex-direction:column;gap:12px}
 .gcard h2{font-family:var(--display);font-weight:400;font-size:21px;display:flex;align-items:center;gap:10px;margin:0}
 .gcard h2 .gic{width:30px;height:30px;border:1px solid var(--ink);border-radius:50%;display:grid;place-items:center;font-size:14px;flex:none;font-family:var(--body)}
@@ -1577,6 +1578,7 @@ function staffTabs(){
   if(p.cr&&p.cr.weeks&&p.cr.weeks.length) t.push(['cr','Weekly CR']);
   if(st.slug) t.push(['off','Time Off']);
   if(st.slug) t.push(['prices','Prices']);
+  if(st.slug&&p.pk&&p.pk.groups&&p.pk.groups.length) t.push(['pk','PK Knowledge']);
   t.push(['guide','Culture']);
   const dc=p.docs||{}; if(dc.hb) t.push(['hb','Handbook']); if(dc.fg) t.push(['fg','Desk Guide']);
   if(st.slug) t.push(['me','My Profile']);
@@ -1584,7 +1586,7 @@ function staffTabs(){
 }
 /* One menu instead of a row of tabs (Alexandra, Oct 2026). Sections are grouped; Customer cards holds RX card and Home care. */
 const NAV_GROUPS=[['Appointments',['home','today','tomorrow']],['Customer Cards',['rx','reg']],['Goals',['growth','cr']],
-  ['Salon & Spa',['prices','inv','skin','cards','off']],['Taffeta',['guide','hb','fg']],['My Profile',['me']]];
+  ['Salon & Spa',['prices','pk','inv','skin','cards','off']],['Taffeta',['guide','hb','fg']],['My Profile',['me']]];
 let NAV_OPEN=false;
 /* Disco ball = Home, Back arrow = the page before (Alexandra, Oct 15 2026). Each page change is a browser history step,
    so the Back arrow and the phone's own back swipe both work. */
@@ -1682,6 +1684,20 @@ function tomorrowView(){
         h('p',{class:'soft'},'No guests booked yet.')),
     h('p',{class:'soft',style:'font-size:13px'},'The schedule can change. Check Today in the morning for the final lineup.'))];
 }
+/* PK Knowledge = product knowledge (Alexandra, Oct 17 2026). Every brand we sell, grouped Hair Care, Skincare, Makeup.
+   Each brand links to one fresh read online; the weekly "update the PK tab" run swaps the links and blurbs in tools/team.json (pk). */
+function pkView(){
+  const pk=(S.mine&&S.mine.pk)||{};
+  const card=b=>h('div',{class:'gcard pkc'},
+    h('div',{class:'pkh'},h('h2',{},b.name),b.week&&b.week===pk.week?h('span',{class:'chip add'},'New'):null),
+    b.title?h('div',{class:'pkt'},b.title):null,
+    b.blurb?h('p',{class:'soft',style:'margin:0'},b.blurb):null,
+    b.url?h('a',{class:'obtn sm pkgo',href:b.url,target:'_blank',rel:'noopener'},b.cta||'Read'):null);
+  return [h('div',{class:'hub'},
+    h('div',{},h('span',{class:'lbl'},'Product knowledge'),h('h1',{style:'font-size:28px'},'PK Knowledge'),
+      h('p',{class:'soft',style:'margin:6px 0 0'},'One new read for every brand we sell. '+(pk.week?'Updated '+pk.week+'.':''))),
+    ...(pk.groups||[]).map(g=>h('div',{class:'pkg'},h('span',{class:'lbl'},g.name),...(g.brands||[]).map(card))))];
+}
 function staffRender(){
   const tabs=staffTabs().map(x=>x[0]);
   if(!tabs.includes(S.tab)) S.tab=tabs[0];
@@ -1691,6 +1707,7 @@ function staffRender(){
   if(S.tab==='reg') return regimenView();
   if(S.tab==='rx') return rxView();
   if(S.tab==='prices') return pricesView();
+  if(S.tab==='pk') return pkView();
   if(S.tab==='growth') return growthView();
   if(S.tab==='cr') return crView();
   if(S.tab==='inv') return invView();
