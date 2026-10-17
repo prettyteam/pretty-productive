@@ -16,3 +16,14 @@
 .rxstar{flex:none;background:none;border:0;font-size:20px;line-height:1;color:var(--gold);padding:4px 6px;cursor:pointer}
 
 .rxfind{color:#5b5149;font-size:13.5px;font-style:italic}
+/* What She Takes Home (Alexandra, Oct 17 2026) */
+.rxthb{display:grid;grid-template-columns:repeat(3,1fr);text-align:center;background:#fff;border:1px solid #2b2a28;outline:1px solid #2b2a28;outline-offset:-5px;padding:14px 6px}
+.rxthb b{display:block;font-family:var(--display,Georgia,serif);font-weight:400;font-size:24px}.rxthb small{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--soft,#6b6762)}
+.rxth{all:unset;box-sizing:border-box;cursor:pointer;width:100%;display:flex;align-items:flex-start;gap:12px;background:#fff;border:1px solid var(--line,#e2ded5);padding:12px 14px}
+.rxth.on{border-color:#121212;outline:1px solid #121212}
+.rxth .rxbx{flex:none;width:22px;height:22px;border:1px solid #121212;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:13px}
+.rxth.on .rxbx{background:#121212;color:#fff}
+.rxthn{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}.rxthn b{font-weight:500;font-size:15px}.rxthn small{color:var(--soft,#6b6762);font-size:12.5px}
+.rxthp{white-space:nowrap;font-variant-numeric:tabular-nums}
+.rxth:focus-visible{outline:2px solid #8b6b4c;outline-offset:2px}
+.rxover{margin:0;text-align:center;color:#9a4a2b;font-size:14px;border:1px solid currentColor;padding:8px 10px}

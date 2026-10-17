@@ -229,7 +229,7 @@ const rxKind=()=>(S.mine&&S.mine.role==='esthetician')?'skin':'hair';
 const rxSlug=()=>(S.mine&&S.mine.staff&&S.mine.staff.slug)||(S.mine&&S.mine.slug)||'x';
 const rxKey=()=>'pp-rx:'+rxSlug(), rxSavedKey=()=>'pp-rxsaved:'+rxSlug();
 const rxBlank=k=>({kind:k||rxKind(),guest:'',budget:'',nob:false,goal:[],a:{},now:[],opts:null,m:null,refresh:'',id:''});
-let RX=null, RX_VIEW='build', RX_FIND='', RX_SHOW=null, RX_MSG='';
+let RX=null, RX_VIEW='build', RX_FIND='', RX_SHOW=null, RX_MSG='', RX_HOME=null;
 function rxLoad(){ if(RX) return RX; try{RX=Object.assign(rxBlank(),JSON.parse(store.get(rxKey())||'{}'))}catch(e){RX=rxBlank()} return RX }
 function rxSave(){ store.set(rxKey(),JSON.stringify(RX)) }
 function rxSaved(){ try{return JSON.parse(store.get(rxSavedKey())||'[]')}catch(e){return []} }
@@ -504,7 +504,8 @@ function rxView(){
     h('button',{type:'button','aria-pressed':String(RX_VIEW==='saved'),onclick:()=>{RX_VIEW='saved';RX_SHOW=null;render()}},'Saved Cards'));
   const head=h('div',{},h('span',{class:'lbl'},'Customer Cards'),h('h1',{style:'font-size:28px'},'RX Consultation Card'),
     h('p',{class:'soft',style:'margin-top:6px'},'For new guests and anyone ready for a big change. Two options for today, home care in both, and what her next visit looks like.'));
-  if(RX_VIEW==='saved') return [h('div',{class:'hub'},head,tabs,rxSavedView(me))];
+  if(RX_VIEW==='home'&&RX_HOME) return [h('div',{class:'hub'},rxTakeHomeView(me))];
+  if(RX_VIEW==='saved') return [h('div',{class:'hub'},head,tabs,RX_MSG?h('div',{class:'card2',style:'text-align:center;border-color:var(--ink)'},h('p',{},'✓ '+RX_MSG)):null,rxSavedView(me))];
   if(RX_VIEW==='qr'&&RX_SHOW) return [h('div',{class:'hub'},head,rxQrView(RX_SHOW))];
   return [h('div',{class:'hub'},head,tabs,...rxBuild(R,me))];
 }
@@ -675,5 +676,56 @@ function rxSavedView(me){
     ...hits.slice(0,20).map(x=>h('div',{class:'rxl'},
       h('div',{class:'rxn'},h('b',{},x.guest),h('small',{class:'soft'},(x.kind==='skin'?'Skin':'Hair')+' · '+new Date(x.date+'T12:00').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'})+(x.budget?' · budget '+rxMoney(x.budget):'')+' · '+x.totals.map(rxMoney).join(' / '))),
       h('button',{type:'button',class:'tab',onclick:async()=>{RX_SHOW={link:await rxRelink(x,me),guest:x.guest};RX_VIEW='qr';render();window.scrollTo(0,0)}},'QR'),
-      h('button',{type:'button',class:'tab',onclick:()=>{RX=Object.assign(rxBlank(x.kind),x.draft);rxSave();RX_VIEW='build';render();window.scrollTo(0,0)}},'Edit'))));
+      h('button',{type:'button',class:'tab',onclick:()=>{RX=Object.assign(rxBlank(x.kind),x.draft);rxSave();RX_VIEW='build';render();window.scrollTo(0,0)}},'Edit'),
+      x.draft&&x.draft.opts&&typeof rgSave2==='function'?h('button',{type:'button',class:'tab',onclick:()=>{RX_HOME=x.id;RX_MSG='';RX_VIEW='home';render();window.scrollTo(0,0)}},'Takes Home'):null)));
+}
+
+/* What She Takes Home (Alexandra, Oct 17 2026): at the end of the appointment the artist fills the home care budget the
+   guest agreed to at her consult. Her starred go-tos come first, then the products the consult rules matched to what
+   she said. Going over just warns ("let her know before ringing up"). Save & Send To Desk puts her Home Care PDF on
+   the front desk app's Home Care list, and the desk texts it to her. */
+function rxTakeHomeView(me){
+  const list=rxSaved(), x=list.find(r=>r.id===RX_HOME); if(!x){RX_VIEW='saved';return rxSavedView(me)}
+  const d=x.draft, kind=d.kind||x.kind, put=()=>{const L=rxSaved(),i=L.findIndex(r=>r.id===x.id);if(i>=0){L[i]=x;store.set(rxSavedKey(),JSON.stringify(L))}};
+  const opts=d.opts||[], ch=x.chosen!=null?x.chosen:Math.max(0,opts.length-1);
+  const hcOf=o=>o?o.lines.filter(l=>l.t!=='s'):[], budget=rxTotal(hcOf(opts[ch]));
+  const names=[['Worth The Wait'],['All In']]; const tots=opts.map(o=>rxTotal(o.lines)), hi=tots.length===2?tots.indexOf(Math.max(...tots)):1;
+  const label=i=>i===hi?'All In':'Worth The Wait';
+  /* candidates: her go-tos, the default for the budget, what the consult matched, a Try Me */
+  const price=n=>{const r=(RX_PRICES[kind]||[]).find(p=>p[0]===n);return r?r[1]:null};
+  const cand=[], add=(n,p,why,grp)=>{if(p==null||cand.some(c=>c.n===n))return;cand.push({n,p,why,grp})};
+  const favs=rxFavs(); (RX_PRICES[kind]||[]).filter(([n])=>favs.includes(n)).forEach(([n,p])=>add(n,p,'Your go-to','fav'));
+  const hcWhy=hcOf(opts[ch]).map(l=>l.why||'').join(' ');
+  if(kind==='skin'){const bx=(hcWhy.match(/Biologique Recherche \w+ Skin Box/)||[])[0];
+    if(bx) add(bx,RX_SK_LO,'About 4 weeks of product to try at home','def'); add('Biologique Recherche Lait VIP O2 (5.1 oz)',price('Biologique Recherche Lait VIP O2 (5.1 oz)')||60,'The full-size cleanser','def')}
+  else add('Taffeta Refill Shampoo & Conditioner, new bottles',81,'Full-size Taffeta bottles','def');
+  let needs=[]; try{needs=rxNeeds(d)}catch(e){}
+  if(kind==='hair'){const svc=opts.flatMap(o=>o.lines.map(l=>l.n)); needs=rxNeedsFor(needs,svc)}
+  needs.forEach(k=>{let [n,p,why,alt]=RX_PROD[k]; if(alt&&RX_OUT.includes(n))[n,p]=alt; add(n,p,why,'match')});
+  if(!x.home){x.home=[];const df=cand.find(c=>c.grp==='def'&&c.p<=budget);if(df)x.home.push({n:df.n,p:df.p}); put()}
+  const picked=n=>x.home.find(p=>p.n===n), sum=rxTotal(x.home), left=budget-sum;
+  const row=c=>{const on=!!picked(c.n);return h('button',{type:'button',class:'rxth'+(on?' on':''),'aria-pressed':String(on),onclick:()=>{
+      if(on)x.home=x.home.filter(p=>p.n!==c.n);else x.home.push({n:c.n,p:c.p}); put(); render()}},
+    h('span',{class:'rxbx','aria-hidden':'true'},on?'✓':''),h('span',{class:'rxthn'},h('b',{},(c.grp==='fav'?'★ ':'')+c.n),c.why?h('small',{},c.why):null),h('span',{class:'rxthp'},rxMoney(c.p)))};
+  const grp=(t,g)=>{const L=cand.filter(c=>c.grp===g);return L.length?[h('span',{class:'lbl',style:'margin-top:6px'},t),...L.map(row)]:[]};
+  const tryMe=h('button',{type:'button',class:'tab',onclick:()=>{const w=prompt('Which product goes in the Try Me bottle?');if(w){x.home.push({n:'Try Me: '+w.trim(),p:RX_TRY});put();render()}}},'+ Try Me bottle · '+rxMoney(RX_TRY));
+  const extra=x.home.filter(p=>!cand.some(c=>c.n===p.n)).map(p=>row({n:p.n,p:p.p,why:'',grp:'x'}));
+  const toast=h('p',{class:'soft',style:'text-align:center;margin:0'});
+  const toRG=()=>{const cat=typeof rgCatalog==='function'?rgCatalog(kind):[], whens=RG_WHEN[kind];
+    RG=rgBlank(); RG.guest=x.guest; RG.next=d.m&&d.m.when||'';
+    RG.picks=x.home.map(p=>{const b=rgNorm(rgBase(String(p.n).replace(/^Try Me: /,''))), it=cat.find(c=>rgNorm(c.n)===b||c.sizes.includes(p.n))||cat.find(c=>{const k=rgNorm(c.n);return k.length>8&&(b.startsWith(k)||k.startsWith(b))});
+      return it?{n:it.n,how:it.how,when:it.w0&&whens.includes(it.w0)?it.w0:whens[0],step:it.step}:{n:String(p.n).replace(/^Try Me: /,''),how:'',when:whens[0],step:''}})};
+  const send=h('button',{type:'button',class:'obtn',onclick:async()=>{if(!x.home.length){toast.textContent='Pick what she’s taking home first.';return}
+    toRG(); await rgSave2(me,toast,send); if(!RG.guest){RX_MSG=x.guest+'’s Home Care PDF is on the front desk list to text her.';x.sent=new Date().toISOString();put();RX_VIEW='saved';RX_FIND=x.guest;render();window.scrollTo(0,0)}}},'Save & Send To Desk');
+  const prev=h('button',{type:'button',class:'tab',onclick:()=>{if(!x.home.length){toast.textContent='Pick what she’s taking home first.';return}toRG();rgPreview(me,toast,RG,kind)}},'Preview Her PDF');
+  return [h('section',{class:'card2'},
+      h('button',{type:'button',class:'tab',style:'align-self:flex-start',onclick:()=>{RX_VIEW='saved';render()}},'‹ Saved Cards'),
+      h('span',{class:'lbl'},'RX Card · '+x.guest),h('h1',{style:'font-size:28px'},'What She Takes Home'),
+      opts.length>1?h('div',{class:'seg'},opts.map((o,i)=>h('button',{type:'button','aria-pressed':String(i===ch),onclick:()=>{x.chosen=i;x.home=null;put();render()}},'She chose '+label(i)))):null,
+      h('p',{class:'soft'},'She agreed to '+rxMoney(budget)+' of home care at her consult. Pick what fits her best.'),
+      h('div',{class:'rxthb'},h('div',{},h('b',{},rxMoney(budget)),h('small',{},'Her budget')),h('div',{},h('b',{},rxMoney(sum)),h('small',{},'Picked')),h('div',{},h('b',{},rxMoney(Math.max(0,left))),h('small',{},'Left'))),
+      left<0?h('p',{class:'rxover'},rxMoney(-left)+' over her budget: let her know before ringing it up.'):null),
+    h('section',{class:'card2'},...grp('★ Your go-tos','fav'),...grp(kind==='skin'?'For her budget':'Default for her budget','def'),...grp('Matched to what she told you','match'),...extra,tryMe),
+    h('section',{class:'card2',style:'align-items:center;text-align:center'},send,prev,toast,
+      h('small',{class:'soft'},'Her Home Care PDF goes to the front desk app’s Home Care list, and the desk texts it to her at checkout.'))];
 }
