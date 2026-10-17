@@ -1032,7 +1032,7 @@ function renderHome(){
   const box=$("#view-home");if(!box||!ROLE)return;
   const name=myName(),first=String(name).trim().split(/\s+/)[0]||"",k=first.toLowerCase(),ph=lsGet(photoKey());
   const today=new Date().toLocaleDateString("en-US",{weekday:"long",month:"long",day:"numeric"});
-  let h='<div class="hhome"><button type="button" class="crest" id="hCrest" aria-label="'+(ph?"Change your photo":"Add your photo")+'">'+(ph?'<img class="me" alt="" src="'+ph+'">':'')+'<img class="w'+(ph?' over':'')+'" src="wreath-weddings.png" alt="Taffeta Weddings"></button>';
+  let h='<div class="hhome"><button type="button" class="crest" id="hCrest" aria-label="'+(ph?"Change your photo":"Add your photo")+'">'+(ph?'<img class="me" alt="" src="'+ph+'">':'')+'<img class="w'+(ph?' over':'')+'" src="wreath-weddings.png?v=2" alt="Taffeta Weddings"></button>';
   if(ROLE==="office"&&!name){
     h+='<div class="whois"><div class="hhi"><span>Who’s this?</span></div><div class="row">'+OFFICE_PEOPLE.map(n=>'<button type="button" class="btn ghost" data-who="'+n+'">'+n+'</button>').join("")+'</div></div></div>';
   }else{
