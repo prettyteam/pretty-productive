@@ -32,6 +32,9 @@ body.tw-in header.top .brand{display:none}
 .tabs{border:0!important}
 body.tw-home header.top{display:none}
 .hhome{display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center;padding-top:6px}
+#bk-table tr.bk-row{cursor:pointer;-webkit-tap-highlight-color:rgba(0,0,0,.06)}
+#bk-table tr.bk-row:active td,#bk-table tr.bk-row:hover td{background:rgba(0,0,0,.035)}
+#bk-table .bk-go{color:#8b6b4c;font-weight:400;margin-left:2px}
 .hhome .crest{position:relative;width:200px;height:200px;border:0;background:none;padding:0;cursor:pointer}
 .hhome .crest img{position:absolute}
 .hhome .crest img.w{inset:0;width:100%;height:100%}
@@ -1647,9 +1650,11 @@ function renderBooked(){
   if(!rows.length){t.innerHTML='<tr><td><div class="empty-state">No upcoming weddings for '+esc(sel.value)+'. Past weddings stay on the Weddings tab of the Google Sheet.</div></td></tr>';return}
   t.innerHTML='<tr><th>Date</th><th>Bride</th><th>Location</th><th>Hair</th><th>Makeup</th><th>Team</th><th>Preview</th><th>Invites</th><th></th></tr>'+rows.map(w=>{
     const d=w.d,i=bkInfo(d);
-    return '<tr><td>'+esc(shortDate(d.date))+'</td><td><b>'+esc(d.bride||"Untitled")+'</b></td><td>'+esc([d.location,d.room].filter(Boolean).join(", "))+'</td><td>'+i.hair+'</td><td>'+i.mu+'</td><td style="white-space:normal;min-width:160px">'+esc(i.team.join(", ")||"Not assigned")+'</td><td>'+esc(i.prev||"–")+'</td><td>'+esc(i.invites)+'</td><td><button class="btn ghost small" data-open-w="'+esc(w.id)+'">Open</button></td></tr>';
+    return '<tr class="bk-row" data-open-w="'+esc(w.id)+'" tabindex="0" title="Open '+esc(d.bride||"this wedding")+'"><td>'+esc(shortDate(d.date))+'</td><td><b>'+esc(d.bride||"Untitled")+'</b> <span class="bk-go" aria-hidden="true">›</span></td><td>'+esc([d.location,d.room].filter(Boolean).join(", "))+'</td><td>'+i.hair+'</td><td>'+i.mu+'</td><td style="white-space:normal;min-width:160px">'+esc(i.team.join(", ")||"Not assigned")+'</td><td>'+esc(i.prev||"–")+'</td><td>'+esc(i.invites)+'</td><td><button class="btn ghost small" type="button" tabindex="-1">Open</button></td></tr>';
   }).join("");
-  t.querySelectorAll("[data-open-w]").forEach(b=>b.onclick=()=>{const s=$("#saved");s.value=b.dataset.openW;s.onchange({target:s});showTab("build");window.scrollTo(0,0)});
+  // tap anywhere on a wedding's row to open its details and timeline (Alexandra, Oct 17 2026)
+  t.querySelectorAll("tr[data-open-w]").forEach(r=>{const go=()=>{const s=$("#saved");s.value=r.dataset.openW;s.onchange({target:s});showTab("build");window.scrollTo(0,0)};
+    r.onclick=go;r.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();go()}}});
 }
 $("#bk-year").onchange=renderBooked;
 $("#bk-copy").onclick=()=>{
