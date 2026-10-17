@@ -1089,7 +1089,12 @@ function calDraft(d){
   /* "Bride + 8 h & 6 mu": different counts for hair and makeup */
   const hm=/bride\s*(?:\([^)]*\)\s*)?\+\s*(\d+)\s*h(?:air)?\s*(?:&|and|\/|,)\s*(\d+)\s*(?:mu|makeup|make up)\b/i.exec(note);
   let counted=!!bm;
-  if(hm){const h=Math.min(+hm[1],30),m=Math.min(+hm[2],30);for(let i=0;i<Math.max(h,m);i++)people.push({id:uid(),name:"",role:"Bridal party",hair:i<h,mu:i<m})}
+  /* "Bride + 3 hair" and "Bride + 3 mu" on separate lines: both services, each with its own count (Hudgins, Oct 16 2026) */
+  let hN=null,mN=null;
+  for(const x of note.matchAll(/bride\s*(?:\([^)]*\)\s*)?\+\s*(\d+)\s*(hair|h|mu|makeup|make up)\b(?!\s*(?:&|and\b|\/|,))/gi)){if(/^h/i.test(x[2]))hN=+x[1];else mN=+x[1]}
+  const two=!hm&&hN!=null&&mN!=null;
+  if(two){people[0].hair=true;people[0].mu=true}
+  if(hm||two){const h=Math.min(two?hN:+hm[1],30),m=Math.min(two?mN:+hm[2],30);for(let i=0;i<Math.max(h,m);i++)people.push({id:uid(),name:"",role:"Bridal party",hair:i<h,mu:i<m})}
   else if(bm){const sv=/hair|mu|makeup/i.test(bm[2])?calSvc(bm[2]):(only||calSvc(bm[2]));if(/hair|mu|makeup/i.test(bm[2])){people[0].hair=sv.hair;people[0].mu=sv.mu}   /* "Bride + 8 MU only" = makeup only for the whole wedding, bride too */
     for(let i=0;i<Math.min(+bm[1],30);i++)people.push({id:uid(),name:"",role:"Bridal party",hair:sv.hair,mu:sv.mu})}
   note.split('\n').forEach(l=>{

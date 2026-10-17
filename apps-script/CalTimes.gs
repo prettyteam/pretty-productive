@@ -21,7 +21,7 @@ function calInfo_() {
       members_().forEach(m => { if (m.email) byEmail[String(m.email).toLowerCase()] = m.preferredName || m.legalName; });
       const byDate = {};
       cal.getEvents(from, to).forEach(ev => {
-        if (ev.isAllDayEvent()) return;
+        /* all-day wedding events count too: linked for the notes and headcount, no hours (Oct 16 2026) */
         const day = Utilities.formatDate(ev.getStartTime(), TZ, 'yyyy-MM-dd');
         (byDate[day] = byDate[day] || []).push({ ev: ev, title: String(ev.getTitle() || '').toLowerCase() });
       });
@@ -44,7 +44,7 @@ function calInfo_() {
             status: st === 'YES' ? 'yes' : st === 'NO' ? 'no' : st === 'MAYBE' ? 'maybe' : 'waiting' };
         }).filter(Boolean);
         out[d.id] = {
-          time: Utilities.formatDate(ev.getStartTime(), TZ, 'h:mma').toLowerCase() + '–' + Utilities.formatDate(ev.getEndTime(), TZ, 'h:mma').toLowerCase(),
+          time: ev.isAllDayEvent() ? '' : Utilities.formatDate(ev.getStartTime(), TZ, 'h:mma').toLowerCase() + '–' + Utilities.formatDate(ev.getEndTime(), TZ, 'h:mma').toLowerCase(),
           place: String(ev.getLocation() || '').slice(0, 200),
           note: calNote_(ev.getDescription()),
           team: team
