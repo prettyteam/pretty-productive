@@ -102,6 +102,7 @@ function doPost(e) {
   let d;
   try { d = JSON.parse(e.postData.contents); } catch (err) { return json_({ ok: false, error: 'bad_request' }); }
   ensureSetup_();
+  if (d.action === 'mkt') return json_(mkt_(d));   // Marketing Proofs (Marketing.gs), passcode-checked there
   const who = who_(d);
   if (!who) return json_({ ok: false, error: 'signin' });
   const lock = LockService.getScriptLock();

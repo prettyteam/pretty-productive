@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Taffeta Marketing Proofs</title>
+<meta name="robots" content="noindex,nofollow">
+<link rel="icon" href="../icon.png">
+<link rel="apple-touch-icon" href="../icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Marketing">
+<meta name="theme-color" content="#fafaf8">
+<style>
+/* The lock screen; the proofs page itself arrives encrypted and is opened with the team's passcode (Alexandra, Oct 17 2026). */
+@font-face{font-family:TaffetaJ;src:url(../g/lora-latin-400-normal.woff2) format("woff2");font-weight:400}
+@font-face{font-family:TaffetaJ;src:url(../g/lora-latin-400-italic.woff2) format("woff2");font-weight:400;font-style:italic}
+:root{color-scheme:light}
+html,body{margin:0;background:#fafaf8;color:#111}
+body{font:16px/1.5 "Libertinus Sans","Gill Sans",system-ui,sans-serif}
+#lock{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px 16px;box-sizing:border-box}
+#lock form{width:100%;max-width:360px;display:flex;flex-direction:column;align-items:center;gap:14px;text-align:center}
+#lock img{width:150px;height:auto}
+#lock h1{font-family:TaffetaJ,Georgia,serif;font-weight:400;font-size:26px;margin:0}
+#lock p{margin:0;color:#555250;font-size:15px}
+#lock input[type=password],#lock input[type=text]{font:inherit;font-size:18px;text-align:center;width:100%;box-sizing:border-box;padding:12px;border:1px solid #2b2a28;border-radius:0;background:#fff;color:#111}
+#lock button{font:inherit;font-size:12px;letter-spacing:.16em;text-transform:uppercase;width:100%;height:46px;border:1px solid #111;background:#111;color:#fff;cursor:pointer}
+#lock button:disabled{opacity:.6}
+#lock label{display:flex;align-items:center;gap:8px;font-size:14px;color:#555250}
+#lock .err{color:#8b6b4c;min-height:1.4em}
+.mk-save{margin-top:2px}
+.mk-wait{opacity:.35}
+</style>
+</head><body>
+<div id="lock"><form id="lockf" autocomplete="off">
+  <img src="../g/logo.png" alt="Taffeta">
+  <h1>Marketing Proofs</h1>
+  <p>Enter the team passcode.</p>
+  <input type="password" id="code" autocapitalize="none" autocorrect="off" spellcheck="false" aria-label="Passcode">
+  <label><input type="checkbox" id="rem" checked> Remember on this phone</label>
+  <button type="submit" id="go">Open</button>
+  <p class="err" id="err" role="alert"></p>
+</form></div>
+<script>
+(function(){
+const EP='https://script.google.com/macros/s/AKfycbze_BgM8UcSG68HIo2sxBvomk4MKsuWkyT3JltEXBWLTQCb4ymJSYaG8OV8Msv2beX2/exec';
+const enc=new TextEncoder(),hex=h=>new Uint8Array(h.match(/../g).map(x=>parseInt(x,16)));
+const MIME={jpg:'image/jpeg',jpeg:'image/jpeg',png:'image/png',mp4:'video/mp4'};
+const MK=window.MK={files:{},migrated:[],code:'',_key:null,_subs:[],_state:null,_urls:new Map(),_thumbs:new Map(),_q:new Set(),_t:0};
+async function keyFor(code){
+  const meta=await (await fetch('c/meta.json?t='+Date.now(),{cache:'no-store'})).json();
+  const base=await crypto.subtle.importKey('raw',enc.encode(code),'PBKDF2',false,['deriveKey']);
+  return crypto.subtle.deriveKey({name:'PBKDF2',salt:hex(meta.salt),iterations:meta.iter,hash:'SHA-256'},base,{name:'AES-GCM',length:256},false,['decrypt']);
+}
+async function dec(buf){const b=new Uint8Array(buf);return crypto.subtle.decrypt({name:'AES-GCM',iv:b.slice(0,12)},MK._key,b.slice(12))}
+MK.url=function(path){
+  if(MK._urls.has(path))return MK._urls.get(path);
+  const n=MK.files[path];if(!n)return Promise.reject(new Error('missing'));
+  const p=fetch('c/'+n+'.bin').then(r=>{if(!r.ok)throw new Error('missing');return r.arrayBuffer()}).then(dec)
+    .then(b=>URL.createObjectURL(new Blob([b],{type:MIME[path.split('.').pop()]||'application/octet-stream'})));
+  p.catch(()=>MK._urls.delete(path));MK._urls.set(path,p);return p;
+};
+MK.api=async function(op,data){
+  let r;try{r=await fetch(EP,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(Object.assign({action:'mkt',code:MK.code,op},data||{})),redirect:'follow'})}
+  catch(e){throw new Error('offline')}
+  const j=await r.json();if(!j.ok){const e=new Error(j.error||'error');throw e}return j;
+};
+MK.onState=function(fn){MK._subs.push(fn);if(MK._state)try{fn(MK._state)}catch(e){console.warn(e)}};
+MK.applyState=function(s){if(!s||!s.edits)return;MK._state=s;MK._subs.forEach(fn=>{try{fn(s)}catch(e){console.warn(e)}})};
+MK.refresh=function(){return MK.api('state').then(MK.applyState).catch(e=>console.warn(e))};
+MK.driveFull=function(id){return MK.api('thumbs',{ids:[id],full:true}).then(r=>r.photos[id])};
+function flushThumbs(){MK._t=0;const ids=[...MK._q].slice(0,30);ids.forEach(i=>MK._q.delete(i));if(!ids.length)return;
+  MK.api('thumbs',{ids}).then(r=>{Object.entries(r.photos||{}).forEach(([id,u])=>{MK._thumbs.set(id,u);document.querySelectorAll('img[data-d="'+id+'"]').forEach(im=>{im.src=u;im.classList.remove('mk-wait')})})})
+    .catch(()=>{}).then(()=>{if(MK._q.size&&!MK._t)MK._t=setTimeout(flushThumbs,50)})}
+function load(el){
+  if(el.dataset.e){el.classList.add('mk-wait');MK.url(el.dataset.e).then(u=>{el.src=u;el.classList.remove('mk-wait')}).catch(()=>{})}
+  if(el.dataset.ep){MK.url(el.dataset.ep).then(u=>el.poster=u).catch(()=>{})}
+  if(el.dataset.d){const u=MK._thumbs.get(el.dataset.d);if(u)el.src=u;else{el.classList.add('mk-wait');MK._q.add(el.dataset.d);if(!MK._t)MK._t=setTimeout(flushThumbs,120)}}
+}
+const io='IntersectionObserver' in window?new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){io.unobserve(e.target);load(e.target)}}),{rootMargin:'600px 0px'}):null;
+MK.scan=function(root){(root||document).querySelectorAll('[data-e],[data-ep],[data-d]').forEach(el=>{if(el._mk)return;el._mk=1;if(io)io.observe(el);else load(el)})};
+/* Save photos: the post's pictures at full quality, ready for Meta Business Suite or the Instagram app */
+function addSave(){
+  document.querySelectorAll('article.post').forEach(a=>{
+    const media=[...a.querySelectorAll('.strip [data-e], video[data-e]')];if(!media.length||a.querySelector('.mk-save'))return;
+    const b=document.createElement('button');b.type='button';b.className='copy mk-save';b.textContent=media.length>1?'Save '+media.length+' photos':(media[0].tagName==='VIDEO'?'Save video':'Save photo');
+    const lab=b.textContent;
+    b.onclick=async()=>{b.disabled=true;b.textContent='Getting them ready…';
+      try{const files=await Promise.all(media.map(async(m,i)=>{const u=await MK.url(m.dataset.e);const bl=await (await fetch(u)).blob();
+          const t=(a.dataset.title||'taffeta-post').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,40);
+          return new File([bl],t+(media.length>1?'-'+(i+1):'')+'.'+m.dataset.e.split('.').pop(),{type:bl.type})}));
+        if(navigator.canShare&&navigator.canShare({files})){try{await navigator.share({files})}catch(e){}}
+        else files.forEach(f=>{const x=document.createElement('a');x.href=URL.createObjectURL(f);x.download=f.name;document.body.append(x);x.click();x.remove();setTimeout(()=>URL.revokeObjectURL(x.href),4000)});
+      }catch(e){alert('Those photos could not be saved. Try again.')}
+      b.disabled=false;b.textContent=lab};
+    const strip=a.querySelector('.strip')||a.querySelector('video[data-e]');strip.after(b);
+  });
+}
+function inject(html){
+  const doc=new DOMParser().parseFromString(html,'text/html');
+  document.getElementById('lock').remove();document.querySelectorAll('head style').forEach(s=>s.remove());
+  doc.head.querySelectorAll('style,link[rel=stylesheet]').forEach(s=>document.head.append(s));
+  const t=doc.querySelector('title');if(t)document.title=t.textContent;
+  [...doc.body.childNodes].forEach(n=>{
+    if(n.nodeType===1&&n.tagName==='SCRIPT'){const s=document.createElement('script');s.textContent=n.textContent;document.body.append(s)}
+    else if(n.nodeType===1&&n.tagName==='TITLE'){document.title=n.textContent}
+    else{n.querySelectorAll&&[...n.querySelectorAll('script')].forEach(x=>{const s=document.createElement('script');s.textContent=x.textContent;x.replaceWith(s)});document.body.append(n)}
+  });
+}
+async function open(code,remember){
+  MK._key=await keyFor(code);
+  let r;try{r=await fetch('c/page.bin?t='+Date.now(),{cache:'no-store'})}catch(e){throw new Error('offline')}
+  if(!r.ok)throw new Error('offline');
+  let P;try{P=JSON.parse(new TextDecoder().decode(await dec(await r.arrayBuffer())))}catch(e){throw new Error('code')}
+  MK.code=code;MK.files=P.files||{};MK.migrated=P.migrated||[];
+  try{localStorage.setItem('mkt-code',remember?code:'')}catch(e){}
+  inject(P.html);MK.scan(document);addSave();
+  const s=await MK.api('state').catch(()=>null);
+  if(s&&!s.rev&&P.seed){const t=await MK.api('seed',{edits:P.seed}).catch(()=>null);MK.applyState(t||s)}else if(s)MK.applyState(s);
+  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')MK.refresh()});
+}
+const f=document.getElementById('lockf'),inp=document.getElementById('code'),err=document.getElementById('err'),go=document.getElementById('go');
+f.addEventListener('submit',async e=>{e.preventDefault();const c=inp.value.trim().toLowerCase();if(!c)return;go.disabled=true;go.textContent='Opening…';err.textContent='';
+  try{await open(c,document.getElementById('rem').checked)}catch(x){go.disabled=false;go.textContent='Open';err.textContent=x.message==='code'?'That passcode didn’t work. Try again.':'Can’t connect right now. Check your signal and try again.'}});
+let saved='';try{saved=localStorage.getItem('mkt-code')||''}catch(e){}
+if(saved){inp.value=saved;go.disabled=true;go.textContent='Opening…';open(saved,true).catch(()=>{go.disabled=false;go.textContent='Open';try{localStorage.setItem('mkt-code','')}catch(e){}})}
+else setTimeout(()=>inp.focus(),50);
+})();
+</script>
+</body></html>
