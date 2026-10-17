@@ -131,7 +131,9 @@ html,body{background:#f8f6f0}
     c.x?el('p',{class:'talk',style:'text-align:center;font-size:14px'},'Want home care or a treatment added? Just ask, and we’ll add it to your plan.'):null,
     el('section',{class:'maint'},el('span',{class:'eyebrow'},'Your next visit'),
       /* no receipt-style breakdown here: what the visit looks like and about what it costs (Alexandra, Oct 15 2026) */
-      el('div',{class:'tot',style:'border-top:0;padding-top:0'},el('span',{},m[1]?'In about '+m[1]:'Your next visit'),el('span',{},money(mt))),
+      /* each service with its price, the way artists write it on the paper card (Alexandra, Oct 17 2026) */
+      m[0].length?el('div',{class:'brk',style:'padding:0'},m[0].map(([n,p,r])=>el('div',{class:'li'},el('span',{},n),el('span',{},r?el('s',{style:'opacity:.55;margin-right:6px'},money(r)):null,money(p))))):null,
+      el('div',{class:'tot'},el('span',{},m[1]?'In about '+m[1]:'Your next visit'),el('span',{},money(mt))),
       el('p',{style:'font-size:14px;margin:0'},nextWhat())),
     c.r?el('p',{class:'talk',style:'text-align:center'},el('b',{},'Refresh in '),c.r):null,
     sign,
