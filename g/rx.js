@@ -388,8 +388,11 @@ function rxGenerateSkin(R,g){
   const needs=rxNeeds(R), P=g.p, b=R.nob?null:Number(R.budget)||null, cap=Math.min(b!=null?b+100:RX_CAP,RX_ALLIN_SKIN);
   const nw=R.now||[], gl=rxGoalList(R);
   const box=nw.includes('Breakouts')||gl.includes('Clear Breakouts')?'Blemish Skin Box':nw.includes('Fine lines')||gl.includes('Fine Lines And Firmness')?'Youth Skin Box':'Standard Skin Box';
-  const hi=()=>({n:'Home Care',p:RX_SK_HI,t:'h',why:'Suggested: Biologique Recherche Lait VIP O2 (5.1 oz), the full-size cleanser',full:RX_SK_HI});
-  const lo=()=>({n:'Home Care',p:RX_SK_LO,t:'h',why:'Suggested: Biologique Recherche '+box+', about 4 weeks of product to try at home',full:RX_SK_LO});
+  /* every product rule still runs: the artist sees the products matched to what she said (P50, serum, cleanser, cream);
+     her card shows only the budget (Alexandra, Oct 17 2026) */
+  const picks=[...new Set(needs.map(k=>{let [n,,,alt]=RX_PROD[k];return alt&&RX_OUT.includes(n)?alt[0]:n}))].join(', ');
+  const hi=()=>({n:'Home Care',p:RX_SK_HI,t:'h',why:'Start with the full-size cleanser, Biologique Recherche Lait VIP O2 (5.1 oz)'+(picks?'. Matched to her skin: '+picks:''),full:RX_SK_HI});
+  const lo=()=>({n:'Home Care',p:RX_SK_LO,t:'h',why:'Suggested: Biologique Recherche '+box+', about 4 weeks of product to try at home'+(picks?'. Matched to her skin for later: '+picks:''),full:RX_SK_LO});
   const pkg=(i,hc)=>[...rxSvcLines('skin',P[i]),hc()];
   let o2=null,i2=P.length-1;
   for(let i=0;i<P.length&&!o2;i++){const L=pkg(i,hi); if(rxTotal(L)<=cap){o2=L;i2=i}}
@@ -474,7 +477,7 @@ function rxPack(R,me,day){
     vp:R.vip?1:0,  /* VIP has its own key: it used to be "v" too, which overwrote the card version and broke every non-VIP card */
     o:R.opts.map(x=>{const sv=x.lines.filter(l=>l.t==='s').map(l=>l.reg&&l.reg!==l.p?[l.n,Number(l.p)||0,l.reg]:[l.n,Number(l.p)||0]), hc=x.lines.filter(l=>l.t!=='s').reduce((a,l)=>a+(Number(l.p)||0),0);
       return [x.title,hc?[...sv,['Maintenance',hc]]:sv]}),
-    m:[R.m.lines.map(l=>l.reg&&l.reg!==l.p?[l.n,Number(l.p)||0,l.reg]:[l.n,Number(l.p)||0]),R.m.when,R.m.text],r:R.refresh,x:R.more?1:0,f:(R.rec||[]).map(l=>[l.n,Number(l.p)||0]),hs:(R.rec||[]).some(l=>l.hint==='p50')?1:0};
+    m:[R.m.lines.map(l=>l.reg&&l.reg!==l.p?[l.n,Number(l.p)||0,l.reg]:[l.n,Number(l.p)||0]),R.m.when,R.m.text],r:R.refresh,x:R.more?1:0,f:(R.rec||[]).map(l=>[l.hint==='p50'?'Your P50, matched to your skin':l.n,Number(l.p)||0]),hs:(R.rec||[]).some(l=>l.hint==='p50')?1:0};
   return o;
 }
 /* deflated so the QR stays easy to scan; "z" marks a compressed card */
