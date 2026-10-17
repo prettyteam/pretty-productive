@@ -11,6 +11,7 @@
 <script src="../g/pdfview.js?v=1"></script>
 <script src="../g/aftercare.js?v=7"></script>
 <script src="../g/topnav.js?v=2"></script>
+<script src="../g/jokes.js?v=2"></script>
 <script>window.RG_BASE='../'</script>
 <script src="../g/regimen.js?v=24"></script>
 <style>
@@ -153,8 +154,44 @@ details.acc summary::after{color:var(--gold)}
 /* the desk has its own bottom tabs, so the Refresh line sits at the top here */
 .rbar{position:static!important;border-top:0!important;border-bottom:1px solid var(--line)!important;padding:8px 16px!important;background:transparent!important}
 body{padding-bottom:0}
+/* Homepage like the other apps (Alexandra, Oct 17 2026): the Salon & Spa wreath with the person's photo, "Hello," and her
+   name (picked from who works the desk), the date and a customer service joke, then 6 menu squares. Pages open from the
+   squares or Menu ▾ at the top, so the bottom tabs are gone. */
+.bnav{display:none!important}
+main{padding-bottom:40px}
+body.dk-home .head{display:none}
+.dhome[hidden]{display:none!important}
+.dhome{display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center;padding-top:6px}
+.dhome .crest{position:relative;width:200px;height:200px;border:0;background:none;padding:0;cursor:pointer}
+.dhome .crest img{position:absolute}
+.dhome .crest img.w{inset:0;width:100%;height:100%}
+.dhome .crest img.w.over{-webkit-mask-image:radial-gradient(circle at 100px 92.5px,transparent 0 75px,#000 75.5px);mask-image:radial-gradient(circle at 100px 92.5px,transparent 0 75px,#000 75.5px)}
+.dhome .crest img.me{left:21.8px;top:14.3px;width:156.4px;height:156.4px;border-radius:50%;object-fit:cover}
+.hhi{display:flex;align-items:center;justify-content:center;gap:10px;font-family:var(--serif,"Lora"),Georgia,serif;color:#121212;line-height:1.15}
+.hhi span:first-child{font-size:28px}
+.hname{font-size:34px;font-style:italic}
+.hnamepic{height:76px;width:auto;max-width:210px;margin-top:6px;filter:brightness(0)}
+.hlinks{display:flex;gap:6px;justify-content:center}
+.hphoto{all:unset;cursor:pointer;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--soft);padding:4px}
+.whois{display:flex;flex-direction:column;align-items:center;gap:10px;width:100%;max-width:280px}
+.whois select{width:100%;padding:12px;font:inherit;font-size:16px;border:1px solid var(--ink);border-radius:0;background:#fff;color:var(--ink)}
+.hgig{display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;padding:14px 8px 4px}
+.hgig .lbl{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:#121212}
+.hgig p{margin:0;font-family:var(--serif,"Lora"),Georgia,serif;font-style:italic;font-size:16px;line-height:1.5;color:#555250;max-width:440px;text-wrap:balance}
+.hmenu{display:flex;flex-direction:column;gap:14px;margin-top:22px;width:100%}
+.mhead{display:flex;align-items:center;justify-content:center;gap:12px;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:#121212}
+.mhead::before,.mhead::after{content:"";width:28px;height:1px;background:#2b2a28}
+.cgrid{display:grid;grid-template-columns:repeat(2,124px);gap:8px;justify-content:center}
+.cgrid>button{position:relative;background:#fff;color:#121212;border:1px solid #2b2a28;outline:1px solid #2b2a28;outline-offset:-6px;border-radius:0;aspect-ratio:1/1;font-family:var(--serif,"Lora"),Georgia,serif;font-size:15.5px;line-height:1.2;padding:8px;letter-spacing:-.01em;cursor:pointer;display:flex;align-items:center;justify-content:center;text-align:center}
+.cgrid>button[aria-expanded="true"]{outline-width:2px}
+.cgrid>button .n{position:absolute;top:10px;right:10px;margin:0}
+.hpages{grid-column:1/-1;display:flex;flex-direction:column;align-items:center;gap:2px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:8px 0;max-width:300px;width:100%;margin:0 auto}
+.hpages button{all:unset;cursor:pointer;font-family:var(--serif,"Lora"),Georgia,serif;font-size:17px;color:#555250;padding:8px}
+.hpages .n{margin-left:8px}
+#send[data-page],#after[data-page]{border:0;padding:0}
 </style>
 </head><body><main id="app">
+<section class="dhome" id="dhome" hidden></section>
 <div class="head"><img src="../g/logo.png" alt="Taffeta Salon &amp; Spa"><div><span class="eyebrow">Front Desk</span><h1>Today at Taffeta</h1></div></div>
 <div class="runbar"><button id="runAll">Run all updates</button><span id="runSt">Refreshes the team app and the Pretty Report with today’s Paired Plus numbers.</span></div>
 <details class="more" id="alerts"><summary>Phone alerts +</summary>
@@ -204,7 +241,7 @@ const hk=(location.hash.match(/k=([\w-]+)/)||[])[1];
 const gkh=(location.hash.match(/g=([\w-]+)/)||[])[1];
 if(hk)store.set('desk-key',hk); if(gkh)store.set('desk-gkey',gkh);
 const KEY=hk||store.get('desk-key'), GKEY=gkh||store.get('desk-gkey');
-let tab=store.get('desk-tab')||'C', area=store.get('desk-area')||'G', list=store.get('desk-list')||'opening', data={concierge:[],consult:[],profiles:[],todo:[],regimen:[]}, pending={}, lastOk=0, GUIDE=null, shown={};
+let tab=store.get('desk-tab')||'C', area='H', list=store.get('desk-list')||'opening', data={concierge:[],consult:[],profiles:[],todo:[],regimen:[]}, pending={}, lastOk=0, GUIDE=null, shown={};
 const today=()=>new Date().toLocaleDateString('en-CA');
 const ticks=k=>{try{return JSON.parse(store.get('desk-chk:'+k+':'+today())||'[]')}catch(e){return[]}};
 const setTicks=(k,a)=>store.set('desk-chk:'+k+':'+today(),JSON.stringify(a));
@@ -283,7 +320,7 @@ function guests(){
   let h=pOpen.length?pOpen.map(profile).join(''):'<p class="empty">No profile updates waiting.</p>';
   if(pDone.length)h+=`<details class="more"><summary>Updated (${pDone.length}) +</summary><div class="list">${pDone.map(profile).join('')}</div></details>`;return h}
 
-function showTodo(on){const b=$('#bT');if(!b)return;b.style.display=on?'':'none';document.querySelector('.bnav').style.gridTemplateColumns='repeat('+(on?5:4)+',1fr)';if(!on&&area==='T'){area='G'}}
+function showTodo(on){}   // To Do is always a square on the homepage now
 /* To Do: tasks Claude adds to the "To Do" tab of the guest Sheet (e.g. thank-you card addresses). A tap marks it done for every desk device. */
 function todoCount(){const n=(data.todo||[]).filter(r=>st(r)!=='Done').length;const el=$('#nT');if(el)el.textContent=n||'';return n}
 const drafts={};
@@ -325,13 +362,52 @@ function guideView(){
   const pl=(GUIDE.links||[]).map(l=>`<a class="plink big" href="${esc(l.u)}" target="_blank" rel="noopener">${esc(l.t)} ↗</a><p class="note2">${esc(l.sub||'')}</p>`).join('');
   return `<div class="sec"><h2>Desk guide</h2>${pl}${logins}${secs.join('')}</div>`}
 
+const DESK_PEOPLE=['Adriana','Alexandra','Amanda','Ashley','Carolyn','Flower'];   // Rose is listed as Flower   // who works the desk (Alexandra, Oct 17 2026)
+const NAME_PICS=['adriana','alexandra','amanda','ashley','carolyn'];
+const DESK_GROUPS=[['Guest Requests',['G|C']],['Consultations',['G|K']],['Profiles & Home Care',['G|P','G|H']],['To Do',['T|C']],['Send to a Guest',['S|C']],['Desk Guide',['D|C','C|C','B|C']]];
+const DESK_LABEL={'H|C':'Home','G|C':'Guest Requests','G|K':'Consultations','G|P':'Profiles','G|H':'Home Care','T|C':'To Do','S|C':'Send a Link or Aftercare','D|C':'Desk Guide','C|C':'Cleaning','B|C':'Keep Busy'};
+let HOME_OPEN='';
+function deskGo(k){const [a,t]=k.split('|');area=a;if(a==='G')tab=t;store.set('desk-tab',tab);HOME_OPEN='';render();scrollTo(0,0);if(window.TopNav)TopNav.check()}
+function deskCount(k){const n=id=>Number(($('#'+id)||{}).textContent)||0;return {'G|C':n('nC'),'G|K':n('nK'),'G|P':n('nP'),'G|H':n('nH'),'T|C':todoCount()}[k]||0}
+function deskHome(){
+  const who=store.get('desk-who'), first=who, k=first.toLowerCase(), ph=who?store.get('desk-photo:'+who):'';
+  const today=new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
+  let h=`<button type="button" class="crest" id="hCrest" aria-label="${ph?'Change your photo':'Add your photo'}">${ph?`<img class="me" alt="" src="${ph}">`:''}<img class="w${ph?' over':''}" src="../g/logo.png" alt="Taffeta Salon &amp; Spa"></button>`;
+  if(!who)h+=`<div class="whois"><div class="hhi"><span>Who’s at the desk?</span></div><select id="hWhoSel" aria-label="Who’s at the desk"><option value="">Choose your name</option>${DESK_PEOPLE.map(n=>`<option>${n}</option>`).join('')}</select></div>`;
+  else h+=`<div class="hhi"><span>Hello,</span>${NAME_PICS.includes(k)?`<img class="hnamepic" src="../g/names/${k}.png" alt="${esc(first)}">`:`<span class="hname">${esc(first)}</span>`}</div>
+    <div class="hlinks"><button type="button" class="hphoto" id="hPhoto">${ph?'Change photo':'Add your photo'}</button><button type="button" class="hphoto" id="hWho">Not ${esc(first)}?</button></div>`;
+  h+=`<div class="hgig"><span class="lbl">${esc(today)}</span><p>${esc(window.dayJoke?dayJoke('service'):'')}</p></div>`;
+  h+=`<div class="hmenu"><div class="mhead">Menu</div><div class="cgrid">`;
+  DESK_GROUPS.forEach(([g,keys],i)=>{const c=keys.reduce((a,x)=>a+deskCount(x),0);
+    h+=`<button type="button" data-g="${esc(g)}"${keys.length>1?` aria-expanded="${HOME_OPEN===g}"`:''}>${c?`<span class="n">${c}</span>`:''}${esc(g)}</button>`;
+    if(i%2===1&&DESK_GROUPS.slice(i-1,i+1).some(x=>x[0]===HOME_OPEN)){const o=DESK_GROUPS.find(x=>x[0]===HOME_OPEN);
+      h+=`<div class="hpages">${o[1].map(p=>{const c=deskCount(p);return `<button type="button" data-p="${p}">${esc(DESK_LABEL[p])}${c?`<span class="n">${c}</span>`:''}</button>`}).join('')}</div>`}});
+  h+=`</div></div><input type="file" accept="image/*" id="hFile" hidden>`;
+  const box=$('#dhome');box.innerHTML=h;
+  const sel=$('#hWhoSel');if(sel)sel.onchange=()=>{if(sel.value){store.set('desk-who',sel.value);deskHome()}};
+  const nw=$('#hWho');if(nw)nw.onclick=()=>{store.set('desk-who','');deskHome()};
+  const pick=()=>{if(store.get('desk-who'))$('#hFile').click()};$('#hCrest').onclick=pick;const hp=$('#hPhoto');if(hp)hp.onclick=pick;
+  $('#hFile').onchange=e=>{const f=e.target.files&&e.target.files[0];if(!f)return;const img=new Image(),url=URL.createObjectURL(f);
+    img.onload=()=>{const m=Math.min(img.width,img.height),c=document.createElement('canvas');c.width=c.height=360;
+      c.getContext('2d').drawImage(img,(img.width-m)/2,(img.height-m)/2,m,m,0,0,360,360);URL.revokeObjectURL(url);
+      store.set('desk-photo:'+store.get('desk-who'),c.toDataURL('image/jpeg',.82));deskHome()};img.src=url};
+  box.querySelectorAll('.cgrid>button[data-g]').forEach(b=>b.onclick=()=>{const g=b.dataset.g,keys=DESK_GROUPS.find(x=>x[0]===g)[1];
+    if(keys.length===1)deskGo(keys[0]);else{HOME_OPEN=HOME_OPEN===g?'':g;deskHome();if(HOME_OPEN)setTimeout(()=>{const p=box.querySelector('.hpages');if(p)p.scrollIntoView({behavior:'smooth',block:'center'})},30)}});
+  box.querySelectorAll('.hpages button').forEach(b=>b.onclick=()=>deskGo(b.dataset.p));
+}
+
 function render(){
-  document.querySelectorAll('.bnav button').forEach(b=>b.classList.toggle('on',b.dataset.area===area));
-  const g=area==='G';
+  const g=area==='G', home=area==='H', send=area==='S';
+  document.body.classList.toggle('dk-home',home);
   document.querySelector('.tabs').style.display=g?'':'none';
-  const body=g?guests():area==='T'?todoView():area==='D'?guideView():area==='C'?cleanView():busyView();
+  $('#dhome').hidden=!home;
+  ['.runbar','#alerts'].forEach(q=>{const el=$(q);if(el)el.style.display=home?'':'none'});
+  ['#send','#after'].forEach(q=>{const el=$(q);if(el){el.style.display=send?'':'none';if(send){el.open=true;el.dataset.page='1'}else delete el.dataset.page}});
+  $('#body').style.display=home||send?'none':'';
+  const body=g?guests():home||send?'':area==='T'?todoView():area==='D'?guideView():area==='C'?cleanView():busyView();
   if(!g)guests();
   todoCount();
+  if(home)deskHome();
   const f=document.activeElement; if(f&&f.classList&&f.classList.contains('tdaddr')&&$('#body').contains(f)) return;   // don't wipe an address being typed
   $('#body').innerHTML=body;
 }
@@ -415,7 +491,8 @@ document.addEventListener('click',e=>{const b=e.target.closest('#runAll');if(!b|
 });
 runState();setInterval(runState,20000);
 render();load();loadGuide();
-TopNav.init({get:()=>area+'|'+tab,home:()=>'G|C',set:k=>{[area,tab]=k.split('|');store.set('desk-area',area);store.set('desk-tab',tab);render()}});
+TopNav.init({get:()=>area==='G'?'G|'+tab:area+'|C',home:()=>'H|C',set:k=>{[area,tab]=k.split('|');if(area!=='G')tab=store.get('desk-tab')||'C';store.set('desk-tab',tab);HOME_OPEN='';render()},
+  menu:()=>[['Home',[['H|C','Home']]]].concat(DESK_GROUPS.map(([g,ks])=>[g,ks.map(k=>[k,DESK_LABEL[k]])]))});
 
 function demo(){const n=Date.now(),m=60000;return{concierge:[
  {row:5,at:n-0.3*m,name:'Jess',sips:'Hi Pretty Latte',comforts:'Blanket, Quiet visit',before:'',note:'',status:'New'},

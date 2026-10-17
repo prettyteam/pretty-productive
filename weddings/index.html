@@ -11,7 +11,7 @@
 <meta name="theme-color" content="#f8f6f0">
 <script src="config.js"></script>
 <script src="../g/topnav.js?v=2"></script>
-<script src="../g/jokes.js?v=1"></script>
+<script src="../g/jokes.js?v=2"></script>
 <script src="../g/qr.js?v=1"></script>
 <style>:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;padding:0}img{max-width:100%}</style>
 <script src="/refresh.js?v=3" defer></script>
@@ -1017,7 +1017,7 @@ $("#saveImg").onclick=()=>saveImage($("#sheet"),fileName(S));
 /* ---------- homepage (Alexandra, Oct 17 2026) ---------- */
 const PAGE_LABEL={booked:"Booked Weddings",build:"Timeline",team:"Schedule",cal:"Calendar",pipe:"Pipeline",todo:"To Do",tpl:"Texts",jobs:"Jobs",admin:"Team Records",pay:"Payout Form",prev:"Bridal Preview",addon:"Add-On Services",info:"My Info"};
 function homeGroups(){
-  if(ROLE==="office")return [["Weddings",["booked","build","team","cal"]],["Sales",["pipe","todo","tpl"]],["Bridal Team",["jobs","admin","pay"]],["Bridal Preview",["prev"]],["Add-On Services",["addon"]]];
+  if(ROLE==="office")return [["Weddings",["booked","build","team","cal"]],["Sales",["pipe","todo","tpl"]],["Bridal Team",["jobs","admin","pay"]],["Preview & Add-Ons",["prev","addon"]]];   // always an even number of squares (Alexandra, Oct 17 2026)
   PAGE_LABEL.team="My Weddings";PAGE_LABEL.jobs="Job Offers";
   return [["My Weddings",["team"]],["Job Offers",["jobs"]],["Add-On Services",["addon"]],["Bridal Preview",["prev"]],["Get Paid",["pay"]],["My Profile",["info"]]];
 }

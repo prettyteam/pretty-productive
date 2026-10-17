@@ -447,7 +447,7 @@ details.days summary::-webkit-details-marker{display:none}
 <script src="g/pdfview.js?v=1"></script>
 <script src="g/regimen.js?v=24"></script>
 <script src="g/qr.js?v=1"></script>
-<script src="g/jokes.js?v=1"></script>
+<script src="g/jokes.js?v=2"></script>
 <script src="g/rx.js?v=63"></script>
 <script src="g/prices.js?v=5"></script>
 <link rel="stylesheet" href="g/rx.css?v=4">
@@ -1864,7 +1864,9 @@ const PR_PEOPLE=['Alexandra','Rick'];
 function prWho(){return store.get('pr-who:'+ID)||''}
 function prPhotoKey(){return 'pp-photo:'+ID+':'+prWho()}
 function reportGroups(){
-  return [['Today',['today']],['Payroll',['payroll']],['Month & Trends',['month']]].concat(S.inv?[['Color Room',['color']]]:[]).concat([['Team',['off','guide']],['Marketing Proofs',['mkt']],['Access',['access']]]);
+  // always 6 squares (Alexandra, Oct 17 2026): Access sits under Team; without the Color Room, Payroll and Month & Trends share one
+  return [['Today',['today']]].concat(S.inv?[['Payroll',['payroll']],['Month & Trends',['month']],['Color Room',['color']]]:[['Payroll & Trends',['payroll','month']]])
+    .concat([['Team',['off','guide','access']],['Marketing Proofs',['mkt']]]);
 }
 const PR_LABEL={mkt:'Marketing Proofs',home:'Home',today:'Today',payroll:'Payroll',month:'Month & Trends',color:'Color Room',off:'Time Off',guide:'Culture',access:'Access'};
 let PR_OPEN='',PR_NAV=false;
