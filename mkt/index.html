@@ -117,7 +117,7 @@ async function open(code,remember){
   document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')MK.refresh()});
 }
 const f=document.getElementById('lockf'),inp=document.getElementById('code'),err=document.getElementById('err'),go=document.getElementById('go');
-f.addEventListener('submit',async e=>{e.preventDefault();const c=inp.value.replace(/\s+/g,'');   // capitals count, spaces don't (Alexandra, Oct 17 2026)if(!c)return;go.disabled=true;go.textContent='Opening…';err.textContent='';
+f.addEventListener('submit',async e=>{e.preventDefault();const c=inp.value.replace(/\s+/g,'');/* capitals count, spaces don't (Alexandra, Oct 17 2026) */if(!c)return;go.disabled=true;go.textContent='Opening…';err.textContent='';
   try{await open(c,document.getElementById('rem').checked)}catch(x){go.disabled=false;go.textContent='Open';err.textContent=x.message==='code'?'That passcode didn’t work. Try again.':'Can’t connect right now. Check your signal and try again.'}});
 let saved='';try{saved=localStorage.getItem('mkt-code')||''}catch(e){}
 if(saved){inp.value=saved;go.disabled=true;go.textContent='Opening…';open(saved,true).catch(()=>{go.disabled=false;go.textContent='Open';try{localStorage.setItem('mkt-code','')}catch(e){}})}
