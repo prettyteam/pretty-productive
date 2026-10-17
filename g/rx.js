@@ -207,9 +207,9 @@ const RX_GOAL={
 const RX_Q={
   hair:[
     ['wash','How often does she wash?',['Daily','Every other day','Every 2–3 days','Once a week']],
-    ['feel','How does her hair feel?',['Dry','Oily','Frizzy','Flat','Curly or wavy','Normal'],1],
+    ['feel','How does her hair feel?',['Dry','Oily','Frizzy','Flat','Breakage','Flyaways','Hard to style','Curly or wavy','Normal'],1],
     ['style','How does she style it?',['Air dry','Blow-dry with a brush','Hot tools daily']],
-    ['color','Is it color-treated?',['No','Yes','Yes, with a glaze that fades','Blonde that turns brassy'],1],
+    ['color','Is it color-treated?',['No','Yes','Yes, with a glaze that fades','Blonde that turns brassy','Grays showing'],1],
     ['prod','What does she use now?',['Professional','Drugstore']],
     ['love','Does she love it?',['Yes','It’s okay','No']],
     ['clean','Does she like clean, vegan products?',['No preference','Yes']]],
@@ -221,7 +221,8 @@ const RX_Q={
     ['love','Does she love it?',['Yes','It’s okay','No']]]
 };
 const RX_NOW={
-  hair:['Color fading','Brassiness','Frizz','Flyaways','Breakage','Dryness','Oily scalp','Flat, no volume','Grays showing','Itchy or flaky scalp','Hard to style','Nothing new, just maintaining'],
+  /* hair: scalp health only; how her hair feels is asked earlier (Alexandra, Oct 17 2026) */
+  hair:['Oily scalp','Dry or tight scalp','Itchy or flaky scalp','Sensitive scalp','Product buildup','Nothing new, healthy scalp'],
   skin:['Breakouts','Redness','Sensitive','Oily','Dullness or uneven tone','Dark spots','Dehydration','Fine lines','Large pores','Nothing new, just maintaining']
 };
 
@@ -237,8 +238,18 @@ const rxMoney=n=>'$'+(Math.round(n*100)/100).toLocaleString('en-US',{maximumFrac
 const rxFirst=n=>String(n||'').trim().split(/\s+/)[0]||'';
 
 /* Genuine needs only, most important first, at most two. "Right now" leads, then her routine. */
+/* Hair concerns from her answers: the scalp question plus how her hair feels and her color (Oct 17 2026).
+   Older cards saved hair concerns in the season question, so those still count. */
+function rxNowAll(R){
+  const now=[...(R.now||[])];if(R.kind!=='hair')return now;
+  const a=R.a||{},feel=[].concat(a.feel||[]),color=[].concat(a.color||[]),add=x=>{if(!now.includes(x))now.push(x)};
+  if(feel.includes('Dry'))add('Dryness');if(feel.includes('Frizzy'))add('Frizz');if(feel.includes('Flat'))add('Flat, no volume');
+  if(feel.includes('Breakage'))add('Breakage');if(feel.includes('Flyaways'))add('Flyaways');if(feel.includes('Hard to style'))add('Hard to style');
+  if(color.includes('Grays showing'))add('Grays showing');
+  return now;
+}
 function rxNeeds(R){
-  const a=R.a||{}, now=R.now||[], out=[], add=k=>{if(!out.includes(k)&&RX_PROD[k]) out.push(k)};
+  const a=R.a||{}, now=rxNowAll(R), out=[], add=k=>{if(!out.includes(k)&&RX_PROD[k]) out.push(k)};
   const notHappy=a.prod&&!['Professional','Unsure','Not sure','I don’t know'].includes(a.prod)||a.love==='No'||a.love==='It’s okay'; /* "it's okay" means she's open to something better (Alexandra, Oct 16 2026) */
   if(R.kind==='hair'&&rxGoalList(R).some(g=>/^Blowout/.test(g))&&(now.includes('Frizz')||now.includes('Flyaways'))) add('sleekStick');
   if(R.kind==='hair'&&rxGoalList(R).some(g=>/^Movement/.test(g))) add(a.style==='Air dry'?'movementAir':'movement');
@@ -268,7 +279,7 @@ function rxNeeds(R){
   if(now.includes('Dryness')) add('dry');
   if(now.includes('Oily scalp')) add(feel.includes('Flat')?'airWash':'oily');
   if(now.includes('Flat, no volume')){ add('flatWash'); add(a.style==='Blow-dry with a brush'?'flat':'flatSpray') }
-  if(now.includes('Itchy or flaky scalp')) add('scalp');
+  if(now.some(x=>/^(Itchy or flaky|Dry or tight|Sensitive) scalp$/.test(x))) add('scalp');
   if(now.includes('Grays showing')) add('grays');
   if(now.includes('Hard to style')) add(a.style==='Air dry'?(feel.includes('Curly or wavy')?'airCurl':'airDry'):a.style==='Blow-dry with a brush'?'prep':'blowLast');
   /* from the routine, only when nothing above already covers it */
@@ -360,7 +371,7 @@ function rxCutSwap(P){const out=[];P.forEach(t=>{out.push(t);if(t.includes('Fema
   if(!P.some(x=>x.length===b.length&&x.every((n,i)=>n===b[i])))out.push(b)}});return out}
 function rxGenerateHair(R,g){
   const needs=rxNeeds(R), P=rxCutSwap(g.p), b=R.nob?null:Number(R.budget)||null;
-  const now=R.now||[], leave=now.some(x=>/Color fading|Brassiness|Breakage|Dryness/.test(x))||P[0].some(n=>RX_BLOND.test(n));
+  const now=rxNowAll(R), leave=now.some(x=>/Color fading|Brassiness|Breakage|Dryness/.test(x))||P[0].some(n=>RX_BLOND.test(n));
   const cap=b!=null?b+100:RX_CAP;
   const pkg=(i,amt,lv)=>[...rxSvcLines('hair',P[i]),...(lv?rxSvcLines('hair',['Goldwell Leave-In Treatment']):[]),rxHcLine(amt,rxNeedsFor(needs,P[i]))];
   const okL=L=>rxTotal(L)<=cap&&(rxTotal(L)<=RX_ALLIN_HAIR||!L.some(l=>l.n==='Goldwell Leave-In Treatment'));
@@ -414,7 +425,7 @@ function rxGenerate(R){
   const needs=rxNeeds(R), P=g.p, b=R.nob?null:Number(R.budget)||null;
   /* Goldwell leave-in backbar treatment: a no-downtime add-on for color that fades, blonde repair or dry, damaged hair.
      $20, or $10–15 when only half the bottle is used (Alexandra, Oct 2026). Offered in the full look. */
-  const now=R.now||[], leave=R.kind==='hair'&&(now.some(x=>/Color fading|Brassiness|Breakage|Dryness/.test(x))||P[0].some(n=>RX_BLOND.test(n)));
+  const now=rxNowAll(R), leave=R.kind==='hair'&&(now.some(x=>/Color fading|Brassiness|Breakage|Dryness/.test(x))||P[0].some(n=>RX_BLOND.test(n)));
   /* Option 2 never goes more than $100 over her budget, and with no budget it stays at $400 or under
      (Alexandra, Oct 16 2026): the fullest package that fits, trimming home care to Try Me bottles,
      then the leave-in treatment, before stepping down a service tier. */
@@ -471,7 +482,7 @@ function rxGenerate(R){
 /* ---- the card in a link: compact JSON → base64url after # ---- */
 function rxPack(R,me,day){
   const o={v:1,k:R.kind,g:rxFirst(R.guest),a:rxFirst(me),d:day||new Date().toISOString().slice(0,10),b:R.nob?null:(Number(R.budget)||null),
-    w:rxGoalList(R).join(', '),n:(R.now||[]).filter(x=>!/^Nothing new/.test(x)),
+    w:rxGoalList(R).join(', '),n:rxNowAll(R).filter(x=>!/^Nothing new/.test(x)),
     /* home care shows on her card as one "Maintenance" line, the way Alexandra writes cards by hand,
        so she sees the investment, not a list of products to say no to */
     vp:R.vip?1:0,  /* VIP has its own key: it used to be "v" too, which overwrote the card version and broke every non-VIP card */
@@ -551,7 +562,7 @@ function rxBuild(R,me){
     tap:o=>{if(multi){let a=[].concat(R.a[key]||[]);const i=a.indexOf(o);if(i<0)a=o===IDK?[IDK]:[...a.filter(x=>x!==IDK),o];else a.splice(i,1);R.a[key]=a}else R.a[key]=R.a[key]===o?'':o}}));
   const goalQ={key:'goal',q:'Her Goals For Today',opts:Object.keys(RX_GOAL[R.kind]),multi:true,get:()=>rxGoalList(R),
     tap:o=>{const L=rxGoalList(R);R.goal=L.includes(o)?L.filter(x=>x!==o):[...L,o]}};
-  const nowQ={key:'now',q:sk?'What is her skin going through right now, this season?':'What is her hair or scalp going through right now, this season?',
+  const nowQ={key:'now',q:sk?'What is her skin going through right now, this season?':'How is her scalp right now, this season?',
     opts:RX_NOW[R.kind],multi:true,get:()=>R.now,tap:o=>{const i=R.now.indexOf(o);i<0?R.now.push(o):R.now.splice(i,1)}};
   const order=[goalQ,...(sk?[nowQ,...routine]:[...routine,nowQ])];
   const nextOpen=after=>{const i=order.findIndex(x=>x.key===after);const L=[...order.slice(i+1),...order.slice(0,Math.max(i,0))];const n=L.find(x=>!x.get().length);return n?n.key:null};
