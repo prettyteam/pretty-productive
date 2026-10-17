@@ -416,7 +416,7 @@ function rxPack(R,me,day){
     w:rxGoalList(R).join(', '),n:(R.now||[]).filter(x=>!/^Nothing new/.test(x)),
     /* home care shows on her card as one "Maintenance" line, the way Alexandra writes cards by hand,
        so she sees the investment, not a list of products to say no to */
-    v:R.vip?1:0,
+    vp:R.vip?1:0,  /* VIP has its own key: it used to be "v" too, which overwrote the card version and broke every non-VIP card */
     o:R.opts.map(x=>{const sv=x.lines.filter(l=>l.t==='s').map(l=>l.reg&&l.reg!==l.p?[l.n,Number(l.p)||0,l.reg]:[l.n,Number(l.p)||0]), hc=x.lines.filter(l=>l.t!=='s').reduce((a,l)=>a+(Number(l.p)||0),0);
       return [x.title,hc?[...sv,['Maintenance',hc]]:sv]}),
     m:[R.m.lines.map(l=>l.reg&&l.reg!==l.p?[l.n,Number(l.p)||0,l.reg]:[l.n,Number(l.p)||0]),R.m.when,R.m.text],r:R.refresh,x:R.more?1:0,f:(R.rec||[]).map(l=>[l.n,Number(l.p)||0])};

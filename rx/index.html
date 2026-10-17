@@ -80,7 +80,13 @@ html,body{background:#f8f6f0}
   if(z) c=JSON.parse(await new Response(new Blob([bin]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).text());
   else c=JSON.parse(new TextDecoder().decode(bin));
   }catch(e){c=null}
-  if(!c||c.v!==1){app.append(el('div',{class:'bad'},el('h1',{},'This card didn’t open'),el('p',{},'Ask your Taffeta artist to show the QR again.')));return}
+  /* cards made before Oct 17 2026 carried VIP in "v" (0 = not VIP), so v 0 or 1 both open; VIP now lives in "vp" */
+  if(!c||(c.v!==1&&c.v!==0)||!Array.isArray(c.o)){
+    /* a Go back button on this page (Alexandra, Oct 17 2026); with nothing to go back to, it opens taffetadesign.com */
+    const back=el('button',{class:'btn',type:'button',style:'max-width:260px;margin:22px auto 0'},'Go back');
+    back.onclick=()=>{if(history.length>1)history.back();else location.href='https://taffetadesign.com'};
+    app.append(el('div',{class:'bad'},el('h1',{},'This card didn’t open'),el('p',{},'Ask your Taffeta artist to show the QR again.'),back));return}
+  const vip='vp' in c?c.vp===1:c.v===1;
   const skin=c.k==='skin', date=new Date((c.d||'')+'T12:00');
   document.title=(c.g?c.g+'’s ':'Your ')+'RX · Taffeta Salon & Spa';
   // one card: each option shows just its name and total; tapping it opens the breakdown that adds up to that total
@@ -116,7 +122,7 @@ html,body{background:#f8f6f0}
     el('div',{class:'top'},el('img',{src:'../g/logo.png',alt:'Taffeta Salon & Spa'})),
     el('div',{class:'rxh'},el('span',{class:'rx'},'Rx'),el('p',{},'Personal plan from today’s consultation: two options and what your next visit looks like.')),
     /* date small at the top as 10/15/26 (Alexandra, Oct 15 2026) */
-    el('div',{class:'for'},el('span',{},'For '+(c.g||'you'),c.v?el('span',{style:'margin-left:8px;font-size:11px;letter-spacing:.16em;border:1px solid currentColor;border-radius:999px;padding:1px 8px;vertical-align:middle'},'VIP'):null),isNaN(date)?null:el('span',{class:'dt'},(date.getMonth()+1)+'/'+date.getDate()+'/'+String(date.getFullYear()).slice(-2))),
+    el('div',{class:'for'},el('span',{},'For '+(c.g||'you'),vip?el('span',{style:'margin-left:8px;font-size:11px;letter-spacing:.16em;border:1px solid currentColor;border-radius:999px;padding:1px 8px;vertical-align:middle'},'VIP'):null),isNaN(date)?null:el('span',{class:'dt'},(date.getMonth()+1)+'/'+date.getDate()+'/'+String(date.getFullYear()).slice(-2))),
     opts,
     /* All In stops at a $400 ticket; anything more is her call (Alexandra, Oct 16 2026) */
     (c.f&&c.f.length)?el('section',{class:'maint'},el('span',{class:'eyebrow'},'When you’re ready: full sizes'),
