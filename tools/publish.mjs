@@ -276,6 +276,25 @@ if (!access) {
     if (prev.access) { const { stylists, ...rest } = prev.access; access = rest; console.log('Access: kept from the last publish (no --access file given).'); }
   } catch (e) { console.warn('Access: no --access file and the last report could not be read, so the Access tab will be empty.'); }
 }
+// Consult first (Alexandra, Oct 17 2026): new guests booked for color or a treatment must get a consultation and RX card.
+// The list is sealed for the Front Desk with the desk guide key (the g= part of the desk link), into d/desk-consult.dat.
+{
+  const HAIR = /color|process|balayage|foil|highlight|glaze|gloss|toner|root|gr[ae]y|lighten|blond|keratin|brazilian|smooth|perm|extension|treatment/i;
+  const SKIN = /facial|peel|dermaplan|microneedl|nano|hydrafacial|acne|lash lift|brow lam|treatment/i;
+  const pick = (list, artist) => (list || []).filter((c) => c && c.isNew && (c.services || []).some((s) => HAIR.test(s.name) || SKIN.test(s.name)))
+    .map((c) => ({ time: c.time || '', guest: String(c.client || '').trim(), artist, services: (c.services || []).map((s) => s.name) }));
+  const today = [], tomorrow = []; let tDate = '';
+  for (const p of pages) { today.push(...pick(p.clients, p.name)); if (p.tomorrow) { tomorrow.push(...pick(p.tomorrow.clients, p.name)); tDate = tDate || p.tomorrow.date || ''; } }
+  const gk = ((access && access.desk) || '').match(/[#&]g=([\w-]+)/);
+  if (gk) {
+    const key = await crypto.subtle.importKey('raw', Buffer.from(gk[1], 'base64url'), 'AES-GCM', false, ['encrypt']);
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const ct = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, enc.encode(JSON.stringify({ updated: new Date().toISOString(), date: (data.daily && data.daily.date) || '', today, tomorrowDate: tDate, tomorrow }))));
+    const out = new Uint8Array(12 + ct.length); out.set(iv, 0); out.set(ct, 12);
+    fs.writeFileSync(path.join(outDir, 'desk-consult.dat'), out);   // in d/ so the daily commit (git add d tools) carries it
+    console.log(`Consult first: ${today.length} today, ${tomorrow.length} tomorrow (d/desk-consult.dat).`);
+  } else console.warn('Consult first: no desk link found, so the Front Desk list was not updated.');
+}
 const board = { access: access ? { ...access, stylists: pages.map((p) => ({ name: p.name, link: linkFor('s', keys.stylists[p.slug]), pin: keys.stylists[p.slug].pin })).sort((a, b) => a.name.localeCompare(b.name)) } : null, daily: data.daily || null, week: data.week || null, payroll: data.payroll || [], hoursList: (data.team && data.team.hoursList) || [], rates: (data.team && data.team.commission) || {}, retailRate: (data.team && data.team.retailRate) || 10, month: data.month || null, hub: { admin: keys.team.admin }, guideUrl: guideUrl || null, docs: docsFor('', true), inv: keys.inv && keys.inv.file ? { k: keys.inv.key, file: keys.inv.file, updated: keys.inv.updated } : null, pages: pages.map((p) => ({ ...strip(p), link: linkFor('s', keys.stylists[p.slug]) })) };
 fs.writeFileSync(path.join(outDir, keys.leadership.id + '.json'), JSON.stringify(await seal(board, keys.leadership.secret, keys.leadership.pin)));
 fs.writeFileSync(args.keys, JSON.stringify(keys, null, 1));
