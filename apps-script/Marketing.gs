@@ -4,7 +4,7 @@
  * so the proofs page works anywhere without signing in to Claude. Every call needs the marketing passcode
  * (only its SHA-256 is kept here). Hooked into doPost with: if (d.action === 'mkt') return json_(mkt_(d));
  */
-const MKT_CODE_SHA = '3a60d3253de88f0637837176f4abadd1b0f7d46dc5b8cc6cbf1870bf60299640';
+const MKT_CODE_SHA = '5442577916fa38cbbb5f383bff864e949b874c619c4c950dd32dd22877258288';
 
 function mktHex_(s) { return Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, String(s || ''), Utilities.Charset.UTF_8).map(b => ('0' + (b & 255).toString(16)).slice(-2)).join(''); }
 
@@ -30,7 +30,7 @@ function mktWrite_(s) { s.rev = (s.rev || 0) + 1; s.updatedAt = new Date().toISO
 function mktPublic_(s) { return { ok: true, edits: s.edits, albums: s.albums, photos: s.photos.map(p => ({ id: p.id, album: p.album, w: p.w, h: p.h, addedAt: p.addedAt, by: p.by || '' })), hidden: s.hidden, rev: s.rev || 0 }; }
 
 function mkt_(d) {
-  if (mktHex_(d.code) !== MKT_CODE_SHA) return { ok: false, error: 'signin' };
+  if (mktHex_(String(d.code || '').replace(/\s+/g, '')) !== MKT_CODE_SHA) return { ok: false, error: 'signin' };
   const lock = LockService.getScriptLock();
   try {
     lock.waitLock(20000);
