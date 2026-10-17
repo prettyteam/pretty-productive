@@ -9,4 +9,4 @@ window.TW_FCM={
 };
 // Wedding day add-on payments (Alexandra, Oct 17 2026): the Taffeta Weddings Venmo username and the Stripe payment link
 // (card and Apple Pay). Both are public payment pages. Leave one empty to hide its button.
-window.TW_PAY={venmo:'',stripe:''};
+window.TW_PAY={venmo:'Taffetaweddings',stripe:''};
