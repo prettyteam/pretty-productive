@@ -111,12 +111,28 @@ function sheetDate_(v, year) {
   if (!m) {
     const iso = String(v || '').trim().match(/^(\d{4})-(\d{2})-(\d{2})/);   // the calendar date as written, not shifted by time zone
     if (iso) return iso[1] + '-' + iso[2] + '-' + iso[3];
-    const t = new Date(String(v || '').trim());   // "2027-05-01T00:00:00", "May 1, 2027" from Zapier
-    return /\d{4}/.test(String(v)) && !isNaN(t) ? Utilities.formatDate(t, TZ, 'yyyy-MM-dd') : '';
+    const n = String(v == null ? '' : v).trim();
+    if (/^\d{5}(\.\d+)?$/.test(n) && Number(n) > 30000 && Number(n) < 80000) {   // a spreadsheet day number, e.g. 46508 = May 1, 2027 (Zapier, Kathleen Saxman, Oct 17 2026)
+      const u = new Date(Date.UTC(1899, 11, 30) + Math.floor(Number(n)) * 864e5);
+      return Utilities.formatDate(u, 'UTC', 'yyyy-MM-dd');
+    }
+    const t = new Date(n);   // "2027-05-01T00:00:00", "May 1, 2027" from Zapier
+    const out = /\d{4}/.test(n) && !isNaN(t) ? Utilities.formatDate(t, TZ, 'yyyy-MM-dd') : '';
+    return /^20\d\d-/.test(out) ? out : '';   // never a made-up year
   }
   let y = m[3] ? Number(m[3]) : year;
   if (y < 100) y += 2000;
   const mo = Number(m[1]), d = Number(m[2]);
   if (mo < 1 || mo > 12 || d < 1 || d > 31) return '';
   return y + '-' + String(mo).padStart(2, '0') + '-' + String(d).padStart(2, '0');
+}
+
+
+/** One time (Oct 17 2026): Kathleen Saxman came in with the year 46508 because Zapier wrote May 1, 2027 as a day number. */
+function fixSaxmanDate20261017() {
+  const w = weddings_().find(x => x.d.id === 'wsync465080101saxman');
+  if (!w) { Logger.log('Not found'); return; }
+  const d = w.d; d.date = '2027-05-01'; d.location = 'Every Note Winery';
+  saveWedding_(d);
+  Logger.log('Fixed: ' + d.bride + ' ' + d.date + ' ' + d.location + '; sheet date reads as ' + sheetDate_('46508', 2026));
 }
