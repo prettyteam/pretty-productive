@@ -12,6 +12,8 @@
 <script src="../g/aftercare.js?v=7"></script>
 <script src="../g/topnav.js?v=2"></script>
 <script src="../g/jokes.js?v=2"></script>
+<script src="../g/coach.js?v=1"></script>
+<link rel="stylesheet" href="../g/coach.css?v=1">
 <script>window.RG_BASE='../'</script>
 <script src="../g/regimen.js?v=24"></script>
 <style>
@@ -364,8 +366,8 @@ function guideView(){
 
 const DESK_PEOPLE=['Adriana','Alexandra','Amanda','Ashley','Carolyn','Flower'];   // Rose is listed as Flower   // who works the desk (Alexandra, Oct 17 2026)
 const NAME_PICS=['adriana','alexandra','amanda','ashley','carolyn'];
-const DESK_GROUPS=[['Guest Requests',['G|C']],['Consultations',['G|K']],['Profiles & Home Care',['G|P','G|H']],['To Do',['T|C']],['Send to a Guest',['S|C']],['Desk Guide',['D|C','C|C','B|C']]];
-const DESK_LABEL={'H|C':'Home','G|C':'Guest Requests','G|K':'Consultations','G|P':'Profiles','G|H':'Home Care','T|C':'To Do','S|C':'Send a Link or Aftercare','D|C':'Desk Guide','C|C':'Cleaning','B|C':'Keep Busy'};
+const DESK_GROUPS=[['Guest Requests',['G|C']],['Consultations',['G|K']],['Profiles & Home Care',['G|P','G|H']],['To Do',['T|C']],['Send to a Guest',['S|C']],['Desk Guide',['D|C','K|C','C|C','B|C']]];
+const DESK_LABEL={'H|C':'Home','G|C':'Guest Requests','G|K':'Consultations','G|P':'Profiles','G|H':'Home Care','T|C':'To Do','S|C':'Send a Link or Aftercare','D|C':'Desk Guide','K|C':'Call Coach','C|C':'Cleaning','B|C':'Keep Busy'};
 let HOME_OPEN='';
 function deskGo(k){const [a,t]=k.split('|');area=a;if(a==='G')tab=t;store.set('desk-tab',tab);HOME_OPEN='';render();scrollTo(0,0);if(window.TopNav)TopNav.check()}
 function deskCount(k){const n=id=>Number(($('#'+id)||{}).textContent)||0;return {'G|C':n('nC'),'G|K':n('nK'),'G|P':n('nP'),'G|H':n('nH'),'T|C':todoCount()}[k]||0}
@@ -404,13 +406,22 @@ function render(){
   ['.runbar','#alerts'].forEach(q=>{const el=$(q);if(el)el.style.display=home?'':'none'});
   ['#send','#after'].forEach(q=>{const el=$(q);if(el){el.style.display=send?'':'none';if(send){el.open=true;el.dataset.page='1'}else delete el.dataset.page}});
   $('#body').style.display=home||send?'none':'';
-  const body=g?guests():home||send?'':area==='T'?todoView():area==='D'?guideView():area==='C'?cleanView():busyView();
+  const body=g?guests():home||send?'':area==='T'?todoView():area==='D'?guideView():area==='K'?'<div id="ccDesk"></div>':area==='C'?cleanView():busyView();
   if(!g)guests();
   todoCount();
   if(home)deskHome();
   const f=document.activeElement; if(f&&f.classList&&f.classList.contains('tdaddr')&&$('#body').contains(f)) return;   // don't wipe an address being typed
   $('#body').innerHTML=body;
+  if(area==='K')deskCoach();
 }
+/* Call Coach (Coach.gs on the bridal app): front desk calls graded from Granola, read with the desk key */
+const COACH_API='https://script.google.com/macros/s/AKfycbze_BgM8UcSG68HIo2sxBvomk4MKsuWkyT3JltEXBWLTQCb4ymJSYaG8OV8Msv2beX2/exec';
+let ccDesk=null,ccAt=0,ccBusy=false;
+function deskCoach(){const box=$('#ccDesk');if(!box||!window.CallCoach)return;
+  const draw=()=>{const b=$('#ccDesk');if(!b)return;if(ccDesk)CallCoach.render(b,ccDesk,{people:[],wonLabel:'Booked',empty:'No graded calls yet. Record desk calls in Granola on the desk phone and save them to the Front Desk Calls folder; they show up here the next morning.'});else b.innerHTML='<div class="cc"><h1 class="cc-h">Call Coach</h1><p class="cc-sub">'+(ccBusy?'Loading…':'Couldn’t load the calls. Check the Wi-Fi and open this page again.')+'</p></div>'};
+  if(ccBusy||Date.now()-ccAt<120000){draw();return}ccBusy=true;draw();
+  fetch(COACH_API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'coachDesk',deskKey:KEY||''}),redirect:'follow'})
+    .then(r=>r.json()).then(j=>{if(j.ok){ccDesk=j;ccAt=Date.now()}}).catch(()=>{}).then(()=>{ccBusy=false;draw()})}
 
 async function loadGuide(){
   if(GUIDE||!GKEY)return;
