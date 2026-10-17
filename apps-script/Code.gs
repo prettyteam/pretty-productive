@@ -66,7 +66,9 @@ function doGet(e) {
   if (p.admin) return adminGet_(p);
   if (p.decide) return decide_(p);
   if (p.key !== DESK_KEY) return json_({ ok: false, error: 'key' });
-  return json_({ ok: true, now: Date.now(), concierge: rows_(TABS.concierge, 2), consult: rows_(TABS.consult, 60), profiles: rows_(TABS.profile, 60), todo: todoRows_(), regimen: rows_(TABS.regimen, 14) });
+  if (p.rxall) return json_({ ok: true, rxall: rxDeskList_(0) });          // every saved RX card, for the desk's filing
+  if (p.rxcard) return json_(rxDeskCard_(p.rxcard));
+  return json_({ ok: true, now: Date.now(), concierge: rows_(TABS.concierge, 2), consult: rows_(TABS.consult, 60), profiles: rows_(TABS.profile, 60), todo: todoRows_(), regimen: rows_(TABS.regimen, 14), rx: rxDeskList_(21) });
 }
 
 function doPost(e) {
@@ -76,6 +78,8 @@ function doPost(e) {
     const d = JSON.parse(e.postData.contents || '{}');
     if (['clock', 'timeoff', 'cover', 'take', 'profile', 'sign', 'stock', 'model', 'regimen'].indexOf(d.type) >= 0) return teamPost_(d);
     if (['rxpin', 'rxlogin', 'rxsync'].indexOf(d.type) >= 0) return rxPost_(d);
+    if (d.type === 'rxdesk') return rxDeskSet_(d);
+    if (d.type === 'rxopen') return rxOpened_(d);
     if (d.website) return json_({ ok: true });                       // spam trap
     const now = new Date();
     if (d.type === 'status') return setStatus_(d);
@@ -254,7 +258,7 @@ const TT = {
   stock: { name: 'Stock Counts', headers: ['Updated', 'Name', 'App ID', 'Item ID', 'Item', 'On hand'] },
   models: { name: 'Model Log', headers: ['Logged', 'Name', 'App ID', 'Skill ID', 'Skill', 'Model date'] },
   rxme:  { name: 'RX Artists', headers: ['Updated', 'Name', 'App ID', 'iPad PIN (scrambled)', 'Starred products', 'Wrong tries', 'Locked until'] },
-  rxcard: { name: 'RX Saved Cards', headers: ['Saved', 'Name', 'App ID', 'Card ID', 'Guest', 'Card'] }
+  rxcard: { name: 'RX Saved Cards', headers: ['Saved', 'Name', 'App ID', 'Card ID', 'Guest', 'Card', 'Desk', 'Desk at', 'Opened at'] }
 };
 const STOCK_EDITORS = ['alexandra', 'rose', 'carolyn'];   // who can change stock counts in the app (everyone else only sees them)
 
@@ -408,6 +412,49 @@ function rxMeSet_(slug, name, o) {
 }
 const rxPinHash_ = (slug, pin) => sign_('pin:' + slug + ':' + pin);
 const rxTok_ = slug => sign_('rx:' + slug + ':' + day_(new Date()));   // the iPad's key for her, good until midnight
+/* ---- RX cards on the Front Desk (Alexandra, Oct 17 2026): the artist taps Save & Send To Desk, the guest scans the
+   QR at the station, and if she doesn't open it the desk texts her the link. Every saved card is filed for the desk. */
+function rxDeskHead_(sh) {
+  if (sh.getRange(1, 7).getValue() !== 'Desk') sh.getRange(1, 7, 1, 3).setValues([['Desk', 'Desk at', 'Opened at']]).setFontWeight('bold').setBackground('#121212').setFontColor('#f8f6f0');
+}
+function rxDeskList_(days) {
+  const cut = days ? Date.now() - days * 864e5 : 0, out = [], ms = v => v instanceof Date ? v.getTime() : (Number(v) || 0);
+  tvals_(TT.rxcard).forEach((r, i) => {
+    const at = ms(r[0]); if (!r[3] || at < cut) return;
+    const desk = String(r[6] || ''); if (days && !desk) return;   // the to-send list only shows cards sent to the desk
+    let c = {}; try { c = JSON.parse(String(r[5])); } catch (e) {}
+    const m = c.draft && c.draft.m || {};
+    out.push({ row: i + 2, id: String(r[3]), at: at, artist: String(r[1]), guest: String(r[4] || c.guest || ''), kind: c.kind === 'skin' ? 'Skin' : 'Hair',
+      day: c.date || '', budget: c.budget || null, totals: c.totals || [], next: m.when || '', desk: desk, deskAt: ms(r[7]), openedAt: ms(r[8]) });
+  });
+  return out.reverse().slice(0, days ? 100 : 1500);
+}
+function rxDeskCard_(row) {
+  const sh = ttab_(TT.rxcard), n = Number(row);
+  if (!(n >= 2 && n <= sh.getLastRow())) return { ok: false };
+  try { const c = JSON.parse(String(sh.getRange(n, 6).getValue())); return { ok: true, link: c.link || '' }; } catch (e) { return { ok: false }; }
+}
+function rxDeskSet_(d) {
+  if (d.key !== DESK_KEY) return json_({ ok: false, error: 'key' });
+  const sh = ttab_(TT.rxcard), n = Number(d.row);
+  if (!(n >= 2 && n <= sh.getLastRow()) || String(sh.getRange(n, 4).getValue()) !== String(d.id || '')) return json_({ ok: false });
+  if (['New', 'Sent'].indexOf(d.status) < 0) return json_({ ok: false });
+  rxDeskHead_(sh); sh.getRange(n, 7, 1, 2).setValues([[d.status, new Date()]]);
+  return json_({ ok: true });
+}
+/** The guest's card page says it was opened (she scanned the QR or tapped the text), so the desk doesn't need to send it. */
+function rxOpened_(d) {
+  const slug = String(d.s || ''), id = String(d.i || '');
+  if (!slug || !id) return json_({ ok: false });
+  const sh = ttab_(TT.rxcard), vals = tvals_(TT.rxcard);
+  const i = vals.findIndex(r => String(r[2]) === slug && String(r[3]) === id);
+  if (i < 0) return json_({ ok: false });
+  rxDeskHead_(sh);
+  if (!vals[i][8]) sh.getRange(i + 2, 9).setValue(new Date());
+  if (String(vals[i][6] || '') === 'New') sh.getRange(i + 2, 7, 1, 2).setValues([['Opened', new Date()]]);
+  return json_({ ok: true });
+}
+
 function rxCards_(slug) {
   return tvals_(TT.rxcard).filter(r => String(r[2]) === slug && r[3] !== '').reverse()
     .map(r => { try { return JSON.parse(String(r[5])); } catch (e) { return null; } }).filter(Boolean).slice(0, RX_MAX_CARDS);
@@ -450,7 +497,10 @@ function rxPost_(d) {
       if (!id || body.length > 45000) return;
       const i = vals.findIndex(r => String(r[2]) === me.slug && String(r[3]) === id);
       const row = [now, me.name, me.slug, id, clean_(c.guest, 60), body];
-      if (i >= 0) sh.getRange(i + 2, 1, 1, row.length).setValues([row]); else { sh.appendRow(row); vals.push(row); }
+      let at = i + 2;
+      if (i >= 0) sh.getRange(at, 1, 1, row.length).setValues([row]); else { sh.appendRow(row); at = sh.getLastRow(); vals.push(row.concat(['', '', ''])); }
+      // "Save & Send To Desk": the card waits on the Front Desk's RX Cards list (once there, saving again keeps its status)
+      if (c.desk && !String((vals[at - 2] || [])[6] || '')) { rxDeskHead_(sh); sh.getRange(at, 7, 1, 2).setValues([['New', now]]); }
     });
   }
   return json_({ ok: true, favs: rxMe_(me.slug).favs, cards: rxCards_(me.slug) });

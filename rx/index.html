@@ -86,6 +86,9 @@ html,body{background:#f8f6f0}
     const back=el('button',{class:'btn',type:'button',style:'max-width:260px;margin:22px auto 0'},'Go back');
     back.onclick=()=>{if(history.length>1)history.back();else location.href='https://taffetadesign.com'};
     app.append(el('div',{class:'bad'},el('h1',{},'This card didn’t open'),el('p',{},'Ask your Taffeta artist to show the QR again.'),back));return}
+  /* tell the front desk she opened her card, so they don't need to text it (not when the artist or desk previews it) */
+  if(c.s&&c.i&&!/[?&]p=1/.test(location.search)){try{if(!localStorage.getItem('rx-open:'+c.i)){localStorage.setItem('rx-open:'+c.i,'1');
+    fetch('https://script.google.com/macros/s/AKfycbx9ZpBSWFRlPCrRrLzJWd_AgjuoQnqKUdSDZWDu-7CkaknkcJxic_bo_DWsIzOinG90eg/exec',{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({type:'rxopen',s:c.s,i:c.i})}).catch(()=>{})}}catch(e){}}
   const vip='vp' in c?c.vp===1:c.v===1;
   const skin=c.k==='skin', date=new Date((c.d||'')+'T12:00');
   document.title=(c.g?c.g+'’s ':'Your ')+'RX · Taffeta Salon & Spa';
