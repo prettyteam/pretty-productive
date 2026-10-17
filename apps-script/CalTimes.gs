@@ -30,7 +30,10 @@ function calInfo_() {
         if (!d.date || d.date < today || !byDate[d.date]) return;
         const words = String(d.bride || '').toLowerCase().replace(/[^a-z\s]/g, ' ').split(/\s+/).filter(x => x.length >= 3);
         const last = words[words.length - 1];   // last name first, so two brides with the same first name on one day don't mix
-        const hitEv = (last && byDate[d.date].find(e => e.title.indexOf(last) >= 0)) || byDate[d.date].find(e => words.some(x => e.title.indexOf(x) >= 0));
+        /* a one-letter typo or swapped letters ("Hugdins" / "Hudgins", "Isabella" / "Isabelle") still links (Oct 16 2026) */
+        const near = (x, t) => t.replace(/[^a-z\s]/g, ' ').split(/\s+/).some(y => y.length >= 4 && x.length >= 4 && typoDist_(x, y) <= 1);
+        const hitEv = (last && byDate[d.date].find(e => e.title.indexOf(last) >= 0)) || byDate[d.date].find(e => words.some(x => e.title.indexOf(x) >= 0))
+          || (last && byDate[d.date].find(e => near(last, e.title))) || byDate[d.date].find(e => words.some(x => near(x, e.title)));
         if (!hitEv) return;
         const ev = hitEv.ev;
         const team = ev.getGuestList().map(g => {
@@ -86,4 +89,19 @@ function checkCalTimes() {
   Object.keys(ct).slice(0, 8).forEach(id => { const w = ws.find(x => x.id === id) || {}; Logger.log(w.date + ' ' + w.bride + ': ' + ct[id]); });
   const ci = calInfo_(), id = Object.keys(ci)[0];
   if (id) Logger.log('example: ' + JSON.stringify({ time: ci[id].time, note: ci[id].note, team: ci[id].team }) + ' | artist view: ' + JSON.stringify(calInfoForArtist_(ci[id]).team));
+}
+
+
+/** Edit distance with swapped neighbors counted as one change ("hugdins" vs "hudgins" = 1). */
+function typoDist_(a, b) {
+  if (Math.abs(a.length - b.length) > 1) return 9;
+  const d = [];
+  for (let i = 0; i <= a.length; i++) { d[i] = [i]; }
+  for (let j = 0; j <= b.length; j++) d[0][j] = j;
+  for (let i = 1; i <= a.length; i++) for (let j = 1; j <= b.length; j++) {
+    const c = a[i - 1] === b[j - 1] ? 0 : 1;
+    d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + c);
+    if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1]) d[i][j] = Math.min(d[i][j], d[i - 2][j - 2] + 1);
+  }
+  return d[a.length][b.length];
 }
