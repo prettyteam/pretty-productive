@@ -21,7 +21,7 @@ from PIL import Image, ImageOps
 SRC_HTML, SRC_DIR, ALB_DIR, DB_DIR, EDITS, CACHE_DIR = sys.argv[1:7]
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = os.path.join(REPO, 'mkt')
-CODE = os.environ['MKT_CODE'].strip().lower()
+CODE = re.sub(r'\s+', '', os.environ['MKT_CODE'])   # capitals count, spaces don't
 ITER = 310000
 META = os.path.join(OUT, 'c', 'meta.json')
 SALT = json.load(open(META))['salt'] if os.path.exists(META) else os.urandom(16).hex()
