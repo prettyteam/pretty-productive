@@ -12,6 +12,8 @@
 <script src="config.js"></script>
 <script src="../g/topnav.js?v=2"></script>
 <script src="../g/jokes.js?v=2"></script>
+<script src="../g/coach.js?v=1"></script>
+<link rel="stylesheet" href="../g/coach.css?v=1">
 <script src="../g/qr.js?v=1"></script>
 <style>:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;padding:0}img{max-width:100%}</style>
 <script src="/refresh.js?v=3" defer></script>
@@ -233,6 +235,7 @@ input,select,textarea{background:#fff;border-radius:0}
       <button id="tab-pipe" role="tab" aria-selected="false" hidden>Pipeline</button>
       <button id="tab-todo" role="tab" aria-selected="false" hidden>To do</button>
       <button id="tab-tpl" role="tab" aria-selected="false" hidden>Texts</button>
+      <button id="tab-coach" role="tab" aria-selected="false" hidden>Call Coach</button>
       <button id="tab-build" role="tab" aria-selected="false" hidden>Timeline</button>
       <button id="tab-team" role="tab" aria-selected="false" hidden>Schedule</button>
       <button id="tab-cal" role="tab" aria-selected="false" hidden>Calendar</button>
@@ -649,6 +652,11 @@ input,select,textarea{background:#fff;border-radius:0}
     <div id="tp-list" class="tp-list"></div>
   </section>
 
+  <section id="view-coach" hidden>
+    <div id="cc-box"><div class="cc"><p class="cc-sub">Loading…</p></div></div>
+    <div style="text-align:center"><button class="btn ghost" id="cc-refresh">Refresh</button></div>
+  </section>
+
   <section id="view-pipe" hidden>
     <div class="toolbar">
       <div class="status" id="pp-note">Loading…</div>
@@ -1015,9 +1023,9 @@ const fileName=s=>((s.bride||"wedding").replace(/[^a-z0-9]+/gi,"-")+"-timeline"+
 $("#saveImg").onclick=()=>saveImage($("#sheet"),fileName(S));
 
 /* ---------- homepage (Alexandra, Oct 17 2026) ---------- */
-const PAGE_LABEL={booked:"Booked Weddings",build:"Timeline",team:"Schedule",cal:"Calendar",pipe:"Pipeline",todo:"To Do",tpl:"Texts",jobs:"Jobs",admin:"Team Records",pay:"Payout Form",prev:"Bridal Preview",addon:"Add-On Services",info:"My Info"};
+const PAGE_LABEL={booked:"Booked Weddings",build:"Timeline",team:"Schedule",cal:"Calendar",pipe:"Pipeline",coach:"Call Coach",todo:"To Do",tpl:"Texts",jobs:"Jobs",admin:"Team Records",pay:"Payout Form",prev:"Bridal Preview",addon:"Add-On Services",info:"My Info"};
 function homeGroups(){
-  if(ROLE==="office")return [["Weddings",["booked","build","team","cal"]],["Sales",["pipe","todo","tpl"]],["Bridal Team",["jobs","admin","pay"]],["Preview & Add-Ons",["prev","addon"]]];   // always an even number of squares (Alexandra, Oct 17 2026)
+  if(ROLE==="office")return [["Weddings",["booked","build","team","cal"]],["Sales",["pipe","coach","todo","tpl"]],["Bridal Team",["jobs","admin","pay"]],["Preview & Add-Ons",["prev","addon"]]];   // always an even number of squares (Alexandra, Oct 17 2026)
   PAGE_LABEL.team="My Weddings";PAGE_LABEL.jobs="Job Offers";
   return [["My Weddings",["team"]],["Job Offers",["jobs"]],["Add-On Services",["addon"]],["Bridal Preview",["prev"]],["Get Paid",["pay"]],["My Profile",["info"]]];
 }
@@ -1093,7 +1101,7 @@ function renderAddon(){
 }
 
 /* ---------- tabs ---------- */
-const TABS=["home","addon","build","team","cal","jobs","prev","booked","pipe","todo","tpl","info","pay","admin"];
+const TABS=["home","addon","build","team","cal","jobs","prev","booked","pipe","coach","todo","tpl","info","pay","admin"];
 function showTab(t){if(!TABS.includes(t))t="home";document.body.classList.toggle("tw-home",t==="home");if(t==="home")renderHome();if(t==="addon")renderAddon();TABS.forEach(k=>{$("#tab-"+k).setAttribute("aria-selected",k===t);$("#view-"+k).hidden=k!==t});$("#pageTitle").textContent=$("#tab-"+t).textContent;try{localStorage.setItem("tt-tab",t)}catch(e){}}
 TABS.forEach(k=>$("#tab-"+k).onclick=()=>showTab(k));
 
@@ -1965,6 +1973,15 @@ function renderPipeline(j){
   mt.innerHTML=m.length?'<tr><th>Bride</th><th>Wedding</th><th>Amount</th><th>How</th><th>Paid on</th><th>In HoneyBook</th></tr>'+m.map(x=>'<tr><td><b>'+esc(x.bride)+'</b></td><td>'+esc(shortDate(x.date)||"–")+'</td><td>$'+esc(x.amount)+'</td><td>'+esc(x.method)+'</td><td>'+esc(shortDate(x.paidOn))+'</td><td>'+(x.inHoneyBook?"Done "+esc(shortDate(x.inHoneyBook)||x.inHoneyBook):"Waiting")+'</td></tr>').join(""):'<tr><td><div class="empty-state">Nothing marked paid in the app yet.</div></td></tr>';
 }
 $("#pp-refresh").onclick=()=>{ppOpen=null;loadPipeline()};
+/* Call Coach (Coach.gs): sales calls graded from Granola, for Alexandra and Dom */
+let ccData=null;
+async function loadCoach(){
+  const box=$("#cc-box");if(!window.CallCoach)return;
+  if(!ccData)box.innerHTML='<div class="cc"><h1 class="cc-h">Call Coach</h1><p class="cc-sub">Loading…</p></div>';
+  try{ccData=await api("coach",{line:"sales"});CallCoach.render(box,ccData,{people:["Alexandra","Dom"]})}
+  catch(e){box.innerHTML='<div class="cc"><h1 class="cc-h">Call Coach</h1><p class="cc-sub">Couldn\'t load your calls. Try Refresh.</p></div>'}
+}
+$("#cc-refresh").onclick=()=>loadCoach();
 
 /* ---------- collapsible cards ---------- */
 document.querySelectorAll(".card").forEach((card,i)=>{
@@ -2016,7 +2033,7 @@ async function start(){
   const j=await api("load");
   ROLE=j.role;canWrite=ROLE==="office";
   $("#view-signin").hidden=true;$("#signOut").hidden=false;
-  const tabs=ROLE==="office"?["home","booked","pipe","todo","tpl","build","team","cal","jobs","prev","admin","pay","addon"]:["home","team","jobs","addon","prev","info","pay"];
+  const tabs=ROLE==="office"?["home","booked","pipe","coach","todo","tpl","build","team","cal","jobs","prev","admin","pay","addon"]:["home","team","jobs","addon","prev","info","pay"];
   TABS.forEach(k=>$("#tab-"+k).hidden=!tabs.includes(k));
   $("#tab-team").textContent=ROLE==="office"?"Schedule":"My weddings";
   $("#tab-jobs").textContent=ROLE==="office"?"Jobs":"Job offers";
@@ -2112,13 +2129,14 @@ async function jbCheckNew(){
   }catch(e){}
 }
 showTab=function(t){
-  const allowed=ROLE==="office"?["home","booked","pipe","todo","tpl","build","team","cal","jobs","prev","admin","pay","addon"]:["home","team","jobs","addon","prev","info","pay"];
+  const allowed=ROLE==="office"?["home","booked","pipe","coach","todo","tpl","build","team","cal","jobs","prev","admin","pay","addon"]:["home","team","jobs","addon","prev","info","pay"];
   if(!allowed.includes(t))t="home";
   document.body.classList.toggle("tw-home",t==="home");if(t==="home")renderHome();if(t==="addon")renderAddon();
   TABS.forEach(k=>{$("#tab-"+k).setAttribute("aria-selected",k===t);$("#view-"+k).hidden=k!==t});
   $("#pageTitle").textContent=$("#tab-"+t).textContent;
   if(t==="prev")loadPreviews();
   if(t==="pipe")loadPipeline();
+  if(t==="coach")loadCoach();
   if(t==="todo")loadTodos();
   if(t==="tpl")loadTemplates();
   if(t==="jobs")loadJobs();

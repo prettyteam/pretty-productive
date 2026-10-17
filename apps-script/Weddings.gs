@@ -103,6 +103,7 @@ function doPost(e) {
   try { d = JSON.parse(e.postData.contents); } catch (err) { return json_({ ok: false, error: 'bad_request' }); }
   ensureSetup_();
   if (d.action === 'mkt') return json_(mkt_(d));   // Marketing Proofs (Marketing.gs), passcode-checked there
+  if (/^coach(Save|Seen|Desk)$/.test(d.action || '')) return json_(coachPost_(d));   // Call Coach (Coach.gs), key-checked there
   const who = who_(d);
   if (!who) return json_({ ok: false, error: 'signin' });
   const lock = LockService.getScriptLock();
@@ -133,6 +134,7 @@ function doPost(e) {
       case 'sendInvites': return json_(sendInvites_(d.weddingId, d.events || []));
       case 'checkInvites': return json_(checkInvites_(d.weddingId));
       case 'pipeline': return json_(pipeline_());
+      case 'coach': return json_(coach_(d.line));
       case 'markPaid': return json_(markPaid_(d.payment));
       case 'todos': return json_(todos_());
       case 'addTodo': return json_(addTodo_(d.todo));
