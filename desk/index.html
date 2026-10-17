@@ -221,6 +221,7 @@ body.dk-home .head{display:none}
   <button role="tab" id="tC" class="on">Concierge<span class="n" id="nC"></span></button>
   <button role="tab" id="tK">Consultations<span class="n" id="nK"></span></button>
   <button role="tab" id="tP">Profiles<span class="n" id="nP"></span></button>
+  <button role="tab" id="tR">RX cards<span class="n" id="nR"></span></button>
   <button role="tab" id="tH">Home care<span class="n" id="nH"></span></button>
 </div>
 <div id="body" class="list"></div>
@@ -243,7 +244,7 @@ const hk=(location.hash.match(/k=([\w-]+)/)||[])[1];
 const gkh=(location.hash.match(/g=([\w-]+)/)||[])[1];
 if(hk)store.set('desk-key',hk); if(gkh)store.set('desk-gkey',gkh);
 const KEY=hk||store.get('desk-key'), GKEY=gkh||store.get('desk-gkey');
-let tab=store.get('desk-tab')||'C', area='H', list=store.get('desk-list')||'opening', data={concierge:[],consult:[],profiles:[],todo:[],regimen:[]}, pending={}, lastOk=0, GUIDE=null, shown={};
+let tab=store.get('desk-tab')||'C', area='H', list=store.get('desk-list')||'opening', data={concierge:[],consult:[],profiles:[],todo:[],regimen:[],rx:[]}, pending={}, lastOk=0, GUIDE=null, shown={};
 const today=()=>new Date().toLocaleDateString('en-CA');
 const ticks=k=>{try{return JSON.parse(store.get('desk-chk:'+k+':'+today())||'[]')}catch(e){return[]}};
 const setTicks=(k,a)=>store.set('desk-chk:'+k+':'+today(),JSON.stringify(a));
@@ -291,6 +292,35 @@ function profile(r){
   <div class="kv">${rows.map(x=>`<span>${x[0]}</span><span>${x[1]}</span>`).join('')}</div>
   ${s==='Updated'?`<div class="act"><button class="on" disabled style="cursor:default">✓ Updated in Paired Plus</button></div>`:`<div class="act"><button data-t="profile" data-r="${r.row}" data-a="${r.at}" data-s="Updated">Updated in Paired Plus</button></div>`}</div>`}
 
+/* RX cards (Alexandra, Oct 17 2026): the artist taps Save & Send To Desk. The guest scans the QR at the station; if
+   she doesn't open her card, the desk texts it. Every saved card is filed below, searchable by name. */
+const rxSt=r=>rxPend[r.row]||r.desk||'';
+let rxPend={}, rxAll=null, rxQ='', rxBusy=false, RX_TYPING=0;
+const money=n=>'$'+Math.round(Number(n)||0).toLocaleString('en-US');
+function rxCard(r,full){
+  const s=rxSt(r), d=r.day?new Date(r.day+'T12:00').toLocaleDateString('en-US',{month:'short',day:'numeric'}):'';
+  const tag=s==='Opened'?'She opened it':s==='Sent'?'Texted to her':s==='New'?'Waiting':'';
+  return `<div class="${s==='New'?'req':'req done'}"><div class="row"><span class="who">${esc(r.guest||'Guest')}</span><span class="when">${esc(full?d:ago(r.at))}</span></div>
+  <div class="badges"><span class="badge${r.kind==='Skin'?' s':''}">${esc(r.kind)}</span>${tag?`<span class="badge">${tag}</span>`:''}</div>
+  <div class="kv"><span>From</span><span>${esc(r.artist)}</span>${(r.totals||[]).length?`<span>Options</span><span>${(r.totals||[]).map(money).join(' or ')}</span>`:''}${r.budget?`<span>Her budget</span><span>${money(r.budget)}</span>`:''}${r.next?`<span>Next visit</span><span>in about ${esc(r.next)}</span>`:''}</div>
+  <div class="act"><button data-rxs="${r.row}" data-id="${esc(r.id)}" data-g="${esc(r.guest)}">Text card</button><button data-rxv="${r.row}">Open</button>${s==='New'?`<button data-rxm="${r.row}" data-id="${esc(r.id)}">Mark sent</button>`:''}</div>
+  <p class="status rxst" style="margin:0"></p></div>`}
+function rxView(){
+  const L=data.rx||[], wait=L.filter(r=>rxSt(r)==='New'), done=L.filter(r=>rxSt(r)!=='New'&&Date.now()-(Number(r.deskAt)||Number(r.at))<2*864e5);
+  let h=`<p class="sub" style="margin:0">Waiting to be texted</p>`+(wait.length?wait.map(r=>rxCard(r)).join(''):'<p class="empty">No RX cards waiting. Cards the guest opens with the QR don’t need texting.</p>');
+  if(done.length)h+=`<details class="more"><summary>Opened or texted (${done.length}) +</summary><div class="list">${done.map(r=>rxCard(r)).join('')}</div></details>`;
+  const q=rxQ.trim().toLowerCase(), hits=rxAll?rxAll.filter(r=>!q||String(r.guest).toLowerCase().includes(q)||String(r.artist).toLowerCase().includes(q)):[];
+  h+=`<p class="sub" style="margin:18px 0 0">All saved RX cards</p><input type="search" class="rxq" placeholder="Search by guest or artist" value="${esc(rxQ)}" style="padding:12px;font:inherit;border:1px solid var(--line,#ddd);border-radius:10px;width:100%;box-sizing:border-box">`;
+  if(!rxAll){h+=`<p class="empty">${rxBusy?'Loading…':'Couldn’t load the saved cards. Check the Wi-Fi.'}</p>`;if(!rxBusy)rxLoadAll()}
+  else h+=hits.length?hits.slice(0,60).map(r=>rxCard(r,1)).join('')+(hits.length>60?`<p class="empty">${hits.length-60} more. Search by name to find one.</p>`:''):`<p class="empty">${q?'No saved card for “'+esc(rxQ)+'”.':'No saved cards yet.'}</p>`;
+  return h}
+function rxLoadAll(){if(DEMO){rxAll=data.rx||[];return}if(rxBusy||!KEY)return;rxBusy=true;
+  fetch(window.TAFFETA_ENDPOINT+'?key='+encodeURIComponent(KEY)+'&rxall=1&t='+Date.now(),{cache:'no-store'}).then(r=>r.json()).then(j=>{if(j.ok)rxAll=j.rxall||[]}).catch(()=>{}).then(()=>{rxBusy=false;if(area==='G'&&tab==='R')render()})}
+async function rxLinkOf(row){const r=await fetch(window.TAFFETA_ENDPOINT+'?key='+encodeURIComponent(KEY)+'&rxcard='+row+'&t='+Date.now(),{cache:'no-store'});const j=await r.json();if(!j.ok||!j.link)throw new Error('no');return j.link}
+function rxMark(row,id,status){rxPend[row]=status;render();
+  if(!DEMO&&window.TAFFETA_ENDPOINT&&KEY)fetch(window.TAFFETA_ENDPOINT,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body:JSON.stringify({type:'rxdesk',key:KEY,row:Number(row),id,status})}).then(()=>setTimeout(()=>{load();rxAll=null},2500)).catch(()=>{})}
+
 /* Home care: at-home regimens the artists saved in their app. The desk texts each guest her PDF, then taps Mark sent. */
 const rgData=r=>{try{return JSON.parse(r.data||'{}')}catch(e){return null}};
 function regimenCard(r,i){
@@ -307,9 +337,11 @@ function guests(){
   const kOpen=data.consult.filter(r=>st(r)!=='Booked'), kDone=data.consult.filter(r=>st(r)==='Booked');
   const pOpen=data.profiles.filter(r=>st(r)!=='Updated'), pDone=data.profiles.filter(r=>st(r)==='Updated'&&(pending[r.row+':'+r.at]||Date.now()-(Number(r.updatedAt)||Number(r.at))<2*864e5));   /* updated profiles drop off after 2 days */
   const rg=data.regimen||[], hOpen=rg.filter(r=>st(r)!=='Sent'), hDone=rg.filter(r=>st(r)==='Sent'&&(pending[r.row+':'+r.at]||Date.now()-(Number(r.sentAt)||Number(r.at))<2*864e5));
+  const rxw=(data.rx||[]).filter(r=>rxSt(r)==='New'), nR=rxw.length;
   const nC=cOpen.length, nK=kOpen.filter(r=>st(r)==='New').length, nP=pOpen.filter(r=>st(r)==='New').length, nH=hOpen.length;
-  $('#nC').textContent=nC||'';$('#nK').textContent=nK||'';$('#nP').textContent=nP||'';$('#nH').textContent=nH||'';$('#nG').textContent=(nC+nK+nP+nH)||'';
-  ['C','K','P','H'].forEach(k=>$('#t'+k).classList.toggle('on',tab===k));
+  $('#nC').textContent=nC||'';$('#nK').textContent=nK||'';$('#nP').textContent=nP||'';$('#nR').textContent=nR||'';$('#nH').textContent=nH||'';$('#nG').textContent=(nC+nK+nP+nR+nH)||'';
+  ['C','K','P','R','H'].forEach(k=>$('#t'+k).classList.toggle('on',tab===k));
+  if(tab==='R') return rxView();
   if(tab==='H'){
     let h=hOpen.length?hOpen.map(r=>regimenCard(r,rg.indexOf(r))).join(''):'<p class="empty">No home care PDFs waiting. When an artist saves one, it shows up here.</p>';
     if(hDone.length)h+=`<details class="more"><summary>Sent (${hDone.length}) +</summary><div class="list">${hDone.map(r=>regimenCard(r,rg.indexOf(r))).join('')}</div></details>`;return h}
@@ -366,11 +398,11 @@ function guideView(){
 
 const DESK_PEOPLE=['Adriana','Alexandra','Amanda','Ashley','Carolyn','Flower'];   // Rose is listed as Flower   // who works the desk (Alexandra, Oct 17 2026)
 const NAME_PICS=['adriana','alexandra','amanda','ashley','carolyn'];
-const DESK_GROUPS=[['Guest Requests',['G|C']],['Consultations',['G|K']],['Profiles & Home Care',['G|P','G|H']],['To Do',['T|C']],['Send to a Guest',['S|C']],['Desk Guide',['D|C','K|C','C|C','B|C']]];
-const DESK_LABEL={'H|C':'Home','G|C':'Guest Requests','G|K':'Consultations','G|P':'Profiles','G|H':'Home Care','T|C':'To Do','S|C':'Send a Link or Aftercare','D|C':'Desk Guide','K|C':'Call Coach','C|C':'Cleaning','B|C':'Keep Busy'};
+const DESK_GROUPS=[['Guest Requests',['G|C']],['Consultations',['G|K']],['Profiles & Home Care',['G|P','G|R','G|H']],['To Do',['T|C']],['Send to a Guest',['S|C']],['Desk Guide',['D|C','K|C','C|C','B|C']]];
+const DESK_LABEL={'H|C':'Home','G|C':'Guest Requests','G|K':'Consultations','G|P':'Profiles','G|R':'RX Cards','G|H':'Home Care','T|C':'To Do','S|C':'Send a Link or Aftercare','D|C':'Desk Guide','K|C':'Call Coach','C|C':'Cleaning','B|C':'Keep Busy'};
 let HOME_OPEN='';
 function deskGo(k){const [a,t]=k.split('|');area=a;if(a==='G')tab=t;store.set('desk-tab',tab);HOME_OPEN='';render();scrollTo(0,0);if(window.TopNav)TopNav.check()}
-function deskCount(k){const n=id=>Number(($('#'+id)||{}).textContent)||0;return {'G|C':n('nC'),'G|K':n('nK'),'G|P':n('nP'),'G|H':n('nH'),'T|C':todoCount()}[k]||0}
+function deskCount(k){const n=id=>Number(($('#'+id)||{}).textContent)||0;return {'G|C':n('nC'),'G|K':n('nK'),'G|P':n('nP'),'G|R':n('nR'),'G|H':n('nH'),'T|C':todoCount()}[k]||0}
 function deskHome(){
   const who=store.get('desk-who'), first=who, k=first.toLowerCase(), ph=who?store.get('desk-photo:'+who):'';
   const today=new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
@@ -410,7 +442,7 @@ function render(){
   if(!g)guests();
   todoCount();
   if(home)deskHome();
-  const f=document.activeElement; if(f&&f.classList&&f.classList.contains('tdaddr')&&$('#body').contains(f)) return;   // don't wipe an address being typed
+  const f=document.activeElement; if(f&&f.classList&&(f.classList.contains('tdaddr')||(f.classList.contains('rxq')&&!RX_TYPING))&&$('#body').contains(f)) return;   // don't wipe an address being typed
   $('#body').innerHTML=body;
   if(area==='K')deskCoach();
 }
@@ -442,7 +474,7 @@ async function load(){
     const r=await fetch(window.TAFFETA_ENDPOINT+'?key='+encodeURIComponent(KEY)+'&t='+Date.now(),{cache:'no-store'});
     const j=await r.json();
     if(!j.ok){if(j.error==='key')lockView();return}
-    data={concierge:j.concierge||[],consult:j.consult||[],profiles:j.profiles||[],todo:j.todo||[],regimen:j.regimen||[]};showTodo(Array.isArray(j.todo));lastOk=Date.now();
+    data={concierge:j.concierge||[],consult:j.consult||[],profiles:j.profiles||[],todo:j.todo||[],regimen:j.regimen||[],rx:j.rx||[]};showTodo(Array.isArray(j.todo));lastOk=Date.now();
     for(const k in pending){const [row,at]=k.split(':');const all=[...data.concierge,...data.consult,...data.profiles,...(data.todo||[]),...(data.regimen||[])];const m=all.find(x=>String(x.row)===row&&String(x.at)===at);if(m&&m.status===pending[k])delete pending[k]}
     render();
   }catch(e){}
@@ -451,7 +483,8 @@ async function load(){
 function status(){$('#st').textContent=lastOk?(Date.now()-lastOk>120000?'Can’t reach the Sheet right now. Check the Wi-Fi.':'Updates on its own every 30 seconds'):''}
 function lockView(){$('#body').innerHTML='<div class="lock"><p>This page needs the full Front Desk link (the long one). Open it in Safari first, then add it to the Home Screen from there. Ask Alexandra to resend it if needed.</p></div>';$('#st').textContent=''}
 
-document.addEventListener('input',e=>{if(e.target.classList.contains('tdaddr'))drafts[e.target.dataset.k]=e.target.value});
+document.addEventListener('input',e=>{if(e.target.classList.contains('tdaddr'))drafts[e.target.dataset.k]=e.target.value;
+  if(e.target.classList.contains('rxq')){rxQ=e.target.value;const pos=e.target.selectionStart;RX_TYPING=1;render();RX_TYPING=0;const n=document.querySelector('.rxq');if(n){n.focus();try{n.setSelectionRange(pos,pos)}catch(_){}}}});
 document.addEventListener('click',e=>{
   const sv=e.target.closest('.tdsave');
   if(sv){const k=sv.dataset.td+':'+sv.dataset.a, ta=sv.parentNode.querySelector('.tdaddr'), v=(ta.value||'').trim();
@@ -465,6 +498,19 @@ document.addEventListener('click',e=>{
   if(td){pending[td.dataset.td+':'+td.dataset.a]=td.dataset.s;render();
     if(!DEMO&&window.TAFFETA_ENDPOINT&&KEY)fetch(window.TAFFETA_ENDPOINT,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},
       body:JSON.stringify({type:'status',key:KEY,tab:'todo',row:Number(td.dataset.td),at:Number(td.dataset.a),status:td.dataset.s})}).then(()=>setTimeout(load,2500)).catch(()=>{});
+    return}
+  const xb=e.target.closest('[data-rxs],[data-rxv],[data-rxm]');
+  if(xb){const t=xb.closest('.req').querySelector('.rxst');
+    if(xb.dataset.rxm){rxMark(xb.dataset.rxm,xb.dataset.id,'Sent');return}
+    const row=xb.dataset.rxs||xb.dataset.rxv, w=xb.dataset.rxv?window.open('about:blank','_blank'):null;
+    t.textContent='Getting her card…';
+    rxLinkOf(row).then(link=>{t.textContent='';
+      if(w){w.location=link.replace('/rx/#','/rx/?p=1#');return}
+      const first=String(xb.dataset.g||'').split(' ')[0], text='Hi'+(first?' '+first:'')+'! Here’s your Taffeta RX card from today: your two options and what your next visit looks like.';
+      const done=()=>{if((data.rx||[]).some(r=>String(r.row)===String(row)&&rxSt(r)==='New'))rxMark(row,xb.dataset.id,'Sent')};
+      if(navigator.share)navigator.share({title:'Your Taffeta RX card',text,url:link}).then(done).catch(()=>{});
+      else{location.href='sms:&body='+encodeURIComponent(text+' '+link);t.textContent='Tap Mark sent once it’s texted.'}
+    }).catch(()=>{if(w)w.close();t.textContent='This card couldn’t be opened. Check the Wi-Fi and try again.'});
     return}
   const rb=e.target.closest('[data-rgs],[data-rgv]');
   if(rb){const r=(data.regimen||[])[Number(rb.dataset.rgs!=null?rb.dataset.rgs:rb.dataset.rgv)], d=r&&rgData(r), t=rb.closest('.req').querySelector('.rgst');
@@ -481,6 +527,7 @@ document.addEventListener('click',e=>{
   if(e.target.closest('#tK')){tab='K';store.set('desk-tab',tab);render()}
   if(e.target.closest('#tP')){tab='P';store.set('desk-tab',tab);render()}
   if(e.target.closest('#tH')){tab='H';store.set('desk-tab',tab);render()}
+  if(e.target.closest('#tR')){tab='R';store.set('desk-tab',tab);render()}
   const nb=e.target.closest('.bnav button'); if(nb){area=nb.dataset.area;store.set('desk-area',area);render();scrollTo(0,0);return}
   const sg=e.target.closest('.seg button'); if(sg){list=sg.dataset.l;store.set('desk-list',list);render();return}
   const ck=e.target.closest('.chk'); if(ck){const k=ck.dataset.k,i=Number(ck.dataset.i),d=ticks(k),x=d.indexOf(i);x<0?d.push(i):d.splice(x,1);setTicks(k,d);render();return}
@@ -514,6 +561,8 @@ function demo(){const n=Date.now(),m=60000;return{concierge:[
  {row:3,at:n-12*m,first:'Sophia',last:'Reyes',phone:'(609) 555-0142',email:'sophia@example.com',hair:'Big color change, Extensions',skin:'',story:"Hair: Box dye about a year ago, want a soft lived-in blonde I don't have to touch up every 6 weeks.",sameBudget:'Yes',budget:'300',reach:'Text',photoNow:'#',photoGoal:'#',status:'New'},
  {row:2,at:n-62*m,first:'Lauren',last:'Kim',phone:'(609) 555-0198',email:'',hair:'',skin:'Signature facial, Brows',story:'Skin: Dry patches and redness, using retinol at night. Sensitive to fragrance.',sameBudget:'',budget:'',reach:'Call',photoNow:'',photoGoal:'',status:'New'}],
  todo:[['Sample Guest A','Sep 18'],['Sample Guest B','Sep 1'],['Sample Guest C','Sep 16'],['Sample Guest D','Sep 24']].map((x,i)=>({row:i+2,at:n-90*m,task:'September first-time guests with no address in Paired Plus. Text them the profile form or ask at check-in, add it in Paired Plus, then tap the circle.',guest:x[0],detail:'First visit '+x[1]+' · needs a mailing address',group:'Addresses for thank-you cards',status:i===1?'Done':'Open',address:''})),
+ rx:[{row:4,id:'d1',at:n-3*m,artist:'Alexandra',guest:'Diana',kind:'Hair',day:new Date().toISOString().slice(0,10),budget:300,totals:[265,375],next:'4–6 weeks',desk:'New'},
+  {row:3,id:'d2',at:n-30*m,artist:'Joanna',guest:'Cora',kind:'Hair',day:new Date().toISOString().slice(0,10),budget:250,totals:[240,310],next:'8–10 weeks',desk:'Opened'}],
  regimen:[{row:2,at:n-6*m,artist:'Carolyn',guest:'Jessica Smith',kind:'Skincare',summary:'Lait VIP O2, Lotion P50W, Sérum Biosensible, Crème Hydravits, Masque VIP O2',
    data:JSON.stringify({guest:'Jessica Smith',services:['Facial','Dermaplaning'],type:'Rosacea / sensitive',picks:[{n:'Biologique Recherche Lait VIP O2',how:'Smooth over dry face and neck with fingertips and massage for 1–2 minutes. Remove with a damp cloth or cotton pads.',when:'AM & PM'},{n:'Biologique Recherche Lotion P50W',how:'After cleansing, soak a cotton pad and sweep over face, neck and chest, upward and outward. A light tingle is normal. Do not rinse.',when:'AM & PM'},{n:'Biologique Recherche Masque VIP O2',how:'Apply an even layer to clean skin, avoiding the eyes. Leave on 10–15 minutes, then rinse with lukewarm water.',when:'Once a week'}],notes:['Wear SPF 30+ every morning and reapply every 2 hours outdoors'],own:'',next:'4 weeks',nextDate:'',msg:'Your skin did so well today!'}),status:'New'}],
  profiles:[{row:3,at:n-20*m,first:'Maya',last:'Patel',phone:'(609) 555-0117',email:'maya@example.com',birthday:'March 14',address:'12 Maple Ave, Hammonton, NJ 08037',allergies:'Sensitive to ammonia',notes:'Prefers a quiet visit',changes:'New address and email',texts:'Yes',status:'New'}]}}

@@ -489,7 +489,8 @@ function rxGenerate(R){
 
 /* ---- the card in a link: compact JSON → base64url after # ---- */
 function rxPack(R,me,day){
-  const o={v:1,k:R.kind,g:rxFirst(R.guest),a:rxFirst(me),d:day||new Date().toISOString().slice(0,10),b:R.nob?null:(Number(R.budget)||null),
+  const au=rxAuth();
+  const o={v:1,k:R.kind,g:rxFirst(R.guest),s:au?au.slug:undefined,i:R.id||undefined,   /* s + i let her card tell the desk she opened it */a:rxFirst(me),d:day||new Date().toISOString().slice(0,10),b:R.nob?null:(Number(R.budget)||null),
     w:rxGoalList(R).join(', '),n:rxNowAll(R).filter(x=>!/^Nothing new/.test(x)),
     /* home care shows on her card as one "Maintenance" line, the way Alexandra writes cards by hand,
        so she sees the investment, not a list of products to say no to */
@@ -644,10 +645,10 @@ function rxEditor(R,me){
     h('div',{class:'rxtot'},h('span',{class:'soft'},'Next Visit'),h('b',{},rxMoney(rxTotal(R.m.lines)))),
     h('label',{class:'fld'},'In About',mw),h('label',{class:'fld'},'What It Looks Like',mt),
     h('label',{class:'fld'},'Refresh In',rf));
-  const save=h('button',{type:'button',class:'obtn',onclick:()=>rxStore(R,me)},'Save & Show QR');
+  const save=h('button',{type:'button',class:'obtn',onclick:()=>rxStore(R,me)},'Save & Send To Desk');
   const clear=h('button',{type:'button',class:'tab',onclick:()=>{if(!confirm('Start a new card? This clears the one on screen.'))return;RX=rxBlank(R.kind);rxSave();render();window.scrollTo(0,0)}},'Start A New One');
   const done=h('section',{class:'card2',style:'align-items:center;text-align:center'},save,clear,
-    h('small',{class:'soft'},'She scans the QR with her camera and the card opens on her phone. No texting, no phone number.'));
+    h('small',{class:'soft'},'Her card goes to the front desk and her QR shows here. She scans it with her camera; if she doesn’t, the desk texts it to her.'));
   /* full sizes she should end up with, outside the budget (Alexandra, Oct 16 2026) */
   const hs=(R.rec||[]).some(l=>l.hint==='p50');
   const rec=(R.rec&&R.rec.length)?h('section',{class:'card2'},h('span',{class:'lbl'},hs?'Highly Suggested: Add Her P50':'Full Sizes To Go Home With'),
@@ -659,13 +660,15 @@ function rxEditor(R,me){
 
 async function rxStore(R,me){
   if(!R.guest.trim()){alert('Add her first name first.');return}
-  const link=await rxLink(R,me), list=rxSaved(), id=R.id||String(Date.now());
+  const id=R.id||String(Date.now()); R.id=id;
+  const link=await rxLink(R,me), list=rxSaved();
+  /* Save & Send To Desk (Alexandra, Oct 17 2026): she scans the QR here; if she doesn't open it, the desk texts it */
   const row={id,guest:rxFirst(R.guest),date:new Date().toISOString().slice(0,10),kind:R.kind,budget:R.nob?null:Number(R.budget)||null,
-    totals:R.opts.map(o=>rxTotal(o.lines)),link,draft:JSON.parse(JSON.stringify(R))};
+    totals:R.opts.map(o=>rxTotal(o.lines)),link,desk:true,draft:JSON.parse(JSON.stringify(R))};
   const i=list.findIndex(x=>x.id===id); i<0?list.unshift(row):list.splice(i,1,row);
   store.set(rxSavedKey(),JSON.stringify(list.slice(0,300)));
-  rxSync({cards:[row]});
-  R.id=id; rxSave(); RX_SHOW={link,guest:row.guest}; RX_VIEW='qr'; render(); window.scrollTo(0,0);
+  rxSync({cards:[row]}).then(ok=>{if(ok){row.up=1;const L=rxSaved(),j=L.findIndex(x=>x.id===id);if(j>=0){L[j].up=1;store.set(rxSavedKey(),JSON.stringify(L))}}});
+  rxSave(); RX_SHOW={link,guest:row.guest}; RX_VIEW='qr'; render(); window.scrollTo(0,0);
 }
 
 /* a saved card's QR is rebuilt from its draft, so cards saved before a change (like home care showing as one
@@ -680,7 +683,8 @@ function rxQrView(x){
     h('h2',{},rxFirst(x.guest)+'’s RX card'),rxQR(x.link),
     h('p',{class:'rxscript'},'Scan With Your Camera'),
     h('small',{class:'soft'},'It opens her two options and what her next visit looks like on her own phone.'),
-    h('a',{href:x.link,target:'_blank',rel:'noopener',class:'tab'},'Open Her Card'),
+    h('small',{class:'soft'},'Saved and sent to the front desk. If she doesn’t open it, the desk texts it to her.'),
+    h('a',{href:x.link.replace('/rx/#','/rx/?p=1#'),target:'_blank',rel:'noopener',class:'tab'},'Open Her Card'),
     h('button',{type:'button',class:'obtn',onclick:()=>{RX_VIEW='build';RX_SHOW=null;render()}},'Done'));
 }
 
