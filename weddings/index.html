@@ -10,7 +10,9 @@
 <meta name="apple-mobile-web-app-title" content="Taffeta Weddings">
 <meta name="theme-color" content="#f8f6f0">
 <script src="config.js"></script>
-<script src="../g/topnav.js?v=1"></script>
+<script src="../g/topnav.js?v=2"></script>
+<script src="../g/jokes.js?v=1"></script>
+<script src="../g/qr.js?v=1"></script>
 <style>:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;padding:0}img{max-width:100%}</style>
 <script src="/refresh.js?v=3" defer></script>
 <style>/* match the team app look (Alexandra, Oct 15 2026): black and soft black on ivory, Lora titles, menus as plain words with the
@@ -23,6 +25,43 @@
 .tabs{border:0!important;border-bottom:1px solid var(--line)!important}
 .tabs button{background:transparent!important;color:var(--ink)!important;letter-spacing:.18em!important}
 .tabs button[aria-selected="true"]{text-decoration:underline;text-underline-offset:7px;text-decoration-thickness:1px}
+/* Homepage like the Employee Experience App (Alexandra, Oct 17 2026): the Taffeta Weddings wreath with her photo inside,
+   "Hello," and her name, the date and a bridal joke, then the menu squares. The tabs live in Menu ▾ at the top. */
+header.top .tabs>button{display:none!important}
+body.tw-in header.top .brand{display:none}
+.tabs{border:0!important}
+body.tw-home header.top{display:none}
+.hhome{display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center;padding-top:6px}
+.hhome .crest{position:relative;width:200px;height:200px;border:0;background:none;padding:0;cursor:pointer}
+.hhome .crest img{position:absolute}
+.hhome .crest img.w{inset:0;width:100%;height:100%}
+.hhome .crest img.w.over{-webkit-mask-image:radial-gradient(circle at 100px 92.5px,transparent 0 75px,#000 75.5px);mask-image:radial-gradient(circle at 100px 92.5px,transparent 0 75px,#000 75.5px)}
+.hhome .crest img.me{left:21.8px;top:14.3px;width:156.4px;height:156.4px;border-radius:50%;object-fit:cover}
+.hhi{display:flex;flex-direction:row;align-items:center;justify-content:center;gap:10px;font-family:"TaffetaJ",Georgia,serif;color:#121212;line-height:1.15}
+.hhi span:first-child{font-size:28px}
+.hname{font-size:34px;font-style:italic}
+.hnamepic{height:76px;width:auto;max-width:210px;margin-top:6px;filter:brightness(0)}
+.hphoto{border:0;background:none;font:400 11px var(--sans);letter-spacing:.14em;text-transform:uppercase;color:var(--muted);cursor:pointer;padding:4px}
+.hgig{display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;padding:14px 8px 4px}
+.hgig .lbl{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:#121212}
+.hgig p{margin:0;font-family:"TaffetaJ",Georgia,serif;font-style:italic;font-size:16px;line-height:1.5;color:#555250;max-width:440px;text-wrap:balance}
+.hmenu{display:flex;flex-direction:column;gap:14px;margin-top:22px}
+.mhead{display:flex;align-items:center;justify-content:center;gap:12px;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:#121212}
+.mhead::before,.mhead::after{content:"";width:28px;height:1px;background:#2b2a28}
+.hmenu .cgrid{display:grid;grid-template-columns:repeat(2,124px);gap:8px;justify-content:center}
+.hmenu .cgrid>button{background:#fff;color:#121212;border:1px solid #2b2a28;outline:1px solid #2b2a28;outline-offset:-6px;border-radius:0;aspect-ratio:1/1;font-family:"TaffetaJ",Georgia,serif;font-size:15.5px;line-height:1.2;padding:8px;letter-spacing:-.01em;cursor:pointer;display:flex;align-items:center;justify-content:center;text-align:center;text-transform:none}
+.hmenu .cgrid>button[aria-expanded="true"]{outline-width:2px}
+.hpages{grid-column:1/-1;display:flex;flex-direction:column;align-items:center;gap:2px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:8px 0;max-width:300px;width:100%;margin:0 auto}
+.hpages button{border:0;background:none;font-family:"TaffetaJ",Georgia,serif;font-size:17px;color:#555250;padding:8px;cursor:pointer}
+.whois{display:flex;flex-direction:column;align-items:center;gap:10px;margin-top:6px}
+.whois .row{justify-content:center;flex-wrap:nowrap}
+.whois button{width:auto;flex:0 0 auto}
+.ao{display:flex;flex-direction:column;align-items:center;gap:16px;text-align:center;padding:8px 0 24px}
+.ao p{margin:0;font-family:"TaffetaJ",Georgia,serif;font-style:italic;color:#555250;font-size:16px;max-width:300px}
+.ao .qr{background:#fff;border:1px solid #2b2a28;outline:1px solid #2b2a28;outline-offset:-6px;padding:22px;line-height:0}
+.ao .qr svg{width:200px;height:200px;display:block}
+.ao .pay{display:flex;align-items:center;justify-content:center;width:260px;height:46px;border:1px solid #121212;background:#fff;font:400 12px var(--sans);letter-spacing:.16em;text-transform:uppercase;color:#121212;text-decoration:none;cursor:pointer}
+.ao .pay[aria-pressed="true"]{background:#121212;color:#fff}
 </style>
 </head><body>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -185,6 +224,8 @@ input,select,textarea{background:#fff;border-radius:0}
     <div class="brand"><h1>TAFFETA WEDDINGS</h1></div>
     <div class="tabs" role="tablist">
       <span id="pageTitle" class="tab-title" aria-live="polite"></span>
+      <button id="tab-home" role="tab" aria-selected="false" hidden>Home</button>
+      <button id="tab-addon" role="tab" aria-selected="false" hidden>Add-On Services</button>
       <button id="tab-booked" role="tab" aria-selected="true" hidden>Booked weddings</button>
       <button id="tab-pipe" role="tab" aria-selected="false" hidden>Pipeline</button>
       <button id="tab-todo" role="tab" aria-selected="false" hidden>To do</button>
@@ -199,6 +240,9 @@ input,select,textarea{background:#fff;border-radius:0}
       <button id="tab-admin" role="tab" aria-selected="false" hidden>Team records</button>
     </div>
   </header>
+
+  <section id="view-home" hidden></section>
+  <section id="view-addon" hidden></section>
 
   <section id="view-signin" hidden>
     <div class="card" style="max-width:420px;margin:40px auto">
@@ -967,9 +1011,86 @@ async function saveImage(container,name){
 const fileName=s=>((s.bride||"wedding").replace(/[^a-z0-9]+/gi,"-")+"-timeline"+(version==="bride"?"-bride-copy":"")+".png").toLowerCase();
 $("#saveImg").onclick=()=>saveImage($("#sheet"),fileName(S));
 
+/* ---------- homepage (Alexandra, Oct 17 2026) ---------- */
+const PAGE_LABEL={booked:"Booked Weddings",build:"Timeline",team:"Schedule",cal:"Calendar",pipe:"Pipeline",todo:"To Do",tpl:"Texts",jobs:"Jobs",admin:"Team Records",pay:"Payout Form",prev:"Bridal Preview",addon:"Add-On Services",info:"My Info"};
+function homeGroups(){
+  if(ROLE==="office")return [["Weddings",["booked","build","team","cal"]],["Sales",["pipe","todo","tpl"]],["Bridal Team",["jobs","admin","pay"]],["Bridal Preview",["prev"]],["Add-On Services",["addon"]]];
+  PAGE_LABEL.team="My Weddings";PAGE_LABEL.jobs="Job Offers";
+  return [["My Weddings",["team"]],["Job Offers",["jobs"]],["Add-On Services",["addon"]],["Bridal Preview",["prev"]],["Get Paid",["pay"]],["My Profile",["info"]]];
+}
+const NAME_PICS=['adriana','alexandra','alyssa','amanda','angelina','ashley','carolyn','dominique','emily','isabella','jen','jennifer','joanna','kelly','lexi','mia','neva','sara'];
+const OFFICE_PEOPLE=["Alexandra","Dominique"];
+let HOME_OPEN="";
+function lsGet(k){try{return localStorage.getItem(k)||""}catch(e){return""}}
+function lsSet(k,v){try{v?localStorage.setItem(k,v):localStorage.removeItem(k)}catch(e){}}
+/* the office shares one code, so each phone says who is using it (asked once, remembered on the phone) */
+function officeWho(){let w=lsGet("tw-who");if(!w){const al=lsGet("tw-al-name");const m=OFFICE_PEOPLE.find(n=>al.toLowerCase().startsWith(n.toLowerCase().slice(0,3)));if(m){w=m;lsSet("tw-who",w)}}return w}
+function myName(){return ROLE==="office"?officeWho():((ME&&(ME.preferredName||ME.legalName))||"")}
+function photoKey(){return "tw-photo:"+(ROLE==="office"?"office-"+officeWho():(ME&&ME.id)||"me")}
+function goTab(k){HOME_OPEN="";showTab(k);window.scrollTo(0,0);if(window.TopNav)TopNav.check()}
+function renderHome(){
+  const box=$("#view-home");if(!box||!ROLE)return;
+  const name=myName(),first=String(name).trim().split(/\s+/)[0]||"",k=first.toLowerCase(),ph=lsGet(photoKey());
+  const today=new Date().toLocaleDateString("en-US",{weekday:"long",month:"long",day:"numeric"});
+  let h='<div class="hhome"><button type="button" class="crest" id="hCrest" aria-label="'+(ph?"Change your photo":"Add your photo")+'">'+(ph?'<img class="me" alt="" src="'+ph+'">':'')+'<img class="w'+(ph?' over':'')+'" src="wreath-weddings.png" alt="Taffeta Weddings"></button>';
+  if(ROLE==="office"&&!name){
+    h+='<div class="whois"><div class="hhi"><span>Who’s this?</span></div><div class="row">'+OFFICE_PEOPLE.map(n=>'<button type="button" class="btn ghost" data-who="'+n+'">'+n+'</button>').join("")+'</div></div></div>';
+  }else{
+    h+='<div class="hhi"><span>Hello,</span>'+(NAME_PICS.includes(k)?'<img class="hnamepic" src="../g/names/'+k+'.png" alt="'+esc(first)+'">':'<span class="hname">'+esc(first)+'</span>')+'</div>';
+    h+='<button type="button" class="hphoto" id="hPhoto">'+(ph?"Change photo":"Add your photo")+'</button>'+(ROLE==="office"?'<button type="button" class="hphoto" id="hWho">Not '+esc(first)+'?</button>':'')+'</div>';
+  }
+  h+='<div class="hgig"><span class="lbl">'+esc(today)+'</span><p>'+esc(window.dayJoke?dayJoke("bridal"):"")+'</p></div>';
+  const gs=homeGroups();
+  h+='<div class="hmenu"><div class="mhead">Menu</div><div class="cgrid">';
+  gs.forEach(([g,keys],i)=>{
+    h+='<button type="button" data-g="'+esc(g)+'"'+(keys.length>1?' aria-expanded="'+(HOME_OPEN===g)+'"':'')+'>'+esc(g)+'</button>';
+    const end=i%2===1||i===gs.length-1,row=gs.slice(i-(i%2),i+1).map(x=>x[0]);
+    if(end&&row.includes(HOME_OPEN)){const o=gs.find(x=>x[0]===HOME_OPEN);h+='<div class="hpages">'+o[1].map(p=>'<button type="button" data-p="'+p+'">'+esc(PAGE_LABEL[p]||p)+'</button>').join("")+'</div>'}
+  });
+  h+='</div></div><input type="file" accept="image/*" id="hFile" hidden>';
+  box.innerHTML=h;
+  box.querySelectorAll("[data-who]").forEach(b=>b.onclick=()=>{lsSet("tw-who",b.dataset.who);renderHome()});
+  const nw=$("#hWho");if(nw)nw.onclick=()=>{lsSet("tw-who","");renderHome()};
+  const pick=()=>$("#hFile").click();$("#hCrest").onclick=pick;const hp=$("#hPhoto");if(hp)hp.onclick=pick;
+  $("#hFile").onchange=e=>{const f=e.target.files&&e.target.files[0];if(f)homePhoto(f)};
+  box.querySelectorAll(".cgrid>button[data-g]").forEach(b=>b.onclick=()=>{const g=b.dataset.g,keys=(gs.find(x=>x[0]===g)||[0,[]])[1];
+    if(keys.length===1)goTab(keys[0]);else{HOME_OPEN=HOME_OPEN===g?"":g;renderHome();if(HOME_OPEN)setTimeout(()=>{const p=document.querySelector(".hpages");if(p)p.scrollIntoView({behavior:"smooth",block:"center"})},30)}});
+  box.querySelectorAll(".hpages button").forEach(b=>b.onclick=()=>goTab(b.dataset.p));
+}
+/* her photo is kept on her own phone, cropped square, small enough to load instantly */
+function homePhoto(file){
+  const img=new Image(),url=URL.createObjectURL(file);
+  img.onload=()=>{const s=Math.min(img.width,img.height),c=document.createElement("canvas");c.width=c.height=360;
+    c.getContext("2d").drawImage(img,(img.width-s)/2,(img.height-s)/2,s,s,0,0,360,360);URL.revokeObjectURL(url);
+    try{localStorage.setItem(photoKey(),c.toDataURL("image/jpeg",.82))}catch(e){toast("That photo is too big for this phone. Try another.")}
+    renderHome()};
+  img.onerror=()=>{URL.revokeObjectURL(url);toast("That photo didn't open. Try another.")};
+  img.src=url;
+}
+/* Wedding day add-ons: the guest scans to pay Taffeta Weddings by Venmo, or card / Apple Pay through Stripe */
+let AO_SHOW="venmo";
+function payLinks(){const p=window.TW_PAY||{};const v=String(p.venmo||"").replace(/^@/,"");
+  return {venmo:v?"https://venmo.com/u/"+encodeURIComponent(v):"",venmoName:v,card:p.stripe||""}}
+function qrSvg(text){if(!window.qrcode||!text)return"";const q=qrcode(0,"M");q.addData(text);q.make();const n=q.getModuleCount();let r="";
+  for(let y=0;y<n;y++)for(let x=0;x<n;x++)if(q.isDark(y,x))r+='M'+x+' '+y+'h1v1h-1z';
+  return '<svg viewBox="-1 -1 '+(n+2)+' '+(n+2)+'" shape-rendering="crispEdges" role="img" aria-label="QR code"><path d="'+r+'" fill="#121212"/></svg>'}
+function renderAddon(){
+  const box=$("#view-addon");if(!box)return;const L=payLinks();
+  if(AO_SHOW==="card"&&!L.card)AO_SHOW="venmo";if(AO_SHOW==="venmo"&&!L.venmo&&L.card)AO_SHOW="card";
+  const link=AO_SHOW==="card"?L.card:L.venmo;
+  let h='<div class="ao"><div class="mhead">Wedding Day Add-Ons</div>';
+  if(!L.venmo&&!L.card){h+='<p>The payment links are being set up. Check back soon.</p></div>';box.innerHTML=h;return}
+  h+='<p>Adding a service today? Scan to pay Taffeta Weddings.</p><div class="qr">'+qrSvg(link)+'</div>'
+   +'<span class="lbl" style="font-size:11px;letter-spacing:.16em;text-transform:uppercase">'+(AO_SHOW==="card"?"Card or Apple Pay":"Venmo"+(L.venmoName?" · @"+esc(L.venmoName):""))+'</span>';
+  if(L.venmo)h+='<button type="button" class="pay" data-s="venmo" aria-pressed="'+(AO_SHOW==="venmo")+'">Pay with Venmo</button>';
+  if(L.card)h+='<button type="button" class="pay" data-s="card" aria-pressed="'+(AO_SHOW==="card")+'">Card or Apple Pay</button>';
+  h+='<p style="font-size:14px">Tap a button to show that code. On the guest’s own phone, the code opens it to pay.</p></div>';
+  box.innerHTML=h;box.querySelectorAll(".pay").forEach(b=>b.onclick=()=>{AO_SHOW=b.dataset.s;renderAddon()});
+}
+
 /* ---------- tabs ---------- */
-const TABS=["build","team","cal","jobs","prev","booked","pipe","todo","tpl","info","pay","admin"];
-function showTab(t){if(!TABS.includes(t))t="team";TABS.forEach(k=>{$("#tab-"+k).setAttribute("aria-selected",k===t);$("#view-"+k).hidden=k!==t});$("#pageTitle").textContent=$("#tab-"+t).textContent;try{localStorage.setItem("tt-tab",t)}catch(e){}}
+const TABS=["home","addon","build","team","cal","jobs","prev","booked","pipe","todo","tpl","info","pay","admin"];
+function showTab(t){if(!TABS.includes(t))t="home";document.body.classList.toggle("tw-home",t==="home");if(t==="home")renderHome();if(t==="addon")renderAddon();TABS.forEach(k=>{$("#tab-"+k).setAttribute("aria-selected",k===t);$("#view-"+k).hidden=k!==t});$("#pageTitle").textContent=$("#tab-"+t).textContent;try{localStorage.setItem("tt-tab",t)}catch(e){}}
 TABS.forEach(k=>$("#tab-"+k).onclick=()=>showTab(k));
 
 /* ---------- storage ---------- */
@@ -1868,7 +1989,7 @@ function showSignIn(msg){
   $("#view-signin").hidden=false;$("#signOut").hidden=true;setStatus("");
   if(msg)$("#si-msg").textContent=msg;
 }
-function signOut(msg){AUTH=null;ROLE=null;canWrite=false;previews=[];pvSel=null;pvLoaded=false;pvThumbs={};$("#pv-detail").innerHTML="";try{localStorage.removeItem(SKEY)}catch(e){}showSignIn(msg)}
+function signOut(msg){AUTH=null;ROLE=null;document.body.classList.remove("tw-in","tw-home");canWrite=false;previews=[];pvSel=null;pvLoaded=false;pvThumbs={};$("#pv-detail").innerHTML="";try{localStorage.removeItem(SKEY)}catch(e){}showSignIn(msg)}
 $("#signOut").onclick=()=>{if(confirm(ROLE==="artist"?"Sign out? You'll need your link to get back in.":"Sign out? You'll need the office code to get back in."))signOut()};
 $("#si-go").onclick=async()=>{
   const code=$("#si-code").value.trim().toUpperCase();if(!code)return;
@@ -1889,15 +2010,16 @@ async function start(){
   const j=await api("load");
   ROLE=j.role;canWrite=ROLE==="office";
   $("#view-signin").hidden=true;$("#signOut").hidden=false;
-  const tabs=ROLE==="office"?["booked","pipe","todo","tpl","build","team","cal","jobs","prev","admin","pay"]:["team","jobs","prev","info","pay"];
+  const tabs=ROLE==="office"?["home","booked","pipe","todo","tpl","build","team","cal","jobs","prev","admin","pay","addon"]:["home","team","jobs","addon","prev","info","pay"];
   TABS.forEach(k=>$("#tab-"+k).hidden=!tabs.includes(k));
   $("#tab-team").textContent=ROLE==="office"?"Schedule":"My weddings";
   $("#tab-jobs").textContent=ROLE==="office"?"Jobs":"Job offers";
   $("#jb-office").hidden=ROLE!=="office";$("#jb-artist").hidden=ROLE==="office";$("#extCard").hidden=ROLE!=="office";
   $("#artistFilter").closest(".row").hidden=ROLE!=="office";
   $("#calCard").hidden=ROLE!=="office";
-  let t=null;try{t=localStorage.getItem("tt-tab")}catch(e){}
-  showTab(ROLE==="office"?"booked":(tabs.includes(t)?t:tabs[0]));   // the office always opens on Booked weddings
+  if(ROLE==="artist")ME=j.me;
+  document.body.classList.add("tw-in");
+  showTab("home");   // everyone opens on the homepage (Alexandra, Oct 17 2026)
   if(ROLE==="artist"){ME=j.me;fillProfile(ME);pfDraftRestore();poPrefill(ME);setStatus("Hi "+(ME.preferredName||ME.legalName||"there"))}
   else setStatus("Office");
   applyData(j);
@@ -1984,8 +2106,9 @@ async function jbCheckNew(){
   }catch(e){}
 }
 showTab=function(t){
-  const allowed=ROLE==="office"?["booked","pipe","todo","tpl","build","team","cal","jobs","prev","admin","pay"]:["team","jobs","prev","info","pay"];
-  if(!allowed.includes(t))t=allowed[0];
+  const allowed=ROLE==="office"?["home","booked","pipe","todo","tpl","build","team","cal","jobs","prev","admin","pay","addon"]:["home","team","jobs","addon","prev","info","pay"];
+  if(!allowed.includes(t))t="home";
+  document.body.classList.toggle("tw-home",t==="home");if(t==="home")renderHome();if(t==="addon")renderAddon();
   TABS.forEach(k=>{$("#tab-"+k).setAttribute("aria-selected",k===t);$("#view-"+k).hidden=k!==t});
   $("#pageTitle").textContent=$("#tab-"+t).textContent;
   if(t==="prev")loadPreviews();
@@ -2027,7 +2150,8 @@ fillForm();
     else{showSignIn("Couldn't reach the office right now. Check your connection and refresh.")}
   }
 })();
-TopNav.init({get:()=>ROLE?(TABS.find(k=>$("#tab-"+k).getAttribute("aria-selected")==="true")||null):null,home:()=>ROLE==="office"?"booked":"team",set:t=>showTab(t)});
+TopNav.init({get:()=>ROLE?(TABS.find(k=>$("#tab-"+k).getAttribute("aria-selected")==="true")||null):null,home:()=>"home",set:t=>showTab(t),
+  menu:()=>ROLE?[["Home",[["home","Home"]]]].concat(homeGroups().map(([g,ks])=>[g,ks.map(k=>[k,PAGE_LABEL[k]||k])])):[]});
 })();
 </script>
 

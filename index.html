@@ -447,6 +447,7 @@ details.days summary::-webkit-details-marker{display:none}
 <script src="g/pdfview.js?v=1"></script>
 <script src="g/regimen.js?v=24"></script>
 <script src="g/qr.js?v=1"></script>
+<script src="g/jokes.js?v=1"></script>
 <script src="g/rx.js?v=63"></script>
 <script src="g/prices.js?v=5"></script>
 <link rel="stylesheet" href="g/rx.css?v=4">
@@ -729,7 +730,6 @@ function renderMast(){
   const d=S.daily; $sub.replaceChildren();
   if(!d) return;
   $sub.append(h('span',{class:'dateline'},d.dateLabel||''));
-  if(EDITION==='team'&&S.isAdmin) $sub.append(leaderTabs());
   if(EDITION==='team'&&S.isAdmin&&S.open){
     $sub.append(h('button',{class:'back',onclick:()=>{S.open=null;render()}},'← Team board'));
   }
@@ -744,12 +744,14 @@ function runCard(){
 }
 function render(){
   if(EDITION==='stylist'&&S.mine) document.querySelector('.mast').hidden=S.tab!=='today';
+  if(EDITION==='team') document.querySelector('.mast').hidden=!!(S.isAdmin&&S.rtab==='home');
   renderMast();
   let parts;
   if(!S.daily&&!(EDITION==='stylist'&&S.mine&&S.tab!=='today')){parts=[h('div',{class:'empty'},h('h3',{},'Today’s hub isn’t ready yet'),h('p',{},'Goals go up every morning the salon is open. Check back after 8 AM.'))];}
   else if(EDITION==='stylist'&&S.mine&&S.tab!=='today') parts=staffRender();
   else if(EDITION==='stylist') parts=S.mine?stylistPage(S.mine):[h('div',{class:'empty'},h('h3',{},'Your page is being set up'),h('p',{},'Your goals will appear here the next morning the salon is open.'))];
   else if(!S.isAdmin) parts=[h('div',{class:'empty'},h('h3',{},'This board is for the leadership team'),h('p',{},'Your own goals live on your personal Employee Experience App link.'))];
+  else if(S.rtab==='home') parts=reportHome();
   else if(S.rtab==='payroll') parts=payrollView();
   else if(S.rtab==='off') parts=adminOffView();
   else if(S.rtab==='month') parts=monthView();
@@ -766,6 +768,7 @@ function render(){
   $main.replaceChildren(...parts.filter(Boolean));
   const old=document.querySelector('nav.nav'); if(old) old.remove();
   if(EDITION==='stylist'&&S.mine){const n=staffNav(); if(n) document.body.append(n);}
+  if(EDITION==='team'&&S.isAdmin){const n=reportNav(); if(n) document.body.append(n);}
 }
 
 /* ---- Team app: Home (time clock), Growth, Time off, Guide; leadership Payroll + Month tabs ---- */
@@ -1848,6 +1851,61 @@ function monthView(){
         h('td',{style:'text-align:left;min-width:160px'},h('div',{style:'display:flex;align-items:center;gap:8px'},h('div',{class:'bar',style:'flex:1;height:6px'},h('i',{style:`width:${Math.round(r.service/max*100)}%`})),h('span',{class:'num',style:'min-width:84px;text-align:right'},money(r.service)))),
         h('td',{class:rp(r.retail,r.service)>=15?'over':'under'},rp(r.retail,r.service)+'%'),h('td',{},r.addons==null?'–':String(r.addons)),h('td',{},r.rebook==null?'–':String(r.rebook))))))))];
 }
+/* The Pretty Report homepage, like the Employee Experience App (Alexandra, Oct 17 2026): the wreath with her photo,
+   "Hello," and the reader's name, the date and a joke about running a business, then the menu squares.
+   One passcode is shared, so each phone says who is reading (asked once, remembered on the phone). */
+const PR_PEOPLE=['Alexandra','Rick'];
+function prWho(){return store.get('pr-who:'+ID)||''}
+function prPhotoKey(){return 'pp-photo:'+ID+':'+prWho()}
+function reportGroups(){
+  return [['Today',['today']],['Payroll',['payroll']],['Month & Trends',['month']]].concat(S.inv?[['Color Room',['color']]]:[]).concat([['Team',['off','guide']],['Access',['access']]]);
+}
+const PR_LABEL={home:'Home',today:'Today',payroll:'Payroll',month:'Month & Trends',color:'Color Room',off:'Time Off',guide:'Culture',access:'Access'};
+let PR_OPEN='',PR_NAV=false;
+function prGo(k,fromHistory){
+  if(!fromHistory&&k!==S.rtab){const d=((history.state&&history.state.d)||0)+1;try{history.pushState({pr:k,d},'',location.href)}catch(e){}}
+  PR_OPEN='';PR_NAV=false;S.rtab=k;S.open=null;render();window.scrollTo(0,0);
+}
+addEventListener('popstate',e=>{const st=e.state;if(EDITION==='team'&&S.isAdmin){prGo(st&&st.pr?st.pr:'home',true)}});
+function reportHome(){
+  const who=prWho(), logo=document.querySelector('.wreath'), ph=who?store.get(prPhotoKey()):'';
+  const file=h('input',{type:'file',accept:'image/*',hidden:'',onchange:e=>{const f=e.target.files&&e.target.files[0];if(!f)return;
+    const rd=new FileReader();rd.onload=()=>{const im=new Image();im.onload=()=>{const N=320,c=document.createElement('canvas');c.width=c.height=N;
+      const m=Math.min(im.width,im.height);c.getContext('2d').drawImage(im,(im.width-m)/2,(im.height-m)/2,m,m,0,0,N,N);
+      store.set(prPhotoKey(),c.toDataURL('image/jpeg',0.82));render()};im.src=rd.result};rd.readAsDataURL(f)}});
+  const crest=h('button',{type:'button',class:'crest',style:'border:0;background:none;padding:0;cursor:pointer','aria-label':ph?'Change your photo':'Add your photo',onclick:()=>{if(who)file.click()}},
+    ph?h('img',{class:'me',src:ph,alt:''}):null,logo?h('img',{class:'w'+(ph?' over':''),src:logo.src,alt:''}):null);
+  const fn=firstName(who), k=fn.toLowerCase();
+  const top=who?[h('div',{class:'hhi'},h('span',{},'Hello,'),NAME_PICS.includes(k)?h('img',{class:'hnamepic',src:'g/names/'+k+'.png',alt:fn}):h('span',{class:'hname'},fn)),
+      h('div',{style:'display:flex;gap:6px;justify-content:center'},
+        h('button',{type:'button',class:'navback',style:'border:0;background:none;color:var(--muted);font-size:11px;letter-spacing:.14em;text-transform:uppercase;cursor:pointer',onclick:()=>file.click()},ph?'Change photo':'Add your photo'),
+        h('button',{type:'button',class:'navback',style:'border:0;background:none;color:var(--muted);font-size:11px;letter-spacing:.14em;text-transform:uppercase;cursor:pointer',onclick:()=>{store.set('pr-who:'+ID,'');render()}},'Not '+fn+'?'))]
+    :[h('div',{class:'hhi'},h('span',{},'Who’s reading?')),h('div',{style:'display:flex;gap:8px;justify-content:center;flex-wrap:wrap'},
+      PR_PEOPLE.map(n=>h('button',{type:'button',class:'obtn sm',onclick:()=>{store.set('pr-who:'+ID,n);render()}},n)))];
+  const today=new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
+  const gs=reportGroups(), cells=[];
+  gs.forEach(([g,keys],i)=>{
+    cells.push(h('button',{type:'button','aria-expanded':keys.length>1?String(PR_OPEN===g):null,
+      onclick:()=>{if(keys.length===1)prGo(keys[0]);else{PR_OPEN=PR_OPEN===g?'':g;render();if(PR_OPEN)setTimeout(()=>{const p=document.querySelector('.hpages');if(p)p.scrollIntoView({behavior:'smooth',block:'center'})},30)}}},g));
+    const end=i%2===1||i===gs.length-1,row=gs.slice(i-(i%2),i+1).map(([x])=>x);
+    if(end&&row.includes(PR_OPEN)){const o=gs.find(([x])=>x===PR_OPEN);cells.push(h('div',{class:'hpages'},o[1].map(p=>h('button',{type:'button',onclick:()=>prGo(p)},PR_LABEL[p]))))}
+  });
+  return [h('div',{class:'hub'},h('div',{class:'hhome'},crest,...top,file),
+    h('div',{class:'hgig'},h('span',{class:'lbl'},today),h('p',{},window.dayJoke?dayJoke('business'):'')),
+    h('div',{class:'hmenu'},h('div',{class:'mhead'},'Menu'),h('div',{class:'cgrid'},cells)))];
+}
+function reportNav(){
+  const groups=[['Home',['home']]].concat(reportGroups());
+  const sheet=PR_NAV?h('div',{class:'navsheet',id:'navsheet',role:'menu'},groups.map(([g,keys])=>h('div',{class:'navgrp'},
+    h('span',{class:'lbl'},g),keys.map(k=>h('button',{type:'button',role:'menuitem','aria-current':S.rtab===k?'page':null,onclick:()=>prGo(k)},PR_LABEL[k]))))):null;
+  const scrim=PR_NAV?h('div',{class:'navscrim',onclick:()=>{PR_NAV=false;render()}}):null;
+  return h('nav',{class:'nav menu','aria-label':'Sections'},scrim,sheet,
+    h('div',{class:'navrow'},
+      (S.rtab!=='home'||(history.state&&history.state.d>0))?h('button',{type:'button',class:'navback',onclick:()=>{if(history.state&&history.state.d>0)history.back();else prGo('home')}},'‹ Back'):h('span',{class:'navback'}),
+      h('button',{type:'button',class:'navhome','aria-label':'Home',title:'Home','aria-current':S.rtab==='home'?'page':null,onclick:()=>prGo('home')},h('img',{src:DISCO,alt:''})),
+      h('button',{type:'button',class:'navbtn','aria-expanded':String(PR_NAV),'aria-controls':'navsheet',onclick:()=>{PR_NAV=!PR_NAV;render()}},
+        h('span',{class:'navlbl'},PR_NAV?'Close ✕':'Menu ▾'))));
+}
 function leaderTabs(){
   return h('div',{class:'tabs',role:'tablist'},[['today','Today'],['payroll','Payroll'],['month','Month & Trends']].concat(S.inv?[['color','Color Room']]:[]).concat([['off','Time Off'],['guide','Culture'],['access','Access']]).map(([k,l])=>
     h('button',{class:'tab',role:'tab','aria-selected':String(S.rtab===k),onclick:()=>{S.rtab=k;S.open=null;render()}},l)));
@@ -1881,7 +1939,7 @@ function setHead(name){
 }
 function apply(P){
   S.daily=P.daily||null;
-  if(EDITION==='team'){S.isAdmin=true;S.pages=(P.pages||[]).filter(isGoalsPerson);S.week=P.week||null;S.hubKey=P.hub&&P.hub.admin;S.payroll=P.payroll||[];S.rates=P.rates||{};S.hoursList=P.hoursList||[];S.retailRate=P.retailRate==null?10:P.retailRate;S.month=P.month||null;S.guideUrl=P.guideUrl||null;S.docs=P.docs||null;S.access=P.access||null;S.inv=P.inv||null;S.rtab=S.rtab||'today';setHead()}
+  if(EDITION==='team'){S.isAdmin=true;S.pages=(P.pages||[]).filter(isGoalsPerson);S.week=P.week||null;S.hubKey=P.hub&&P.hub.admin;S.payroll=P.payroll||[];S.rates=P.rates||{};S.hoursList=P.hoursList||[];S.retailRate=P.retailRate==null?10:P.retailRate;S.month=P.month||null;S.guideUrl=P.guideUrl||null;S.docs=P.docs||null;S.access=P.access||null;S.inv=P.inv||null;S.rtab=S.rtab||'home';setHead()}
   else{S.mine=P.mine||null;setHead(S.mine&&S.mine.name);
     if(S.mine&&!S.tab){const st=S.mine.staff||{};S.tab=store.get('pp-tab:'+ID)||(st.clock?'home':isGoalsPerson(S.mine)?'today':'home')}
     if(S.mine&&!(history.state&&history.state.pp)){try{history.replaceState({pp:S.tab,d:0},'',location.href)}catch(e){}}
