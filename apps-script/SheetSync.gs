@@ -35,7 +35,7 @@ function syncFromWeddingsSheet_(dryRun) {
     const have = weddings_().map(x => x.d);
     const words = s => String(s || '').toLowerCase().replace(/[^a-z\s]/g, ' ').split(/\s+/).filter(w => w.length >= 3);
     const inApp = (date, bride) => have.some(d => d.date === date &&
-      words(bride).some(w => String(d.bride || '').toLowerCase().indexOf(w) >= 0));
+      words(bride).some(w => String(d.bride || '').toLowerCase().indexOf(w) >= 0 || words(d.bride).some(y => w.length >= 4 && y.length >= 4 && typoDist_(w, y) <= 1)));   // a one-letter typo is the same bride (Hugdins / Hudgins, Oct 16 2026)
     const added = [], book = SpreadsheetApp.openById(BOOKINGS_SHEET_ID);
     const paid = paidClients_(book);
     const hasPaid = (bride, email) => (email && paid.emails.has(email)) || paid.names.has(bride.toLowerCase());

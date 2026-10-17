@@ -73,7 +73,7 @@ function markPaid_(p) {
   let added = false;
   const today = Utilities.formatDate(new Date(), TZ, 'yyyy-MM-dd');
   const words = String(bride).toLowerCase().replace(/[^a-z\s]/g, ' ').split(/\s+/).filter(w => w.length >= 3);
-  if (date && date >= today && !weddings_().some(w => w.d.date === date && words.some(x => String(w.d.bride || '').toLowerCase().indexOf(x) >= 0))) {
+  if (date && date >= today && !weddings_().some(w => w.d.date === date && words.some(x => String(w.d.bride || '').toLowerCase().indexOf(x) >= 0 || String(w.d.bride || '').toLowerCase().split(/[^a-z]+/).some(y => x.length >= 4 && y.length >= 4 && typoDist_(x, y) <= 1)))) {
     saveWedding_({ id: 'wsync' + date.replace(/-/g, '') + (words.pop() || 'bride'), bride: bride, date: date, location: clean_(p.location, 200),
       notes: 'Added when the office marked her paid in the app (' + method + '). Fill in the party, team and times here.' });
     added = true;
