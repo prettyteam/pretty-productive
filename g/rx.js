@@ -165,19 +165,22 @@ function rxPriceList(kind){
 /* Balayage (Alexandra, Oct 15 2026): the glaze is already in the balayage price, so it is never added on top (Additional
    Mix $25 is the add-on instead), and anyone getting a balayage comes back for a balayage: Minimum Balayage. */
 const RX_BAL=/balayage/i;
-const RX_BAL_M=[['Minimum Balayage','Female Haircut'],'10–12 weeks','A minimum balayage and a trim. Your glaze is included.'];
+const RX_BAL_M=[['Minimum Balayage','Female Haircut'],'8–10 weeks','A minimum balayage and a trim. Your glaze is included.'];
 /* Guests who come every 4 to 8 weeks don't need a cut every visit: the next visit after a cut can be "Leave Wet" to save
-   on cost (Alexandra, Oct 15 2026). Balayage guests (10–12 weeks) keep the trim. */
+   on cost (Alexandra, Oct 15 2026). Balayage guests keep the trim.
+   Color never goes longer than 10 weeks: 8–10 weeks for balayage, foils and soft root color; single process and gray
+   coverage every 4–6 weeks (Alexandra, Oct 17 2026). */
 /* What she's hoping for → service packages, fullest first. */
 const RX_GOAL={
   hair:{
     'Lived-In Blonde (Balayage)':{p:[['Full Head Balayage','Female Haircut'],['Half Head Balayage','Female Haircut'],['Minimum Balayage','Female Haircut'],['Minimum Balayage']],
       m:RX_BAL_M},
-    'Brighter Blonde (Foils)':{p:[['Full Foil','Glaze','Female Haircut'],['Half Foil','Glaze','Female Haircut'],['Minimum Foil','Glaze','Female Haircut'],['Face Frame/Spot Highlight','Glaze'],['Minimum Foil','Glaze']],
+    /* foils are their own color choice; foil prices don't include the glaze, so it's its own line (Alexandra, Oct 17 2026) */
+    'Foils (Highlights)':{p:[['Full Foil','Glaze','Female Haircut'],['Half Foil','Glaze','Female Haircut'],['Minimum Foil','Glaze','Female Haircut'],['Face Frame/Spot Highlight','Glaze'],['Minimum Foil','Glaze']],
       m:[['Minimum Foil','Glaze','Leave Wet (no haircut)'],'8–10 weeks','Foils around the part and hairline and a glaze. If you get your cut today, skip it next time to save: leave wet, or add a $50 blow dry. Need a trim? A haircut leaving wet is $50.']},
     /* soft, grown-out color so she can go longer between visits (Alexandra, Oct 15 2026); balayage already includes shadow root and glaze */
     'Lower Maintenance Hair Color':{p:[['Half Head Balayage','Female Haircut'],['Minimum Balayage','Female Haircut'],['Shadow Root','Glaze','Female Haircut'],['Shadow Root','Glaze']],
-      m:[['Shadow Root','Glaze'],'12–16 weeks','A soft root melt and a glaze. It grows out softly, so you can go longer between visits.']},
+      m:[['Shadow Root','Glaze'],'8–10 weeks','A soft root melt and a glaze. It grows out softly, so you can go up to 10 weeks between visits.']},
     /* a Female Haircut already includes the blow dry, so the two are never listed together; with no cut she leaves wet,
        no extra service (Alexandra, Oct 16 2026) */
     'Single Process or Gray Coverage':{p:[['Single Process','Glaze','Female Haircut'],['Single Process','Female Haircut'],['Single Process']],
@@ -208,7 +211,7 @@ const RX_Q={
   hair:[
     ['wash','How often does she wash?',['Daily','Every other day','Every 2–3 days','Once a week']],
     ['feel','How does her hair feel?',['Dry','Oily','Frizzy','Flat','Breakage','Flyaways','Hard to style','Curly or wavy','Normal'],1],
-    ['style','How does she style it?',['Air dry','Blow-dry with a brush','Hot tools daily']],
+    ['style','How does she style it?',['Air dry','Blow-dry with a brush or diffuser','Hot tools daily']],
     ['color','Is it color-treated?',['No','Yes','Yes, with a glaze that fades','Blonde that turns brassy','Grays showing'],1],
     ['prod','What does she use now?',['Professional','Drugstore']],
     ['love','Does she love it?',['Yes','It’s okay','No']],
@@ -278,17 +281,17 @@ function rxNeeds(R){
   if(now.includes('Frizz')) add(a.style==='Air dry'?(feel.includes('Curly or wavy')?'airCurl':'airDry'):'frizz');
   if(now.includes('Dryness')) add('dry');
   if(now.includes('Oily scalp')) add(feel.includes('Flat')?'airWash':'oily');
-  if(now.includes('Flat, no volume')){ add('flatWash'); add(a.style==='Blow-dry with a brush'?'flat':'flatSpray') }
+  if(now.includes('Flat, no volume')){ add('flatWash'); add(/^Blow-dry with a brush/.test(a.style||'')?'flat':'flatSpray') }
   if(now.some(x=>/^(Itchy or flaky|Dry or tight|Sensitive) scalp$/.test(x))) add('scalp');
   if(now.includes('Grays showing')) add('grays');
-  if(now.includes('Hard to style')) add(a.style==='Air dry'?(feel.includes('Curly or wavy')?'airCurl':'airDry'):a.style==='Blow-dry with a brush'?'prep':'blowLast');
+  if(now.includes('Hard to style')) add(a.style==='Air dry'?(feel.includes('Curly or wavy')?'airCurl':'airDry'):/^Blow-dry with a brush/.test(a.style||'')?'prep':'blowLast');
   /* from the routine, only when nothing above already covers it */
   if(colored&&notHappy) add('colorSafe');
-  if(a.style==='Hot tools daily'||a.style==='Blow-dry with a brush') add('heat');
+  if(a.style==='Hot tools daily'||/^Blow-dry with a brush/.test(a.style||'')) add('heat');
   if(a.style==='Air dry'&&!out.some(k=>k==='airDry'||k==='airCurl')) add(feel.includes('Curly or wavy')?'airCurl':'airDry');
   if(feel.includes('Oily')&&a.wash==='Daily') add('oily');
   if(feel.includes('Flat')) add('flatWash');
-  if((a.wash==='Every 2–3 days'||a.wash==='Once a week')&&(a.style==='Blow-dry with a brush'||feel.includes('Flat'))) add('airWash');
+  if((a.wash==='Every 2–3 days'||a.wash==='Once a week')&&(/^Blow-dry with a brush/.test(a.style||'')||feel.includes('Flat'))) add('airWash');
   /* home care is always budgeted, even before the artist knows exactly what she'll take home (Alexandra, Oct 16 2026) */
   if(!out.length) add(colored?'colorSafe':'basicWash');
   return out.slice(0,2).map(k=>a.clean==='Yes'&&RX_PROD[k+'RF']?k+'RF':k);
@@ -311,7 +314,7 @@ const rxTotal=L=>L.reduce((s,x)=>s+(Number(x.p)||0),0);
 /* She can pick more than one goal (Alexandra, Oct 15 2026): the packages merge tier by tier, without doubles
    (a full cut wins over leaving wet, Blowdry Plus over Blow Dry). Old cards saved one goal as text. */
 /* goal names are Title Case (Alexandra, Oct 15 2026); cards saved before still match by spelling, any case */
-const RX_GOAL_OLD={'root touch-up or gray coverage':'Single Process or Gray Coverage','movement (layers & texture)':'Movement (Color & Style)'};
+const RX_GOAL_OLD={'brighter blonde (foils)':'Foils (Highlights)','root touch-up or gray coverage':'Single Process or Gray Coverage','movement (layers & texture)':'Movement (Color & Style)'};
 const rxGoalKey=(R,g)=>{const l=String(g).toLowerCase();return Object.keys((RX_GOAL[R.kind]||{})).find(k=>k.toLowerCase()===l)||RX_GOAL_OLD[l]||g};
 const rxGoalList=R=>(Array.isArray(R.goal)?R.goal:(R.goal?[R.goal]:[])).map(g=>rxGoalKey(R,g));
 function rxMergeSvc(names){
@@ -384,6 +387,11 @@ function rxGenerateHair(R,g){
   let [ms,mw,mt]=[o1,o2].some(L=>L.some(l=>RX_BAL.test(l.n)))?RX_BAL_M:g.m;
   /* next visit: today's color stays (a glaze she had today comes back), and with no cut or style it's a blow dry, not leave wet */
   ms=[...ms]; const today=[...o1,...o2].map(l=>l.n);
+  /* single process or gray coverage today: her next visit is her roots in 4–6 weeks, even with a balayage or foils
+     (those refresh at about 8–10 weeks) (Alexandra, Oct 17 2026) */
+  if(today.includes('Single Process')){const bal=today.some(n=>RX_BAL.test(n)), bl=today.some(n=>RX_BLOND.test(n));
+    ms=['Single Process']; mw='4–6 weeks';
+    mt='Your roots every 4 to 6 weeks keep your grays covered.'+(bl?' Your '+(bal?'balayage':'highlights')+' refresh comes at about 8 to 10 weeks.':'')+' Add a cut every other visit.'}
   if(ms.includes('Single Process')&&today.includes('Glaze')&&!ms.includes('Glaze')) ms.push('Glaze');
   ms=ms.map(n=>n==='Leave Wet (no haircut)'?'Blow Dry':n);
   if(!ms.some(n=>/Haircut|Blow ?dry|Blowdry/i.test(n))&&ms.some(n=>!/Female Haircut/.test(n))&&g.p[0].includes('Female Haircut')) ms.push('Blow Dry');
