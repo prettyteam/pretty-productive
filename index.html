@@ -447,7 +447,7 @@ details.days summary::-webkit-details-marker{display:none}
 <script src="g/pdfview.js?v=1"></script>
 <script src="g/regimen.js?v=24"></script>
 <script src="g/qr.js?v=1"></script>
-<script src="g/jokes.js?v=2"></script>
+<script src="g/jokes.js?v=3"></script>
 <script src="g/rx.js?v=69"></script>
 <script src="g/prices.js?v=5"></script>
 <link rel="stylesheet" href="g/rx.css?v=5">
@@ -1906,7 +1906,7 @@ function reportHome(){
     if(end&&row.includes(PR_OPEN)){const o=gs.find(([x])=>x===PR_OPEN);cells.push(h('div',{class:'hpages'},o[1].map(p=>h('button',{type:'button',onclick:()=>prGo(p)},PR_LABEL[p]))))}
   });
   return [h('div',{class:'hub'},h('div',{class:'hhome'},crest,...top,file),
-    h('div',{class:'hgig'},h('span',{class:'lbl'},today),h('p',{},window.dayJoke?dayJoke('business'):'')),
+    h('div',{class:'hgig'},h('span',{class:'lbl'},today),h('p',{'data-joke':'business'},window.dayJoke?dayJoke('business'):'')),
     h('div',{class:'hmenu'},h('div',{class:'mhead'},'Menu'),h('div',{class:'cgrid'},cells)))];
 }
 function reportNav(){

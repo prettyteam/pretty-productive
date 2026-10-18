@@ -11,7 +11,7 @@
 <script src="../g/pdfview.js?v=1"></script>
 <script src="../g/aftercare.js?v=7"></script>
 <script src="../g/topnav.js?v=2"></script>
-<script src="../g/jokes.js?v=2"></script>
+<script src="../g/jokes.js?v=3"></script>
 <script src="../g/coach.js?v=1"></script>
 <link rel="stylesheet" href="../g/coach.css?v=1">
 <script>window.RG_BASE='../'</script>
@@ -417,7 +417,7 @@ function deskHome(){
   if(!who)h+=`<div class="whois"><div class="hhi"><span>Who’s at the desk?</span></div><select id="hWhoSel" aria-label="Who’s at the desk"><option value="">Choose your name</option>${DESK_PEOPLE.map(n=>`<option>${n}</option>`).join('')}</select></div>`;
   else h+=`<div class="hhi"><span>Hello,</span>${NAME_PICS.includes(k)?`<img class="hnamepic" src="../g/names/${k}.png" alt="${esc(first)}">`:`<span class="hname">${esc(first)}</span>`}</div>
     <div class="hlinks"><button type="button" class="hphoto" id="hPhoto">${ph?'Change photo':'Add your photo'}</button><button type="button" class="hphoto" id="hWho">Not ${esc(first)}?</button></div>`;
-  h+=`<div class="hgig"><span class="lbl">${esc(today)}</span><p>${esc(window.dayJoke?dayJoke('service'):'')}</p></div>`;
+  h+=`<div class="hgig"><span class="lbl">${esc(today)}</span><p data-joke="service">${esc(window.dayJoke?dayJoke('service'):'')}</p></div>`;
   h+=consultHome();
   h+=`<div class="hmenu"><div class="mhead">Menu</div><div class="cgrid">`;
   DESK_GROUPS.forEach(([g,keys],i)=>{const c=keys.reduce((a,x)=>a+deskCount(x),0);

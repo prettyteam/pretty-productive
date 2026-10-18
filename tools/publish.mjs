@@ -222,6 +222,14 @@ data.pages ||= [];
 for (const x of ((data.team && data.team.extra) || teamDefaults.extra || [])) if (!data.pages.some((p) => p && p.slug === x.slug)) data.pages.push({ ...x });
 if (!keys.leadership) { keys.leadership = newKey(6); created.push(['The Pretty Report', linkFor('r', keys.leadership), keys.leadership.pin]); }
 const pages = (data.pages || []).filter((p) => p && p.slug);
+// Today's jokes for the other homepages (front desk, bridal app, The Pretty Report), written fresh by the morning run
+// like the Employee Experience App's giggle. Not secret, so d/jokes.json is plain; g/jokes.js shows it on its date.
+if (data.daily && data.daily.jokes) {
+  const j = data.daily.jokes, pick = (k) => (typeof j[k] === 'string' ? j[k].trim() : '');
+  fs.writeFileSync(path.join(outDir, 'jokes.json'), JSON.stringify({ date: data.daily.date || '', service: pick('service'), bridal: pick('bridal'), business: pick('business') }));
+  console.log('Jokes: d/jokes.json for ' + (data.daily.date || 'today') + '.');
+}
+
 // The team never sees team sales: drop team service $ (and contractor sales) and the incentive's Sales part from their copy.
 // Alexandra's board keeps the full daily. done is worked out on the full goal so the surprise still needs every goal.
 const staffDaily = (() => {
