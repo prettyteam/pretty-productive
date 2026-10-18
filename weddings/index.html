@@ -11,7 +11,7 @@
 <meta name="theme-color" content="#f8f6f0">
 <script src="config.js"></script>
 <script src="../g/topnav.js?v=2"></script>
-<script src="../g/jokes.js?v=2"></script>
+<script src="../g/jokes.js?v=3"></script>
 <script src="../g/coach.js?v=1"></script>
 <link rel="stylesheet" href="../g/coach.css?v=1">
 <script src="../g/qr.js?v=1"></script>
@@ -1050,7 +1050,7 @@ function renderHome(){
     h+='<div class="hhi"><span>Hello,</span>'+(NAME_PICS.includes(k)?'<img class="hnamepic" src="../g/names/'+k+'.png" alt="'+esc(first)+'">':'<span class="hname">'+esc(first)+'</span>')+'</div>';
     h+='<button type="button" class="hphoto" id="hPhoto">'+(ph?"Change photo":"Add your photo")+'</button>'+(ROLE==="office"?'<button type="button" class="hphoto" id="hWho">Not '+esc(first)+'?</button>':'')+'</div>';
   }
-  h+='<div class="hgig"><span class="lbl">'+esc(today)+'</span><p>'+esc(window.dayJoke?dayJoke("bridal"):"")+'</p></div>';
+  h+='<div class="hgig"><span class="lbl">'+esc(today)+'</span><p data-joke="bridal">'+esc(window.dayJoke?dayJoke("bridal"):"")+'</p></div>';
   const gs=homeGroups();
   h+='<div class="hmenu"><div class="mhead">Menu</div><div class="cgrid">';
   gs.forEach(([g,keys],i)=>{
