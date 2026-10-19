@@ -668,7 +668,8 @@ async function rxStore(R,me){
   const i=list.findIndex(x=>x.id===id); i<0?list.unshift(row):list.splice(i,1,row);
   store.set(rxSavedKey(),JSON.stringify(list.slice(0,300)));
   rxSync({cards:[row]}).then(ok=>{if(ok){row.up=1;const L=rxSaved(),j=L.findIndex(x=>x.id===id);if(j>=0){L[j].up=1;store.set(rxSavedKey(),JSON.stringify(L))}}});
-  rxSave(); RX_SHOW={link,guest:row.guest}; RX_VIEW='qr'; render(); window.scrollTo(0,0);
+  /* the builder clears once she's sent to the desk, so the next guest starts on a blank card; this card stays in Saved Cards (Edit reopens it) (Alexandra, Oct 19 2026) */
+  RX=rxBlank(R.kind); rxSave(); RX_SHOW={link,guest:row.guest}; RX_VIEW='qr'; render(); window.scrollTo(0,0);
 }
 
 /* a saved card's QR is rebuilt from its draft, so cards saved before a change (like home care showing as one
