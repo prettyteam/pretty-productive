@@ -547,7 +547,11 @@ function rxView(){
   if(RX_VIEW==='home'&&RX_HOME) return [h('div',{class:'hub'},rxTakeHomeView(me))];
   if(RX_VIEW==='saved') return [h('div',{class:'hub'},head,tabs,RX_MSG?h('div',{class:'card2',style:'text-align:center;border-color:var(--ink)'},h('p',{},'✓ '+RX_MSG)):null,rxSavedView(me))];
   if(RX_VIEW==='qr'&&RX_SHOW) return [h('div',{class:'hub'},head,rxQrView(RX_SHOW))];
-  return [h('div',{class:'hub'},head,tabs,...rxBuild(R,me))];
+  /* Start A New One sits at the top, right under the tabs, so a new guest never starts on the last guest's answers (Alexandra, Oct 20 2026) */
+  const used=!!(String(R.guest||'').trim()||rxGoalList(R).length||String(R.budget||'').trim()||(R.now||[]).length||Object.keys(R.a||{}).length);
+  const fresh=used?h('div',{style:'display:flex;justify-content:center;margin:-4px 0 4px'},h('button',{type:'button',class:'obtn',style:'max-width:320px',
+    onclick:()=>{if(!confirm('Start a new card? This clears the one on screen.'))return;RX=rxBlank(R.kind);rxSave();render();window.scrollTo(0,0)}},'Start A New One')):null;
+  return [h('div',{class:'hub'},head,tabs,fresh,...rxBuild(R,me))];
 }
 
 let RX_DD={card:null,kind:null,open:null};
@@ -567,6 +571,7 @@ function rxDDStyle(){if(document.getElementById('rxdd-css'))return;const st=docu
 .rxdd-list input:checked{background:var(--kelly,var(--ink))}.rxdd-list input:checked::after{content:"✓";color:#fff;font-size:12px;line-height:1}
 @media (prefers-reduced-motion:reduce){.rxdd-chev{transition:none}}`;document.head.append(st)}
 function rxBuild(R,me){
+  const spNow=rxSetSP();   /* her single process price; rxView sets it too, but this function needs its own copy */
   /* every word starts with a capital, "or" stays lowercase (Alexandra, Oct 15 2026); the saved answers keep their spelling */
   const rxTitle=o=>String(o).replace(/(^|[\s(\-])([a-z])/g,(m,p,c)=>p+c.toUpperCase()).replace(/ Or /g,' or ');
   const chips=(opts,isOn,onTap)=>h('div',{class:'seg'},opts.map(o=>h('button',{type:'button','aria-pressed':String(!!isOn(o)),onclick:()=>{onTap(o);rxSave();render()}},rxTitle(o))));
@@ -669,8 +674,7 @@ function rxEditor(R,me){
     h('label',{class:'fld'},'In About',mw),h('label',{class:'fld'},'What It Looks Like',mt),
     h('label',{class:'fld'},'Refresh In',rf));
   const save=h('button',{type:'button',class:'obtn',onclick:()=>rxStore(R,me)},'Save & Send To Desk');
-  const clear=h('button',{type:'button',class:'tab',onclick:()=>{if(!confirm('Start a new card? This clears the one on screen.'))return;RX=rxBlank(R.kind);rxSave();render();window.scrollTo(0,0)}},'Start A New One');
-  const done=h('section',{class:'card2',style:'align-items:center;text-align:center'},save,clear,
+  const done=h('section',{class:'card2',style:'align-items:center;text-align:center'},save,
     h('small',{class:'soft'},'Her card goes to the front desk and her QR shows here. She scans it with her camera; if she doesn’t, the desk texts it to her.'));
   /* full sizes she should end up with, outside the budget (Alexandra, Oct 16 2026) */
   const hs=(R.rec||[]).some(l=>l.hint==='p50');
