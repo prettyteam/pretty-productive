@@ -113,7 +113,7 @@ html,body{background:#f8f6f0}
   const m=c.m||[[],'',''], mt=m[0].reduce((s,l)=>s+l[1],0);
   /* the next visit in plain words: "Color and haircut or style" (Alexandra, Oct 15 2026), not a list */
   function nextWhat(){
-    if(skin) return m[2]||m[0].map(([n])=>n).join(', ');
+    if(skin) return /every .*weeks/i.test(m[2]||'')?'':(m[2]||'');   /* services are listed above and the timing is in "In about": no repeats (Alexandra, Oct 20 2026) */
     const names=m[0].map(([n])=>n).join(' ').toLowerCase();
     const color=/balayage|foil|highlight|single process|glaze|shadow root|lightener|color|gloss/.test(names);
     const cut=/haircut|cut|blow ?dry|style|leave wet|blowdry/.test(names);
@@ -156,8 +156,8 @@ html,body{background:#f8f6f0}
       /* skin with two options: Worth The Wait comes back in 4 weeks, All In in 4–6 weeks (its home care keeps results longer) (Alexandra, Oct 20 2026) */
       el('div',{class:'tot'},el('span',{},c.k==='skin'&&hi>=0?'Your next visit':m[1]?'In about '+m[1]:'Your next visit'),el('span',{},money(mt))),
       c.k==='skin'&&hi>=0?el('div',{class:'brk',style:'padding:6px 0 0'},el('div',{class:'li'},el('span',{},'With Worth The Wait'),el('span',{},'in about 4 weeks')),el('div',{class:'li'},el('span',{},'With All In'),el('span',{},'in about 4–6 weeks'))):null,
-      el('p',{style:'font-size:14px;margin:0'},nextWhat())),
-    c.r?el('p',{class:'talk',style:'text-align:center'},el('b',{},'Refresh in '),c.r):null,
+      nextWhat()?el('p',{style:'font-size:14px;margin:0'},nextWhat()):null),
+
     sign,
     about,
     el('p',{class:'foot'},'Prices are estimates and can change with time and product used. ',el('br'),'Book your next visit: ',el('a',{href:'tel:+16093835504'},'(609) 383-5504'),' · ',el('a',{href:'https://taffetadesign.com'},'taffetadesign.com'))));

@@ -493,6 +493,7 @@ function rxGenerateSkin(R,g){
   const p50=(needs.find(k=>/^sk(Break|Sens|Bright|P50V)$/.test(k))||'skP50V'); let [n,pr,why,alt]=RX_PROD[p50]; if(alt&&RX_OUT.includes(n))[n,pr]=alt;
   if(!/5(\.1)? oz/.test(n)&&alt) [n,pr]=alt;   /* the note suggests the full-size P50 */
   let [ms,mw,mt]=g.m, mLines=rxSvcLines('skin',ms);
+  if(/every .*weeks/i.test(mt||'')) mt='';   /* the timing is already in "In about": no repeat (Alexandra, Oct 20 2026) */
   /* a budget that only covers Worth The Wait means she goes home with the Skin Box (about 4 weeks of samples), so her
      next visit is a $99 targeted treatment plus her first full-size product, not a full facial. A rule for everyone with a
      low budget to start, not just one guest (Alexandra, Oct 20 2026) */
@@ -786,8 +787,7 @@ function rxEditor(R,me){
   const maint=h('section',{class:'card2'},h('span',{class:'lbl'},'Her Next Visit'),
     ...R.m.lines.map(l=>lineRow(R.m.lines,l)),adder(R.m.lines),
     h('div',{class:'rxtot'},h('span',{class:'soft'},'Next Visit'),h('b',{},rxMoney(rxTotal(R.m.lines)))),
-    h('label',{class:'fld'},'In About',mw),h('label',{class:'fld'},'What It Looks Like',mt),
-    h('label',{class:'fld'},'Refresh In',rf));
+    h('label',{class:'fld'},'In About',mw),h('label',{class:'fld'},'What It Looks Like ',h('small',{class:'soft'},'(optional note)'),mt)); /* no Refresh In: it repeated In About (Alexandra, Oct 20 2026) */
   const save=h('button',{type:'button',class:'obtn',onclick:()=>rxStore(R,me)},'Save & Send To Desk');
   const done=h('section',{class:'card2',style:'align-items:center;text-align:center'},save,
     h('small',{class:'soft'},'Her card goes to the front desk and her QR shows here. She scans it with her camera; if she doesn’t, the desk texts it to her.'));
