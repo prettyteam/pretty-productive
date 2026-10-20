@@ -162,7 +162,7 @@ function rxPriceList(kind){
         return [mine.length?h('div',{},h('span',{class:'lbl'},'★ My Go-Tos'),...mine.map(row)):null,
           ...rxByBrand(items.filter(([n])=>!favs.includes(n))).map(([b,L])=>{const d=h('details',{class:'invg'},h('summary',{},h('h2',{style:'font-size:17px'},b),h('span',{class:'soft invc'},String(L.length)),h('span',{class:'tplus','aria-hidden':'true'},'+')),
             h('div',{class:'sec2'},...L.map(row)));if(q)d.open=true;return d})]})(),
-      h('p',{class:'soft'},'Try Me bottle: 1 oz of any backbar product, $6. Retail prices from Paired Plus; ring up from the POS.')));
+      h('p',{class:'soft'},(kind==='skin'?'Skin has no Try Me bottles: the $25 take-home size is the skin version.':'Try Me bottle: 1 oz of any backbar product, $6.')+' Retail prices from Paired Plus; ring up from the POS.')));
   if(q) d.open=true;
   return d;
 }
@@ -458,7 +458,7 @@ function rxGenerateSkin(R,g){
   /* home care by amount: $60 and up starts with the full-size cleanser, $50 is the Skin Box, less is what's left of her budget */
   const hc=p=>({n:'Home Care',p,t:'h',full:p,why:p>=RX_SK_HI?'Start with the full-size cleanser, Biologique Recherche Lait VIP O2 (5.1 oz, lasts about 3 months)'+(picks?'. Matched to her skin: '+picks:''):
     p>=RX_SK_LO?'Suggested: Biologique Recherche '+box+', lasts for a 4-week skincare routine'+(picks?'. Matched to her skin for later: '+picks:''):
-    p>RX_SK_MIN?'What’s left of her budget: the travel-size Lait VIP O2 (1.7 oz, $35, lasts about 1 month) or Try Me bottles'+(picks?'. Matched to her skin for later: '+picks:''):
+    p>RX_SK_MIN?'What’s left of her budget: the travel-size Lait VIP O2 (1.7 oz, $35, lasts about 1 month) or the $25 take-home size Collagène Originel (lasts about 2 weeks)'+(picks?'. Matched to her skin for later: '+picks:''):
     'Three Biologique Recherche samples matched to her skin (less than the Skin Box, but she goes home with something)'+(picks?'. Matched to her skin for later: '+picks:'')});
   const pkg=(i,amt)=>[...rxSvcLines('skin',P[i]),...(amt>0?[hc(amt)]:[])];
   /* two different facials (Alexandra, Oct 20 2026): Worth The Wait is the lighter facial that fits her budget, All In is
@@ -741,7 +741,7 @@ function rxEditor(R,me){
     p.addEventListener('change',()=>{l.p=Number(p.value)||0;rxSave();render()});
     return h('div',{class:'rxl'},
       h('div',{class:'rxn'},h('b',{},l.t==='t'?'Try Me: '+l.n:l.t==='h'?'Home Care Budget':l.n),l.t==='s'&&l.reg&&l.reg!==l.p?h('small',{class:'soft'},'VIP · regular ',h('s',{},rxMoney(l.reg))):null,l.t==='s'?null:h('small',{class:'soft'},l.t==='t'?'1 oz Try Me bottle':l.t==='h'?'She agrees to this at the consult; you pick what she takes home at the end.'+(l.why?' '+l.why+'.':''):'Maintenance'+(l.why?' · '+l.why:''))),
-      l.t==='s'||l.t==='h'?null:h('button',{type:'button',class:'tab rxtry',onclick:()=>{if(l.t==='t'){l.t='p';l.p=l.full||(RX_PRICES[R.kind].find(x=>x[0]===l.n)||[0,l.p])[1]}else{l.full=l.full||l.p;l.t='t';l.p=RX_TRY}rxSave();render()}},l.t==='t'?'Full Size':'Try Me '+rxMoney(RX_TRY)),
+      l.t==='s'||l.t==='h'||(R.kind==='skin'&&l.t!=='t')?null:h('button',{type:'button',class:'tab rxtry',onclick:()=>{if(l.t==='t'){l.t='p';l.p=l.full||(RX_PRICES[R.kind].find(x=>x[0]===l.n)||[0,l.p])[1]}else{l.full=l.full||l.p;l.t='t';l.p=RX_TRY}rxSave();render()}},l.t==='t'?'Full Size':'Try Me '+rxMoney(RX_TRY)),
       p,h('button',{type:'button',class:'rgx','aria-label':'Remove '+l.n,onclick:()=>{L.splice(L.indexOf(l),1);rxSave();render()}},'×'));
   };
   /* Add a line in two steps, a category and then what's in it, so it's never one long list (Alexandra, Oct 20 2026) */
@@ -752,7 +752,9 @@ function rxEditor(R,me){
     if(favs.length) cats.push(['My Go-Tos',plist.filter(x=>favs.includes(x[0]))]);
     rxSvcCats(R.kind,svc).forEach(c=>cats.push(c));
     rxProdCats(R.kind,plist).forEach(([c,P])=>cats.push(['Maintenance · '+c,P]));
-    cats.push(['Try Me Bottle',[['__try',RX_TRY]]]);
+    /* skin has no Try Me bottles: its version is the $25 take-home size (Alexandra, Oct 20 2026) */
+    if(R.kind==='skin'){const t=plist.filter(([n])=>/\$25 Take-Home Size/.test(n));if(t.length)cats.push(['Take-Home Size · $25',t])}
+    else cats.push(['Try Me Bottle',[['__try',RX_TRY]]]);
     const cur=RX_ADDCAT.get(L), cat=h('select',{'aria-label':'Category'},h('option',{value:''},'+ Add: Pick A Category'),cats.map(([c,P])=>h('option',Object.assign({value:c},c===cur?{selected:''}:{}),c+' ('+P.length+')')));
     const items=(cats.find(c=>c[0]===cur)||[])[1];
     const sel=h('select',Object.assign({'aria-label':'Add a service or product'},items?{}:{disabled:''}),h('option',{value:''},'Then Pick One'),items?items.map(([n,p])=>n==='__try'?h('option',{value:n},'Try Me bottle · '+rxMoney(p)):opt([n,p])):null);
@@ -789,7 +791,7 @@ function rxEditor(R,me){
   /* full sizes she should end up with, outside the budget (Alexandra, Oct 16 2026) */
   const hs=(R.rec||[]).some(l=>l.hint==='p50');
   const rec=(R.rec&&R.rec.length)?h('section',{class:'card2'},h('span',{class:'lbl'},hs?'Highly Suggested: Add Her P50':'Full Sizes To Go Home With'),
-    h('small',{class:'soft'},hs?'Shows under All In on her card. Not in the totals: offer it on top of her cleanser.':'Not in her budget or totals. She starts with the Try Me today; these are what she should take home when she’s ready.'),
+    h('small',{class:'soft'},hs?'Shows under All In on her card. Not in the totals: offer it on top of her cleanser.':'Not in her budget or totals. She starts with '+(R.kind==='skin'?'her samples':'the Try Me')+' today; these are what she should take home when she’s ready.'),
     ...R.rec.map(l=>h('div',{style:'display:flex;justify-content:space-between;gap:12px;font-size:14px'},h('span',{},l.n),h('span',{},rxMoney(l.p))))):null;
   /* specialty suggestion (Carolyn's Nano Needling): one tap swaps it in as All In's facial; she can still edit it after */
   const all2=R.opts&&R.opts[1], hasSpec=R.spec&&all2&&!all2.lines.some(l=>l.n===R.spec.n);
@@ -886,7 +888,8 @@ function rxTakeHomeView(me){
   const favs=rxFavs(); (RX_PRICES[kind]||[]).filter(([n])=>favs.includes(n)).forEach(([n,p])=>add(n,p,'Your go-to','fav'));
   const hcWhy=hcOf(opts[ch]).map(l=>l.why||'').join(' ');
   if(kind==='skin'){const bx=(hcWhy.match(/Biologique Recherche \w+ Skin Box/)||[])[0];
-    if(bx) add(bx,RX_SK_LO,'Lasts for a 4-week skincare routine','def'); add('Biologique Recherche Lait VIP O2 (5.1 oz)',price('Biologique Recherche Lait VIP O2 (5.1 oz)')||60,'The full-size cleanser','def');add('Biologique Recherche Lait VIP O2 (1.7 oz)',price('Biologique Recherche Lait VIP O2 (1.7 oz)')||35,'The travel-size cleanser','def')}
+    if(bx) add(bx,RX_SK_LO,'Lasts for a 4-week skincare routine','def'); add('Biologique Recherche Lait VIP O2 (5.1 oz)',price('Biologique Recherche Lait VIP O2 (5.1 oz)')||60,'The full-size cleanser','def');add('Biologique Recherche Lait VIP O2 (1.7 oz)',price('Biologique Recherche Lait VIP O2 (1.7 oz)')||35,'The travel-size cleanser','def');
+    (RX_PRICES.skin||[]).filter(([n])=>/\$25 Take-Home Size/.test(n)).forEach(([n,p])=>add(n,p,'The $25 take-home size','def'))}
   else add('Taffeta Refill Shampoo & Conditioner, new bottles',81,'Full-size Taffeta bottles','def');
   let needs=[]; try{needs=rxNeeds(d)}catch(e){}
   if(kind==='hair'){const svc=opts.flatMap(o=>o.lines.map(l=>l.n)); needs=rxNeedsFor(needs,svc)}
@@ -919,12 +922,12 @@ function rxTakeHomeView(me){
     ...rxByBrand(allP.filter(([n])=>!favs.includes(n)&&hit([n]))).map(([br,L])=>{const dd=h('details',{class:'invg'},h('summary',{},h('h2',{style:'font-size:17px'},br),h('span',{class:'soft invc'},String(L.length)),h('span',{class:'tplus','aria-hidden':'true'},'+')),
       h('div',{class:'sec2'},...L.map(([n,p])=>pickRow(n,p,tagOf(n)))));if(q||L.some(([n])=>picked(n)))dd.open=true;return dd}),
     ...x.home.filter(p=>!allP.some(([n])=>n===p.n)).map(p=>pickRow(p.n,p.p,'')),
-    h('button',{type:'button',class:'tab',onclick:()=>{const w=prompt('Which product goes in the Try Me bottle?');if(w){x.home.push({n:'Try Me: '+w.trim(),p:RX_TRY});put();render()}}},'+ Try Me bottle · '+rxMoney(RX_TRY)));
+    kind==='skin'?null:h('button',{type:'button',class:'tab',onclick:()=>{const w=prompt('Which product goes in the Try Me bottle?');if(w){x.home.push({n:'Try Me: '+w.trim(),p:RX_TRY});put();render()}}},'+ Try Me bottle · '+rxMoney(RX_TRY)));
   const row=c=>{const on=!!picked(c.n);return h('button',{type:'button',class:'rxth'+(on?' on':''),'aria-pressed':String(on),onclick:()=>{
       if(on)x.home=x.home.filter(p=>p.n!==c.n);else x.home.push({n:c.n,p:c.p}); put(); render()}},
     h('span',{class:'rxbx','aria-hidden':'true'},on?'✓':''),h('span',{class:'rxthn'},h('b',{},(c.grp==='fav'?'★ ':'')+c.n),c.why?h('small',{},c.why):null),h('span',{class:'rxthp'},rxMoney(c.p)))};
   const grp=(t,g)=>{const L=cand.filter(c=>c.grp===g);return L.length?[h('span',{class:'lbl',style:'margin-top:6px'},t),...L.map(row)]:[]};
-  const tryMe=h('button',{type:'button',class:'tab',onclick:()=>{const w=prompt('Which product goes in the Try Me bottle?');if(w){x.home.push({n:'Try Me: '+w.trim(),p:RX_TRY});put();render()}}},'+ Try Me bottle · '+rxMoney(RX_TRY));
+  const tryMe=kind==='skin'?null:h('button',{type:'button',class:'tab',onclick:()=>{const w=prompt('Which product goes in the Try Me bottle?');if(w){x.home.push({n:'Try Me: '+w.trim(),p:RX_TRY});put();render()}}},'+ Try Me bottle · '+rxMoney(RX_TRY));
   const extra=x.home.filter(p=>!cand.some(c=>c.n===p.n)).map(p=>row({n:p.n,p:p.p,why:'',grp:'x'}));
   const toast=h('p',{class:'soft',style:'text-align:center;margin:0'});
   const toRG=()=>{const cat=typeof rgCatalog==='function'?rgCatalog(kind):[], whens=RG_WHEN[kind];
