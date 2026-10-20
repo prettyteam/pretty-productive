@@ -942,7 +942,7 @@ function ipadPinsCard(list){
       if(!/^\d{4,8}$/.test(x)){msg('Use 4 to 8 numbers');continue}
       msg('Saving…');
       try{
-        const L=String(s.link||'').split('#')[1].split('.'), st=(await openFile(L[1],L[2],s.pin)).staff||{};
+        const L=String(s.link||'').split('#')[1].split('.'), f=await openFile(L[1],L[2],s.pin), st=(f.mine&&f.mine.staff)||f.staff||{};
         const r=await fetch(API(),{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({type:'rxpin',pin:x,slug:st.slug,t:st.t})});
         const j=await r.json(); msg(j.ok?'Saved':'Didn’t save'); if(j.ok) ins[i].value='';
       }catch(e){msg('Didn’t save')}
