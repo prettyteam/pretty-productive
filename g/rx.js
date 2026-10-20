@@ -494,9 +494,9 @@ function rxGenerateSkin(R,g){
      low budget to start, not just one guest (Alexandra, Oct 20 2026) */
   const low=b!=null&&b<200;   /* a low budget to start: under $200 */
   if(low){
-    const relax=R.visit==='relax';
-    mLines=[...rxSvcLines('skin',[relax?'Taffeta Facial':tgt]),{n,p:pr,t:'p',why:'Her first full size, matched to her skin',full:pr}];
-    mw=relax?'4–6 weeks':'4 weeks'; mt=relax?'Your Taffeta Facial again, and your first full-size product to keep your results going.':'We’ll see how your skin did with your Skin Box: a targeted treatment, and your first full-size product to keep your results going.'}
+    /* every low budget, relaxing visit or results first: the $99 targeted treatment next time (Alexandra, Oct 20 2026) */
+    mLines=[...rxSvcLines('skin',[tgt]),{n,p:pr,t:'p',why:'Her first full size, matched to her skin',full:pr}];
+    mw='4 weeks'; mt='We’ll see how your skin did with what you took home: a targeted treatment, and your first full-size product to keep your results going.'}
   return {opts:[{title:'Option 1',lines:o1},{title:'Option 2',lines:o2}],
     m:{lines:mLines,when:mw,text:mt},refresh:mw,keep:false,more:false,rec:[{n,p:pr,why,hint:'p50'}],spec};
 }
