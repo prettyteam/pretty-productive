@@ -27,3 +27,7 @@
 .rxthp{white-space:nowrap;font-variant-numeric:tabular-nums}
 .rxth:focus-visible{outline:2px solid #8b6b4c;outline-offset:2px}
 .rxover{margin:0;text-align:center;color:#9a4a2b;font-size:14px;border:1px solid currentColor;padding:8px 10px}
+
+.rxadd{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px}
+.rxadd .fld{margin:0}
+@media(max-width:520px){.rxadd{grid-template-columns:1fr}}
