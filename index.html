@@ -805,12 +805,15 @@ function liveClock(){const c=HUB.data&&HUB.data.clock; if(!c) return null;
    inner circle; "Hi," in the serif and her name under it (the Antoinetta name pictures come next). */
 /* first names written in Antoinetta (Alexandra's licensed font, used as pictures as the desktop license allows) */
 const NAME_PICS=['adriana','alexandra','alyssa','amanda','angelina','ashley','carolyn','dominique','emily','isabella','jen','jennifer','joanna','kelly','lexi','mia','neva','sara'];
+/* Adriana and Lexi get a black bat in place of the bow (Alexandra, Oct 20 2026) */
+const BAT_WREATH=['adriana','lexi'];
 function hello(){
-  const logo=document.querySelector('.wreath'), ph=myPhoto();
+  const logo=document.querySelector('.wreath'), ph=myPhoto(), fn=firstName(S.mine.name), k=fn.toLowerCase();
+  const src=BAT_WREATH.includes(k)?'g/bat-wreath.svg':logo&&logo.src;
   return h('div',{class:'hhome'},
-    h('div',{class:'crest'},ph?h('img',{class:'me',src:ph,alt:''}):null,logo?h('img',{class:'w'+(ph?' over':''),src:logo.src,alt:''}):null),
-    h('div',{class:'hhi'},h('span',{},'Hello,'),(()=>{const fn=firstName(S.mine.name), k=fn.toLowerCase();
-      return NAME_PICS.includes(k)?h('img',{class:'hnamepic',src:'g/names/'+k+'.png',alt:fn}):h('span',{class:'hname'},fn)})()));
+    h('div',{class:'crest'},ph?h('img',{class:'me',src:ph,alt:''}):null,logo?h('img',{class:'w'+(ph?' over':''),src,alt:''}):null),
+    h('div',{class:'hhi'},h('span',{},'Hello,'),
+      NAME_PICS.includes(k)?h('img',{class:'hnamepic',src:'g/names/'+k+'.png',alt:fn}):h('span',{class:'hname'},fn)));
 }
 function clockCard(){
   const c=liveClock();
