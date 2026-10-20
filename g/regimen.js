@@ -16,8 +16,9 @@ const RG_GROUPS={
 const RG_HOW={
   milk:'With dry hands and a dry face, cleanse with 1 pump in the morning and 2–3 pumps at night. Massage over face and neck for 1–2 minutes. Remove with a wet cloth, then rinse with cool water. At night, if you’re wearing makeup, double cleanse to remove the first layer.',
   p50:'After cleansing, put 1–2 pumps of P50 on a cotton pad and sweep over face and neck, upward and outward. A light tingle is normal. Do not rinse.',
-  serum:'After your P50, press a few drops between your fingertips and pat into face and neck. Let it sink in before your cream.',
-  cream:'Warm a pea-size amount between your fingertips and press into face and neck as your last step.',
+  /* serum and cream in Carolyn's own words (Oct 14 2026) */
+  serum:'After your P50, apply 2–3 drops directly onto skin. Gently pat to spread the product evenly over face and neck.',
+  cream:'Use a pea-size amount all over face and neck. Emulsify between your fingers and press into skin. Use a little more if needed.',
   eye:'Tap a rice-grain amount around the orbital bone with your ring finger, from the inner corner out.',
   mask:'Apply an even layer to clean skin, avoiding the eyes. Leave on 10–15 minutes, then rinse with lukewarm water.',
   hairsh:'Massage into wet scalp, work through to the ends and rinse. Repeat for a deeper clean.',
@@ -491,7 +492,8 @@ async function rgShare(me,R,kind,toast){
   try{
     const blob=await rgPdf(me,R,kind), file=new File([blob],rgFile(R,kind),{type:'application/pdf'});
     if(navigator.canShare&&navigator.canShare({files:[file]})){
-      try{await navigator.share({files:[file],title:'Your Taffeta at-home regimen'});toast.textContent='Sent? Tap Mark sent.'}
+      const first=String(R.guest||'').trim().split(/\s+/)[0];
+      try{await navigator.share({files:[file],title:'Your Taffeta at-home regimen',text:'Hi'+(first?' '+first:'')+'! Here’s your Taffeta at-home routine from today: your products and how to use them.'});toast.textContent='Sent? Tap Mark sent.'}
       catch(e){toast.textContent=e&&e.name==='AbortError'?'':'Couldn’t open the share sheet. Try Preview.'}
     } else {const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=rgFile(R,kind);document.body.appendChild(a);a.click();a.remove();toast.textContent='Saved the PDF. Attach it to your text.'}
   }catch(e){toast.textContent='Couldn’t make the PDF. Check the Wi-Fi and try again.'}

@@ -868,15 +868,19 @@ function rxSavedView(me){
    she said. Going over just warns ("let her know before ringing up"). Save & Send To Desk puts her Home Care PDF on
    the front desk app's Home Care list, and the desk texts it to her. */
 /* How to use it at home, by type of product, not by name (Alexandra, Oct 20 2026). Face and neck only, the way Carolyn teaches it. */
+/* generic directions by product type, in Carolyn's own words (Alexandra, Oct 14 2026). A product with its own
+   directions in the take-home builder (g/regimen.js) uses those instead. Face and neck only. */
 function rxHowTo(n){n=String(n||'');
   if(n.startsWith(RX_BRB_N+': ')){const b=n.slice(RX_BRB_N.length+2);return rxHowTo(/Sérum|Serum|Collag/i.test(b)?'Sérum '+b:b)||rxHowTo('Sérum')}
-  if(/Skin Box/.test(n))return 'Morning and night, in this order. 1) Cleanser: on a dry face, massage 1–2 pumps over your face and neck for 1–2 minutes, remove with a warm damp cloth, rinse with cool water. 2) P50: soak a cotton round and sweep it over your face and neck from the center out; don’t rinse. 3) Serum: press 2–3 drops into your face and neck and let it sink in. 4) Moisturizer: warm a pea-size amount between your fingertips and press it in.';
-  if(/Lait|Démaquillante|Micellaire|Cleans/i.test(n))return 'On a dry face, massage 1–2 pumps over your face and neck for 1–2 minutes. Remove with a warm damp cloth, then rinse with cool water. Morning and night.';
-  if(/Lotion P50|MC 110|Eauxyg/.test(n))return 'After cleansing, soak a cotton round and sweep it over your face and neck, from the center out. Don’t rinse. Morning and night, unless your esthetician told you otherwise.';
-  if(/Sérum|Serum|Fluide|Amniotique|Collag|Élastine|Placenta|Tensil|Oligo|Dermopore|Silk Plus|Iribiol|Tissulaires|Colostrum|Spectral/.test(n))return 'After your P50, put 2–3 drops on your fingertips and press them into your face and neck. Let it sink in before your moisturizer. Morning and night.';
-  if(/Contour des Yeux|Eye/.test(n))return 'Tap a tiny amount around the eye area with your ring finger, morning and night.';
-  if(/Masque|Mask/.test(n))return '1–2 times a week after your P50: smooth a thin layer over your face and neck, leave it on as directed, then remove.';
-  if(/Crème|Émulsion|Cream/.test(n))return 'Last step: warm a pea-size amount between your fingertips and press it into your face and neck.';
+  if(/Skin Box/.test(n))return 'Morning and night, in this order. 1) Cleanser: With dry hands and a dry face, cleanse with 1 pump in the morning and 2–3 pumps at night. Massage over face and neck for 1–2 minutes. Remove with a wet cloth, then rinse with cool water. At night, if you’re wearing makeup, double cleanse to remove the first layer. 2) P50: After cleansing, put 1–2 pumps of your P50 on a cotton round and sweep over face and neck, upward and outward. A light tingle is normal. Don’t rinse. 3) Serum: After your P50, apply 2–3 drops directly onto skin. Gently pat to spread the product evenly over face and neck. 4) Moisturizer: Use a pea-size amount all over face and neck. Emulsify between your fingers and press into skin. Use a little more if needed.';
+  if(/Lait|Démaquillante|Micellaire|Cleans/i.test(n))return 'With dry hands and a dry face, cleanse with 1 pump in the morning and 2–3 pumps at night. Massage over face and neck for 1–2 minutes. Remove with a wet cloth, then rinse with cool water. At night, if you’re wearing makeup, double cleanse to remove the first layer.';
+  if(/Lotion MC 110/.test(n))return 'Use 2–3 times a week. Apply 1–2 pumps to a cotton round and tap onto the affected areas. Also great for fine lines.';
+  if(/Lotion P50|Eauxyg/.test(n))return 'After cleansing, put 1–2 pumps of your P50 on a cotton round and sweep over face and neck, upward and outward. A light tingle is normal. Don’t rinse.';
+  if(/Sérum Vivant/.test(n))return 'At night, apply 2–3 drops onto blemished areas and pat into skin.';
+  if(/Sérum|Serum|Fluide|Amniotique|Collag|Élastine|Placenta|Tensil|Oligo|Dermopore|Silk Plus|Iribiol|Tissulaires|Colostrum|Spectral/.test(n))return 'After your P50, apply 2–3 drops directly onto skin. Gently pat to spread the product evenly over face and neck.';
+  if(/Contour des Yeux|Eye/.test(n))return 'Tap a rice-grain amount around the orbital bone with your ring finger, from the inner corner out.';
+  if(/Masque|Mask/.test(n))return 'Apply an even layer to clean skin, avoiding the eyes. Leave on 10–15 minutes, then rinse with lukewarm water.';
+  if(/Crème|Émulsion|Cream/.test(n))return 'Use a pea-size amount all over face and neck. Emulsify between your fingers and press into skin. Use a little more if needed.';
   return ''}
 const RX_HOW_STEP=n=>/Skin Box/.test(n)?0:/Lait|Démaquillante|Micellaire/.test(n)?1:/Lotion P50|MC 110|Eauxyg/.test(n)?2:/Masque|Mask/.test(n)?5:/Contour des Yeux|Eye/.test(n)?4:/Crème|Émulsion|Cream/.test(n)?4.5:3;
 function rxTakeHomeView(me){
@@ -937,7 +941,7 @@ function rxTakeHomeView(me){
     RG=rgBlank(); RG.guest=x.guest; RG.next=d.m&&d.m.when||''; RG.rid=x.id;   /* her card id: saving again replaces the desk's copy */
     RG.picks=x.home.map(p=>{if(String(p.n).startsWith(RX_BRB_N+': '))return {n:String(p.n),how:rxHowTo(p.n)+' About 85 drops: lasts about 2 weeks.',when:whens[0],step:''};const b=rgNorm(rgBase(String(p.n).replace(/^Try Me: /,''))), it=cat.find(c=>rgNorm(c.n)===b||c.sizes.includes(p.n))||cat.find(c=>{const k=rgNorm(c.n);return k.length>8&&(b.startsWith(k)||k.startsWith(b))});
       const nm=it?it.n:String(p.n).replace(/^Try Me: /,''), gen=kind==='skin'?rxHowTo(nm):'';
-      return it?{n:it.n,how:gen||it.how,when:it.w0&&whens.includes(it.w0)?it.w0:whens[0],step:it.step}:{n:nm,how:gen,when:whens[0],step:''}});
+      return it?{n:it.n,how:it.how||gen,when:it.w0&&whens.includes(it.w0)?it.w0:whens[0],step:it.step}:{n:nm,how:gen,when:whens[0],step:''}});
     if(kind==='skin') RG.picks.sort((a,b)=>RX_HOW_STEP(a.n)-RX_HOW_STEP(b.n))};
   const send=h('button',{type:'button',class:'obtn',onclick:async()=>{if(!x.home.length){toast.textContent='Pick what she’s taking home first.';return}
     toRG(); await rgSave2(me,toast,send); if(!RG.guest){RX_MSG=x.guest+'’s Home Care PDF is on the front desk list to text her.';x.sent=new Date().toISOString();put();RX_VIEW='saved';RX_FIND=x.guest;render();window.scrollTo(0,0)}}},'Save & Send To Desk');
