@@ -206,7 +206,8 @@ const RX_GOAL={
     'Calm Redness':{p:[['Taffeta Facial'],['Mini Redness Reversal']],m:[['Mini Redness Reversal'],'4 weeks','A calming 30-minute treatment.']},
     'Brighten or Even Tone':{p:[['Taffeta Facial','Dermaplaning Add-On'],['Taffeta Facial'],['Brightening Mini Facial']],m:[['Brightening Mini Facial'],'4 weeks','A 30-minute brightening treatment.']},
     'Hydrate':{p:[['Taffeta Facial'],['Hydration Boost']],m:[['Hydration Boost'],'4 weeks','A 30-minute moisture boost.']},
-    'Fine Lines And Firmness':{p:[['Nano Needling Facial'],['Taffeta Facial'],['Anti-Aging Express']],m:[['Anti-Aging Express'],'4 weeks','A 30-minute treatment for firmness and fine lines.']},
+    /* named Anti-Aging so the girls find it (Alexandra, Oct 20 2026); cards saved as Fine Lines And Firmness still open */
+    'Anti-Aging (Fine Lines & Firmness)':{p:[['Nano Needling Facial'],['Taffeta Facial'],['Anti-Aging Express']],m:[['Anti-Aging Express'],'4 weeks','A 30-minute treatment for firmness and fine lines.']},
     'Overall Glow':{p:[['Taffeta Facial'],['Hydration Boost']],m:[['Taffeta Facial'],'4–6 weeks','Your facial every 4 to 6 weeks keeps skin on track.']}
   }
 };
@@ -319,7 +320,7 @@ const rxTotal=L=>L.reduce((s,x)=>s+(Number(x.p)||0),0);
 /* She can pick more than one goal (Alexandra, Oct 15 2026): the packages merge tier by tier, without doubles
    (a full cut wins over leaving wet, Blowdry Plus over Blow Dry). Old cards saved one goal as text. */
 /* goal names are Title Case (Alexandra, Oct 15 2026); cards saved before still match by spelling, any case */
-const RX_GOAL_OLD={'brighter blonde (foils)':'Foils (Highlights)','root touch-up or gray coverage':'Single Process or Gray Coverage','movement (layers & texture)':'Movement (Color & Style)'};
+const RX_GOAL_OLD={'fine lines and firmness':'Anti-Aging (Fine Lines & Firmness)','brighter blonde (foils)':'Foils (Highlights)','root touch-up or gray coverage':'Single Process or Gray Coverage','movement (layers & texture)':'Movement (Color & Style)'};
 const rxGoalKey=(R,g)=>{const l=String(g).toLowerCase();return Object.keys((RX_GOAL[R.kind]||{})).find(k=>k.toLowerCase()===l)||RX_GOAL_OLD[l]||g};
 const rxGoalList=R=>(Array.isArray(R.goal)?R.goal:(R.goal?[R.goal]:[])).map(g=>rxGoalKey(R,g));
 function rxMergeSvc(names){
@@ -349,8 +350,8 @@ const RX_MC110={p:[['Taffeta Facial with MC 110'],['Brightening Mini Facial']],
   m:[['Taffeta Facial with MC 110'],'4–6 weeks','Your facial with MC 110 brightens and plumps at the same time.']};
 function rxGoalPlan(R){
   let keys=rxGoalList(R);
-  const mc=R.kind==='skin'&&keys.includes('Fine Lines And Firmness')&&keys.includes('Brighten or Even Tone');
-  if(mc) keys=keys.filter(k=>k!=='Fine Lines And Firmness'&&k!=='Brighten or Even Tone');
+  const mc=R.kind==='skin'&&keys.includes('Anti-Aging (Fine Lines & Firmness)')&&keys.includes('Brighten or Even Tone');
+  if(mc) keys=keys.filter(k=>k!=='Anti-Aging (Fine Lines & Firmness)'&&k!=='Brighten or Even Tone');
   const gs=[...(mc?[RX_MC110]:[]),...keys.map(k=>(RX_GOAL[R.kind]||{})[k]).filter(Boolean)]; if(!gs.length) return null;
   if(gs.length===1) return gs[0];
   const mg=R.kind==='skin'?rxMergeSkin:rxMergeSvc;
@@ -431,7 +432,7 @@ const RX_SK_HI=60, RX_SK_LO=50;
 function rxGenerateSkin(R,g){
   const needs=rxNeeds(R), P=g.p, b=R.nob?null:Number(R.budget)||null, cap=RX_ALLIN_SKIN;
   const nw=R.now||[], gl=rxGoalList(R);
-  const box=nw.includes('Breakouts')||gl.includes('Clear Breakouts')?'Blemish Skin Box':nw.includes('Fine lines')||gl.includes('Fine Lines And Firmness')?'Youth Skin Box':'Standard Skin Box';
+  const box=nw.includes('Breakouts')||gl.includes('Clear Breakouts')?'Blemish Skin Box':nw.includes('Fine lines')||gl.includes('Anti-Aging (Fine Lines & Firmness)')?'Youth Skin Box':'Standard Skin Box';
   /* every product rule still runs: the artist sees the products matched to what she said (P50, serum, cleanser, cream);
      her card shows only the budget (Alexandra, Oct 17 2026) */
   const picks=[...new Set(needs.map(k=>{let [n,,,alt]=RX_PROD[k];return alt&&RX_OUT.includes(n)?alt[0]:n}))].join(', ');
@@ -497,7 +498,7 @@ function rxGenerate(R){
   if(R.kind==='skin'&&b!=null&&o1.some(l=>l.t==='t')){
     const nw=R.now||[], gl=rxGoalList(R);
     const box=nw.includes('Breakouts')||gl.includes('Clear Breakouts')?'Blemish Skin Box':
-      nw.includes('Fine lines')||gl.includes('Fine Lines And Firmness')?'Youth Skin Box':'Standard Skin Box';
+      nw.includes('Fine lines')||gl.includes('Anti-Aging (Fine Lines & Firmness)')?'Youth Skin Box':'Standard Skin Box';
     const bx={n:'Biologique Recherche '+box,p:50,t:'p',why:'About 4 weeks of Biologique Recherche to try at home',full:50};
     o1=[...o1.filter(l=>l.t==='s'),bx];
     if(o2.some(l=>l.t==='t')){const o2b=[...o2.filter(l=>l.t==='s'),bx]; if(rxTotal(o2b)<=cap) o2=o2b}
