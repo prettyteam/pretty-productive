@@ -239,7 +239,7 @@ const RX_NOW={
 const rxKind=()=>(S.mine&&S.mine.role==='esthetician')?'skin':'hair';
 const rxSlug=()=>(S.mine&&S.mine.staff&&S.mine.staff.slug)||(S.mine&&S.mine.slug)||'x';
 const rxKey=()=>'pp-rx:'+rxSlug(), rxSavedKey=()=>'pp-rxsaved:'+rxSlug();
-const rxBlank=k=>({kind:k||rxKind(),guest:'',budget:'',nob:false,goal:[],a:{},now:[],opts:null,m:null,refresh:'',id:''});
+const rxBlank=k=>({kind:k||rxKind(),guest:'',visit:'',budget:'',nob:false,goal:[],a:{},now:[],opts:null,m:null,refresh:'',id:''});
 let RX=null, RX_VIEW='build', RX_FIND='', RX_SHOW=null, RX_MSG='', RX_HOME=null;
 function rxLoad(){ if(RX) return RX; try{RX=Object.assign(rxBlank(),JSON.parse(store.get(rxKey())||'{}'))}catch(e){RX=rxBlank()} return RX }
 function rxSave(){ store.set(rxKey(),JSON.stringify(RX)) }
@@ -462,6 +462,10 @@ function rxGenerateSkin(R,g){
     o1=b>=99+RX_SK_LO?[...rxSvcLines('skin',[tgt]),hc(RX_SK_LO)]:rxSvcLines('skin',['Taffeta Facial']);
     o2=[...rxSvcLines('skin',['Taffeta Facial']),Object.assign(hc(RX_SK_LO),{why:'The Biologique Recherche '+box+' (about 4 weeks of product), or one full-size bottle instead: her cleanser, Lait VIP O2 (5.1 oz, $60), or her P50 matched to her skin'+(picks?' ('+picks+')':'')})];
     if(rxTotal(o1)>=rxTotal(o2)) o1=rxSvcLines('skin',['Taffeta Facial']);
+    /* she wants the relaxing 60-minute facial: both options are the Taffeta Facial, Worth The Wait with what her budget allows */
+    if(R.visit==='relax'){const left=b-rxPrice('skin','Taffeta Facial');
+      o1=left>=RX_SK_LO?[...rxSvcLines('skin',['Taffeta Facial']),hc(RX_SK_LO)]:rxSvcLines('skin',['Taffeta Facial']);
+      if(rxTotal(o2)<=rxTotal(o1)) o2=[...rxSvcLines('skin',['Taffeta Facial']),hc(RX_SK_HI)]}
   }
   /* Carolyn's specialty: Nano Needling is suggested for her to swap into All In when it's right for the guest */
   const spec=rxArtist()==='carolyn'&&(gl.includes('Anti-Aging (Fine Lines & Firmness)')||nw.includes('Fine lines'))
@@ -474,8 +478,9 @@ function rxGenerateSkin(R,g){
      low budget to start, not just one guest (Alexandra, Oct 20 2026) */
   const low=b!=null&&b<200;   /* a low budget to start: under $200 */
   if(low){
-    mLines=[...rxSvcLines('skin',[tgt]),{n,p:pr,t:'p',why:'Her first full size, matched to her skin',full:pr}];
-    mw='4 weeks'; mt='We’ll see how your skin did with your Skin Box: a targeted treatment, and your first full-size product to keep your results going.'}
+    const relax=R.visit==='relax';
+    mLines=[...rxSvcLines('skin',[relax?'Taffeta Facial':tgt]),{n,p:pr,t:'p',why:'Her first full size, matched to her skin',full:pr}];
+    mw=relax?'4–6 weeks':'4 weeks'; mt=relax?'Your Taffeta Facial again, and your first full-size product to keep your results going.':'We’ll see how your skin did with your Skin Box: a targeted treatment, and your first full-size product to keep your results going.'}
   return {opts:[{title:'Option 1',lines:o1},{title:'Option 2',lines:o2}],
     m:{lines:mLines,when:mw,text:mt},refresh:mw,keep:false,more:false,rec:[{n,p:pr,why,hint:'p50'}],spec};
 }
@@ -636,6 +641,9 @@ function rxBuild(R,me){
   const spRow=R.kind==='hair'?h('div',{class:'fld'},'Your Single Process Price',chips(RX_SP.map(p=>'$'+p),o=>o==='$'+spNow,o=>{if(o!=='$'+spNow){store.set(rxSpKey(),o.slice(1));R.opts=null;R.m=null}})):null;
   const s1=h('section',{class:'card2'},h('span',{class:'lbl'},'1 · Your Guest'),kindRow,vipRow,spRow,
     h('label',{class:'fld'},'Guest’s First Name',gIn),
+    /* skin: the kind of visit comes before her budget (Alexandra, Oct 20 2026): a relaxing 60-minute facial, or results
+       first where time doesn't matter (then the $99 targeted treatment makes sense on a budget) */
+    R.kind==='skin'?h('div',{class:'fld'},'What Kind Of Visit Is She Hoping For?',chips(['A relaxing 60-minute facial','Results first, time doesn’t matter'],o=>R.visit===(/^A relaxing/.test(o)?'relax':'results'),o=>{const v=/^A relaxing/.test(o)?'relax':'results';if(v!==R.visit){R.visit=v;R.opts=null;R.m=null}})):null,
     h('label',{class:'fld'},h('span',{},'Her Budget For Today ',h('small',{class:'soft'},'(include an estimated cost of maintenance to bundle with the services)')),bIn));
   /* Each question is one dropdown row that shows what's picked; tap it to open a checklist (Alexandra, Oct 16 2026).
      Answering a one-answer question closes it and opens the next unanswered one, so nothing gets skipped; a pick-all
