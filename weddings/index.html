@@ -167,6 +167,13 @@ display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap}
 .toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;margin-bottom:12px}
 .toolbar .row{flex:0 1 auto}
 .paperwrap{overflow-x:auto;background:var(--soft);padding:28px}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+@media (max-width:600px){.paperwrap{padding:12px}}
+.paper .dline{overflow-wrap:anywhere}
+.pdfstage{position:fixed;left:-10000px;top:0;width:680px;-webkit-text-size-adjust:100%}
+.cf-body{text-align:left;white-space:pre-wrap;font:400 13px/1.6 var(--sans);color:var(--paper-ink);max-width:540px;margin:0 auto;overflow-wrap:anywhere}
+.cf-body b{font-weight:600;letter-spacing:.04em}
+#cf-text{min-height:380px;font-size:14px;line-height:1.5}
 /* The timeline sheet: stays paper-white in both themes, like the Canva PDFs */
 .paper{background:var(--paper);color:var(--paper-ink);width:100%;max-width:760px;min-width:540px;margin:0 auto;padding:40px 36px 48px;border:1px solid var(--line)}
 .paper{text-align:center}
@@ -279,6 +286,7 @@ input,select,textarea{background:#fff;border-radius:0}
           </div>
           <label class="f">Getting-ready location<input id="location" placeholder="Venue or address"></label>
           <label class="f">Room / details<input id="room" placeholder="e.g. Bridal suite, room 305"></label>
+          <label class="f">Parking / valet<input id="parking" placeholder="e.g. Street parking available"></label>
           <div class="row">
             <label class="f">Day-of contact<input id="contactName" placeholder="Team lead"></label>
             <label class="f">Contact cell<input id="contactPhone" placeholder="(856) 000-0000"></label>
@@ -397,11 +405,21 @@ input,select,textarea{background:#fff;border-radius:0}
           <div class="row">
             <button class="btn ghost" id="copyText">Copy as text</button>
             <button class="btn ghost" id="copySheet">Copy for Sheets</button>
-            <button class="btn" id="saveImg">Save image</button>
+            <button class="btn ghost" id="saveImg">Save image</button>
+            <button class="btn" id="pdfTeam">Team PDF</button>
+            <button class="btn" id="pdfBride">Bride PDF</button>
           </div>
         </div>
         <div class="paperwrap"><div id="sheet"></div></div>
-        <p class="legend">Click any box on the sheet to change its wording. Your edits stay when you change the times or add people.</p>
+        <p class="legend">Click any box on the sheet to change its wording. Your edits stay when you change the times or add people. Team PDF and Bride PDF open your phone's share sheet so you can text the PDF.</p>
+        <div class="card" id="cfCard" style="margin-top:18px">
+          <h2 data-open>Team confirmation</h2>
+          <p class="hint">Fills in from this wedding. Edit anything, then send it to the team.</p>
+          <textarea id="cf-text" aria-label="Team confirmation message"></textarea>
+          <label class="chk"><input type="checkbox" id="cf-tl" checked> Add the team timeline as page 2</label>
+          <div class="row"><button class="btn" id="cf-pdf">Send as PDF</button><button class="btn ghost" id="cf-copy">Copy text</button><button class="btn ghost" id="cf-reset">Refill from wedding</button></div>
+          <p class="status" id="cf-status"></p>
+        </div>
       </div>
     </div>
   </section>
@@ -428,7 +446,9 @@ input,select,textarea{background:#fff;border-radius:0}
           <div class="status" id="teamNote">Pick a wedding to see the timeline.</div>
           <div class="row">
             <button class="btn ghost" id="teamCopy" disabled>Copy as text</button>
-            <button class="btn" id="teamImg" disabled>Save image</button>
+            <button class="btn ghost" id="teamImg" disabled>Save image</button>
+            <button class="btn" id="teamPdf" disabled>Team PDF</button>
+            <button class="btn" id="teamPdfBride" disabled hidden>Bride PDF</button>
           </div>
         </div>
       </div>
@@ -841,7 +861,7 @@ function sheetHTML(s,ver,editable){
   const l2=["Contact "+([s.contactName,s.contactPhone].filter(Boolean).join(" ")||blank),servicesLine(s)];
   if(s.touchups)l2.push("Touch-ups: "+s.touchups);
   h+='<div class="dline muted">'+l2.map(esc).join(' <span class="sep">·</span> ')+'</div>';
-  if(s.notes)h+='<div class="dline note">'+esc(s.notes)+'</div>';
+  if(s.notes&&ver!=="bride")h+='<div class="dline note">'+esc(s.notes)+'</div>';   // office notes stay off the bride's copy
   h+='<div class="sp"></div>';
   if(!plan.cols.length){h+='<p style="text-align:center;color:#5d554e;font-family:var(--serif)">Add an artist and the people getting ready to build the schedule.</p></div>';return {html:h,plan}}
   h+='<table class="tl"><thead><tr>'+(sameSlot?'<th>Time</th>':'');
@@ -893,7 +913,7 @@ function tsvOf(s){
 }
 
 /* ---------- form ---------- */
-const FIELDS=["bride","date","location","room","contactName","contactPhone","notes","previewDate","previewTime","previewLen","previewLoc","start","finishBy","hairSlot","muSlot","arrival","touchups"];
+const FIELDS=["bride","date","location","room","parking","contactName","contactPhone","notes","previewDate","previewTime","previewLen","previewLoc","start","finishBy","hairSlot","muSlot","arrival","touchups"];
 function fillForm(){
   FIELDS.forEach(f=>{const el=$("#"+f);if(el)el.value=S[f]??""});
   setMode(S.mode,false);
@@ -986,7 +1006,7 @@ function renderPeople(){
 }
 function renderSheet(){
   const {html,plan}=sheetHTML(S,version,true);
-  $("#sheet").innerHTML=html;
+  $("#sheet").innerHTML=html;renderConfirm();
   $("#warnings").textContent=plan.warnings?plan.warnings.join(" "):"";
   $("#sheet").querySelectorAll("[data-key]").forEach(td=>{
     td.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();td.blur()}});
@@ -1022,6 +1042,91 @@ async function saveImage(container,name){
 }
 const fileName=s=>((s.bride||"wedding").replace(/[^a-z0-9]+/gi,"-")+"-timeline"+(version==="bride"?"-bride-copy":"")+".png").toLowerCase();
 $("#saveImg").onclick=()=>saveImage($("#sheet"),fileName(S));
+
+
+/* ---------- PDFs to text (Alexandra, Oct 20 2026): same share-sheet idea as the marketing proofs ---------- */
+async function shotOf(html){
+  const box=document.createElement("div");box.className="pdfstage";box.innerHTML=html;document.body.appendChild(box);
+  try{try{await document.fonts.ready}catch(_){}
+    const imgs=[...box.querySelectorAll("img")];await Promise.all(imgs.map(i=>i.complete?0:new Promise(r=>{i.onload=i.onerror=r})));
+    return await html2canvas(box.firstElementChild,{scale:2,backgroundColor:"#ffffff"});
+  }finally{box.remove()}
+}
+function pdfFrom(canvases){
+  const W=612,enc=new TextEncoder(),parts=[],offs=[];let len=0;
+  const push=x=>{const b=typeof x==="string"?enc.encode(x):x;parts.push(b);len+=b.length};
+  const obj=(id,body)=>{offs[id]=len;push(id+" 0 obj\n");[].concat(body).forEach(push);push("\nendobj\n")};
+  const imgs=canvases.map(c=>{const d=atob(c.toDataURL("image/jpeg",0.92).split(",")[1]);const u=new Uint8Array(d.length);for(let i=0;i<d.length;i++)u[i]=d.charCodeAt(i);return {u,w:c.width,h:c.height}});
+  push("%PDF-1.4\n");
+  obj(1,"<< /Type /Catalog /Pages 2 0 R >>");
+  obj(2,"<< /Type /Pages /Kids ["+imgs.map((_,i)=>(3+i*3)+" 0 R").join(" ")+"] /Count "+imgs.length+" >>");
+  imgs.forEach((im,i)=>{
+    const p=3+i*3,H=Math.round(W*im.h/im.w),cs="q "+W+" 0 0 "+H+" 0 0 cm /Im"+i+" Do Q";
+    obj(p,"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 "+W+" "+H+"] /Resources << /XObject << /Im"+i+" "+(p+2)+" 0 R >> >> /Contents "+(p+1)+" 0 R >>");
+    obj(p+1,"<< /Length "+cs.length+" >>\nstream\n"+cs+"\nendstream");
+    obj(p+2,["<< /Type /XObject /Subtype /Image /Width "+im.w+" /Height "+im.h+" /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length "+im.u.length+" >>\nstream\n",im.u,"\nendstream"]);
+  });
+  const total=2+imgs.length*3,xref=len;
+  let x="xref\n0 "+(total+1)+"\n0000000000 65535 f \n";for(let i=1;i<=total;i++)x+=String(offs[i]).padStart(10,"0")+" 00000 n \n";
+  push(x+"trailer\n<< /Size "+(total+1)+" /Root 1 0 R >>\nstartxref\n"+xref+"\n%%EOF\n");
+  return new Blob(parts,{type:"application/pdf"});
+}
+function downloadFile(f){const a=document.createElement("a");a.href=URL.createObjectURL(f);a.download=f.name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),4000)}
+/* Builds the PDF, then opens the share sheet (Messages, Mail, Files). If the phone says the tap "expired"
+   while the PDF was being made, the button turns into "Tap again to send" and the next tap shares it at once. */
+async function sendPdf(btn,pagesHTML,name){
+  if(btn._ready){const f=btn._ready;btn._ready=null;btn.textContent=btn._lab;try{await navigator.share({files:[f]})}catch(e){if(!e||e.name!=="AbortError")downloadFile(f)}return}
+  if(!window.html2canvas){toast("PDFs aren't available here");return}
+  btn._lab=btn._lab||btn.textContent;btn.disabled=true;btn.textContent="Making PDF…";
+  try{
+    const canv=[];for(const h of pagesHTML)canv.push(await shotOf(h));
+    const f=new File([pdfFrom(canv)],name,{type:"application/pdf"});
+    btn.disabled=false;btn.textContent=btn._lab;
+    if(navigator.canShare&&navigator.canShare({files:[f]})){
+      try{await navigator.share({files:[f]})}
+      catch(e){if(e&&e.name==="NotAllowedError"){btn._ready=f;btn.textContent="Tap again to send"}else if(!e||e.name!=="AbortError")downloadFile(f)}
+    }else downloadFile(f);
+  }catch(e){btn.disabled=false;btn.textContent=btn._lab;toast("The PDF didn't save. Try again.")}
+}
+const pdfName=(s,kind)=>((s.bride||"wedding").trim().replace(/[^a-z0-9]+/gi,"-")+"-"+kind+".pdf").toLowerCase();
+$("#pdfTeam").onclick=e=>sendPdf(e.currentTarget,[sheetHTML(S,"team",false).html],pdfName(S,"team-timeline"));
+$("#pdfBride").onclick=e=>sendPdf(e.currentTarget,[sheetHTML(S,"bride",false).html],pdfName(S,"timeline"));
+function teamSel_s(){const w=allWeddings.find(x=>x.id===teamSel);return w?Object.assign(starter(),w.d,Array.isArray(w.d.people)?{}:(calDraft(w.d)||{})):null}
+$("#teamPdf").onclick=e=>{const s=teamSel_s();if(s)sendPdf(e.currentTarget,[sheetHTML(s,"team",false).html],pdfName(s,"team-timeline"))};
+$("#teamPdfBride").onclick=e=>{const s=teamSel_s();if(s)sendPdf(e.currentTarget,[sheetHTML(s,"bride",false).html],pdfName(s,"timeline"))};
+
+/* ---------- team confirmation (Dominique's message, Oct 20 2026) ---------- */
+const ampm=min=>{min=((min%1440)+1440)%1440;let h=Math.floor(min/60),m=min%60;const ap=h>=12?"pm":"am";h=h%12||12;return h+(m?":"+String(m).padStart(2,"0"):"")+" "+ap};
+function confirmOf(s){
+  const plan=build(s),arr=Number(s.arrival)||0,arrive=plan.start-arr,B="___";
+  const first=(s.bride||"").trim().split(/\s+/)[0]||B;
+  const md=s.date?(()=>{const[,m,d]=s.date.split("-");return Number(m)+"/"+Number(d)})():B;
+  const x=s.ext||{},other=[];
+  if(x.on)other.push("Bride is renting extensions"+([x.type,x.color,x.length].filter(Boolean).length?" ("+[x.type,x.color,x.length].filter(Boolean).join(", ")+")":"")+".");
+  if(s.notes)other.push(s.notes.trim());
+  return ["Hi team! 🤍 Confirming your upcoming wedding for "+first+" on "+md+"!","",
+    "📍 Location","Address: "+([s.location,s.room].filter(Boolean).join(", ")||B),"Parking/Valet: "+(s.parking||B),"",
+    "⏰ TIMELINE","Arrival: "+(arr>=15?ampm(arrive)+" - "+ampm(arrive+15):ampm(arrive)),"Start time: "+ampm(plan.start),"Must be finished by: "+ampm(plan.end)]
+   .concat(s.touchups?["Touch-ups before leaving: "+s.touchups]:[])
+   .concat(["Please review the Google Calendar prior to the wedding for the full service details, timeline, and any additional notes.","",
+    "📱 DAY-OF CONTACT","POC: "+([s.contactName,s.contactPhone].filter(Boolean).join(" ")||B),"They will also have the bride’s/designated bridesmaid’s contact information should anything come up day-of.","",
+    "🚗 ADDITIONAL NOTES —","Other: "+(other.join(" ")||"None"),"",
+    "Please let us know before the wedding day if you have any questions, concerns, or conflicts with the timeline.","Thank you, team! Have an amazing wedding day! ✨"]).join("\n");
+}
+function renderConfirm(){
+  const t=$("#cf-text");if(!t||document.activeElement===t)return;
+  t.value=S.confirmEdited&&S.confirmText!=null?S.confirmText:confirmOf(S);
+  $("#cf-status").textContent=S.confirmEdited?"Your edits are saved with this wedding. Refill to start over from the wedding details.":"";
+}
+$("#cf-text").addEventListener("input",e=>{S.confirmText=e.target.value;S.confirmEdited=true;queueSave()});
+$("#cf-text").addEventListener("blur",renderConfirm);
+$("#cf-reset").onclick=()=>{if(S.confirmEdited&&!confirm("Replace your edits with a fresh message from the wedding details?"))return;S.confirmEdited=false;delete S.confirmText;renderConfirm();queueSave()};
+$("#cf-copy").onclick=()=>copy($("#cf-text").value);
+function confirmSheetHTML(text){
+  const body=esc(text).split("\n").map(l=>/^(📍|⏰|📱|🚗)/u.test(l)?"<b>"+l+"</b>":l).join("\n");
+  return '<div class="paper" data-sheet><img class="bow" alt="" src="data:image/png;base64,'+BOW+'"><div class="cf-body">'+body+'</div><div class="brandline bottom">TAFFETA WEDDINGS</div></div>';
+}
+$("#cf-pdf").onclick=e=>{const pages=[confirmSheetHTML($("#cf-text").value)];if($("#cf-tl").checked)pages.push(sheetHTML(S,"team",false).html);sendPdf(e.currentTarget,pages,pdfName(S,"team-confirmation"))};
 
 /* ---------- homepage (Alexandra, Oct 17 2026) ---------- */
 const PAGE_LABEL={booked:"Booked Weddings",build:"Timeline",team:"Schedule",cal:"Calendar",pipe:"Pipeline",coach:"Call Coach",todo:"To Do",tpl:"Texts",jobs:"Jobs",admin:"Team Records",pay:"Payout Form",prev:"Bridal Preview",addon:"Add-On Services",info:"My Info"};
@@ -1301,23 +1406,23 @@ function headWarnHTML(d,mode){   /* mode: "build" (office editing: button), "off
 function renderTeamSheet(){
   const w=allWeddings.find(x=>x.id===teamSel);
   $("#teamCal").innerHTML=w?headWarnHTML(w.d,ROLE==="office"?"office":"artist")+gcalHTML(w.d.calInfo):"";
-  if(!w){$("#teamSheet").innerHTML='<div class="empty-state">Pick a wedding to see the timeline.</div>';$("#teamCopy").disabled=true;$("#teamImg").disabled=true;return}
+  if(!w){$("#teamSheet").innerHTML='<div class="empty-state">Pick a wedding to see the timeline.</div>';$("#teamCopy").disabled=true;$("#teamImg").disabled=true;$("#teamPdf").disabled=true;$("#teamPdfBride").disabled=true;return}
   // No timeline built yet (a job Yes or a Google Calendar wedding): never fill in made-up default times and people.
   if(w.d.startMin==null){
     $("#teamSheet").innerHTML='<div class="empty-state">The detailed timeline for this wedding isn\'t built yet.'+(w.d.calInfo?' Until it is, go by the Google Calendar details above.':' The office will add it here.')+'</div>';
-    $("#teamNote").textContent="";$("#teamCopy").disabled=true;$("#teamImg").disabled=true;return}
+    $("#teamNote").textContent="";$("#teamCopy").disabled=true;$("#teamImg").disabled=true;$("#teamPdf").disabled=true;$("#teamPdfBride").disabled=true;return}
   /* A wedding added from bookings or a job offer has no timeline yet (no party saved). Don't fill in the sample
      8:00 start and sample bridal party: show what's real (Google Calendar, above) until the office builds it. */
   const dr=Array.isArray(w.d.people)?null:calDraft(w.d);
   if(!Array.isArray(w.d.people)&&!dr){
     $("#teamSheet").innerHTML='<div class="empty-state">The office hasn’t built this wedding’s timeline yet. Your timeline shows here as soon as it’s ready.</div>';
-    $("#teamNote").textContent="";$("#teamCopy").disabled=true;$("#teamImg").disabled=true;return}
+    $("#teamNote").textContent="";$("#teamCopy").disabled=true;$("#teamImg").disabled=true;$("#teamPdf").disabled=true;$("#teamPdfBride").disabled=true;return}
   const s=Object.assign(starter(),w.d,dr||{});
   if(dr){$("#teamSheet").innerHTML='<div class="empty-state" style="margin-bottom:10px">Draft from Google Calendar. The office will confirm names and times.</div>'+sheetHTML(s,"team",false).html;
-    $("#teamNote").textContent="Draft from Google Calendar";$("#teamCopy").disabled=false;$("#teamImg").disabled=false;return}
+    $("#teamNote").textContent="Draft from Google Calendar";$("#teamCopy").disabled=false;$("#teamImg").disabled=false;$("#teamPdf").disabled=false;$("#teamPdfBride").disabled=false;$("#teamPdfBride").hidden=ROLE!=="office";return}
   $("#teamSheet").innerHTML=sheetHTML(s,"team",false).html;
   $("#teamNote").textContent="Updated "+(w.d.updatedAt?new Date(w.d.updatedAt).toLocaleString("en-US",{month:"short",day:"numeric",hour:"numeric",minute:"2-digit"}):"");
-  $("#teamCopy").disabled=false;$("#teamImg").disabled=false;
+  $("#teamCopy").disabled=false;$("#teamImg").disabled=false;$("#teamPdf").disabled=false;$("#teamPdfBride").disabled=false;$("#teamPdfBride").hidden=ROLE!=="office";
 }
 $("#artistFilter").onchange=()=>{try{localStorage.setItem("tt-artist",$("#artistFilter").value)}catch(e){}renderTeam()};
 $("#showPast").onchange=renderTeam;
