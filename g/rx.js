@@ -448,9 +448,23 @@ function rxGenerateSkin(R,g){
   return {opts:[{title:'Option 1',lines:o1},{title:'Option 2',lines:o2}],
     m:{lines:rxSvcLines('skin',ms),when:mw,text:mt},refresh:mw,keep:false,more:false,rec:[{n,p:pr,why,hint:'p50'}]};
 }
+/* Who does which skin service (Alexandra, Oct 20 2026): only Carolyn does Nano Needling; Kelly does the Taffeta Facial
+   and the Biologique Recherche facials only. A suggestion she can't do is swapped out or dropped from her card. */
+const RX_BR_FACIALS=['Express Acne Treatment','Hydration Boost','Brightening Mini Facial','Mini Redness Reversal','Anti-Aging Express','Taffeta Facial with MC 110'];
+const RX_SKIN_ONLY={kelly:['Taffeta Facial',...RX_BR_FACIALS]};
+const RX_SKIN_JUST={'Nano Needling Facial':['carolyn']};
+function rxArtist(){const n=(typeof S!=='undefined'&&S&&S.mine&&(S.mine.name||(S.mine.staff&&S.mine.staff.name)))||'';return String(n).trim().split(/\s+/)[0].toLowerCase()}
+function rxSkinCan(n,who){if(!who)return true;if(RX_SKIN_JUST[n]&&!RX_SKIN_JUST[n].includes(who))return false;const only=RX_SKIN_ONLY[who];return !only||only.includes(n)}
+function rxSkinFor(g){const who=rxArtist();if(!who)return g;
+  const keep=L=>L.filter(n=>rxSkinCan(n,who));
+  let p=g.p.map(keep).filter(t=>t.length);p=p.filter((t,i)=>p.findIndex(x=>x.join('|')===t.join('|'))===i);
+  if(!p.length)p=[['Taffeta Facial']];
+  let ms=keep(g.m[0]);if(!ms.length)ms=[p[p.length-1][0]];
+  return {p,m:[ms,g.m[1],g.m[2]]}}
 function rxGenerate(R){
   RX_VIPON=!!R.vip; RX_RATE=(typeof S!=='undefined'&&S&&S.mine&&Number(S.mine.rate))||45;
-  const g=rxGoalPlan(R); if(!g) return null;
+  let g=rxGoalPlan(R); if(!g) return null;
+  if(R.kind==='skin') g=rxSkinFor(g);
   if(R.kind==='hair') return rxGenerateHair(R,g);
   if(R.kind==='skin') return rxGenerateSkin(R,g);
   const needs=rxNeeds(R), P=g.p, b=R.nob?null:Number(R.budget)||null;
