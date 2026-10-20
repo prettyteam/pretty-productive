@@ -202,14 +202,14 @@ const RX_GOAL={
     'Blowout or Style':{p:[['Blowdry Plus'],['Blow Dry']],m:[['Blow Dry'],'1–2 weeks','A blowout for your next event.']}
   },
   skin:{
-    'Clear Breakouts':{p:[['Taffeta Facial'],['Express Acne Treatment']],m:[['Express Acne Treatment'],'4 weeks','A focused 30-minute treatment to stay clear.']},
-    'Calm Redness':{p:[['Taffeta Facial'],['Mini Redness Reversal']],m:[['Mini Redness Reversal'],'4 weeks','A calming 30-minute treatment.']},
-    'Brighten or Even Tone':{p:[['Taffeta Facial','Dermaplaning Add-On'],['Taffeta Facial'],['Brightening Mini Facial']],m:[['Brightening Mini Facial'],'4 weeks','A 30-minute brightening treatment.']},
-    'Hydrate':{p:[['Taffeta Facial'],['Hydration Boost']],m:[['Hydration Boost'],'4 weeks','A 30-minute moisture boost.']},
+    'Clear Breakouts':{p:[['Biologique Recherche Cure All'],['Taffeta Facial'],['Express Acne Treatment']],m:[['Express Acne Treatment'],'4 weeks','A focused 30-minute treatment to stay clear.']},
+    'Calm Redness':{p:[['Biologique Recherche Cure All'],['Taffeta Facial'],['Mini Redness Reversal']],m:[['Mini Redness Reversal'],'4 weeks','A calming 30-minute treatment.']},
+    'Brighten or Even Tone':{p:[['Biologique Recherche Cure All'],['Taffeta Facial','Dermaplaning Add-On'],['Taffeta Facial'],['Brightening Mini Facial']],m:[['Brightening Mini Facial'],'4 weeks','A 30-minute brightening treatment.']},
+    'Hydrate':{p:[['Biologique Recherche Cure All'],['Taffeta Facial'],['Hydration Boost']],m:[['Hydration Boost'],'4 weeks','A 30-minute moisture boost.']},
     /* named Anti-Aging so the girls find it (Alexandra, Oct 20 2026); cards saved as Fine Lines And Firmness still open */
-    'Anti-Aging (Fine Lines & Firmness)':{p:[['Taffeta Facial'],['Anti-Aging Express']],   /* Nano Needling is Carolyn's specialty suggestion, not an option (Oct 20 2026) */
+    'Anti-Aging (Fine Lines & Firmness)':{p:[['Biologique Recherche Lift & Remodel'],['Taffeta Facial'],['Anti-Aging Express']],   /* Nano Needling is Carolyn's specialty suggestion, not an option (Oct 20 2026) */
       m:[['Anti-Aging Express'],'4 weeks','A 30-minute treatment for firmness and fine lines.']},
-    'Overall Glow':{p:[['Taffeta Facial'],['Hydration Boost']],m:[['Taffeta Facial'],'4–6 weeks','Your facial every 4 to 6 weeks keeps skin on track.']}
+    'Overall Glow':{p:[['Biologique Recherche Cure All'],['Taffeta Facial'],['Hydration Boost']],m:[['Taffeta Facial'],'4–6 weeks','Your facial every 4 to 6 weeks keeps skin on track.']}
   }
 };
 
@@ -430,6 +430,8 @@ function rxGenerateHair(R,g){
 /* Skin home care the same way (Alexandra, Oct 17 2026): All In budgets $60 for the full-size cleanser (Lait VIP O2 5.1 oz),
    Worth The Wait carries the $50 Biologique Recherche Skin Box. Her matched P50 is highly suggested under All In, not in the total. */
 const RX_SK_HI=60, RX_SK_LO=50;
+/* the 90-minute Biologique Recherche facials ($200) sit at the top of every skin goal: All In on a bigger budget, or
+   Worth The Wait with the Skin Box when her budget is about $300 (Alexandra, Oct 20 2026) */
 function rxGenerateSkin(R,g){
   const needs=rxNeeds(R), P=g.p, b=R.nob?null:Number(R.budget)||null, cap=RX_ALLIN_SKIN;
   const nw=R.now||[], gl=rxGoalList(R);
@@ -446,9 +448,11 @@ function rxGenerateSkin(R,g){
      the next facial up. With only one facial to offer, All In is the same facial with the bigger home care budget. */
   const bb=b!=null?b:RX_CAP;
   const fac=i=>P[i][0], up=i=>{for(let j=i-1;j>=0;j--) if(fac(j)!==fac(i)) return j; return -1};
-  let i1=P.findIndex((t,i)=>up(i)>=0&&rxTotal(pkg(i,RX_SK_LO))<=bb); if(i1<0) i1=P.length-1;
+  let i1=P.findIndex((t,i)=>rxTotal(pkg(i,RX_SK_LO))<=bb); if(i1<0) i1=P.length-1;
   let o1=pkg(i1,RX_SK_LO); if(b!=null&&rxTotal(o1)>b){const s=rxTotal(pkg(i1,0)); o1=pkg(i1,Math.max(0,Math.floor((b-s)/5)*5))}
-  const o2=pkg(Math.max(0,up(i1)),RX_SK_HI);
+  /* All In: the next facial up; when she's already on the top facial, the same facial with her cleanser and matched P50 in full size */
+  const p50k=(needs.find(k=>/^sk(Break|Sens|Bright|P50V)$/.test(k))||'skP50V'), p50f=(()=>{let [pn,pp,,alt]=RX_PROD[p50k];if(alt&&(RX_OUT.includes(pn)||!/5(\.1)? oz/.test(pn)))[pn,pp]=alt;return [pn,pp]})();
+  const o2=up(i1)>=0?pkg(up(i1),RX_SK_HI):[...rxSvcLines('skin',P[i1]),{n:'Home Care',p:RX_SK_HI+p50f[1],t:'h',full:RX_SK_HI+p50f[1],why:'Her full-size cleanser, Biologique Recherche Lait VIP O2 (5.1 oz), and her P50 matched to her skin: '+p50f[0]}];
   /* Carolyn's specialty: Nano Needling is suggested for her to swap into All In when it's right for the guest */
   const spec=rxArtist()==='carolyn'&&(gl.includes('Anti-Aging (Fine Lines & Firmness)')||nw.includes('Fine lines'))
     ?{n:'Nano Needling Facial',p:rxPrice('skin','Nano Needling Facial'),why:'Your specialty for fine lines and firmness. If it’s right for her, swap it into All In.'}:null;
@@ -456,8 +460,10 @@ function rxGenerateSkin(R,g){
   if(!/5(\.1)? oz/.test(n)&&alt) [n,pr]=alt;   /* the note suggests the full-size P50 */
   let [ms,mw,mt]=g.m, mLines=rxSvcLines('skin',ms);
   /* a budget that only covers Worth The Wait means she goes home with the Skin Box (about 4 weeks of samples), so her
-     next visit is a $99 targeted treatment plus her first full-size product, not a full facial (Alexandra, Oct 20 2026) */
-  if(b!=null&&b<rxTotal(o2)){
+     next visit is a $99 targeted treatment plus her first full-size product, not a full facial. A rule for everyone with a
+     low budget to start, not just one guest (Alexandra, Oct 20 2026) */
+  const low=b!=null&&b<rxPrice('skin','Taffeta Facial')+RX_SK_HI;   /* a low budget to start: under a Taffeta Facial with full-size home care */
+  if(low){
     const who=rxArtist(), at99=x=>rxRegPrice('skin',x)===99&&rxSkinCan(x,who);
     const tgt=ms.find(at99)||P.flat().find(at99)||['Hydration Boost','Anti-Aging Express','Brightening Mini Facial'].find(at99)||ms[0];
     mLines=[...rxSvcLines('skin',[tgt]),{n,p:pr,t:'p',why:'Her first full size, matched to her skin',full:pr}];
