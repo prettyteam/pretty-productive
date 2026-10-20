@@ -673,7 +673,7 @@ function rxBuild(R,me){
   const routine=RX_Q[R.kind].map(([key,q,opts,multi])=>({key,q,opts:[IDK,...opts],multi:!!multi,
     get:()=>[].concat(R.a[key]||[]).filter(Boolean),
     tap:o=>{if(multi){let a=[].concat(R.a[key]||[]);const i=a.indexOf(o);if(i<0)a=o===IDK?[IDK]:[...a.filter(x=>x!==IDK),o];else a.splice(i,1);R.a[key]=a}else R.a[key]=R.a[key]===o?'':o}}));
-  const goalQ={key:'goal',q:'Her Goals For Today',opts:Object.keys(RX_GOAL[R.kind]),multi:true,get:()=>rxGoalList(R),
+  const goalQ={key:'goal',q:'Today’s Goals',opts:Object.keys(RX_GOAL[R.kind]),multi:true,get:()=>rxGoalList(R),
     tap:o=>{const L=rxGoalList(R);R.goal=L.includes(o)?L.filter(x=>x!==o):[...L,o]}};
   const nowQ={key:'now',q:sk?'What is her skin going through right now, this season?':'Scalp Condition',
     opts:RX_NOW[R.kind],multi:true,get:()=>R.now,tap:o=>{const i=R.now.indexOf(o);i<0?R.now.push(o):R.now.splice(i,1)}};
@@ -703,7 +703,7 @@ function rxBuild(R,me){
   /* the button always answers (Alexandra, Oct 20 2026): with something missing it opens that question instead of doing nothing */
   const missing=()=>{
     if(!(Number(R.budget)>0)){const n=document.querySelector('.card2 input[type=number]');if(n){n.scrollIntoView({behavior:'smooth',block:'center'});n.focus()}RX_HINT='Type her budget first.';return}
-    RX_DD.open=!rxGoalList(R).length?'goal':'now';RX_HINT=!rxGoalList(R).length?'Pick her goals for today first.':(sk?'Answer Her Skin Instant first.':'Answer Scalp Condition first.');render();
+    RX_DD.open=!rxGoalList(R).length?'goal':'now';RX_HINT=!rxGoalList(R).length?'Pick today’s goals first.':(sk?'Answer Her Skin Instant first.':'Answer Scalp Condition first.');render();
     setTimeout(()=>{const d=document.querySelector('details.rxdd[open]');if(d)d.scrollIntoView({behavior:'smooth',block:'center'})},60)};
   const gen=h('button',{type:'button',class:'obtn',style:ready?null:'opacity:.55',onclick:()=>{if(!ready){missing();return}RX_HINT='';const g=rxGenerate(R);if(!g)return;Object.assign(R,g);rxSave();render();setTimeout(()=>{const n=document.getElementById('rxopts');if(n)n.scrollIntoView({behavior:'smooth'})},50)}},R.opts?'Suggest Again':'Suggest Options');
   const s4=h('section',{class:'card2',style:'align-items:center;text-align:center'},gen,
