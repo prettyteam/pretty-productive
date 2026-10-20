@@ -31,3 +31,14 @@
 .rxadd{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px}
 .rxadd .fld{margin:0}
 @media(max-width:520px){.rxadd{grid-template-columns:1fr}}
+
+/* saved-card screen: next steps first, the QR folded under "Client QR Code +" (Alexandra, Oct 20 2026) */
+.rxqbig{width:100%;max-width:420px;min-height:56px;font-size:16px}
+.rxqrow{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%;max-width:420px}
+.rxqrow .obtn{display:flex;align-items:center;justify-content:center;text-decoration:none;width:100%;margin:0}
+.rxqrd{width:100%;max-width:420px;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.rxqrd summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;padding:12px 2px;font-size:11px;letter-spacing:.18em;text-transform:uppercase}
+.rxqrd summary::-webkit-details-marker{display:none}
+.rxqrd .pm::before{content:"+";font-size:20px;line-height:1;letter-spacing:0}
+.rxqrd[open] .pm::before{content:"\2212"}
+.rxqrb{display:flex;flex-direction:column;align-items:center;gap:8px;padding:4px 0 14px}

@@ -829,16 +829,21 @@ async function rxRelink(x,me){
   try{return await rxLink(Object.assign(rxBlank(d.kind),d),me,x.date)}catch(e){return x.link}
 }
 function rxQrView(x){
+  /* the team mostly shows or talks her through the card, so the QR folds under "Client QR Code +" and the next steps
+     are the main part of the screen (Alexandra, Oct 20 2026) */
+  const qr=h('details',{class:'rxqrd'},h('summary',{},h('span',{},'Client QR Code'),h('span',{class:'pm','aria-hidden':'true'})),
+    h('div',{class:'rxqrb'},rxQR(x.link),h('p',{class:'rxscript'},'Scan With Your Camera'),
+      h('small',{class:'soft'},'It opens her options and what her next visit looks like on her own phone.')));
   return h('section',{class:'card2 out',style:'align-items:center;text-align:center'},
-    h('h2',{},rxGuestName(x.guest)+'’s RX card'),rxQR(x.link),
-    h('p',{class:'rxscript'},'Scan With Your Camera'),
-    h('small',{class:'soft'},'It opens her two options and what her next visit looks like on her own phone.'),
+    h('h2',{},rxGuestName(x.guest)+'’s RX card'),
     h('small',{class:'soft'},'Saved and sent to the front desk. If she doesn’t open it, the desk texts it to her.'),
-    /* same tab, so Go Back To Edit on her card comes back here with this card open to edit (Alexandra, Oct 20 2026) */
-    h('a',{href:x.link.replace('/rx/#','/rx/?p=1#'),class:'tab',onclick:()=>{try{if(x.id)sessionStorage.setItem('rx-edit',JSON.stringify({id:x.id,t:Date.now()}))}catch(e){}}},'Open Her Card'),
-    x.id?h('button',{type:'button',class:'tab',onclick:()=>rxEditSaved(x.id)},'Edit This Card'):null,
-    /* one flow (Alexandra, Oct 20 2026): from her QR straight to what she takes home; she can come back and change it at the end */
-    x.id&&typeof rgSave2==='function'?h('button',{type:'button',class:'obtn',onclick:()=>{RX_HOME=x.id;RX_MSG='';RX_SHOW=null;RX_VIEW='home';render();window.scrollTo(0,0)}},'Next: What She Takes Home'):null,
+    /* one flow (Alexandra, Oct 20 2026): straight to what she takes home; she can come back and change it at the end */
+    x.id&&typeof rgSave2==='function'?h('button',{type:'button',class:'obtn rxqbig',onclick:()=>{RX_HOME=x.id;RX_MSG='';RX_SHOW=null;RX_VIEW='home';render();window.scrollTo(0,0)}},'Next: What She Takes Home'):null,
+    h('div',{class:'rxqrow'},
+      /* same tab, so Go Back To Edit on her card comes back here with this card open to edit (Alexandra, Oct 20 2026) */
+      h('a',{href:x.link.replace('/rx/#','/rx/?p=1#'),class:'obtn',onclick:()=>{try{if(x.id)sessionStorage.setItem('rx-edit',JSON.stringify({id:x.id,t:Date.now()}))}catch(e){}}},'Open Her Card'),
+      x.id?h('button',{type:'button',class:'obtn',onclick:()=>rxEditSaved(x.id)},'Edit Her Card'):null),
+    qr,
     h('button',{type:'button',class:'tab',onclick:()=>{RX_VIEW='build';RX_SHOW=null;render()}},'Done'));
 }
 /* coming back from her card with the Back button (the page may be restored as it was): open the card to edit */
