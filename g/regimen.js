@@ -406,9 +406,12 @@ const rgNamePic=n=>{const k=String(n||'').toLowerCase();if(!k)return Promise.res
 async function rgPdf(me,R,kind){
   R=R||RG; kind=kind||rgKind();
   const [lib,logo,script]=await Promise.all([rgLib(),rgLogo(),rgScriptFont()]);
-  const doc=new lib.jsPDF({unit:'pt',format:[396,612]});
-  let SF='times';
-  if(script){try{doc.addFileToVFS('CormorantLightItalic.ttf',script);doc.addFont('CormorantLightItalic.ttf','CormorantLI','italic');SF='CormorantLI'}catch(e){SF='times'}}
+  /* laid out twice: once to measure, then for real with the spare room shared evenly between the sections, so a
+     short sheet fills the page instead of bunching at the top (Alexandra, Oct 20 2026) */
+  const mk=()=>{const d=new lib.jsPDF({unit:'pt',format:[396,612]});
+    if(script){try{d.addFileToVFS('CormorantLightItalic.ttf',script);d.addFont('CormorantLightItalic.ttf','CormorantLI','italic');SF='CormorantLI'}catch(e){SF='times'}}return d};
+  let SF='times', doc=mk(), pad=0, gaps=0;
+  const np=me?await rgNamePic(rgFirst(me)):null;
   const big=SF==='times'?1:1.12;
   const W=396, H=612, M=34, CW=W-M*2, ink=[18,18,18], soft=[95,91,85], choc=[18,18,18], line=[226,222,213];
   let y=0;
@@ -422,11 +425,12 @@ async function rgPdf(me,R,kind){
   const para=(t,size,font,style,color,gap,indent)=>{doc.setFont(font,style);doc.setFontSize(size);doc.setTextColor(...color);
     const lines=doc.splitTextToSize(t,CW-(indent||0)), lh=size*1.32;
     lines.forEach(l=>{need(lh);doc.text(l,M+(indent||0),y+size);y+=lh});y+=gap||0};
-  const label=t=>{need(64);y+=4;doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.setTextColor(...ink);doc.setCharSpace(1.6);
+  const label=t=>{gaps++;y+=pad;need(64);y+=4;doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.setTextColor(...ink);doc.setCharSpace(1.6);
     const T=t.toUpperCase(), tw=doc.getTextWidth(T)+1.6*T.length; doc.text(T,W/2-tw/2,y+8);doc.setCharSpace(0);
     /* centered label between two short dashes, like MENU in the app */
     doc.setDrawColor(18,18,18);doc.setLineWidth(.4);doc.line(W/2-tw/2-30,y+5.5,W/2-tw/2-10,y+5.5);doc.line(W/2+tw/2+10,y+5.5,W/2+tw/2+30,y+5.5);doc.setLineWidth(.2);y+=20};
 
+  const draw=()=>{
   bg();
   if(logo) doc.addImage(logo,'PNG',W/2-34,24,68,68);
   y=104;
@@ -454,6 +458,7 @@ async function rgPdf(me,R,kind){
   const notes=R.notes.concat(R.own.trim()?R.own.trim().split(/\n+/):[]);
   if(notes.length){label('Aftercare');notes.forEach(n=>{need(16);doc.setTextColor(...choc);doc.setFontSize(9.5);doc.text('•',M+2,y+9.5);para(n,9.5,'helvetica','normal',ink,3,14)})}
 
+  gaps++; y+=pad;
   if(rgBack(R)||R.msg.trim()){
     y+=10; need(70);
     const top=y; y+=12;
@@ -465,7 +470,6 @@ async function rgPdf(me,R,kind){
   y+=12; need(20);
   /* sign-off with the artist's first name in Antoinetta (a picture, as the font license allows) */
   doc.setFont(SF,'italic');doc.setFontSize(13*big);doc.setTextColor(...choc);
-  const np=me?await rgNamePic(rgFirst(me)):null;
   if(np){need(38);const nh=30, nw=nh*np.w/np.h;doc.setFont(SF,'italic');doc.setFontSize(13*big);doc.setTextColor(...choc);
     /* "Pretty Hair by [name] xo" */
     const pre=rgPretty(kind,R.services), post=' xo';
@@ -473,7 +477,11 @@ async function rgPdf(me,R,kind){
     doc.text(pre,x0,y+21);doc.addImage(np.d,'PNG',x0+pw,y+2,nw,nh);doc.text(post,x0+pw+nw,y+21);y+=34}
   else{doc.text(rgPretty(kind,R.services)+(me?rgFirst(me):'Taffeta')+' xo',W/2,y+12,{align:'center'});y+=20}
   need(14);doc.setFont('helvetica','normal');doc.setFontSize(8.5);doc.setTextColor(...soft);doc.text(rgDate(),W/2,y+8,{align:'center'});
-  foot();
+  foot()};
+  draw();
+  /* the extra room goes before each section and the sign-off; if that tips it onto a second page, ease off until it fits */
+  if(doc.getNumberOfPages()===1&&gaps){const room=Math.min(70,Math.max(0,(H-60-y)/gaps));
+    for(const f of [1,.75,.5,0]){pad=room*f;doc=mk();gaps=0;draw();if(doc.getNumberOfPages()===1)break}}
   return doc.output('blob');
 }
 const rgFile=(R,kind)=>'Taffeta '+(kind==='skin'?'Skincare':'Hair Care')+' Regimen'+(R.guest.trim()?' - '+rgFirst(R.guest):'')+'.pdf';

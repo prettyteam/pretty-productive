@@ -48,9 +48,11 @@ function acLogo(){
 /* Half-letter page (5.5 × 8.5 in), cream ground, wreath, serif headings: same look as the artists' regimen PDF */
 async function acPdf(sheet,guest){
   const [lib,logo,script]=await Promise.all([acLib(),acLogo(),acScriptFont()]);
-  const doc=new lib.jsPDF({unit:'pt',format:[396,612]});
-  let SF='times';
-  if(script){try{doc.addFileToVFS('CormorantLightItalic.ttf',script);doc.addFont('CormorantLightItalic.ttf','CormorantLI','italic');SF='CormorantLI'}catch(e){SF='times'}}
+  /* laid out twice: once to measure, then for real with the spare room shared evenly between the sections, so a
+     short sheet fills the page instead of bunching at the top (Alexandra, Oct 20 2026) */
+  const mk=()=>{const d=new lib.jsPDF({unit:'pt',format:[396,612]});
+    if(script){try{d.addFileToVFS('CormorantLightItalic.ttf',script);d.addFont('CormorantLightItalic.ttf','CormorantLI','italic');SF='CormorantLI'}catch(e){SF='times'}}return d};
+  let SF='times', doc=mk(), pad=0, gaps=0;
   const big=SF==='times'?1:1.12;
   const W=396,H=612,M=34,CW=W-M*2,ink=[18,18,18],soft=[95,91,85],choc=[18,18,18],line=[226,222,213];
   let y=0;
@@ -62,10 +64,11 @@ async function acPdf(sheet,guest){
   const need=n=>{if(y+n>H-52){foot();doc.addPage([396,612]);bg();y=M+6}};
   const para=(t,size,font,style,color,gap,indent)=>{doc.setFont(font,style);doc.setFontSize(size);doc.setTextColor(...color);
     const ls=doc.splitTextToSize(t,CW-(indent||0)),lh=size*1.32;ls.forEach(l=>{need(lh);doc.text(l,M+(indent||0),y+size);y+=lh});y+=gap||0};
-  const label=t=>{need(50);y+=4;doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.setTextColor(...ink);doc.setCharSpace(1.6);
+  const label=t=>{gaps++;y+=pad;need(50);y+=4;doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.setTextColor(...ink);doc.setCharSpace(1.6);
     const T=t.toUpperCase(), tw=doc.getTextWidth(T)+1.6*T.length; doc.text(T,W/2-tw/2,y+8);doc.setCharSpace(0);
     /* centered label between two short dashes, like MENU in the app */
     doc.setDrawColor(18,18,18);doc.setLineWidth(.4);doc.line(W/2-tw/2-30,y+5.5,W/2-tw/2-10,y+5.5);doc.line(W/2+tw/2+10,y+5.5,W/2+tw/2+30,y+5.5);doc.setLineWidth(.2);y+=20};
+  const draw=()=>{
   bg();
   if(logo) doc.addImage(logo,'PNG',W/2-34,24,68,68);
   y=104;
@@ -75,11 +78,15 @@ async function acPdf(sheet,guest){
   y+=6;
   para(sheet.intro,10.5*big,SF,'italic',ink,6);
   sheet.sections.forEach(([t,items])=>{label(t);items.forEach(n=>{need(16);doc.setFont('helvetica','normal');doc.setTextColor(...choc);doc.setFontSize(9.5);doc.text('•',M+2,y+9.5);para(n,9.5,'helvetica','normal',ink,4,14)})});
-  y+=10;need(40);
+  gaps++;y+=10+pad;need(40);
   para('Questions? Call or text us at '+AC_PHONE+'.',9.5,'helvetica','bold',choc,8);
   doc.setFont(SF,'italic');doc.setFontSize(13*big);doc.setTextColor(...choc);need(20);doc.text(sheet.kind==='hair'?'Pretty Hair by Taffeta xo':sheet.id==='brow'?'Pretty Brows by Taffeta xo':sheet.id==='lash'?'Pretty Lashes by Taffeta xo':'Pretty Skin by Taffeta xo',W/2,y+12,{align:'center'});y+=20;
   need(14);doc.setFont('helvetica','normal');doc.setFontSize(8.5);doc.setTextColor(...soft);doc.text(new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}),W/2,y+8,{align:'center'});
-  foot();
+  foot()};
+  draw();
+  /* the extra room goes before each section and the sign-off; if that tips it onto a second page, ease off until it fits */
+  if(doc.getNumberOfPages()===1&&gaps){const room=Math.min(70,Math.max(0,(H-60-y)/gaps));
+    for(const f of [1,.75,.5,0]){pad=room*f;doc=mk();gaps=0;draw();if(doc.getNumberOfPages()===1)break}}
   return doc.output('blob');
 }
 const acFile=(s,g)=>'Taffeta '+s.name.replace(/&/g,'and')+' Aftercare'+(g?' - '+g:'')+'.pdf';
