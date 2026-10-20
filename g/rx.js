@@ -441,7 +441,7 @@ function rxGenerateSkin(R,g){
   const picks=[...new Set(needs.map(k=>{let [n,,,alt]=RX_PROD[k];return alt&&RX_OUT.includes(n)?alt[0]:n}))].join(', ');
   /* home care by amount: $60 and up starts with the full-size cleanser, $50 is the Skin Box, less is what's left of her budget */
   const hc=p=>({n:'Home Care',p,t:'h',full:p,why:p>=RX_SK_HI?'Start with the full-size cleanser, Biologique Recherche Lait VIP O2 (5.1 oz)'+(picks?'. Matched to her skin: '+picks:''):
-    p>=RX_SK_LO?'Suggested: Biologique Recherche '+box+', about 4 weeks of product to try at home'+(picks?'. Matched to her skin for later: '+picks:''):
+    p>=RX_SK_LO?'Suggested: Biologique Recherche '+box+', lasts for a 4-week skincare routine'+(picks?'. Matched to her skin for later: '+picks:''):
     p>RX_SK_MIN?'What’s left of her budget: the travel-size Lait VIP O2 (1.7 oz, $35) or Try Me bottles'+(picks?'. Matched to her skin for later: '+picks:''):
     'Three Biologique Recherche samples matched to her skin (less than the Skin Box, but she goes home with something)'+(picks?'. Matched to her skin for later: '+picks:'')});
   const pkg=(i,amt)=>[...rxSvcLines('skin',P[i]),...(amt>0?[hc(amt)]:[])];
@@ -461,7 +461,7 @@ function rxGenerateSkin(R,g){
      Skin Box, or one full-size bottle instead */
   if(b!=null&&b<200){
     o1=b>=99+RX_SK_LO?[...rxSvcLines('skin',[tgt]),hc(RX_SK_LO)]:[...rxSvcLines('skin',['Taffeta Facial']),hc(RX_SK_MIN)];
-    o2=[...rxSvcLines('skin',['Taffeta Facial']),Object.assign(hc(RX_SK_LO),{why:'The Biologique Recherche '+box+' (about 4 weeks of product), or one full-size bottle instead: her cleanser, Lait VIP O2 (5.1 oz, $60), or her P50 matched to her skin'+(picks?' ('+picks+')':'')})];
+    o2=[...rxSvcLines('skin',['Taffeta Facial']),Object.assign(hc(RX_SK_LO),{why:'The Biologique Recherche '+box+' (lasts for a 4-week skincare routine), or one full-size bottle instead: her cleanser, Lait VIP O2 (5.1 oz, $60), or her P50 matched to her skin'+(picks?' ('+picks+')':'')})];
     if(rxTotal(o1)>=rxTotal(o2)) o1=[...rxSvcLines('skin',['Taffeta Facial']),hc(RX_SK_MIN)];
     /* she wants the relaxing 60-minute facial: both options are the Taffeta Facial, Worth The Wait with what her budget allows */
     if(R.visit==='relax'){const left=b-rxPrice('skin','Taffeta Facial');
@@ -550,7 +550,7 @@ function rxGenerate(R){
     const nw=R.now||[], gl=rxGoalList(R);
     const box=nw.includes('Breakouts')||gl.includes('Clear Breakouts')?'Blemish Skin Box':
       nw.includes('Fine lines')||gl.includes('Anti-Aging (Fine Lines & Firmness)')?'Youth Skin Box':'Standard Skin Box';
-    const bx={n:'Biologique Recherche '+box,p:50,t:'p',why:'About 4 weeks of Biologique Recherche to try at home',full:50};
+    const bx={n:'Biologique Recherche '+box,p:50,t:'p',why:'Lasts for a 4-week skincare routine',full:50};
     o1=[...o1.filter(l=>l.t==='s'),bx];
     if(o2.some(l=>l.t==='t')){const o2b=[...o2.filter(l=>l.t==='s'),bx]; if(rxTotal(o2b)<=cap) o2=o2b}
     const last=P[P.length-1], tgt=last.find(n=>RX_FACIAL.test(n)&&rxRegPrice('skin',n)===99)||'Hydration Boost';
@@ -570,7 +570,7 @@ function rxPack(R,me,day){
        so she sees the investment, not a list of products to say no to */
     vp:R.vip?1:0,  /* VIP has its own key: it used to be "v" too, which overwrote the card version and broke every non-VIP card */
     o:R.opts.map(x=>{const sv=x.lines.filter(l=>l.t==='s').map(l=>l.reg&&l.reg!==l.p?[l.n,Number(l.p)||0,l.reg]:[l.n,Number(l.p)||0]), hc=x.lines.filter(l=>l.t!=='s').reduce((a,l)=>a+(Number(l.p)||0),0);
-      return [x.title,hc?[...sv,['Maintenance',hc]]:sv]}),
+      return [x.title,hc?[...sv,[R.kind==='skin'&&hc===RX_SK_LO?'Maintenance: Skin Box, lasts for a 4-week skincare routine':'Maintenance',hc]]:sv]}),   /* the Skin Box says how long it lasts on her card (Alexandra, Oct 20 2026) */
     m:[R.m.lines.map(l=>l.reg&&l.reg!==l.p?[l.n,Number(l.p)||0,l.reg]:[l.n,Number(l.p)||0]),R.m.when,R.m.text],r:R.refresh,x:R.more?1:0,f:(R.rec||[]).map(l=>[l.hint==='p50'?'Your P50, matched to your skin':l.n,Number(l.p)||0]),hs:(R.rec||[]).some(l=>l.hint==='p50')?1:0};
   return o;
 }
@@ -827,7 +827,7 @@ function rxTakeHomeView(me){
   const favs=rxFavs(); (RX_PRICES[kind]||[]).filter(([n])=>favs.includes(n)).forEach(([n,p])=>add(n,p,'Your go-to','fav'));
   const hcWhy=hcOf(opts[ch]).map(l=>l.why||'').join(' ');
   if(kind==='skin'){const bx=(hcWhy.match(/Biologique Recherche \w+ Skin Box/)||[])[0];
-    if(bx) add(bx,RX_SK_LO,'About 4 weeks of product to try at home','def'); add('Biologique Recherche Lait VIP O2 (5.1 oz)',price('Biologique Recherche Lait VIP O2 (5.1 oz)')||60,'The full-size cleanser','def')}
+    if(bx) add(bx,RX_SK_LO,'Lasts for a 4-week skincare routine','def'); add('Biologique Recherche Lait VIP O2 (5.1 oz)',price('Biologique Recherche Lait VIP O2 (5.1 oz)')||60,'The full-size cleanser','def')}
   else add('Taffeta Refill Shampoo & Conditioner, new bottles',81,'Full-size Taffeta bottles','def');
   let needs=[]; try{needs=rxNeeds(d)}catch(e){}
   if(kind==='hair'){const svc=opts.flatMap(o=>o.lines.map(l=>l.n)); needs=rxNeedsFor(needs,svc)}
