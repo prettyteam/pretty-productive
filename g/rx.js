@@ -246,6 +246,8 @@ function rxSave(){ store.set(rxKey(),JSON.stringify(RX)) }
 function rxSaved(){ try{return JSON.parse(store.get(rxSavedKey())||'[]')}catch(e){return []} }
 const rxMoney=n=>'$'+(Math.round(n*100)/100).toLocaleString('en-US',{maximumFractionDigits:2});
 const rxFirst=n=>String(n||'').trim().split(/\s+/)[0]||'';
+/* the guest is saved as first name + last initial ("Danielle M.") so two guests with the same name don't mix up (Alexandra, Oct 20 2026) */
+const rxGuestName=n=>{const w=String(n||'').trim().split(/\s+/).filter(Boolean);if(!w.length)return '';const f=w[0].charAt(0).toUpperCase()+w[0].slice(1);const l=w.length>1?w[w.length-1].replace(/[^A-Za-z]/g,'').charAt(0).toUpperCase():'';return l?f+' '+l+'.':f};
 
 /* Genuine needs only, most important first, at most two. "Right now" leads, then her routine. */
 /* Hair concerns from her answers: the scalp question plus how her hair feels and her color (Oct 17 2026).
@@ -645,7 +647,7 @@ function rxBuild(R,me){
   const rxTitle=o=>String(o).replace(/(^|[\s(\-])([a-z])/g,(m,p,c)=>p+c.toUpperCase()).replace(/ Or /g,' or ');
   const chips=(opts,isOn,onTap)=>h('div',{class:'seg'},opts.map(o=>h('button',{type:'button','aria-pressed':String(!!isOn(o)),onclick:()=>{onTap(o);rxSave();render()}},rxTitle(o))));
   const kindRow=h('div',{class:'fld'},'Card For',chips(['Hair','Skin'],o=>R.kind===o.toLowerCase(),o=>{const k=o.toLowerCase();if(k!==R.kind){RX=Object.assign(rxBlank(k),{guest:R.guest,budget:R.budget,nob:R.nob})}}));
-  const gIn=h('input',{type:'text',value:R.guest,placeholder:'First name',autocomplete:'off',autocapitalize:'words'});
+  const gIn=h('input',{type:'text',value:R.guest,placeholder:'First name and last initial',autocomplete:'off',autocapitalize:'words'});
   gIn.addEventListener('input',()=>{R.guest=gIn.value;rxSave()});
   const bIn=h('input',{type:'number',inputmode:'decimal',min:'0',step:'5',value:R.budget,placeholder:'$'});
   bIn.addEventListener('input',()=>{const was=Number(R.budget)>0;R.budget=bIn.value;rxSave();if(was!==(Number(R.budget)>0)){render();const n=document.querySelector('.card2 input[type=number]');if(n){n.focus();try{n.setSelectionRange(n.value.length,n.value.length)}catch(e){}}}});
@@ -654,7 +656,7 @@ function rxBuild(R,me){
   const vipRow=h('div',{class:'fld'},'Pricing',chips(['Regular','VIP (family)'],o=>(o==='Regular')!==!!R.vip,o=>{const v=o!=='Regular';if(v!==!!R.vip){R.vip=v;R.opts=null;R.m=null}}));
   const spRow=R.kind==='hair'?h('div',{class:'fld'},'Your Single Process Price',chips(RX_SP.map(p=>'$'+p),o=>o==='$'+spNow,o=>{if(o!=='$'+spNow){store.set(rxSpKey(),o.slice(1));R.opts=null;R.m=null}})):null;
   const s1=h('section',{class:'card2'},h('span',{class:'lbl'},'1 · Your Guest'),kindRow,vipRow,spRow,
-    h('label',{class:'fld'},'Guest’s First Name',gIn),
+    h('label',{class:'fld'},'Guest’s First Name & Last Initial',gIn),
     /* skin: the kind of visit comes before her budget (Alexandra, Oct 20 2026): a relaxing 60-minute facial, or results
        first where time doesn't matter (then the $99 targeted treatment makes sense on a budget) */
     R.kind==='skin'?h('div',{class:'fld'},'What Kind Of Visit Is She Hoping For?',chips(['Relaxing 60 min & solve a skin problem','Results first, time doesn’t matter'],o=>R.visit===(/^Relaxing/.test(o)?'relax':'results'),o=>{const v=/^Relaxing/.test(o)?'relax':'results';if(v!==R.visit){R.visit=v;R.opts=null;R.m=null}})):null,
@@ -770,11 +772,12 @@ function rxEditor(R,me){
 }
 
 async function rxStore(R,me){
-  if(!R.guest.trim()){alert('Add her first name first.');return}
+  if(!R.guest.trim()){alert('Add her first name and last initial first.');return}
+  if(R.guest.trim().split(/\s+/).length<2){alert('Add her last initial too, like “Danielle M.”');return}
   const id=R.id||String(Date.now()); R.id=id;
   const link=await rxLink(R,me), list=rxSaved();
   /* Save & Send To Desk (Alexandra, Oct 17 2026): she scans the QR here; if she doesn't open it, the desk texts it */
-  const row={id,guest:rxFirst(R.guest),date:new Date().toISOString().slice(0,10),kind:R.kind,budget:R.nob?null:Number(R.budget)||null,
+  const row={id,guest:rxGuestName(R.guest),date:new Date().toISOString().slice(0,10),kind:R.kind,budget:R.nob?null:Number(R.budget)||null,
     totals:R.opts.map(o=>rxTotal(o.lines)),link,desk:true,draft:JSON.parse(JSON.stringify(R))};
   const i=list.findIndex(x=>x.id===id); i<0?list.unshift(row):list.splice(i,1,row);
   store.set(rxSavedKey(),JSON.stringify(list.slice(0,300)));
@@ -792,7 +795,7 @@ async function rxRelink(x,me){
 }
 function rxQrView(x){
   return h('section',{class:'card2 out',style:'align-items:center;text-align:center'},
-    h('h2',{},rxFirst(x.guest)+'’s RX card'),rxQR(x.link),
+    h('h2',{},rxGuestName(x.guest)+'’s RX card'),rxQR(x.link),
     h('p',{class:'rxscript'},'Scan With Your Camera'),
     h('small',{class:'soft'},'It opens her two options and what her next visit looks like on her own phone.'),
     h('small',{class:'soft'},'Saved and sent to the front desk. If she doesn’t open it, the desk texts it to her.'),
