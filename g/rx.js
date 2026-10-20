@@ -835,7 +835,7 @@ function rxSavedView(me){
    the front desk app's Home Care list, and the desk texts it to her. */
 /* How to use it at home, by type of product, not by name (Alexandra, Oct 20 2026). Face and neck only, the way Carolyn teaches it. */
 function rxHowTo(n){n=String(n||'');
-  if(/Skin Box/.test(n))return 'Use your samples in this order, morning and night: cleanser, then your P50 on a cotton round, then serum, then moisturizer. Each one has its how-to on this sheet.';
+  if(/Skin Box/.test(n))return 'Morning and night, in this order. 1) Cleanser: on a dry face, massage 1–2 pumps over your face and neck for 1–2 minutes, remove with a warm damp cloth, rinse with cool water. 2) P50: soak a cotton round and sweep it over your face and neck from the center out; don’t rinse. 3) Serum: press 2–3 drops into your face and neck and let it sink in. 4) Moisturizer: warm a pea-size amount between your fingertips and press it in.';
   if(/Lait|Démaquillante|Micellaire|Cleans/i.test(n))return 'On a dry face, massage 1–2 pumps over your face and neck for 1–2 minutes. Remove with a warm damp cloth, then rinse with cool water. Morning and night.';
   if(/Lotion P50|MC 110|Eauxyg/.test(n))return 'After cleansing, soak a cotton round and sweep it over your face and neck, from the center out. Don’t rinse. Morning and night, unless your esthetician told you otherwise.';
   if(/Sérum|Serum|Fluide|Amniotique|Collag|Élastine|Placenta|Tensil|Oligo|Dermopore|Silk Plus|Iribiol|Tissulaires|Colostrum|Spectral/.test(n))return 'After your P50, put 2–3 drops on your fingertips and press them into your face and neck. Let it sink in before your moisturizer. Morning and night.';
