@@ -124,7 +124,12 @@ html,body{background:#f8f6f0}
   const first=String(c.a||'').trim().split(/\s+/)[0]||'', pre=!skin?'Pretty Hair by ':rxPretty(c);
   const sign=el('p',{class:'sign'},pre,first?el('img',{class:'namepic',src:'../g/names/'+first.toLowerCase()+'.png',alt:first}):'Taffeta',' xo');
   const pic=sign.querySelector('img');if(pic)pic.onerror=()=>pic.replaceWith(document.createTextNode(first));
+  /* artist or desk preview (?p=1): a Go back button to get back to editing; guests never see it (Alexandra, Oct 20 2026) */
+  const prev=/[?&]p=1/.test(location.search);
+  const goBack=prev?el('button',{type:'button',style:'display:block;margin:0 auto 18px;padding:11px 22px;border:1px solid #121212;border-radius:999px;background:#fff;color:#121212;font:inherit;font-size:12px;letter-spacing:.16em;text-transform:uppercase;cursor:pointer'},'‹ Go Back To Edit'):null;
+  if(goBack)goBack.onclick=()=>{if(history.length>1){history.back();return}try{window.close()}catch(e){}setTimeout(()=>{location.href=document.referrer||'https://prettyteam.taffetadesign.com/cards/'},300)};
   app.append(el('div',{class:'page'},
+    goBack,
     el('div',{class:'top'},el('img',{src:'../g/logo.png',alt:'Taffeta Salon & Spa'})),
     el('div',{class:'rxh'},el('span',{class:'rx'},'Rx'),el('p',{},'Personal plan from today’s consultation: two options and what your next visit looks like.')),
     /* date small at the top as 10/15/26 (Alexandra, Oct 15 2026) */

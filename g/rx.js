@@ -539,6 +539,7 @@ function rxQR(text){
 
 function rxView(){
   rxPull();
+  try{const e=JSON.parse(sessionStorage.getItem('rx-edit')||'null');if(e){sessionStorage.removeItem('rx-edit');const c=Date.now()-e.t<30*60000&&rxSaved().find(y=>y.id===e.id);if(c&&c.draft){RX=Object.assign(rxBlank(c.kind),c.draft);rxSave();RX_VIEW='build';RX_SHOW=null}}}catch(e){}
   const R=rxLoad(), me=(S.mine&&(S.mine.name||(S.mine.staff&&S.mine.staff.name)))||'';
   rxSetCut(me); const spNow=rxSetSP();
   const tabs=h('div',{class:'seg',style:'justify-content:center'},
@@ -705,7 +706,7 @@ async function rxStore(R,me){
   store.set(rxSavedKey(),JSON.stringify(list.slice(0,300)));
   rxSync({cards:[row]}).then(ok=>{if(ok){row.up=1;const L=rxSaved(),j=L.findIndex(x=>x.id===id);if(j>=0){L[j].up=1;store.set(rxSavedKey(),JSON.stringify(L))}}});
   /* the builder clears once she's sent to the desk, so the next guest starts on a blank card; this card stays in Saved Cards (Edit reopens it) (Alexandra, Oct 19 2026) */
-  RX=rxBlank(R.kind); rxSave(); RX_SHOW={link,guest:row.guest}; RX_VIEW='qr'; render(); window.scrollTo(0,0);
+  RX=rxBlank(R.kind); rxSave(); RX_SHOW={link,guest:row.guest,id}; RX_VIEW='qr'; render(); window.scrollTo(0,0);
 }
 
 /* a saved card's QR is rebuilt from its draft, so cards saved before a change (like home care showing as one
@@ -721,8 +722,16 @@ function rxQrView(x){
     h('p',{class:'rxscript'},'Scan With Your Camera'),
     h('small',{class:'soft'},'It opens her two options and what her next visit looks like on her own phone.'),
     h('small',{class:'soft'},'Saved and sent to the front desk. If she doesn’t open it, the desk texts it to her.'),
-    h('a',{href:x.link.replace('/rx/#','/rx/?p=1#'),target:'_blank',rel:'noopener',class:'tab'},'Open Her Card'),
+    /* same tab, so Go Back To Edit on her card comes back here with this card open to edit (Alexandra, Oct 20 2026) */
+    h('a',{href:x.link.replace('/rx/#','/rx/?p=1#'),class:'tab',onclick:()=>{try{if(x.id)sessionStorage.setItem('rx-edit',JSON.stringify({id:x.id,t:Date.now()}))}catch(e){}}},'Open Her Card'),
+    x.id?h('button',{type:'button',class:'tab',onclick:()=>rxEditSaved(x.id)},'Edit This Card'):null,
     h('button',{type:'button',class:'obtn',onclick:()=>{RX_VIEW='build';RX_SHOW=null;render()}},'Done'));
+}
+/* coming back from her card with the Back button (the page may be restored as it was): open the card to edit */
+window.addEventListener('pageshow',e=>{try{if(e.persisted&&sessionStorage.getItem('rx-edit')&&typeof render==='function')render()}catch(_){}});
+function rxEditSaved(id){
+  const c=rxSaved().find(y=>y.id===id); if(!c||!c.draft) return false;
+  RX=Object.assign(rxBlank(c.kind),c.draft); rxSave(); RX_VIEW='build'; RX_SHOW=null; render(); window.scrollTo(0,0); return true;
 }
 
 function rxSavedView(me){
@@ -735,7 +744,7 @@ function rxSavedView(me){
     q&&!hits.length?h('p',{class:'soft'},'No saved card for “'+RX_FIND+'”.'):null,
     ...hits.slice(0,20).map(x=>h('div',{class:'rxl'},
       h('div',{class:'rxn'},h('b',{},x.guest),h('small',{class:'soft'},(x.kind==='skin'?'Skin':'Hair')+' · '+new Date(x.date+'T12:00').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'})+(x.budget?' · budget '+rxMoney(x.budget):'')+' · '+x.totals.map(rxMoney).join(' / '))),
-      h('button',{type:'button',class:'tab',onclick:async()=>{RX_SHOW={link:await rxRelink(x,me),guest:x.guest};RX_VIEW='qr';render();window.scrollTo(0,0)}},'QR'),
+      h('button',{type:'button',class:'tab',onclick:async()=>{RX_SHOW={link:await rxRelink(x,me),guest:x.guest,id:x.id};RX_VIEW='qr';render();window.scrollTo(0,0)}},'QR'),
       h('button',{type:'button',class:'tab',onclick:()=>{RX=Object.assign(rxBlank(x.kind),x.draft);rxSave();RX_VIEW='build';render();window.scrollTo(0,0)}},'Edit'),
       x.draft&&x.draft.opts&&typeof rgSave2==='function'?h('button',{type:'button',class:'tab',onclick:()=>{RX_HOME=x.id;RX_MSG='';RX_VIEW='home';render();window.scrollTo(0,0)}},'Takes Home'):null)));
 }
