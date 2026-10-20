@@ -375,7 +375,7 @@ function rxCutSwap(P){const out=[];P.forEach(t=>{out.push(t);if(t.includes('Fema
 /* Option 1 at or under her budget, Option 2 about $60 to $80 more, so the two are a real choice (Alexandra, Oct 20 2026:
    Sarah's skin card came out $9 over her budget with the options only $41 apart). Option 1 is the fullest service
    that fits her budget with home care; when none does, the lightest service with whatever home care is left.
-   Option 2 is the fullest package up to $80 more, never a lighter service than Option 1; when nothing lands at
+   Option 2 is the fullest package up to $80 more, keeping every service in Option 1; when nothing lands at
    least $60 more, its home care goes up to make the difference. pkg(i,home care $,leave-in) builds a tier. */
 const RX_GAP_LO=60, RX_GAP_HI=80, RX_GAP_MID=70;
 function rxPair(P,b,pkg,lo,vars,ok,cap){
@@ -383,11 +383,13 @@ function rxPair(P,b,pkg,lo,vars,ok,cap){
   let o1=null,i1=P.length-1;
   for(let i=0;i<P.length&&!o1;i++){const L=pkg(i,lo,false); if(rxTotal(L)<=bb){o1=L;i1=i}}
   if(!o1){const s=rxTotal(pkg(i1,0,false)); o1=pkg(i1,Math.max(0,Math.floor((bb-s)/5)*5),false)}
+  /* Option 2 keeps every service in Option 1 (Donelle's card, Oct 20 2026: never trade her haircut for a blow dry) */
+  const svc1=o1.filter(l=>l.t==='s').map(l=>l.n), keeps=L=>svc1.every(n=>L.some(l=>l.n===n));
   const t1=rxTotal(o1); let best=null;
   for(let i=0;i<=i1;i++) for(const [a,lv] of vars){const L=pkg(i,a,lv),t=rxTotal(L);
-    if(t>t1&&t<=t1+RX_GAP_HI&&ok(L)&&(!best||t>best.t)) best={L,t,i,a,lv}}
+    if(t>t1&&t<=t1+RX_GAP_HI&&ok(L)&&keeps(L)&&(!best||t>best.t)) best={L,t,i,a,lv}}
   if(!best) for(let i=0;i<=i1;i++) for(const [a,lv] of vars){const L=pkg(i,a,lv),t=rxTotal(L);
-    if(t>t1&&ok(L)&&(!best||t<best.t)) best={L,t,i,a,lv}}
+    if(t>t1&&ok(L)&&keeps(L)&&(!best||t<best.t)) best={L,t,i,a,lv}}
   if(!best){const a=vars[0][0];best={L:pkg(i1,a,false),i:i1,a,lv:false};best.t=rxTotal(best.L)}
   let o2=best.L;
   if(best.t<t1+RX_GAP_LO){const add=Math.min(Math.round(t1+RX_GAP_MID)-best.t,cap-best.t), a=Math.ceil((best.a+add)/5)*5;
@@ -641,8 +643,10 @@ function rxEditor(R,me){
       const sv=RX_SVC[R.kind].find(x=>x[0]===n);const pr=plist.find(x=>x[0]===n);const ex=Object.values(RX_PROD).find(x=>x[0]===n);
       L.push(sv?(()=>{const p=rxPrice(R.kind,n),reg=sv[1];return reg!==p?{n,p,t:'s',reg}:{n,p,t:'s'}})():{n,p:pr[1],t:'p',why:ex?ex[2]:'',full:pr[1]});rxSave();render()});return h('label',{class:'fld'},sel)};
   const badge=t=>b==null?null:h('span',{class:'rxbadge '+(t<=b?'ok':'over')},t<=b?rxMoney(b-t)+' under budget':rxMoney(t-b)+' over budget');
-  const opts=R.opts.map((o,i)=>{const t=rxTotal(o.lines);
-    return h('section',{class:'card2 out'},h('span',{class:'lbl'},o.title+(i===0?(b==null?' · a lighter start':t<=b?' · within her budget':' · closest to her budget'):' · the full look')),
+  /* the same names her card shows: the higher total is All In, the other Worth The Wait, none when they tie (Alexandra, Oct 20 2026) */
+  const tots=R.opts.map(o=>rxTotal(o.lines)), hiI=tots.length===2&&tots[0]!==tots[1]?tots.indexOf(Math.max(...tots)):-1;
+  const opts=R.opts.map((o,i)=>{const t=tots[i];
+    return h('section',{class:'card2 out'},h('span',{class:'lbl'},o.title+(hiI<0?'':i===hiI?' · All In':' · Worth The Wait')),
       ...o.lines.map(l=>lineRow(o.lines,l)),
       !o.lines.some(l=>l.t!=='s')?h('p',{class:'soft'},'Maintenance: keep her current routine.'):null,
       i===1&&R.more?h('small',{class:'soft'},'Kept at '+rxMoney(R.kind==='skin'?RX_ALLIN_SKIN:RX_ALLIN_HAIR)+' or under: home care is trimmed to Try Me bottles or left off. The full sizes she should end up with show below the options.'):null,
