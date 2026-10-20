@@ -802,7 +802,9 @@ function rxQrView(x){
     /* same tab, so Go Back To Edit on her card comes back here with this card open to edit (Alexandra, Oct 20 2026) */
     h('a',{href:x.link.replace('/rx/#','/rx/?p=1#'),class:'tab',onclick:()=>{try{if(x.id)sessionStorage.setItem('rx-edit',JSON.stringify({id:x.id,t:Date.now()}))}catch(e){}}},'Open Her Card'),
     x.id?h('button',{type:'button',class:'tab',onclick:()=>rxEditSaved(x.id)},'Edit This Card'):null,
-    h('button',{type:'button',class:'obtn',onclick:()=>{RX_VIEW='build';RX_SHOW=null;render()}},'Done'));
+    /* one flow (Alexandra, Oct 20 2026): from her QR straight to what she takes home; she can come back and change it at the end */
+    x.id&&typeof rgSave2==='function'?h('button',{type:'button',class:'obtn',onclick:()=>{RX_HOME=x.id;RX_MSG='';RX_SHOW=null;RX_VIEW='home';render();window.scrollTo(0,0)}},'Next: What She Takes Home'):null,
+    h('button',{type:'button',class:'tab',onclick:()=>{RX_VIEW='build';RX_SHOW=null;render()}},'Done'));
 }
 /* coming back from her card with the Back button (the page may be restored as it was): open the card to edit */
 window.addEventListener('pageshow',e=>{try{if(e.persisted&&sessionStorage.getItem('rx-edit')&&typeof render==='function')render()}catch(_){}});
@@ -830,6 +832,17 @@ function rxSavedView(me){
    guest agreed to at her consult. Her starred go-tos come first, then the products the consult rules matched to what
    she said. Going over just warns ("let her know before ringing up"). Save & Send To Desk puts her Home Care PDF on
    the front desk app's Home Care list, and the desk texts it to her. */
+/* How to use it at home, by type of product, not by name (Alexandra, Oct 20 2026). Face and neck only, the way Carolyn teaches it. */
+function rxHowTo(n){n=String(n||'');
+  if(/Skin Box/.test(n))return 'Use your samples in this order, morning and night: cleanser, then your P50 on a cotton round, then serum, then moisturizer. Each one has its how-to on this sheet.';
+  if(/Lait|Démaquillante|Micellaire|Cleans/i.test(n))return 'On a dry face, massage 1–2 pumps over your face and neck for 1–2 minutes. Remove with a warm damp cloth, then rinse with cool water. Morning and night.';
+  if(/Lotion P50|MC 110|Eauxyg/.test(n))return 'After cleansing, soak a cotton round and sweep it over your face and neck, from the center out. Don’t rinse. Morning and night, unless your esthetician told you otherwise.';
+  if(/Sérum|Serum|Fluide|Amniotique|Collag|Élastine|Placenta|Tensil|Oligo|Dermopore|Silk Plus|Iribiol|Tissulaires|Colostrum|Spectral/.test(n))return 'After your P50, put 2–3 drops on your fingertips and press them into your face and neck. Let it sink in before your moisturizer.';
+  if(/Contour des Yeux|Eye/.test(n))return 'Tap a tiny amount around the eye area with your ring finger, morning and night.';
+  if(/Masque|Mask/.test(n))return '1–2 times a week after your P50: smooth a thin layer over your face and neck, leave it on as directed, then remove.';
+  if(/Crème|Émulsion|Cream/.test(n))return 'Last step: warm a pea-size amount between your fingertips and press it into your face and neck.';
+  return ''}
+const RX_HOW_STEP=n=>/Skin Box/.test(n)?0:/Lait|Démaquillante|Micellaire/.test(n)?1:/Lotion P50|MC 110|Eauxyg/.test(n)?2:/Masque|Mask/.test(n)?5:/Contour des Yeux|Eye/.test(n)?4:/Crème|Émulsion|Cream/.test(n)?4.5:3;
 function rxTakeHomeView(me){
   const list=rxSaved(), x=list.find(r=>r.id===RX_HOME); if(!x){RX_VIEW='saved';return rxSavedView(me)}
   const d=x.draft, kind=d.kind||x.kind, put=()=>{const L=rxSaved(),i=L.findIndex(r=>r.id===x.id);if(i>=0){L[i]=x;store.set(rxSavedKey(),JSON.stringify(L))}};
@@ -885,9 +898,11 @@ function rxTakeHomeView(me){
   const extra=x.home.filter(p=>!cand.some(c=>c.n===p.n)).map(p=>row({n:p.n,p:p.p,why:'',grp:'x'}));
   const toast=h('p',{class:'soft',style:'text-align:center;margin:0'});
   const toRG=()=>{const cat=typeof rgCatalog==='function'?rgCatalog(kind):[], whens=RG_WHEN[kind];
-    RG=rgBlank(); RG.guest=x.guest; RG.next=d.m&&d.m.when||'';
+    RG=rgBlank(); RG.guest=x.guest; RG.next=d.m&&d.m.when||''; RG.rid=x.id;   /* her card id: saving again replaces the desk's copy */
     RG.picks=x.home.map(p=>{const b=rgNorm(rgBase(String(p.n).replace(/^Try Me: /,''))), it=cat.find(c=>rgNorm(c.n)===b||c.sizes.includes(p.n))||cat.find(c=>{const k=rgNorm(c.n);return k.length>8&&(b.startsWith(k)||k.startsWith(b))});
-      return it?{n:it.n,how:it.how,when:it.w0&&whens.includes(it.w0)?it.w0:whens[0],step:it.step}:{n:String(p.n).replace(/^Try Me: /,''),how:'',when:whens[0],step:''}})};
+      const nm=it?it.n:String(p.n).replace(/^Try Me: /,''), gen=kind==='skin'?rxHowTo(nm):'';
+      return it?{n:it.n,how:gen||it.how,when:it.w0&&whens.includes(it.w0)?it.w0:whens[0],step:it.step}:{n:nm,how:gen,when:whens[0],step:''}});
+    if(kind==='skin') RG.picks.sort((a,b)=>RX_HOW_STEP(a.n)-RX_HOW_STEP(b.n))};
   const send=h('button',{type:'button',class:'obtn',onclick:async()=>{if(!x.home.length){toast.textContent='Pick what she’s taking home first.';return}
     toRG(); await rgSave2(me,toast,send); if(!RG.guest){RX_MSG=x.guest+'’s Home Care PDF is on the front desk list to text her.';x.sent=new Date().toISOString();put();RX_VIEW='saved';RX_FIND=x.guest;render();window.scrollTo(0,0)}}},'Save & Send To Desk');
   const prev=h('button',{type:'button',class:'tab',onclick:()=>{if(!x.home.length){toast.textContent='Pick what she’s taking home first.';return}toRG();rgPreview(me,toast,RG,kind)}},'Preview Her PDF');
@@ -901,5 +916,5 @@ function rxTakeHomeView(me){
       h('p',{class:'rxover',id:'rxthover',hidden:left<0?null:''},rxMoney(-left)+' over her budget: let her know before ringing it up.')),
     listSec,
     h('section',{class:'card2',style:'align-items:center;text-align:center'},send,prev,toast,
-      h('small',{class:'soft'},'Her Home Care PDF goes to the front desk app’s Home Care list, and the desk texts it to her at checkout.'))];
+      h('small',{class:'soft'},'Her Home Care PDF goes to the front desk app’s Home Care list, and the desk texts it to her at checkout. Changed your mind at the end of her service? Change the picks and tap Save & Send To Desk again: it replaces the one on the desk.'))];
 }
