@@ -554,6 +554,7 @@ function rxView(){
   return [h('div',{class:'hub'},head,tabs,fresh,...rxBuild(R,me))];
 }
 
+let RX_HINT='';
 let RX_DD={card:null,kind:null,open:null};
 function rxDDStyle(){if(document.getElementById('rxdd-css'))return;const st=document.createElement('style');st.id='rxdd-css';
   st.textContent=`.rxdd{border-top:1px solid var(--line)}
@@ -622,9 +623,15 @@ function rxBuild(R,me){
   const done=order.filter(x=>x.get().length).length;
   /* no options until a budget is typed in (Alexandra, Oct 16 2026): "No set budget" is gone */
   const ready=rxGoalList(R).length&&Number(R.budget)>0&&R.now.length;
-  const gen=h('button',{type:'button',class:'obtn',disabled:ready?null:'',onclick:()=>{const g=rxGenerate(R);if(!g)return;Object.assign(R,g);rxSave();render();setTimeout(()=>{const n=document.getElementById('rxopts');if(n)n.scrollIntoView({behavior:'smooth'})},50)}},R.opts?'Suggest Again':'Suggest Options');
+  /* the button always answers (Alexandra, Oct 20 2026): with something missing it opens that question instead of doing nothing */
+  const missing=()=>{
+    if(!(Number(R.budget)>0)){const n=document.querySelector('.card2 input[type=number]');if(n){n.scrollIntoView({behavior:'smooth',block:'center'});n.focus()}RX_HINT='Type her budget first.';return}
+    RX_DD.open=!rxGoalList(R).length?'goal':'now';RX_HINT=!rxGoalList(R).length?'Pick her goals for today first.':(sk?'Answer Her Skin Instant first.':'Answer Scalp Condition first.');render();
+    setTimeout(()=>{const d=document.querySelector('details.rxdd[open]');if(d)d.scrollIntoView({behavior:'smooth',block:'center'})},60)};
+  const gen=h('button',{type:'button',class:'obtn',style:ready?null:'opacity:.55',onclick:()=>{if(!ready){missing();return}RX_HINT='';const g=rxGenerate(R);if(!g)return;Object.assign(R,g);rxSave();render();setTimeout(()=>{const n=document.getElementById('rxopts');if(n)n.scrollIntoView({behavior:'smooth'})},50)}},R.opts?'Suggest Again':'Suggest Options');
   const s4=h('section',{class:'card2',style:'align-items:center;text-align:center'},gen,
     h('small',{class:'soft'},done+' of '+order.length+' questions answered'),
+    !ready&&RX_HINT?h('small',{style:'color:#8b3a2b;font-weight:600'},RX_HINT):null,
     h('small',{class:'soft'},ready?'Suggestions follow the Taffeta consultation: only what she needs, inside her budget.':(Number(R.budget)>0?'Pick her goals and what’s going on right now.':'Type her budget first. Options only show once there’s a budget.')));
   /* Maintenance prices come after her routine and what's going on now, when the artist decides what she goes home with (Alexandra, Oct 15 2026) */
   const out=[s1,...(sk?[s3,s2]:[s2,s3]),h('section',{class:'card2'},rxPriceList(R.kind)),s4];
