@@ -54,6 +54,12 @@ html,body{background:#f8f6f0}
 .talked{text-align:center}
 .talked summary{list-style:none;cursor:pointer;display:inline-flex;align-items:center;gap:7px;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink);text-decoration:underline;text-underline-offset:5px;padding:4px 0}
 .talked summary::-webkit-details-marker{display:none}
+.addl summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:12px}
+.addl summary::-webkit-details-marker{display:none}
+.addl summary .eyebrow{margin:0}
+.addl .pm::before{content:"+";font-size:20px;line-height:1}
+.addl[open] .pm::before{content:"\2212"}
+.addl[open] summary{margin-bottom:8px}
 .talked summary::after{content:"";width:6px;height:6px;border-right:1.2px solid var(--ink);border-bottom:1.2px solid var(--ink);transform:rotate(45deg);margin-top:-3px;transition:transform .15s}
 .talked[open] summary::after{transform:rotate(-135deg);margin-top:3px}
 .talked .tbody{display:flex;flex-direction:column;gap:10px;padding:12px 4px 0;text-align:left}
@@ -136,7 +142,8 @@ html,body{background:#f8f6f0}
     el('div',{class:'for'},el('span',{},'For '+(c.g||'you'),vip?el('span',{style:'margin-left:8px;font-size:11px;letter-spacing:.16em;border:1px solid currentColor;border-radius:999px;padding:1px 8px;vertical-align:middle'},'VIP'):null),isNaN(date)?null:el('span',{class:'dt'},(date.getMonth()+1)+'/'+date.getDate()+'/'+String(date.getFullYear()).slice(-2))),
     opts,
     /* All In stops at a $400 ticket; anything more is her call (Alexandra, Oct 16 2026) */
-    (c.f&&c.f.length)?el('section',{class:'maint'},el('span',{class:'eyebrow'},c.hs?'Highly suggested':'When you’re ready: full sizes'),
+    /* closed by default: "Additional suggestions +" opens it (Alexandra, Oct 20 2026) */
+    (c.f&&c.f.length)?el('details',{class:'maint addl'},el('summary',{},el('span',{class:'eyebrow'},'Additional suggestions'),el('span',{class:'pm','aria-hidden':'true'})),
       el('p',{style:'font-size:14px;margin:0'},c.hs?'Add your P50 to All In. It’s the step that makes your results last, and it isn’t in the totals above.':'Start with a Try Me today. These are the full sizes we’d love you to take home. They aren’t in the totals above.'),
       c.f.map(([n,p])=>el('div',{class:'tot',style:'border-top:0;padding-top:0;font-size:14px'},el('span',{},n),el('span',{},money(p))))):
     c.x?el('p',{class:'talk',style:'text-align:center;font-size:14px'},'Want home care or a treatment added? Just ask, and we’ll add it to your plan.'):null,
