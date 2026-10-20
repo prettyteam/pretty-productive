@@ -713,6 +713,26 @@ function rxBuild(R,me){
   return out;
 }
 
+/* Categories for the editor's Add picker (Alexandra, Oct 20 2026) */
+const RX_ADDCAT=new WeakMap();
+function rxSvcCats(kind,svc){
+  const groups=kind==='skin'?[['Facials',/Facial|Lift & Remodel|Cure All|Microdermabrasion/],['Targeted Treatments',/Express|Boost|Mini|Reversal/],['Add-Ons',/Dermaplaning/],['Brows & Wax',/Brow|Wax/]]
+    :[['Cuts & Styling',/Haircut|Leave Wet|Blow|Formal/],['Color',/Single Process|Shadow Root|Glaze|Additional Mix|Base Lightener/],['Foils & Balayage',/Foil|Highlight|Balayage/],['Treatments',/K18|Goldwell|Wave/]];
+  const out=groups.map(([c,re])=>['Services · '+c,svc.filter(([n])=>re.test(n))]);
+  const left=svc.filter(([n])=>!groups.some(([,re])=>re.test(n))); if(left.length) out.push(['Services · Other',left]);
+  return out.filter(c=>c[1].length);
+}
+function rxProdCats(kind,plist){
+  const groups=kind!=='skin'?[['Scalp Care',/Scalp/],['Shampoos',/Shampoo|Wash|Cleanse/],['Conditioners',/Conditioner|Condtion|Cond\b/],['Masks & Treatments',/Mask|Masque|Treatment|Leave-In|Leave In|Repair|Night Cr/i],
+    ['Heat Protection',/Heat|Protect|Shield|D.Or|Defense/i],['Oils & Serums',/Oil|Serum|Drops/],
+    ['Creams, Mousse & Volume',/Mousse|Cream|Crème|Creme|Balm|Gel|Foam|Primer|Lotion|Blowout|Butter|Styler|Volume|Textur|Wand|Après|Apres/i],
+    ['Sprays & Finishing',/Hairspray|Spray|Gloss|Shine|Polish|Wax|Pomade|Paste|Powder|Dust|Finish/i],
+    ['Tools, Sets & Extras',/Brush|Dryer|Iron|Straightener|Curl|Smooth X|T3|Showerhead|Filter|Pillowcase|Clip|Set|Ties|Kit|Parfum|Collection|Holiday/i]]:[['Skin Boxes',/Skin Box/],['Cleansers',/Lait|Démaquillante|Micellaire|Cleans/i],['P50 & Lotions',/Lotion|Eauxyg/],['Eye Care',/Contour des Yeux|Eye|Patch/i],['Masks',/Masque|Mask/],
+    ['Serums',/Sérum|Serum|Fluide|Amniotique|Collag|Élastine|Placenta|Tensil|Oligo|Dermopore|Silk Plus|Iribiol|Tissulaires|Colostrum|Spectral/],['Moisturizers',/Crème|Émulsion|Cream/]];
+  const used=new Set(), out=groups.map(([c,re])=>{const P=plist.filter(([n])=>!used.has(n)&&re.test(n)&&!(c==='Serums'&&/Crème/.test(n)));P.forEach(([n])=>used.add(n));return [c,P]});
+  const left=plist.filter(([n])=>!used.has(n)); if(left.length) out.push(['Other',left]);
+  return out.filter(c=>c[1].length);
+}
 function rxEditor(R,me){
   const b=R.nob?null:Number(R.budget)||null;
   const favs=rxFavs(), plist=RX_PRICES[R.kind];
@@ -724,14 +744,23 @@ function rxEditor(R,me){
       l.t==='s'||l.t==='h'?null:h('button',{type:'button',class:'tab rxtry',onclick:()=>{if(l.t==='t'){l.t='p';l.p=l.full||(RX_PRICES[R.kind].find(x=>x[0]===l.n)||[0,l.p])[1]}else{l.full=l.full||l.p;l.t='t';l.p=RX_TRY}rxSave();render()}},l.t==='t'?'Full Size':'Try Me '+rxMoney(RX_TRY)),
       p,h('button',{type:'button',class:'rgx','aria-label':'Remove '+l.n,onclick:()=>{L.splice(L.indexOf(l),1);rxSave();render()}},'×'));
   };
-  const adder=L=>{const sel=h('select',{'aria-label':'Add a service or product'},h('option',{value:''},'+ Add a service or product'),
-      favs.length?h('optgroup',{label:'My go-tos'},plist.filter(x=>favs.includes(x[0])).map(([n,p])=>h('option',{value:n},n+' · '+rxMoney(p)))):null,
-      h('optgroup',{label:'Services'},RX_SVC[R.kind].filter(([n])=>!(n==='Glaze'&&L.some(l=>RX_BAL.test(l.n)))).map(([n,p])=>h('option',{value:n},n+' · '+rxMoney(p)))),
-      ...rxByBrand(plist).map(([b,L])=>h('optgroup',{label:'Maintenance · '+b},L.map(([n,p])=>h('option',{value:n},n+' · '+rxMoney(p))))),
-      h('optgroup',{label:'Try Me'},h('option',{value:'__try'},'Try Me bottle · '+rxMoney(RX_TRY))));
-    sel.addEventListener('change',()=>{const n=sel.value;if(!n)return;if(n==='__try'){const what=prompt('Which product goes in the Try Me bottle?');if(what)L.push({n:what.trim(),p:RX_TRY,t:'t'});rxSave();render();return}
+  /* Add a line in two steps, a category and then what's in it, so it's never one long list (Alexandra, Oct 20 2026) */
+  const adder=L=>{
+    const opt=([n,p])=>h('option',{value:n},n+' · '+rxMoney(p));
+    const svc=RX_SVC[R.kind].filter(([n])=>!(n==='Glaze'&&L.some(l=>RX_BAL.test(l.n))));
+    const cats=[];
+    if(favs.length) cats.push(['My Go-Tos',plist.filter(x=>favs.includes(x[0]))]);
+    rxSvcCats(R.kind,svc).forEach(c=>cats.push(c));
+    rxProdCats(R.kind,plist).forEach(([c,P])=>cats.push(['Maintenance · '+c,P]));
+    cats.push(['Try Me Bottle',[['__try',RX_TRY]]]);
+    const cur=RX_ADDCAT.get(L), cat=h('select',{'aria-label':'Category'},h('option',{value:''},'+ Add: Pick A Category'),cats.map(([c,P])=>h('option',Object.assign({value:c},c===cur?{selected:''}:{}),c+' ('+P.length+')')));
+    const items=(cats.find(c=>c[0]===cur)||[])[1];
+    const sel=h('select',Object.assign({'aria-label':'Add a service or product'},items?{}:{disabled:''}),h('option',{value:''},'Then Pick One'),items?items.map(([n,p])=>n==='__try'?h('option',{value:n},'Try Me bottle · '+rxMoney(p)):opt([n,p])):null);
+    cat.addEventListener('change',()=>{RX_ADDCAT.set(L,cat.value);render()});
+    sel.addEventListener('change',()=>{const n=sel.value;if(!n)return;RX_ADDCAT.delete(L);if(n==='__try'){const what=prompt('Which product goes in the Try Me bottle?');if(what)L.push({n:what.trim(),p:RX_TRY,t:'t'});rxSave();render();return}
       const sv=RX_SVC[R.kind].find(x=>x[0]===n);const pr=plist.find(x=>x[0]===n);const ex=Object.values(RX_PROD).find(x=>x[0]===n);
-      L.push(sv?(()=>{const p=rxPrice(R.kind,n),reg=sv[1];return reg!==p?{n,p,t:'s',reg}:{n,p,t:'s'}})():{n,p:pr[1],t:'p',why:ex?ex[2]:'',full:pr[1]});rxSave();render()});return h('label',{class:'fld'},sel)};
+      L.push(sv?(()=>{const p=rxPrice(R.kind,n),reg=sv[1];return reg!==p?{n,p,t:'s',reg}:{n,p,t:'s'}})():{n,p:pr[1],t:'p',why:ex?ex[2]:'',full:pr[1]});rxSave();render()});
+    return h('div',{class:'rxadd'},h('label',{class:'fld'},cat),h('label',{class:'fld'},sel))};
   const badge=t=>b==null?null:h('span',{class:'rxbadge '+(t<=b?'ok':'over')},t<=b?rxMoney(b-t)+' under budget':rxMoney(t-b)+' over budget');
   /* the same names her card shows: the higher total is All In, the other Worth The Wait, none when they tie (Alexandra, Oct 20 2026) */
   const tots=R.opts.map(o=>rxTotal(o.lines)), hiI=tots.length===2&&tots[0]!==tots[1]?tots.indexOf(Math.max(...tots)):-1;
