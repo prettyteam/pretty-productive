@@ -13,7 +13,7 @@ const RX_SVC={
     ['Base Lightener',55],['K18 Bond Protection',25],['Goldwell Leave-In Treatment',20],['Permanent Wave',100],['Formal Style',105]],
   skin:[['Taffeta Facial',130],['Express Acne Treatment',99],['Hydration Boost',99],['Brightening Mini Facial',99],
     ['Mini Redness Reversal',99],['Anti-Aging Express',99],['Dermaplaning',60],['Dermaplaning Add-On',40],
-    ['Nano Needling Facial',199],['Taffeta Facial with MC 110',130],['Microdermabrasion',150],['Brow Sculpt Maintenance',25],['Brow Tint',25],['Brow Lamination',85],['Lip Wax',15]]
+    ['Nano Needling Facial',199],['Biologique Recherche Lift & Remodel',200],['Biologique Recherche Cure All',200],['Taffeta Facial with MC 110',130],['Microdermabrasion',150],['Brow Sculpt Maintenance',25],['Brow Tint',25],['Brow Lamination',85],['Lip Wax',15]]
 };
 /* Female haircut follows the artist's level (Alexandra, Oct 15 2026): newer artists $65, Alexandra $100, everyone else $75 */
 const RX_CUT={Adriana:65,Ashley:65,Amanda:65,Isabella:65,Alexandra:100};
@@ -339,7 +339,7 @@ function rxMergeSvc(names){
 }
 /* Skin: one facial per visit (Alexandra, Oct 16 2026). With several goals the card keeps one facial (the MC 110 facial
    when it's there, otherwise the fullest) plus any add-ons like dermaplaning, brows or wax. */
-const RX_FACIAL=/Facial|Treatment|Boost|Reversal|Express|Microdermabrasion/;
+const RX_FACIAL=/Facial|Treatment|Boost|Reversal|Express|Microdermabrasion|Lift & Remodel|Cure All/;
 function rxMergeSkin(names){
   let L=[...new Set(names)]; const f=L.filter(n=>RX_FACIAL.test(n)&&!/Add-On/.test(n)); if(f.length<2) return L;
   const keep=f.find(n=>/MC 110/.test(n))||f.slice().sort((x,y)=>rxRegPrice('skin',y)-rxRegPrice('skin',x))[0];
@@ -454,13 +454,20 @@ function rxGenerateSkin(R,g){
     ?{n:'Nano Needling Facial',p:rxPrice('skin','Nano Needling Facial'),why:'Your specialty for fine lines and firmness. If it’s right for her, swap it into All In.'}:null;
   const p50=(needs.find(k=>/^sk(Break|Sens|Bright|P50V)$/.test(k))||'skP50V'); let [n,pr,why,alt]=RX_PROD[p50]; if(alt&&RX_OUT.includes(n))[n,pr]=alt;
   if(!/5(\.1)? oz/.test(n)&&alt) [n,pr]=alt;   /* the note suggests the full-size P50 */
-  const [ms,mw,mt]=g.m;
+  let [ms,mw,mt]=g.m, mLines=rxSvcLines('skin',ms);
+  /* a budget that only covers Worth The Wait means she goes home with the Skin Box (about 4 weeks of samples), so her
+     next visit is a $99 targeted treatment plus her first full-size product, not a full facial (Alexandra, Oct 20 2026) */
+  if(b!=null&&b<rxTotal(o2)){
+    const who=rxArtist(), at99=x=>rxRegPrice('skin',x)===99&&rxSkinCan(x,who);
+    const tgt=ms.find(at99)||P.flat().find(at99)||['Hydration Boost','Anti-Aging Express','Brightening Mini Facial'].find(at99)||ms[0];
+    mLines=[...rxSvcLines('skin',[tgt]),{n,p:pr,t:'p',why:'Her first full size, matched to her skin',full:pr}];
+    mw='4 weeks'; mt='We’ll see how your skin did with your Skin Box: a targeted treatment, and your first full-size product to keep your results going.'}
   return {opts:[{title:'Option 1',lines:o1},{title:'Option 2',lines:o2}],
-    m:{lines:rxSvcLines('skin',ms),when:mw,text:mt},refresh:mw,keep:false,more:false,rec:[{n,p:pr,why,hint:'p50'}],spec};
+    m:{lines:mLines,when:mw,text:mt},refresh:mw,keep:false,more:false,rec:[{n,p:pr,why,hint:'p50'}],spec};
 }
 /* Who does which skin service (Alexandra, Oct 20 2026): only Carolyn does Nano Needling; Kelly does the Taffeta Facial
    and the Biologique Recherche facials only. A suggestion she can't do is swapped out or dropped from her card. */
-const RX_BR_FACIALS=['Express Acne Treatment','Hydration Boost','Brightening Mini Facial','Mini Redness Reversal','Anti-Aging Express','Taffeta Facial with MC 110'];
+const RX_BR_FACIALS=['Express Acne Treatment','Hydration Boost','Brightening Mini Facial','Mini Redness Reversal','Anti-Aging Express','Taffeta Facial with MC 110','Biologique Recherche Lift & Remodel','Biologique Recherche Cure All'];
 const RX_SKIN_ONLY={kelly:['Taffeta Facial',...RX_BR_FACIALS]};
 const RX_SKIN_JUST={'Nano Needling Facial':['carolyn']};
 function rxArtist(){const n=(typeof S!=='undefined'&&S&&S.mine&&(S.mine.name||(S.mine.staff&&S.mine.staff.name)))||'';return String(n).trim().split(/\s+/)[0].toLowerCase()}
