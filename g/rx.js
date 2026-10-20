@@ -154,7 +154,9 @@ function rxPriceList(kind){
     h('div',{class:'sec2'},h('p',{class:'soft'},'Know what your favorites cost so you can build them into her budget. Star your go-tos and they show first when you add home care.'),
       h('label',{class:'fld'},s),
       ...(()=>{const row=([n,p])=>h('div',{class:'rxl'},
-        h('button',{type:'button',class:'rxstar','aria-pressed':String(favs.includes(n)),'aria-label':(favs.includes(n)?'Unstar ':'Star ')+n,onclick:()=>{rxFavToggle(n);render();const x=document.getElementById('rxpl');if(x)x.open=true}},favs.includes(n)?'★':'☆'),
+        h('button',{type:'button',class:'rxstar','aria-pressed':String(favs.includes(n)),'aria-label':(favs.includes(n)?'Unstar ':'Star ')+n,onclick:e=>{  /* star several in a row: the star flips in place and the list stays open; go-tos move to the top next time it opens (Alexandra, Oct 20 2026) */
+          rxFavToggle(n);const on=rxFavs().includes(n),b=e.currentTarget;b.textContent=on?'★':'☆';b.setAttribute('aria-pressed',String(on));b.setAttribute('aria-label',(on?'Unstar ':'Star ')+n);
+          const c=document.querySelector('#rxpl .invc');if(c){const k=rxFavs().length;c.textContent=k?k+' starred':''}}},favs.includes(n)?'★':'☆'),
         h('div',{class:'rxn'},h('b',{},n.replace(/^Biologique Recherche /,'BR '))),h('span',{class:'num'},rxMoney(p)));
         const mine=items.filter(([n])=>favs.includes(n));
         return [mine.length?h('div',{},h('span',{class:'lbl'},'★ My Go-Tos'),...mine.map(row)):null,
