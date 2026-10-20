@@ -1,17 +1,17 @@
 /* Prices tab (Alexandra, Oct 2026): every artist can look up our starting service prices and retail prices,
    so they know what things cost before they build a budget with a guest. Services are the starting prices on
-   taffetadesign.com/salon-and-spa-menu (read Oct 15 2026); retail is the home care list in g/rx.js (RX_PRICES).
+   taffetadesign.com/salon-and-spa-menu (read Oct 15 2026), updated Oct 20 2026 from Alexandra's marked-up menu card; retail is the home care list in g/rx.js (RX_PRICES).
    Uses the host page's h() and render(). No costs here, only what the guest pays. */
 const PR_MENU=[
   ['Hair cutting',[['Female haircut','$65+'],['Female haircut, leaving wet','$50+'],['Male haircut','$45+'],['Child haircut','$35+']]],
-  ['Hair color',[['Single process','$65+'],['Gloss','$45+'],['Base break','$55+'],['Shadow root','$55+'],['Face frame highlight','$55+'],
-    ['Minimal highlight','$80+'],['Half highlight','$110+'],['Full highlight','$140+'],['Double process','Upon consultation'],
-    ['K18 bond protection, every blonding service','$25 to $50']]],
+  ['Hair color',[['Single process','$65+'],['Gloss','$45+'],['Base break','$55+'],['Shadow root','$55+'],['Face frame highlight','$65+'],
+    ['Minimal highlight','$100+'],['Half highlight','$125+'],['Full highlight','$150+'],['Double process','Upon consultation'],
+    ['K18 bond protection','$45+']]],
   ['Lived-in color packages',[['Full balayage · 3–4 hrs, 1–3x a year','$320+'],['Maintenance balayage · 2–3 hrs, every 6–12 weeks','$220+'],
     ['Refresh balayage · 45 min–1.5 hrs, every 6–8 weeks','$120+'],['Babylight technique, per package','+$50']],'Packages include shadow root and gloss. Price varies with length and thickness.'],
-  ['Hair treatments',[['Brazilian Blowout smoothing','$275+'],['Keratin smoothing','$275+'],['Olaplex','$50+'],['Goldwell leave-in treatment (backbar)','$20; $10–15 for half a bottle']]],
+  ['Hair treatments',[['Brazilian Blowout smoothing','$275+'],['Keratin smoothing','$275+'],['Goldwell leave-in treatment (backbar)','$20; $10–15 for half a bottle']]],
   ['Extensions',[['Clip-in extensions','$45+'],['Tape-in extensions','Upon consultation'],['Invisible bead / hand-tied','Upon consultation'],['Extension removal','$75+']]],
-  ['Styling',[['Wash & blow dry','$50+']]],
+  ['Styling',[['Wash & blow dry','$50+'],['Formal style','$100+']]],
   ['Makeup & lashes',[['Full face, traditional foundation','$85'],['Full face, airbrush foundation','$95'],['Just eyes (shadow & strip lash)','$70'],
     ['Individual false lashes','$25'],['Strip lash application','$15'],['Lash lift & tint','$125'],['Eyelash extensions','Upon consultation']]],
   ['Brows & waxing',[['First-time brow sculpt','$40'],['Maintenance brow sculpt','$25'],['Brow tint','$25'],['Brow lamination (with kit)','$85'],
