@@ -8,7 +8,7 @@
 /* Service prices: the median price for each service in the salon's own bookings, Oct 2026. */
 const RX_SVC={
   hair:[['Female Haircut',75],['Male Haircut',45],['Haircut Leaving Wet',50],['Leave Wet (no haircut)',0],['Blow Dry',50],['Blowdry Plus',65],
-    ['Single Process',70],['Shadow Root',60],['Glaze',45],['Additional Mix',25],['Face Frame/Spot Highlight',100],['Minimum Foil',85],
+    ['Single Process',65],['Shadow Root',60],['Glaze',45],['Additional Mix',25],['Face Frame/Spot Highlight',100],['Minimum Foil',85],
     ['Half Foil',150],['Full Foil',175],['Minimum Balayage',125],['Half Head Balayage',185],['Full Head Balayage',325],
     ['Base Lightener',55],['K18 Bond Protection',25],['Goldwell Leave-In Treatment',20],['Permanent Wave',100],['Formal Style',105]],
   skin:[['Taffeta Facial',130],['Express Acne Treatment',99],['Hydration Boost',99],['Brightening Mini Facial',99],
@@ -18,6 +18,9 @@ const RX_SVC={
 /* Female haircut follows the artist's level (Alexandra, Oct 15 2026): newer artists $65, Alexandra $100, everyone else $75 */
 const RX_CUT={Adriana:65,Ashley:65,Amanda:65,Isabella:65,Alexandra:100};
 function rxSetCut(me){const f=String(me||'').trim().split(/\s+/)[0]||'', r=RX_SVC.hair.find(x=>x[0]==='Female Haircut'); if(r) r[1]=RX_CUT[f]||75}
+/* Single process: each artist picks her own price, $65, $70, $80 or $100, and the card remembers it on her device (Alexandra, Oct 20 2026) */
+const RX_SP=[65,70,80,100], rxSpKey=()=>'pp-rxsp:'+rxSlug();
+function rxSetSP(){const v=Number(store.get(rxSpKey())), p=RX_SP.includes(v)?v:65, r=RX_SVC.hair.find(x=>x[0]==='Single Process'); if(r) r[1]=p; return p}
 const rxRegPrice=(k,n)=>{const r=RX_SVC[k].find(x=>x[0]===n);return r?r[1]:0};
 /* VIP family pricing (Alexandra, Oct 16 2026): a VIP service covers the artist's commission and the cost of the
    service, plus 10% for the house. VIP = (full price x her commission rate + $25 per color bowl) x 1.10, never more
@@ -372,18 +375,38 @@ const rxHcLine=(amt,needs)=>({n:'Home Care',p:amt,t:'h',why:needs.length?'Sugges
 /* the lighter option keeps the color and swaps the haircut for a blow dry (Melissa's card: $266 with the cut, $246 with a blow dry) */
 function rxCutSwap(P){const out=[];P.forEach(t=>{out.push(t);if(t.includes('Female Haircut')&&t.some(n=>n!=='Female Haircut')){const b=t.map(n=>n==='Female Haircut'?'Blow Dry':n);
   if(!P.some(x=>x.length===b.length&&x.every((n,i)=>n===b[i])))out.push(b)}});return out}
+/* Option 1 at or under her budget, Option 2 about $60 to $80 more, so the two are a real choice (Alexandra, Oct 20 2026:
+   Sarah's skin card came out $9 over her budget with the options only $41 apart). Option 1 is the fullest service
+   that fits her budget with home care; when none does, the lightest service with whatever home care is left.
+   Option 2 is the fullest package up to $80 more, keeping every service in Option 1; when nothing lands at
+   least $60 more, its home care goes up to make the difference. pkg(i,home care $,leave-in) builds a tier. */
+const RX_GAP_LO=60, RX_GAP_HI=80, RX_GAP_MID=70;
+function rxPair(P,b,pkg,lo,vars,ok,cap){
+  const bb=b!=null?b:RX_CAP-RX_GAP_HI;
+  let o1=null,i1=P.length-1;
+  for(let i=0;i<P.length&&!o1;i++){const L=pkg(i,lo,false); if(rxTotal(L)<=bb){o1=L;i1=i}}
+  if(!o1){const s=rxTotal(pkg(i1,0,false)); o1=pkg(i1,Math.max(0,Math.floor((bb-s)/5)*5),false)}
+  /* Option 2 keeps every service in Option 1 (Donelle's card, Oct 20 2026: never trade her haircut for a blow dry) */
+  const svc1=o1.filter(l=>l.t==='s').map(l=>l.n), keeps=L=>svc1.every(n=>L.some(l=>l.n===n));
+  const t1=rxTotal(o1); let best=null;
+  for(let i=0;i<=i1;i++) for(const [a,lv] of vars){const L=pkg(i,a,lv),t=rxTotal(L);
+    if(t>t1&&t<=t1+RX_GAP_HI&&ok(L)&&keeps(L)&&(!best||t>best.t)) best={L,t,i,a,lv}}
+  if(!best) for(let i=0;i<=i1;i++) for(const [a,lv] of vars){const L=pkg(i,a,lv),t=rxTotal(L);
+    if(t>t1&&ok(L)&&keeps(L)&&(!best||t<best.t)) best={L,t,i,a,lv}}
+  if(!best){const a=vars[0][0];best={L:pkg(i1,a,false),i:i1,a,lv:false};best.t=rxTotal(best.L)}
+  let o2=best.L;
+  if(best.t<t1+RX_GAP_LO){const add=Math.min(Math.round(t1+RX_GAP_MID)-best.t,cap-best.t), a=Math.ceil((best.a+add)/5)*5;
+    if(add>0) o2=pkg(best.i,best.t+a-best.a<=cap?a:best.a+add,best.lv)}
+  return [o1,o2];
+}
 function rxGenerateHair(R,g){
   const needs=rxNeeds(R), P=rxCutSwap(g.p), b=R.nob?null:Number(R.budget)||null;
   const now=rxNowAll(R), leave=now.some(x=>/Color fading|Brassiness|Breakage|Dryness/.test(x))||P[0].some(n=>RX_BLOND.test(n));
-  const cap=b!=null?b+100:RX_CAP;
-  const pkg=(i,amt,lv)=>[...rxSvcLines('hair',P[i]),...(lv?rxSvcLines('hair',['Goldwell Leave-In Treatment']):[]),rxHcLine(amt,rxNeedsFor(needs,P[i]))];
+  const cap=Infinity;  /* Option 2 stays within $80 of Option 1 (rxPair), which replaces the old $100-over-budget cap */
+  const pkg=(i,amt,lv)=>[...rxSvcLines('hair',P[i]),...(lv?rxSvcLines('hair',['Goldwell Leave-In Treatment']):[]),...(amt>0?[rxHcLine(amt,rxNeedsFor(needs,P[i]))]:[])];
   const okL=L=>rxTotal(L)<=cap&&(rxTotal(L)<=RX_ALLIN_HAIR||!L.some(l=>l.n==='Goldwell Leave-In Treatment'));
-  let o2=null,i2=P.length-1;
-  for(let i=0;i<P.length&&!o2;i++) for(const [a,lv] of [[RX_HC_HI,leave],[RX_HC_HI,false],[RX_HC_LO,false]]){const L=pkg(i,a,lv); if(okL(L)){o2=L;i2=i;break}}
-  if(!o2) o2=pkg(P.length-1,RX_HC_LO,false);
-  let o1=null; const lim=Math.min(b!=null?b:Infinity,rxTotal(o2)-1);
-  for(let i=Math.min(i2+1,P.length-1);i<P.length&&!o1;i++){const L=pkg(i,RX_HC_LO,false); if(rxTotal(L)<=lim) o1=L}
-  if(!o1) o1=pkg(P.length-1,RX_HC_LO,false);
+  const vars=[[RX_HC_HI,leave],[RX_HC_HI,false],[RX_HC_LO,leave],[RX_HC_LO,false]].filter(([,lv],i,A)=>!lv||A.findIndex(x=>x[0]===A[i][0])===i);
+  const [o1,o2]=rxPair(P,b,pkg,RX_HC_LO,vars,okL,cap);
   let [ms,mw,mt]=[o1,o2].some(L=>L.some(l=>RX_BAL.test(l.n)))?RX_BAL_M:g.m;
   /* next visit: today's color stays (a glaze she had today comes back), and with no cut or style it's a blow dry, not leave wet */
   ms=[...ms]; const today=[...o1,...o2].map(l=>l.n);
@@ -404,21 +427,18 @@ function rxGenerateHair(R,g){
    Worth The Wait carries the $50 Biologique Recherche Skin Box. Her matched P50 is highly suggested under All In, not in the total. */
 const RX_SK_HI=60, RX_SK_LO=50;
 function rxGenerateSkin(R,g){
-  const needs=rxNeeds(R), P=g.p, b=R.nob?null:Number(R.budget)||null, cap=Math.min(b!=null?b+100:RX_CAP,RX_ALLIN_SKIN);
+  const needs=rxNeeds(R), P=g.p, b=R.nob?null:Number(R.budget)||null, cap=RX_ALLIN_SKIN;
   const nw=R.now||[], gl=rxGoalList(R);
   const box=nw.includes('Breakouts')||gl.includes('Clear Breakouts')?'Blemish Skin Box':nw.includes('Fine lines')||gl.includes('Fine Lines And Firmness')?'Youth Skin Box':'Standard Skin Box';
   /* every product rule still runs: the artist sees the products matched to what she said (P50, serum, cleanser, cream);
      her card shows only the budget (Alexandra, Oct 17 2026) */
   const picks=[...new Set(needs.map(k=>{let [n,,,alt]=RX_PROD[k];return alt&&RX_OUT.includes(n)?alt[0]:n}))].join(', ');
-  const hi=()=>({n:'Home Care',p:RX_SK_HI,t:'h',why:'Start with the full-size cleanser, Biologique Recherche Lait VIP O2 (5.1 oz)'+(picks?'. Matched to her skin: '+picks:''),full:RX_SK_HI});
-  const lo=()=>({n:'Home Care',p:RX_SK_LO,t:'h',why:'Suggested: Biologique Recherche '+box+', about 4 weeks of product to try at home'+(picks?'. Matched to her skin for later: '+picks:''),full:RX_SK_LO});
-  const pkg=(i,hc)=>[...rxSvcLines('skin',P[i]),hc()];
-  let o2=null,i2=P.length-1;
-  for(let i=0;i<P.length&&!o2;i++){const L=pkg(i,hi); if(rxTotal(L)<=cap){o2=L;i2=i}}
-  if(!o2) o2=pkg(P.length-1,hi);
-  let o1=null; const lim=Math.min(b!=null?b:Infinity,rxTotal(o2)-1);
-  for(let i=Math.min(i2+1,P.length-1);i<P.length&&!o1;i++){const L=pkg(i,lo); if(rxTotal(L)<=lim) o1=L}
-  if(!o1) o1=pkg(P.length-1,lo);
+  /* home care by amount: $60 and up starts with the full-size cleanser, $50 is the Skin Box, less is what's left of her budget */
+  const hc=p=>({n:'Home Care',p,t:'h',full:p,why:p>=RX_SK_HI?'Start with the full-size cleanser, Biologique Recherche Lait VIP O2 (5.1 oz)'+(picks?'. Matched to her skin: '+picks:''):
+    p>=RX_SK_LO?'Suggested: Biologique Recherche '+box+', about 4 weeks of product to try at home'+(picks?'. Matched to her skin for later: '+picks:''):
+    'What’s left of her budget: the travel-size Lait VIP O2 (1.7 oz, $35) or Try Me bottles'+(picks?'. Matched to her skin for later: '+picks:'')});
+  const pkg=(i,amt)=>[...rxSvcLines('skin',P[i]),...(amt>0?[hc(amt)]:[])];
+  const [o1,o2]=rxPair(P,b,pkg,RX_SK_LO,[[RX_SK_HI,false],[RX_SK_LO,false]],L=>rxTotal(L)<=cap,cap);
   const p50=(needs.find(k=>/^sk(Break|Sens|Bright|P50V)$/.test(k))||'skP50V'); let [n,pr,why,alt]=RX_PROD[p50]; if(alt&&RX_OUT.includes(n))[n,pr]=alt;
   if(!/5(\.1)? oz/.test(n)&&alt) [n,pr]=alt;   /* the note suggests the full-size P50 */
   const [ms,mw,mt]=g.m;
@@ -518,7 +538,7 @@ function rxQR(text){
 function rxView(){
   rxPull();
   const R=rxLoad(), me=(S.mine&&(S.mine.name||(S.mine.staff&&S.mine.staff.name)))||'';
-  rxSetCut(me);
+  rxSetCut(me); const spNow=rxSetSP();
   const tabs=h('div',{class:'seg',style:'justify-content:center'},
     h('button',{type:'button','aria-pressed':String(RX_VIEW!=='saved'),onclick:()=>{RX_VIEW='build';render()}},'Build A Card'),
     h('button',{type:'button','aria-pressed':String(RX_VIEW==='saved'),onclick:()=>{RX_VIEW='saved';RX_SHOW=null;render()}},'Saved Cards'));
@@ -558,7 +578,8 @@ function rxBuild(R,me){
   RX_VIPON=!!R.vip; RX_RATE=(typeof S!=='undefined'&&S&&S.mine&&Number(S.mine.rate))||45;
   /* family on VIP pricing (Alexandra, Oct 16 2026): options are priced from the VIP list; her card shows the regular price crossed out */
   const vipRow=h('div',{class:'fld'},'Pricing',chips(['Regular','VIP (family)'],o=>(o==='Regular')!==!!R.vip,o=>{const v=o!=='Regular';if(v!==!!R.vip){R.vip=v;R.opts=null;R.m=null}}));
-  const s1=h('section',{class:'card2'},h('span',{class:'lbl'},'1 · Your Guest'),kindRow,vipRow,
+  const spRow=R.kind==='hair'?h('div',{class:'fld'},'Your Single Process Price',chips(RX_SP.map(p=>'$'+p),o=>o==='$'+spNow,o=>{if(o!=='$'+spNow){store.set(rxSpKey(),o.slice(1));R.opts=null;R.m=null}})):null;
+  const s1=h('section',{class:'card2'},h('span',{class:'lbl'},'1 · Your Guest'),kindRow,vipRow,spRow,
     h('label',{class:'fld'},'Guest’s First Name',gIn),
     h('label',{class:'fld'},h('span',{},'Her Budget For Today ',h('small',{class:'soft'},'(include an estimated cost of maintenance to bundle with the services)')),bIn));
   /* Each question is one dropdown row that shows what's picked; tap it to open a checklist (Alexandra, Oct 16 2026).
@@ -626,8 +647,10 @@ function rxEditor(R,me){
       const sv=RX_SVC[R.kind].find(x=>x[0]===n);const pr=plist.find(x=>x[0]===n);const ex=Object.values(RX_PROD).find(x=>x[0]===n);
       L.push(sv?(()=>{const p=rxPrice(R.kind,n),reg=sv[1];return reg!==p?{n,p,t:'s',reg}:{n,p,t:'s'}})():{n,p:pr[1],t:'p',why:ex?ex[2]:'',full:pr[1]});rxSave();render()});return h('label',{class:'fld'},sel)};
   const badge=t=>b==null?null:h('span',{class:'rxbadge '+(t<=b?'ok':'over')},t<=b?rxMoney(b-t)+' under budget':rxMoney(t-b)+' over budget');
-  const opts=R.opts.map((o,i)=>{const t=rxTotal(o.lines);
-    return h('section',{class:'card2 out'},h('span',{class:'lbl'},o.title+(i===0?(b==null?' · a lighter start':t<=b?' · within her budget':' · closest to her budget'):' · the full look')),
+  /* the same names her card shows: the higher total is All In, the other Worth The Wait, none when they tie (Alexandra, Oct 20 2026) */
+  const tots=R.opts.map(o=>rxTotal(o.lines)), hiI=tots.length===2&&tots[0]!==tots[1]?tots.indexOf(Math.max(...tots)):-1;
+  const opts=R.opts.map((o,i)=>{const t=tots[i];
+    return h('section',{class:'card2 out'},h('span',{class:'lbl'},o.title+(hiI<0?'':i===hiI?' · All In':' · Worth The Wait')),
       ...o.lines.map(l=>lineRow(o.lines,l)),
       !o.lines.some(l=>l.t!=='s')?h('p',{class:'soft'},'Maintenance: keep her current routine.'):null,
       i===1&&R.more?h('small',{class:'soft'},'Kept at '+rxMoney(R.kind==='skin'?RX_ALLIN_SKIN:RX_ALLIN_HAIR)+' or under: home care is trimmed to Try Me bottles or left off. The full sizes she should end up with show below the options.'):null,

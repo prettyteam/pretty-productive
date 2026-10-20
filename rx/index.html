@@ -118,7 +118,10 @@ html,body{background:#f8f6f0}
     c.b?line('Your Budget Today',money(c.b)):null].filter(Boolean);
   const about=aboutLines.length?el('details',{class:'talked'},el('summary',{},skin?'Skin Goals':'Hair Goals'),el('div',{class:'tbody'},aboutLines)):null;
   /* sign-off like the Home Maintenance PDFs: "Pretty Hair by [name in Antoinetta] xo"; the date sits under it */
-  const first=String(c.a||'').trim().split(/\s+/)[0]||'', pre=skin?'Pretty Skin by ':'Pretty Hair by ';
+  /* brows or lashes only: Pretty Brows / Pretty Lashes instead of Pretty Skin (Alexandra, Oct 20 2026) */
+  function rxPretty(c){const sv=(c.o||[]).flatMap(([,L])=>L.map(l=>l[0])).filter(n=>n!=='Maintenance'),b=sv.some(n=>/^Brow/.test(n)),l=sv.some(n=>/Lash/.test(n));
+    return sv.length&&sv.every(n=>/^Brow|Lash/.test(n))?(b&&l?'Pretty Brows & Lashes by ':b?'Pretty Brows by ':'Pretty Lashes by '):'Pretty Skin by '}
+  const first=String(c.a||'').trim().split(/\s+/)[0]||'', pre=!skin?'Pretty Hair by ':rxPretty(c);
   const sign=el('p',{class:'sign'},pre,first?el('img',{class:'namepic',src:'../g/names/'+first.toLowerCase()+'.png',alt:first}):'Taffeta',' xo');
   const pic=sign.querySelector('img');if(pic)pic.onerror=()=>pic.replaceWith(document.createTextNode(first));
   app.append(el('div',{class:'page'},

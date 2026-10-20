@@ -77,7 +77,7 @@ async function acPdf(sheet,guest){
   sheet.sections.forEach(([t,items])=>{label(t);items.forEach(n=>{need(16);doc.setFont('helvetica','normal');doc.setTextColor(...choc);doc.setFontSize(9.5);doc.text('•',M+2,y+9.5);para(n,9.5,'helvetica','normal',ink,4,14)})});
   y+=10;need(40);
   para('Questions? Call or text us at '+AC_PHONE+'.',9.5,'helvetica','bold',choc,8);
-  doc.setFont(SF,'italic');doc.setFontSize(13*big);doc.setTextColor(...choc);need(20);doc.text(sheet.kind==='hair'?'Pretty Hair by Taffeta xo':'Pretty Skin by Taffeta xo',W/2,y+12,{align:'center'});y+=20;
+  doc.setFont(SF,'italic');doc.setFontSize(13*big);doc.setTextColor(...choc);need(20);doc.text(sheet.kind==='hair'?'Pretty Hair by Taffeta xo':sheet.id==='brow'?'Pretty Brows by Taffeta xo':sheet.id==='lash'?'Pretty Lashes by Taffeta xo':'Pretty Skin by Taffeta xo',W/2,y+12,{align:'center'});y+=20;
   need(14);doc.setFont('helvetica','normal');doc.setFontSize(8.5);doc.setTextColor(...soft);doc.text(new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}),W/2,y+8,{align:'center'});
   foot();
   return doc.output('blob');
