@@ -157,7 +157,7 @@ function rxPriceList(kind){
         h('button',{type:'button',class:'rxstar','aria-pressed':String(favs.includes(n)),'aria-label':(favs.includes(n)?'Unstar ':'Star ')+n,onclick:e=>{  /* star several in a row: the star flips in place and the list stays open; go-tos move to the top next time it opens (Alexandra, Oct 20 2026) */
           rxFavToggle(n);const on=rxFavs().includes(n),b=e.currentTarget;b.textContent=on?'★':'☆';b.setAttribute('aria-pressed',String(on));b.setAttribute('aria-label',(on?'Unstar ':'Star ')+n);
           const c=document.querySelector('#rxpl .invc');if(c){const k=rxFavs().length;c.textContent=k?k+' starred':''}}},favs.includes(n)?'★':'☆'),
-        h('div',{class:'rxn'},h('b',{},n.replace(/^Biologique Recherche /,'BR '))),h('span',{class:'num'},rxMoney(p)));
+        h('div',{class:'rxn'},h('b',{},n.replace(/^Biologique Recherche /,'BR ')),kind==='skin'&&rxLasts(n)?h('small',{class:'soft'},'Lasts '+rxLasts(n)):null),h('span',{class:'num'},rxMoney(p)));
         const mine=items.filter(([n])=>favs.includes(n));
         return [mine.length?h('div',{},h('span',{class:'lbl'},'★ My Go-Tos'),...mine.map(row)):null,
           ...rxByBrand(items.filter(([n])=>!favs.includes(n))).map(([b,L])=>{const d=h('details',{class:'invg'},h('summary',{},h('h2',{style:'font-size:17px'},b),h('span',{class:'soft invc'},String(L.length)),h('span',{class:'tplus','aria-hidden':'true'},'+')),
@@ -429,6 +429,19 @@ function rxGenerateHair(R,g){
 }
 /* Skin home care the same way (Alexandra, Oct 17 2026): All In budgets $60 for the full-size cleanser (Lait VIP O2 5.1 oz),
    Worth The Wait carries the $50 Biologique Recherche Skin Box. Her matched P50 is highly suggested under All In, not in the total. */
+/* How long a skin product lasts with daily use (Alexandra, Oct 20 2026), so she knows when she'll need it again.
+   Estimates for using it as directed; Carolyn can correct any of them. */
+function rxLasts(n){n=String(n||'');
+  if(/Skin Box/.test(n))return '4-week skincare routine';
+  const oz=Number((n.match(/\(([\d.]+) oz\)/)||[])[1])||0;
+  if(/Lait|Démaquillante|Micellaire/.test(n))return oz&&oz<2?'about 1 month':oz>=8?'about 5 months':'about 3 months';
+  if(/Lotion P50|Eauxyg/.test(n))return oz&&oz<2?'about 1 month':oz>=8?'about 5 months':'about 3 months';
+  if(/MC 110/.test(n))return 'about 3 months';
+  if(/Sérum|Serum|Fluide|Amniotique|Collag|Élastine|Placenta|Tensil|Oligo|Dermopore|Silk Plus|Iribiol|Tissulaires|Colostrum|Spectral/.test(n))return oz&&oz<0.5?'about 1 month':'about 3 months';
+  if(/Contour des Yeux|Eye Care/.test(n))return 'about 3 months';
+  if(/Masque|Mask/.test(n))return 'about 3 months (1–2 times a week)';
+  if(/Crème|Émulsion|Cream/.test(n))return 'about 2–3 months';
+  return ''}
 const RX_SK_HI=60, RX_SK_LO=50, RX_SK_MIN=25;   /* $25: three samples matched to her skin, so a first-time guest never leaves with nothing (Alexandra, Oct 20 2026) */
 /* the 90-minute Biologique Recherche facials ($200) sit at the top of every skin goal: All In on a bigger budget, or
    Worth The Wait with the Skin Box when her budget is about $300 (Alexandra, Oct 20 2026) */
@@ -440,9 +453,9 @@ function rxGenerateSkin(R,g){
      her card shows only the budget (Alexandra, Oct 17 2026) */
   const picks=[...new Set(needs.map(k=>{let [n,,,alt]=RX_PROD[k];return alt&&RX_OUT.includes(n)?alt[0]:n}))].join(', ');
   /* home care by amount: $60 and up starts with the full-size cleanser, $50 is the Skin Box, less is what's left of her budget */
-  const hc=p=>({n:'Home Care',p,t:'h',full:p,why:p>=RX_SK_HI?'Start with the full-size cleanser, Biologique Recherche Lait VIP O2 (5.1 oz)'+(picks?'. Matched to her skin: '+picks:''):
+  const hc=p=>({n:'Home Care',p,t:'h',full:p,why:p>=RX_SK_HI?'Start with the full-size cleanser, Biologique Recherche Lait VIP O2 (5.1 oz, lasts about 3 months)'+(picks?'. Matched to her skin: '+picks:''):
     p>=RX_SK_LO?'Suggested: Biologique Recherche '+box+', lasts for a 4-week skincare routine'+(picks?'. Matched to her skin for later: '+picks:''):
-    p>RX_SK_MIN?'What’s left of her budget: the travel-size Lait VIP O2 (1.7 oz, $35) or Try Me bottles'+(picks?'. Matched to her skin for later: '+picks:''):
+    p>RX_SK_MIN?'What’s left of her budget: the travel-size Lait VIP O2 (1.7 oz, $35, lasts about 1 month) or Try Me bottles'+(picks?'. Matched to her skin for later: '+picks:''):
     'Three Biologique Recherche samples matched to her skin (less than the Skin Box, but she goes home with something)'+(picks?'. Matched to her skin for later: '+picks:'')});
   const pkg=(i,amt)=>[...rxSvcLines('skin',P[i]),...(amt>0?[hc(amt)]:[])];
   /* two different facials (Alexandra, Oct 20 2026): Worth The Wait is the lighter facial that fits her budget, All In is
@@ -823,11 +836,11 @@ function rxTakeHomeView(me){
   const label=i=>i===hi?'All In':'Worth The Wait';
   /* candidates: her go-tos, the default for the budget, what the consult matched, a Try Me */
   const price=n=>{const r=(RX_PRICES[kind]||[]).find(p=>p[0]===n);return r?r[1]:null};
-  const cand=[], add=(n,p,why,grp)=>{if(p==null||cand.some(c=>c.n===n))return;cand.push({n,p,why,grp})};
+  const cand=[], add=(n,p,why,grp)=>{if(p==null||cand.some(c=>c.n===n))return;const l=kind==='skin'&&!/Skin Box/.test(n)?rxLasts(n):'';cand.push({n,p,why:l?(why?why+' · ':'')+'Lasts '+l:why,grp})};
   const favs=rxFavs(); (RX_PRICES[kind]||[]).filter(([n])=>favs.includes(n)).forEach(([n,p])=>add(n,p,'Your go-to','fav'));
   const hcWhy=hcOf(opts[ch]).map(l=>l.why||'').join(' ');
   if(kind==='skin'){const bx=(hcWhy.match(/Biologique Recherche \w+ Skin Box/)||[])[0];
-    if(bx) add(bx,RX_SK_LO,'Lasts for a 4-week skincare routine','def'); add('Biologique Recherche Lait VIP O2 (5.1 oz)',price('Biologique Recherche Lait VIP O2 (5.1 oz)')||60,'The full-size cleanser','def')}
+    if(bx) add(bx,RX_SK_LO,'Lasts for a 4-week skincare routine','def'); add('Biologique Recherche Lait VIP O2 (5.1 oz)',price('Biologique Recherche Lait VIP O2 (5.1 oz)')||60,'The full-size cleanser','def');add('Biologique Recherche Lait VIP O2 (1.7 oz)',price('Biologique Recherche Lait VIP O2 (1.7 oz)')||35,'The travel-size cleanser','def')}
   else add('Taffeta Refill Shampoo & Conditioner, new bottles',81,'Full-size Taffeta bottles','def');
   let needs=[]; try{needs=rxNeeds(d)}catch(e){}
   if(kind==='hair'){const svc=opts.flatMap(o=>o.lines.map(l=>l.n)); needs=rxNeedsFor(needs,svc)}
