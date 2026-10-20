@@ -15,7 +15,7 @@ const RG_GROUPS={
 
 const RG_HOW={
   milk:'With dry hands and a dry face, cleanse with 1 pump in the morning and 2–3 pumps at night. Massage over face and neck for 1–2 minutes. Remove with a wet cloth, then rinse with cool water. At night, if you’re wearing makeup, double cleanse to remove the first layer.',
-  p50:'After cleansing, put 1–2 pumps of P50 on a cotton pad and sweep over face and neck, upward and outward. A light tingle is normal. Do not rinse.',
+  p50:'After cleansing, put 1–2 pumps of your P50 on a cotton round and press it into your face and neck in an upward motion. No rubbing. A light tingle is normal. Don’t rinse.',
   /* serum and cream in Carolyn's own words (Oct 14 2026) */
   serum:'After your P50, apply 2–3 drops directly onto skin. Gently pat to spread the product evenly over face and neck.',
   cream:'Use a pea-size amount all over face and neck. Emulsify between your fingers and press into skin. Use a little more if needed.',
