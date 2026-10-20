@@ -13,7 +13,7 @@ main{padding:14px 12px 40px}
 .top img{width:70px}
 .rxh{display:flex;align-items:center;gap:14px;border-top:1px solid var(--ink);border-bottom:1px solid var(--ink);padding:10px 0}
 .rxh .rx{font-family:var(--display);font-size:52px;line-height:.85}
-.rxh p{font-size:14px;line-height:1.4}
+.rxh p{font-size:12.5px;line-height:1.4;text-wrap:balance}
 .for{display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px;font-size:14px;color:var(--soft)}
 .talk{font-size:15px}
 /* both options in one card: "Option 1 ... $total"; tap an option for the breakdown (Alexandra, Oct 15 2026) */
@@ -102,7 +102,7 @@ html,body{background:#f8f6f0}
   /* two options: the higher one is "All In", the other "Worth The Wait", each with a short line (Alexandra, Oct 15 2026) */
   const tots=(c.o||[]).map(([,lines])=>lines.reduce((s,l)=>s+l[1],0)), hi=tots.length===2&&tots[0]!==tots[1]?tots.indexOf(Math.max(...tots)):-1;
   /* skin: how long the results last (the difference is the home care, not spelled out here) (Alexandra, Oct 20 2026) */
-  const NAMES=c.k==='skin'?[['All In','Your goal achieved, with results lasting about 4 weeks.'],['Worth The Wait','A big step toward your goals, with results lasting about 2 weeks.']]
+  const NAMES=c.k==='skin'?[['All In','Your goal achieved, with results lasting about 4 to 6 weeks.'],['Worth The Wait','A big step toward your goals, with results lasting about 2 weeks.']]
     :[['All In','Your inspo goal achieved in this visit.'],['Worth The Wait','You’ll leave feeling happy & fresh, with a big step toward your goals.']];
   const opts=(c.o||[]).length?el('section',{class:'rxo'},el('span',{class:'eyebrow'},'Your options for today'),(c.o||[]).map(([title,lines],i)=>{const t=tots[i];
     const nm=hi<0?null:NAMES[i===hi?0:1];
