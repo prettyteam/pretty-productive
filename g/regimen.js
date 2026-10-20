@@ -196,6 +196,9 @@ const RG_SERV={
 };
 const RG_SKINTYPE=['Dehydrated / aging','Acne-prone / oily','Rosacea / sensitive','Normal / combination'];
 const RG_NEXT=['2 weeks','3 weeks','4 weeks','6 weeks','8 weeks','10–12 weeks'];
+/* sign-off follows today's service: brows or lashes only say Pretty Brows / Pretty Lashes instead of Pretty Skin (Alexandra, Oct 20 2026) */
+const rgPretty=(kind,sv)=>{if(kind!=='skin')return 'Pretty Hair by ';const b=sv.includes('Brow Sculpt'),l=sv.includes('Lift & Tint');
+  return sv.length&&sv.every(x=>x==='Brow Sculpt'||x==='Lift & Tint')?(b&&l?'Pretty Brows & Lashes by ':b?'Pretty Brows by ':'Pretty Lashes by '):'Pretty Skin by '};
 const RG_PHONE='(609) 383-5504', RG_SITE='taffetadesign.com';
 
 const rgKind=()=>(S.mine&&S.mine.role==='esthetician')?'skin':'hair';
@@ -465,10 +468,10 @@ async function rgPdf(me,R,kind){
   const np=me?await rgNamePic(rgFirst(me)):null;
   if(np){need(38);const nh=30, nw=nh*np.w/np.h;doc.setFont(SF,'italic');doc.setFontSize(13*big);doc.setTextColor(...choc);
     /* "Pretty Hair by [name] xo" */
-    const pre=kind==='skin'?'Pretty Skin by ':'Pretty Hair by ', post=' xo';
+    const pre=rgPretty(kind,R.services), post=' xo';
     const pw=doc.getTextWidth(pre), qw=doc.getTextWidth(post), x0=W/2-(pw+nw+qw)/2;
     doc.text(pre,x0,y+21);doc.addImage(np.d,'PNG',x0+pw,y+2,nw,nh);doc.text(post,x0+pw+nw,y+21);y+=34}
-  else{doc.text((kind==='skin'?'Pretty Skin by ':'Pretty Hair by ')+(me?rgFirst(me):'Taffeta')+' xo',W/2,y+12,{align:'center'});y+=20}
+  else{doc.text(rgPretty(kind,R.services)+(me?rgFirst(me):'Taffeta')+' xo',W/2,y+12,{align:'center'});y+=20}
   need(14);doc.setFont('helvetica','normal');doc.setFontSize(8.5);doc.setTextColor(...soft);doc.text(rgDate(),W/2,y+8,{align:'center'});
   foot();
   return doc.output('blob');
