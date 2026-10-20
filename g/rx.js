@@ -448,11 +448,21 @@ function rxGenerateSkin(R,g){
      the next facial up. With only one facial to offer, All In is the same facial with the bigger home care budget. */
   const bb=b!=null?b:RX_CAP;
   const fac=i=>P[i][0], up=i=>{for(let j=i-1;j>=0;j--) if(fac(j)!==fac(i)) return j; return -1};
+  const who0=rxArtist(), at99=x=>rxRegPrice('skin',x)===99&&rxSkinCan(x,who0);
+  const tgt=g.m[0].find(at99)||P.flat().find(at99)||['Hydration Boost','Anti-Aging Express','Brightening Mini Facial'].find(at99)||g.m[0][0];
   let i1=P.findIndex((t,i)=>rxTotal(pkg(i,RX_SK_LO))<=bb); if(i1<0) i1=P.length-1;
   let o1=pkg(i1,RX_SK_LO); if(b!=null&&rxTotal(o1)>b){const s=rxTotal(pkg(i1,0)); o1=pkg(i1,Math.max(0,Math.floor((b-s)/5)*5))}
   /* All In: the next facial up; when she's already on the top facial, the same facial with her cleanser and matched P50 in full size */
   const p50k=(needs.find(k=>/^sk(Break|Sens|Bright|P50V)$/.test(k))||'skP50V'), p50f=(()=>{let [pn,pp,,alt]=RX_PROD[p50k];if(alt&&(RX_OUT.includes(pn)||!/5(\.1)? oz/.test(pn)))[pn,pp]=alt;return [pn,pp]})();
-  const o2=up(i1)>=0?pkg(up(i1),RX_SK_HI):[...rxSvcLines('skin',P[i1]),{n:'Home Care',p:RX_SK_HI+p50f[1],t:'h',full:RX_SK_HI+p50f[1],why:'Her full-size cleanser, Biologique Recherche Lait VIP O2 (5.1 oz), and her P50 matched to her skin: '+p50f[0]}];
+  let o2=up(i1)>=0?pkg(up(i1),RX_SK_HI):[...rxSvcLines('skin',P[i1]),{n:'Home Care',p:RX_SK_HI+p50f[1],t:'h',full:RX_SK_HI+p50f[1],why:'Her full-size cleanser, Biologique Recherche Lait VIP O2 (5.1 oz), and her P50 matched to her skin: '+p50f[0]}];
+  /* a budget under $200 to start (Alexandra, Oct 20 2026): Worth The Wait is the $99 targeted treatment with the Skin Box
+     ($149), or a Taffeta Facial with no home care when her budget is under that; All In is a Taffeta Facial with the
+     Skin Box, or one full-size bottle instead */
+  if(b!=null&&b<200){
+    o1=b>=99+RX_SK_LO?[...rxSvcLines('skin',[tgt]),hc(RX_SK_LO)]:rxSvcLines('skin',['Taffeta Facial']);
+    o2=[...rxSvcLines('skin',['Taffeta Facial']),Object.assign(hc(RX_SK_LO),{why:'The Biologique Recherche '+box+' (about 4 weeks of product), or one full-size bottle instead: her cleanser, Lait VIP O2 (5.1 oz, $60), or her P50 matched to her skin'+(picks?' ('+picks+')':'')})];
+    if(rxTotal(o1)>=rxTotal(o2)) o1=rxSvcLines('skin',['Taffeta Facial']);
+  }
   /* Carolyn's specialty: Nano Needling is suggested for her to swap into All In when it's right for the guest */
   const spec=rxArtist()==='carolyn'&&(gl.includes('Anti-Aging (Fine Lines & Firmness)')||nw.includes('Fine lines'))
     ?{n:'Nano Needling Facial',p:rxPrice('skin','Nano Needling Facial'),why:'Your specialty for fine lines and firmness. If it’s right for her, swap it into All In.'}:null;
@@ -462,10 +472,8 @@ function rxGenerateSkin(R,g){
   /* a budget that only covers Worth The Wait means she goes home with the Skin Box (about 4 weeks of samples), so her
      next visit is a $99 targeted treatment plus her first full-size product, not a full facial. A rule for everyone with a
      low budget to start, not just one guest (Alexandra, Oct 20 2026) */
-  const low=b!=null&&b<rxPrice('skin','Taffeta Facial')+RX_SK_HI;   /* a low budget to start: under a Taffeta Facial with full-size home care */
+  const low=b!=null&&b<200;   /* a low budget to start: under $200 */
   if(low){
-    const who=rxArtist(), at99=x=>rxRegPrice('skin',x)===99&&rxSkinCan(x,who);
-    const tgt=ms.find(at99)||P.flat().find(at99)||['Hydration Boost','Anti-Aging Express','Brightening Mini Facial'].find(at99)||ms[0];
     mLines=[...rxSvcLines('skin',[tgt]),{n,p:pr,t:'p',why:'Her first full size, matched to her skin',full:pr}];
     mw='4 weeks'; mt='We’ll see how your skin did with your Skin Box: a targeted treatment, and your first full-size product to keep your results going.'}
   return {opts:[{title:'Option 1',lines:o1},{title:'Option 2',lines:o2}],
