@@ -207,7 +207,8 @@ const RX_GOAL={
     'Brighten or Even Tone':{p:[['Taffeta Facial','Dermaplaning Add-On'],['Taffeta Facial'],['Brightening Mini Facial']],m:[['Brightening Mini Facial'],'4 weeks','A 30-minute brightening treatment.']},
     'Hydrate':{p:[['Taffeta Facial'],['Hydration Boost']],m:[['Hydration Boost'],'4 weeks','A 30-minute moisture boost.']},
     /* named Anti-Aging so the girls find it (Alexandra, Oct 20 2026); cards saved as Fine Lines And Firmness still open */
-    'Anti-Aging (Fine Lines & Firmness)':{p:[['Nano Needling Facial'],['Taffeta Facial'],['Anti-Aging Express']],m:[['Anti-Aging Express'],'4 weeks','A 30-minute treatment for firmness and fine lines.']},
+    'Anti-Aging (Fine Lines & Firmness)':{p:[['Taffeta Facial'],['Anti-Aging Express']],   /* Nano Needling is Carolyn's specialty suggestion, not an option (Oct 20 2026) */
+      m:[['Anti-Aging Express'],'4 weeks','A 30-minute treatment for firmness and fine lines.']},
     'Overall Glow':{p:[['Taffeta Facial'],['Hydration Boost']],m:[['Taffeta Facial'],'4–6 weeks','Your facial every 4 to 6 weeks keeps skin on track.']}
   }
 };
@@ -441,12 +442,21 @@ function rxGenerateSkin(R,g){
     p>=RX_SK_LO?'Suggested: Biologique Recherche '+box+', about 4 weeks of product to try at home'+(picks?'. Matched to her skin for later: '+picks:''):
     'What’s left of her budget: the travel-size Lait VIP O2 (1.7 oz, $35) or Try Me bottles'+(picks?'. Matched to her skin for later: '+picks:'')});
   const pkg=(i,amt)=>[...rxSvcLines('skin',P[i]),...(amt>0?[hc(amt)]:[])];
-  const [o1,o2]=rxPair(P,b,pkg,RX_SK_LO,[[RX_SK_HI,false],[RX_SK_LO,false]],L=>rxTotal(L)<=cap,cap);
+  /* two different facials (Alexandra, Oct 20 2026): Worth The Wait is the lighter facial that fits her budget, All In is
+     the next facial up. With only one facial to offer, All In is the same facial with the bigger home care budget. */
+  const bb=b!=null?b:RX_CAP;
+  const fac=i=>P[i][0], up=i=>{for(let j=i-1;j>=0;j--) if(fac(j)!==fac(i)) return j; return -1};
+  let i1=P.findIndex((t,i)=>up(i)>=0&&rxTotal(pkg(i,RX_SK_LO))<=bb); if(i1<0) i1=P.length-1;
+  let o1=pkg(i1,RX_SK_LO); if(b!=null&&rxTotal(o1)>b){const s=rxTotal(pkg(i1,0)); o1=pkg(i1,Math.max(0,Math.floor((b-s)/5)*5))}
+  const o2=pkg(Math.max(0,up(i1)),RX_SK_HI);
+  /* Carolyn's specialty: Nano Needling is suggested for her to swap into All In when it's right for the guest */
+  const spec=rxArtist()==='carolyn'&&(gl.includes('Anti-Aging (Fine Lines & Firmness)')||nw.includes('Fine lines'))
+    ?{n:'Nano Needling Facial',p:rxPrice('skin','Nano Needling Facial'),why:'Your specialty for fine lines and firmness. If it’s right for her, swap it into All In.'}:null;
   const p50=(needs.find(k=>/^sk(Break|Sens|Bright|P50V)$/.test(k))||'skP50V'); let [n,pr,why,alt]=RX_PROD[p50]; if(alt&&RX_OUT.includes(n))[n,pr]=alt;
   if(!/5(\.1)? oz/.test(n)&&alt) [n,pr]=alt;   /* the note suggests the full-size P50 */
   const [ms,mw,mt]=g.m;
   return {opts:[{title:'Option 1',lines:o1},{title:'Option 2',lines:o2}],
-    m:{lines:rxSvcLines('skin',ms),when:mw,text:mt},refresh:mw,keep:false,more:false,rec:[{n,p:pr,why,hint:'p50'}]};
+    m:{lines:rxSvcLines('skin',ms),when:mw,text:mt},refresh:mw,keep:false,more:false,rec:[{n,p:pr,why,hint:'p50'}],spec};
 }
 /* Who does which skin service (Alexandra, Oct 20 2026): only Carolyn does Nano Needling; Kelly does the Taffeta Facial
    and the Biologique Recherche facials only. A suggestion she can't do is swapped out or dropped from her card. */
@@ -465,7 +475,7 @@ function rxGenerate(R){
   RX_VIPON=!!R.vip; RX_RATE=(typeof S!=='undefined'&&S&&S.mine&&Number(S.mine.rate))||45;
   let g=rxGoalPlan(R); if(!g) return null;
   if(R.kind==='skin') g=rxSkinFor(g);
-  if(R.kind==='hair') return rxGenerateHair(R,g);
+  if(R.kind==='hair') return Object.assign({spec:null},rxGenerateHair(R,g));
   if(R.kind==='skin') return rxGenerateSkin(R,g);
   const needs=rxNeeds(R), P=g.p, b=R.nob?null:Number(R.budget)||null;
   /* Goldwell leave-in backbar treatment: a no-downtime add-on for color that fades, blonde repair or dry, damaged hair.
@@ -706,7 +716,13 @@ function rxEditor(R,me){
   const rec=(R.rec&&R.rec.length)?h('section',{class:'card2'},h('span',{class:'lbl'},hs?'Highly Suggested: Add Her P50':'Full Sizes To Go Home With'),
     h('small',{class:'soft'},hs?'Shows under All In on her card. Not in the totals: offer it on top of her cleanser.':'Not in her budget or totals. She starts with the Try Me today; these are what she should take home when she’s ready.'),
     ...R.rec.map(l=>h('div',{style:'display:flex;justify-content:space-between;gap:12px;font-size:14px'},h('span',{},l.n),h('span',{},rxMoney(l.p))))):null;
-  const wrap=h('div',{id:'rxopts',style:'display:flex;flex-direction:column;gap:26px'},...opts,rec,maint,done);
+  /* specialty suggestion (Carolyn's Nano Needling): one tap swaps it in as All In's facial; she can still edit it after */
+  const all2=R.opts&&R.opts[1], hasSpec=R.spec&&all2&&!all2.lines.some(l=>l.n===R.spec.n);
+  const spec=hasSpec?h('section',{class:'card2'},h('span',{class:'lbl'},'Specialty Suggestion'),
+    h('div',{style:'display:flex;justify-content:space-between;gap:12px;font-size:15px'},h('b',{},R.spec.n),h('span',{},rxMoney(R.spec.p))),
+    h('small',{class:'soft'},R.spec.why),
+    h('button',{type:'button',class:'tab',onclick:()=>{all2.lines=[...rxSvcLines('skin',[R.spec.n]),...all2.lines.filter(l=>l.t!=='s')];rxSave();render()}},'Use It In All In')):null;
+  const wrap=h('div',{id:'rxopts',style:'display:flex;flex-direction:column;gap:26px'},...opts,spec,rec,maint,done);
   return [wrap];
 }
 
