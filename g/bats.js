@@ -1,4 +1,4 @@
-/* Halloween bats for the team apps (Alexandra, Oct 20 2026): a few tiny black bats flap across the screen, behind taps
+/* Halloween bats for the team apps (Alexandra, Oct 20 2026): a few black bats, big and small, flap across the screen, behind taps
    (they never block a button). October only, so they leave on their own Nov 1. Off for anyone who has reduced motion set. */
 (function(){
   if(window.__bats) return; window.__bats=1;
@@ -15,7 +15,7 @@
 @media print{.bats{display:none}}`;
   const st=document.createElement('style'); st.textContent=css; document.head.appendChild(st);
   const box=document.createElement('div'); box.className='bats';
-  [[12,22,0,18,1.6],[30,17,-7,24,1.3],[52,24,-3,21,1.9],[70,16,-12,27,1.4],[86,20,-17,23,1.7]].forEach(([top,w,delay,dur,bob],n)=>{
+  [[8,34,0,16,1.8],[22,14,-9,26,1.2],[38,26,-4,20,1.6],[54,12,-14,28,1.1],[66,30,-7,18,1.9],[80,18,-18,24,1.4],[92,22,-11,22,1.5]].forEach(([top,w,delay,dur,bob],n)=>{
     const i=document.createElement('i'); i.style.cssText='top:'+top+'%;width:'+w+'px;animation-duration:'+dur+'s;animation-delay:'+delay+'s'+(n%2?';animation-direction:reverse':'');
     i.innerHTML='<b style="animation-duration:'+bob+'s">'+BAT+'</b>';
     box.appendChild(i);
