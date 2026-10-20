@@ -8,7 +8,7 @@
 /* Service prices: the median price for each service in the salon's own bookings, Oct 2026. */
 const RX_SVC={
   hair:[['Female Haircut',75],['Male Haircut',45],['Haircut Leaving Wet',50],['Leave Wet (no haircut)',0],['Blow Dry',50],['Blowdry Plus',65],
-    ['Single Process',70],['Shadow Root',60],['Glaze',45],['Additional Mix',25],['Face Frame/Spot Highlight',100],['Minimum Foil',85],
+    ['Single Process',65],['Shadow Root',60],['Glaze',45],['Additional Mix',25],['Face Frame/Spot Highlight',100],['Minimum Foil',85],
     ['Half Foil',150],['Full Foil',175],['Minimum Balayage',125],['Half Head Balayage',185],['Full Head Balayage',325],
     ['Base Lightener',55],['K18 Bond Protection',25],['Goldwell Leave-In Treatment',20],['Permanent Wave',100],['Formal Style',105]],
   skin:[['Taffeta Facial',130],['Express Acne Treatment',99],['Hydration Boost',99],['Brightening Mini Facial',99],
@@ -18,6 +18,9 @@ const RX_SVC={
 /* Female haircut follows the artist's level (Alexandra, Oct 15 2026): newer artists $65, Alexandra $100, everyone else $75 */
 const RX_CUT={Adriana:65,Ashley:65,Amanda:65,Isabella:65,Alexandra:100};
 function rxSetCut(me){const f=String(me||'').trim().split(/\s+/)[0]||'', r=RX_SVC.hair.find(x=>x[0]==='Female Haircut'); if(r) r[1]=RX_CUT[f]||75}
+/* Single process: each artist picks her own price, $65, $70, $80 or $100, and the card remembers it on her device (Alexandra, Oct 20 2026) */
+const RX_SP=[65,70,80,100], rxSpKey=()=>'pp-rxsp:'+rxSlug();
+function rxSetSP(){const v=Number(store.get(rxSpKey())), p=RX_SP.includes(v)?v:65, r=RX_SVC.hair.find(x=>x[0]==='Single Process'); if(r) r[1]=p; return p}
 const rxRegPrice=(k,n)=>{const r=RX_SVC[k].find(x=>x[0]===n);return r?r[1]:0};
 /* VIP family pricing (Alexandra, Oct 16 2026): a VIP service covers the artist's commission and the cost of the
    service, plus 10% for the house. VIP = (full price x her commission rate + $25 per color bowl) x 1.10, never more
@@ -535,7 +538,7 @@ function rxQR(text){
 function rxView(){
   rxPull();
   const R=rxLoad(), me=(S.mine&&(S.mine.name||(S.mine.staff&&S.mine.staff.name)))||'';
-  rxSetCut(me);
+  rxSetCut(me); const spNow=rxSetSP();
   const tabs=h('div',{class:'seg',style:'justify-content:center'},
     h('button',{type:'button','aria-pressed':String(RX_VIEW!=='saved'),onclick:()=>{RX_VIEW='build';render()}},'Build A Card'),
     h('button',{type:'button','aria-pressed':String(RX_VIEW==='saved'),onclick:()=>{RX_VIEW='saved';RX_SHOW=null;render()}},'Saved Cards'));
@@ -575,7 +578,8 @@ function rxBuild(R,me){
   RX_VIPON=!!R.vip; RX_RATE=(typeof S!=='undefined'&&S&&S.mine&&Number(S.mine.rate))||45;
   /* family on VIP pricing (Alexandra, Oct 16 2026): options are priced from the VIP list; her card shows the regular price crossed out */
   const vipRow=h('div',{class:'fld'},'Pricing',chips(['Regular','VIP (family)'],o=>(o==='Regular')!==!!R.vip,o=>{const v=o!=='Regular';if(v!==!!R.vip){R.vip=v;R.opts=null;R.m=null}}));
-  const s1=h('section',{class:'card2'},h('span',{class:'lbl'},'1 · Your Guest'),kindRow,vipRow,
+  const spRow=R.kind==='hair'?h('div',{class:'fld'},'Your Single Process Price',chips(RX_SP.map(p=>'$'+p),o=>o==='$'+spNow,o=>{if(o!=='$'+spNow){store.set(rxSpKey(),o.slice(1));R.opts=null;R.m=null}})):null;
+  const s1=h('section',{class:'card2'},h('span',{class:'lbl'},'1 · Your Guest'),kindRow,vipRow,spRow,
     h('label',{class:'fld'},'Guest’s First Name',gIn),
     h('label',{class:'fld'},h('span',{},'Her Budget For Today ',h('small',{class:'soft'},'(include an estimated cost of maintenance to bundle with the services)')),bIn));
   /* Each question is one dropdown row that shows what's picked; tap it to open a checklist (Alexandra, Oct 16 2026).
