@@ -77,3 +77,25 @@
     }
   };
 })();
+
+/* "Leave us a review" on the guest PDFs (Alexandra, Oct 21 2026): five empty stars she taps to open our Google
+   review page. Google doesn't let a link fill in the stars or the words, so she picks them there herself.
+   Draws centered at y on a jsPDF doc and returns the height used (0, and nothing drawn, while the link is blank). */
+window.pdfReview=function(doc,W,y,font,ink,soft){
+  const url=(window.TAFFETA_REVIEWS||{}).salon; if(!url) return 0;   /* set in g/config.js, same link as the gratuity tab QR */
+  const r=7.5, gap=6, n=5, sw=n*2*r+(n-1)*gap, x0=W/2-sw/2, cy=y+r+2;
+  doc.setDrawColor(...ink); doc.setLineWidth(.7); doc.setLineJoin && doc.setLineJoin('round');
+  for(let k=0;k<n;k++){
+    const cx=x0+r+k*(2*r+gap), pts=[];
+    for(let i=0;i<10;i++){const a=-Math.PI/2+i*Math.PI/5, rr=i%2?r*.42:r; pts.push([cx+rr*Math.cos(a),cy+rr*Math.sin(a)])}
+    doc.lines(pts.slice(1).map((p,i)=>[p[0]-pts[i][0],p[1]-pts[i][1]]),pts[0][0],pts[0][1],[1,1],'S',true);
+  }
+  doc.setLineWidth(.2);
+  doc.setFont(font,'italic'); doc.setFontSize(12); doc.setTextColor(...ink);
+  doc.text('Loved your visit? Tap the stars',W/2,cy+r+15,{align:'center'});
+  doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(...soft);
+  doc.text('to leave us a Google review. It means the world to us.',W/2,cy+r+27,{align:'center'});
+  const h=2*r+2+29;
+  doc.link(x0-6,y-2,sw+12,h+4,{url});
+  return h+6;
+};

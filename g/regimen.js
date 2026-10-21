@@ -531,6 +531,8 @@ async function rgPdf(me,R,kind){
     y+=8; doc.setDrawColor(43,42,40); doc.setLineWidth(.4); doc.rect(M-8,top,CW+16,y-top,'S'); doc.setLineWidth(.2);
   }
   if(kind==='skin'&&R.picks.some(p=>/^Biologique Recherche/.test(p.n))){y+=10;para('Remember, Biologique Recherche is very concentrated, so only a small amount is needed. If you have questions, reach out any time!',9.5,'helvetica','italic',soft,2)}
+  /* five stars that open our Google review page (Alexandra, Oct 21 2026) */
+  if(window.pdfReview&&(window.TAFFETA_REVIEWS||{}).salon){y+=14;need(56);y+=window.pdfReview(doc,W,y,SF,ink,soft)}
   y+=12; need(20);
   /* sign-off with the artist's first name in Antoinetta (a picture, as the font license allows) */
   doc.setFont(SF,'italic');doc.setFontSize(13*big);doc.setTextColor(...choc);
