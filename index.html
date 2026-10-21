@@ -1388,10 +1388,23 @@ function shelfOrder(g,list){
   }
   return [[null,list]];
 }
+/* shades the team asked for that aren't in the color report yet: [group, shade, who/when]. Copies a shade from the same line for supplier and price.
+   Skipped once the report lists the shade itself. */
+const BACKBAR_ADD=[['Goldwell Topchic Canister','6N','added for Rose, Oct 21']];
+function backbarAdd(rows,grpOf){
+  const out=[...rows], nm=r=>String(r[3]).toUpperCase();
+  BACKBAR_ADD.forEach(([g,shade,note])=>{
+    const same=rows.filter(r=>grpOf(r)===g);
+    if(!same.length||same.some(r=>nm(r)===shade||nm(r).startsWith(shade+' '))) return;
+    const x=[...(same.find(r=>/^\d+[A-Z]+$/.test(nm(r)))||same[0])];
+    x[3]=shade; x[9]=null; x[10]=note; out.push(x);
+  });
+  return out;
+}
 function invBackbar(B){
   /* one section per color line (Goldwell Topchic, Colorance, Shades EQ...), developers and lighteners on their own */
   const grpOf=r=>/Developer|Lightener|Smoothing/.test(r[0])||/Lightener/.test(r[2])?(/Lightener/.test(r[2])?'Lighteners':r[0]):r[1]+' '+r[2].replace(/ ?(Blonding Cream|High Blond|@Elumenated)$/,'').trim();
-  const groups={}; B.rows.forEach(r=>(groups[grpOf(r)]||=[]).push(r));
+  const groups={}; backbarAdd(B.rows,grpOf).forEach(r=>(groups[grpOf(r)]||=[]).push(r));
   const rows=[], out=[];
   const bb=B.bb;
   const bbCard=(h('div',{class:'card2','data-nosearch':'1'},h('span',{class:'lbl'},'Brazilian Blowout · per treatment'),
