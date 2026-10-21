@@ -972,7 +972,7 @@ function rxTakeHomeView(me){
       const nm=it?it.n:String(p.n).replace(/^Try Me: /,''), gen=kind==='skin'?rxHowTo(nm):'';
       return it?{n:it.n,how:it.how||gen,when:it.w0&&whens.includes(it.w0)?it.w0:whens[0],step:it.step}:{n:nm,how:gen,when:whens[0],step:''}});
     /* New to P50 (Alexandra, Oct 20 2026): the artist checks it and her P50 step gets the dilute / ease-in line */
-    if(kind==='skin'&&x.newP50) RG.picks.forEach(p=>{if(/Skin Box/.test(p.n))p.how=p.how.replace(/(P50 Toner:[^\n]*)/,'$1\n'+RX_NEWP50);else if(/Lotion P50/.test(p.n))p.how=p.how+'\n'+RX_NEWP50});
+    if(kind==='skin'&&x.newP50) RG.newP50=true;   /* g/regimen.js rgBake puts it on her P50 step, or with her aftercare notes */
     if(kind==='skin') RG.picks.sort((a,b)=>RX_HOW_STEP(a.n)-RX_HOW_STEP(b.n))};
   const send=h('button',{type:'button',class:'obtn',onclick:async()=>{if(!x.home.length){toast.textContent='Pick what she’s taking home first.';return}
     toRG(); await rgSave2(me,toast,send); if(!RG.guest){RX_MSG=x.guest+'’s Home Care PDF is on the front desk list to text her.';x.sent=new Date().toISOString();put();RX_VIEW='saved';RX_FIND=x.guest;render();window.scrollTo(0,0)}}},'Save & Send To Desk');
@@ -986,7 +986,7 @@ function rxTakeHomeView(me){
       h('p',{class:'soft',id:'rxthpicked',style:'margin:0'},x.home.length?'Picked: '+x.home.map(q=>q.n.replace(/^Biologique Recherche /,'BR ')).join(', '):'Nothing picked yet.'),
       h('p',{class:'rxover',id:'rxthover',hidden:left<0?null:''},rxMoney(-left)+' over her budget: let her know before ringing it up.')),
     listSec,
-    kind==='skin'&&x.home.some(q=>/Lotion P50|Skin Box/.test(q.n))?h('section',{class:'card2'},h('span',{class:'lbl'},'P50 Options'),
+    kind==='skin'?h('section',{class:'card2'},h('span',{class:'lbl'},'P50 Options'),
       h('button',{type:'button',class:'rxth'+(x.newP50?' on':''),'aria-pressed':String(!!x.newP50),onclick:()=>{x.newP50=!x.newP50;put();render()}},
         h('span',{class:'rxbx','aria-hidden':'true'},x.newP50?'✓':''),h('span',{class:'rxthn'},h('b',{},'She’s new to P50'),h('small',{},'Adds to her PDF: dilute the cotton round, start 1–2 times a week, then add more days once her skin is used to it.')))):null,
     h('section',{class:'card2',style:'align-items:center;text-align:center'},send,prev,toast,

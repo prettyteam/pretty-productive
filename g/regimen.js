@@ -204,6 +204,15 @@ const RG_PHONE='(609) 383-5504', RG_SITE='taffetadesign.com', RG_IG={skin:'spa.t
 
 const rgKind=()=>(S.mine&&S.mine.role==='esthetician')?'skin':'hair';
 const rgKey=()=>'pp-regimen:'+((S.mine&&S.mine.staff&&S.mine.staff.slug)||(typeof ID!=='undefined'?ID:'x'));
+/* New to P50 (Alexandra, Oct 20 2026): checked on the builder, her P50 (or the P50 in her Skin Box) gets this line */
+const RG_NEWP50='New to P50: Dilute your cotton round with water first. For the first few applications, use it 1–2 times a week, then add more days once your skin is used to it.';
+const rgHasP50=R=>(R.picks||[]).some(p=>/Lotion P50|Skin Box/.test(p.n));
+function rgBake(R){ if(!R||!R.newP50) return R;
+  return Object.assign({},R,{picks:(R.picks||[]).map(p=>{if(/New to P50/.test(p.how||''))return p;
+    if(/Skin Box/.test(p.n)&&/P50 Toner:/.test(p.how||''))return Object.assign({},p,{how:p.how.replace(/(P50 Toner:[^\n]*)/,'$1\n'+RG_NEWP50)});
+    if(/Lotion P50/.test(p.n))return Object.assign({},p,{how:(p.how||'')+'\n'+RG_NEWP50});return p}),
+    /* no P50 on her list yet: it goes with her aftercare notes */
+    notes:rgHasP50(R)||(R.notes||[]).includes(RG_NEWP50)?R.notes:[...(R.notes||[]),RG_NEWP50]}) }
 const rgBlank=()=>({guest:'',services:[],type:'',picks:[],notes:[],own:'',next:'',nextDate:'',msg:''});
 /* "Come back to see us …" line for the PDF and text, from a picked date or an "in about" chip */
 function rgBack(R){
@@ -358,6 +367,7 @@ function regimenView(){
   msg.addEventListener('input',()=>{R.msg=msg.value;rgSave()});
   const care=h('section',{class:'card2'},h('span',{class:'lbl'},'4 · Aftercare & next visit'),
     h('div',{class:'fld'},'Aftercare',h('div',{class:'rgnotes'},RG_NOTES[kind].map(t=>h('button',{type:'button',class:'rgp','aria-pressed':String(R.notes.includes(t)),onclick:()=>{rgToggle(R.notes,t);rgSave();render()}},h('span',{class:'rgbox','aria-hidden':'true'}),h('span',{},t))))),
+    kind==='skin'?h('div',{class:'fld'},'P50 options',h('div',{class:'rgnotes'},h('button',{type:'button',class:'rgp','aria-pressed':String(!!R.newP50),onclick:()=>{R.newP50=!R.newP50;rgSave();render()}},h('span',{class:'rgbox','aria-hidden':'true'}),h('span',{},'She’s new to P50: dilute the cotton round, start 1–2 times a week')))):null,
     h('label',{class:'fld'},'Other notes',own),
     h('div',{class:'fld'},'When should she come back?',chips(RG_NEXT,o=>R.next===o,o=>{R.next=R.next===o?'':o;R.nextDate=''})),
     (()=>{const di=h('input',{type:'date',value:R.nextDate||''});di.addEventListener('change',()=>{R.nextDate=di.value;if(di.value)R.next='';rgSave();render()});
@@ -408,7 +418,7 @@ const rgNamePic=n=>{const k=String(n||'').toLowerCase();if(!k)return Promise.res
   return fetch((window.RG_BASE||'')+'g/names/'+k+'.png').then(r=>r.ok?r.blob():null).then(b=>b?new Promise(ok=>{const f=new FileReader();f.onload=()=>{const im=new Image();im.onload=()=>{/* solid black ink, so the name prints as dark as the text */try{const c=document.createElement('canvas');c.width=im.width;c.height=im.height;const x=c.getContext('2d');x.drawImage(im,0,0);const D=x.getImageData(0,0,c.width,c.height),a=D.data;for(let i=0;i<a.length;i+=4){a[i]=a[i+1]=a[i+2]=18;a[i+3]=Math.min(255,a[i+3]*2)}x.putImageData(D,0,0);ok({d:c.toDataURL('image/png'),w:im.width,h:im.height})}catch(e){ok({d:f.result,w:im.width,h:im.height})}};im.onerror=()=>ok(null);im.src=f.result};f.readAsDataURL(b)}):null).catch(()=>null)};
 /* Half-letter page (5.5 × 8.5 in), easy to read on a phone. Cream page, Taffeta wreath, serif headings. */
 async function rgPdf(me,R,kind){
-  R=R||RG; kind=kind||rgKind();
+  R=rgBake(R||RG); kind=kind||rgKind();
   const [lib,logo,script]=await Promise.all([rgLib(),rgLogo(),rgScriptFont()]);
   /* laid out twice: once to measure, then for real with the spare room shared evenly between the sections, so a
      short sheet fills the page instead of bunching at the top (Alexandra, Oct 20 2026) */
@@ -537,7 +547,7 @@ async function rgSave2(me,toast,btn){
   btn.disabled=true; toast.textContent='Saving…';
   try{
     const r=await fetch(window.TAFFETA_ENDPOINT,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
-      body:JSON.stringify({type:'regimen',slug:st.slug,t:st.t,tk:st.tk,artist:me,guest:RG.guest.trim(),kind,data:RG})});
+      body:JSON.stringify({type:'regimen',slug:st.slug,t:st.t,tk:st.tk,artist:me,guest:RG.guest.trim(),kind,data:rgBake(RG)})});
     const j=await r.json();
     if(!j.ok) throw new Error(j.error||'no');
     const who=rgFirst(RG.guest);
