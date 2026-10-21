@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#fdfcfb"><meta name="robots" content="noindex,nofollow"><meta name="referrer" content="no-referrer">
+<title>Taffeta Briefing</title>
+<link rel="icon" href="../icon.png"><link rel="apple-touch-icon" href="../icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Briefing">
+<link rel="stylesheet" href="../g/base.css">
+<style>
+main{max-width:420px;margin:0 auto;padding:64px 16px;display:flex;flex-direction:column;gap:18px;text-align:center}
+main img{width:64px;margin:0 auto}
+h1{font-family:var(--display);font-size:28px;font-weight:400}
+p{color:var(--soft)}
+.pin{font-size:24px;letter-spacing:.4em;text-align:center;padding:12px;border:1px solid var(--line);background:#fff;width:100%;box-sizing:border-box}
+button{all:unset;cursor:pointer;padding:13px;background:var(--brown,#121212);color:#fff;letter-spacing:.12em;text-transform:uppercase;font-size:13px}
+button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
+label{font-size:13px;color:var(--soft)}
+.err{color:#9a2b1d;min-height:1.2em}
+</style>
+</head><body>
+<main id="lock">
+  <img src="../g/logo.png" alt="Taffeta">
+  <h1>Your Briefing</h1>
+  <p id="msg">Enter your passcode.</p>
+  <input id="pin" class="pin" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="off" aria-label="Passcode">
+  <label><input id="rem" type="checkbox" checked> Remember on this device</label>
+  <button id="go">Open</button>
+  <p class="err" id="err"></p>
+</main>
+<script>
+/* Private link (#b.<id>.<secret>) + passcode. The briefing is AES-GCM encrypted in <id>.json; nothing readable is in this repo. */
+const store={get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
+const enc=new TextEncoder(), b64d=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
+let link=(location.hash||'').slice(1).split('.');
+if(link[0]==='b'&&link.length===3) store.set('pb-link',link.join('.'));
+else link=(store.get('pb-link')||'').split('.');
+const ID=link[1], SECRET=link[2], PINKEY='pb-pin:'+ID;
+async function open(pin){
+  const r=await fetch(ID+'.json?t='+Date.now(),{cache:'no-store'});
+  if(!r.ok) throw new Error('missing');
+  const f=await r.json();
+  const base=await crypto.subtle.importKey('raw',enc.encode(SECRET+':'+pin),'PBKDF2',false,['deriveKey']);
+  const key=await crypto.subtle.deriveKey({name:'PBKDF2',salt:b64d(f.salt),iterations:f.iter,hash:'SHA-256'},base,{name:'AES-GCM',length:256},false,['decrypt']);
+  let pt;try{pt=await crypto.subtle.decrypt({name:'AES-GCM',iv:b64d(f.iv)},key,b64d(f.ct))}catch(e){throw new Error('pin')}
+  return JSON.parse(new TextDecoder().decode(pt));
+}
+function show(P){
+  if(location.hash.slice(1).startsWith('b.')) history.replaceState(null,'',location.pathname);
+  document.open();
+  document.write('<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="robots" content="noindex,nofollow"><meta name="referrer" content="no-referrer"><link rel="apple-touch-icon" href="../icon.png"></head><body>'+P.html
+    +'<p style="text-align:center;margin:0 0 40px"><a href="#" onclick="try{localStorage.removeItem(\''+PINKEY+'\')}catch(e){};location.reload();return false" style="font-size:12px;color:#6d6868">Lock this page on this device</a></p></body></html>');
+  document.close();
+}
+async function tryPin(pin,remember){
+  const err=document.getElementById('err');err.textContent='';
+  try{const P=await open(pin);if(remember)store.set(PINKEY,pin);show(P)}
+  catch(e){store.set(PINKEY,'');err.textContent=e.message==='pin'?'That passcode didn’t work.':'Couldn’t load the briefing. Check your connection.'}
+}
+if(!ID||!SECRET){document.getElementById('msg').textContent='Open this page from your private briefing link.';document.querySelector('#lock .pin').remove();document.getElementById('go').remove();document.querySelector('#lock label').remove()}
+else{
+  const saved=store.get(PINKEY); if(saved) tryPin(saved,true);
+  const pin=document.getElementById('pin');
+  document.getElementById('go').onclick=()=>tryPin(pin.value.trim(),document.getElementById('rem').checked);
+  pin.addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('go').click()});
+}
+</script>
+</body></html>
