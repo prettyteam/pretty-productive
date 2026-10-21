@@ -92,10 +92,10 @@ window.pdfReview=function(doc,W,y,font,ink,soft){
   }
   doc.setLineWidth(.2);
   doc.setFont(font,'italic'); doc.setFontSize(12); doc.setTextColor(...ink);
-  doc.text('Loved your visit? Tap the stars',W/2,cy+r+15,{align:'center'});
+  doc.text('Loved your visit? Tap the stars',W/2,cy+r+21,{align:'center'});
   doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(...soft);
-  doc.text('to leave us a Google review. It means the world to us.',W/2,cy+r+27,{align:'center'});
-  const h=2*r+2+29;
+  doc.text('to leave us a Google review. It means the world to us.',W/2,cy+r+33,{align:'center'});
+  const h=2*r+2+35;   /* a little more room between the stars and the words (Oct 21 2026) */
   doc.link(x0-6,y-2,sw+12,h+4,{url});
   return h+6;
 };
