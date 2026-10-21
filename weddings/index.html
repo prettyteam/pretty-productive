@@ -1303,7 +1303,7 @@ function myCardUrl(){
   const full=String(myName()).trim(),first=full.split(/\s+/)[0]||"",role=String((ME&&ME.role)||"").toLowerCase();
   const salon=SALON_ARTISTS.includes(first.toLowerCase())||/^jen(nifer)?\b.*\bcurley\b/i.test(full+" "+((ME&&ME.legalName)||""));
   const r=/hair/.test(role)&&/makeup/.test(role)?"both":/makeup/.test(role)?"makeup":/hair/.test(role)?"hair":"";
-  const k={carolyn:"skin",kat:"mh",katherine:"mh",kathryn:"mh",ashley:"mcce",dominique:"mcce",amanda:"cce",lexi:"cce",alexis:"cce",joanna:"cce"}[first.toLowerCase()];   // her own salon button line (hello/)
+  const k={carolyn:"skin",kat:"mh",katherine:"mh",kathryn:"mh",ashley:"mcce",dominique:"mcce",amanda:"cce",lexi:"cce",alexis:"cce",joanna:"cce",neva:"cce"}[first.toLowerCase()]||(salon?"cce":"");   // her own salon button line (hello/); Jen Curley is color, cuts and extensions too
   return new URL("../hello/?a="+encodeURIComponent(first)+(r?"&r="+r:"")+(salon?"&s=1":"")+(salon&&k?"&k="+k:""),location.href).href}
 async function shareCard(){const url=myCardUrl();
   if(navigator.share){try{await navigator.share({title:"A little thank you from Taffeta Weddings",url})}catch(e){}return}
