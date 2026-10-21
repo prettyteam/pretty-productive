@@ -172,8 +172,10 @@ function who_(d) {
 function load_(who) {
   const weddings = weddings_();
   if (who.role === 'office') {
-    const ci = calInfo_();
-    return { role: 'office', weddings: weddings.map(w => Object.assign(w.d, ci[w.d.id] ? { calTime: ci[w.d.id].time, calInfo: ci[w.d.id] } : {})), team: members_().map(m => Object.assign({}, m)), alerts: pushOnIds_() };
+    const ci = calInfo_(), jobs = {};
+    /* her Yes / No on the job offer, per wedding and artist id, so Team on site can show it (Dominique on Whitney's wedding, Oct 21 2026) */
+    jobRows_().forEach(j => { if (j.status === 'Yes' || j.status === 'No') (jobs[j.weddingId] = jobs[j.weddingId] || {})[j.artistId] = j.status; });
+    return { role: 'office', weddings: weddings.map(w => Object.assign(w.d, ci[w.d.id] ? { calTime: ci[w.d.id].time, calInfo: ci[w.d.id] } : {}, jobs[w.d.id] ? { jobAnswers: jobs[w.d.id] } : {})), team: members_().map(m => Object.assign({}, m)), alerts: pushOnIds_() };
   }
   const m = who.member, email = String(m.email || '').toLowerCase();
   const mine = weddings.map(w => w.d).filter(w => (w.artists || []).some(a =>
@@ -216,7 +218,7 @@ function members_() {
 /* ---------- weddings ---------- */
 function saveWedding_(w) {
   if (!w || typeof w !== 'object') return { ok: false, error: 'bad_request' };
-  delete w.calTime; delete w.calInfo;   // shown from the calendar on each load, never saved
+  delete w.calTime; delete w.calInfo; delete w.jobAnswers;   // shown from the calendar and job offers on each load, never saved
   const sh = sheet_(TABS.weddings.name);
   const list = weddings_();
   const found = w.id && list.find(x => x.d.id === w.id);
