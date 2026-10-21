@@ -62,8 +62,14 @@ main{padding:22px 16px 48px;gap:0}
   if(R){const el=document.getElementById("role");el.textContent=R+" · Taffeta Weddings";el.hidden=false}
   /* the salon button says hair or makeup to match the artist */
   if(role==="makeup")document.getElementById("book").firstChild.textContent="Come visit me in the salon for your other beauty needs";
-  /* Carolyn is our esthetician, so her button is about skin (Alexandra, Oct 21 2026) */
-  if(q.get("k")==="skin")document.getElementById("book").firstChild.textContent="Come glow with me at my salon & spa home. I'd love to take care of your skin";
+  /* some artists' buttons name what they do in the salon (Alexandra, Oct 21 2026): Carolyn is our esthetician,
+     Kat does makeup and hair, Ashley and Dominique do makeup, color, cuts and extensions, Amanda, Lexi and Joanna do color, cuts
+     and extensions. Everyone else in the salon gets the hair line above. */
+  const K={skin:"Come glow with me at my salon & spa home. I'd love to take care of your skin",
+    mh:"Come visit me in the salon for your makeup and hair needs",
+    mcce:"Come visit me in the salon for makeup, color, cuts or extensions",
+    cce:"Come visit me in the salon for all things hair: color, cuts and extensions"}[q.get("k")];
+  if(K)document.getElementById("book").firstChild.textContent=K;
   const book=window.TAFFETA_BOOKING||"", rev=(window.TAFFETA_REVIEWS||{}).weddings||"";
   /* artists who only do weddings get a short thank-you instead (Alexandra, Oct 21 2026) */
   if(q.get("s")!=="1")document.getElementById("note").textContent="Thank you for letting me be part of your day!";
