@@ -1298,13 +1298,17 @@ function venmoTipUrl(v,amt){return amt?"https://venmo.com/"+encodeURIComponent(v
 /* My Card (Alexandra, Oct 21 2026): in place of the review code, a thank-you card from the artist (hello/). The guest scans
    it or the artist AirDrops it, so nobody collects phone numbers. The card has the review stars. Artists who also work in
    the salon get the salon booking button on theirs. */
-const SALON_ARTISTS=["kat","katherine","kathryn","amanda","ashley","dominique","joanna","neva","lexi","alexis","carolyn"];
+/* Salon artists are matched on the first name of her preferred name OR her legal name, so a profile that goes by a
+   nickname ("Dom", "Kat") or a different spelling still gets her salon box (Alexandra, Oct 21 2026). */
+const SALON_K={carolyn:"skin",kat:"mh",katherine:"mh",kathryn:"mh",ashley:"mcce",dominique:"mcce",dom:"mcce",domenique:"mcce",dominque:"mcce",
+  amanda:"cce",lexi:"cce",alexis:"cce",joanna:"cce",neva:"cce"};   // her salon services line on the card (hello/)
 function myCardUrl(){
-  const full=String(myName()).trim(),first=full.split(/\s+/)[0]||"",role=String((ME&&ME.role)||"").toLowerCase();
-  const salon=SALON_ARTISTS.includes(first.toLowerCase())||/^jen(nifer)?\b.*\bcurley\b/i.test(full+" "+((ME&&ME.legalName)||""));
+  const full=String(myName()).trim(),first=full.split(/\s+/)[0]||"",legal=String((ME&&ME.legalName)||"").trim(),role=String((ME&&ME.role)||"").toLowerCase();
+  const keys=[first,legal.split(/\s+/)[0]].map(n=>String(n||"").toLowerCase().replace(/[^a-z]/g,""));
+  const jen=/^jen(nifer)?\b.*\bcurley\b/i.test(full+" "+legal)||/\bcurley\b/i.test(legal);   // Jen Curley: color, cuts and extensions
+  const k=keys.map(n=>SALON_K[n]).find(Boolean)||(jen?"cce":""), salon=!!k;
   const r=/hair/.test(role)&&/makeup/.test(role)?"both":/makeup/.test(role)?"makeup":/hair/.test(role)?"hair":"";
-  const k={carolyn:"skin",kat:"mh",katherine:"mh",kathryn:"mh",ashley:"mcce",dominique:"mcce",amanda:"cce",lexi:"cce",alexis:"cce",joanna:"cce",neva:"cce"}[first.toLowerCase()]||(salon?"cce":"");   // her own salon button line (hello/); Jen Curley is color, cuts and extensions too
-  return new URL("../hello/?a="+encodeURIComponent(first)+(r?"&r="+r:"")+(salon?"&s=1":"")+(salon&&k?"&k="+k:"")+(salon?"&d="+cardDay():""),location.href).href}
+  return new URL("../hello/?a="+encodeURIComponent(first)+(r?"&r="+r:"")+(salon?"&s=1&k="+k+"&d="+cardDay():""),location.href).href}
 const cardDay=()=>{const t=new Date();return t.getFullYear()+"-"+String(t.getMonth()+1).padStart(2,"0")+"-"+String(t.getDate()).padStart(2,"0")};   // the $20 offer runs 3 months from the day the guest scans it
 async function shareCard(){const url=myCardUrl();
   if(navigator.share){try{await navigator.share({title:"A little thank you from Taffeta Weddings",url})}catch(e){}return}
