@@ -14,6 +14,8 @@ const RG_GROUPS={
 };
 
 const RG_HOW={
+  /* the BR Skin Box: cleanser, P50 toner, moisturizer (Alexandra, Oct 20 2026) */
+  skinbox:'Morning and night, in this order:\nCleanser: With dry hands and a dry face, 1 pump in the morning, 2–3 at night. Massage over face and neck for 1–2 minutes, remove with a wet cloth, then rinse with cool water. Double cleanse at night if you’re wearing makeup.\nP50 Toner: Put 1–2 drops on a cotton round and press into your face and neck in an upward motion. No rubbing. Avoid the eye area. Don’t rinse.\nMoisturizer: Emulsify a pea-size amount between your fingers and press into face and neck.',
   milk:'With dry hands and a dry face, cleanse with 1 pump in the morning and 2–3 pumps at night. Massage over face and neck for 1–2 minutes. Remove with a wet cloth, then rinse with cool water. At night, if you’re wearing makeup, double cleanse to remove the first layer.',
   p50:'After cleansing, put 1–2 drops of your P50 on a cotton round and press it into your face and neck in an upward motion. No rubbing. Avoid the eye area. A light tingle is normal. Don’t rinse.',
   /* serum and cream in Carolyn's own words (Oct 14 2026) */
@@ -239,6 +241,7 @@ function rgGuess(kind,n){
     if(/lait|micellaire|cleans|démaquill/.test(t)) return ['Cleanse',H.milk];
     if(/mc 110/.test(t)) return ['Tone (Lotion P50)',H.mc110];
     if(/p50/.test(t)) return ['Tone (Lotion P50)',H.p50];
+    if(/skin box/.test(t)) return ['Kits & more',H.skinbox];
     if(/box/.test(t)) return ['Kits & more',''];
     if(/u\.v\.|spf|teint|kiss|hand|body|oil|tint/.test(t)) return ['Protect & glow',''];
     if(/crème|creme|émulsion|emulsion/.test(t)) return ['Moisturize',H.cream];
@@ -418,7 +421,8 @@ const rgNamePic=n=>{const k=String(n||'').toLowerCase();if(!k)return Promise.res
   return fetch((window.RG_BASE||'')+'g/names/'+k+'.png').then(r=>r.ok?r.blob():null).then(b=>b?new Promise(ok=>{const f=new FileReader();f.onload=()=>{const im=new Image();im.onload=()=>{/* solid black ink, so the name prints as dark as the text */try{const c=document.createElement('canvas');c.width=im.width;c.height=im.height;const x=c.getContext('2d');x.drawImage(im,0,0);const D=x.getImageData(0,0,c.width,c.height),a=D.data;for(let i=0;i<a.length;i+=4){a[i]=a[i+1]=a[i+2]=18;a[i+3]=Math.min(255,a[i+3]*2)}x.putImageData(D,0,0);ok({d:c.toDataURL('image/png'),w:im.width,h:im.height})}catch(e){ok({d:f.result,w:im.width,h:im.height})}};im.onerror=()=>ok(null);im.src=f.result};f.readAsDataURL(b)}):null).catch(()=>null)};
 /* Half-letter page (5.5 × 8.5 in), easy to read on a phone. Cream page, Taffeta wreath, serif headings. */
 async function rgPdf(me,R,kind){
-  R=rgBake(R||RG); kind=kind||rgKind();
+  R=R||RG; if((R.picks||[]).some(p=>/Skin Box/.test(p.n)))R=Object.assign({},R,{newP50:R.newP50||(R.picks||[]).some(p=>/New to P50/.test(p.how||'')),picks:R.picks.map(p=>/Skin Box/.test(p.n)?Object.assign({},p,{how:RG_HOW.skinbox}):p)});
+  R=rgBake(R); kind=kind||rgKind();
   const [lib,logo,script]=await Promise.all([rgLib(),rgLogo(),rgScriptFont()]);
   /* laid out twice: once to measure, then for real with the spare room shared evenly between the sections, so a
      short sheet fills the page instead of bunching at the top (Alexandra, Oct 20 2026) */
