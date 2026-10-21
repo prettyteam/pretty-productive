@@ -1303,7 +1303,8 @@ function myCardUrl(){
   const full=String(myName()).trim(),first=full.split(/\s+/)[0]||"",role=String((ME&&ME.role)||"").toLowerCase();
   const salon=SALON_ARTISTS.includes(first.toLowerCase())||/^jen(nifer)?\b.*\bcurley\b/i.test(full+" "+((ME&&ME.legalName)||""));
   const r=/hair/.test(role)&&/makeup/.test(role)?"both":/makeup/.test(role)?"makeup":/hair/.test(role)?"hair":"";
-  return new URL("../hello/?a="+encodeURIComponent(first)+(r?"&r="+r:"")+(salon?"&s=1":""),location.href).href}
+  const skin=first.toLowerCase()==="carolyn";   // our esthetician: her salon button is about skin
+  return new URL("../hello/?a="+encodeURIComponent(first)+(r?"&r="+r:"")+(salon?"&s=1":"")+(skin?"&k=skin":""),location.href).href}
 async function shareCard(){const url=myCardUrl();
   if(navigator.share){try{await navigator.share({title:"A little thank you from Taffeta Weddings",url})}catch(e){}return}
   try{await navigator.clipboard.writeText(url);toast("Card link copied.")}catch(e){prompt("Copy your card link:",url)}}
