@@ -718,7 +718,7 @@ function rxBuild(R,me){
 }
 
 /* Categories for the editor's Add picker (Alexandra, Oct 20 2026) */
-const RX_ADDCAT=new WeakMap();
+const RX_ADDCAT=new WeakMap(), RX_ADDOPEN=new WeakSet();
 function rxSvcCats(kind,svc){
   const groups=kind==='skin'?[['Facials',/Facial|Lift & Remodel|Cure All|Microdermabrasion/],['Targeted Treatments',/Express|Boost|Mini|Reversal/],['Add-Ons',/Dermaplaning/],['Brows & Wax',/Brow|Wax/]]
     :[['Cuts & Styling',/Haircut|Leave Wet|Blow|Formal/],['Color',/Single Process|Shadow Root|Glaze|Additional Mix|Base Lightener/],['Foils & Balayage',/Foil|Highlight|Balayage/],['Treatments',/K18|Goldwell|Wave/]];
@@ -759,14 +759,18 @@ function rxEditor(R,me){
     /* skin has no Try Me bottles: its version is the $25 take-home size (Alexandra, Oct 20 2026) */
     if(R.kind==='skin') cats.push([RX_BRB_N+' · $25',[['__brb',RX_BRB]]]);
     else cats.push(['Try Me Bottle',[['__try',RX_TRY]]]);
-    const cur=RX_ADDCAT.get(L), cat=h('select',{'aria-label':'Category'},h('option',{value:''},'+ Add: Pick A Category'),cats.map(([c,P])=>h('option',Object.assign({value:c},c===cur?{selected:''}:{}),c+' ('+P.length+')')));
+    const cur=RX_ADDCAT.get(L), cat=h('select',{'aria-label':'Category'},h('option',{value:''},'Pick A Category'),cats.map(([c,P])=>h('option',Object.assign({value:c},c===cur?{selected:''}:{}),c+' ('+P.length+')')));
     const items=(cats.find(c=>c[0]===cur)||[])[1];
     const sel=h('select',Object.assign({'aria-label':'Add a service or product'},items?{}:{disabled:''}),h('option',{value:''},'Then Pick One'),items?items.map(([n,p])=>n==='__try'?h('option',{value:n},'Try Me bottle · '+rxMoney(p)):n==='__brb'?h('option',{value:n},RX_BRB_N+' (pick the BR product) · '+rxMoney(p)):opt([n,p])):null);
     cat.addEventListener('change',()=>{RX_ADDCAT.set(L,cat.value);render()});
-    sel.addEventListener('change',()=>{const n=sel.value;if(!n)return;RX_ADDCAT.delete(L);if(n==='__brb'){const w=rxBrbAsk();if(w)L.push({n:w,p:RX_BRB,t:'p',full:RX_BRB});rxSave();render();return}if(n==='__try'){const what=prompt('Which product goes in the Try Me bottle?');if(what)L.push({n:what.trim(),p:RX_TRY,t:'t'});rxSave();render();return}
+    sel.addEventListener('change',()=>{const n=sel.value;if(!n)return;RX_ADDCAT.delete(L);RX_ADDOPEN.delete(L);if(n==='__brb'){const w=rxBrbAsk();if(w)L.push({n:w,p:RX_BRB,t:'p',full:RX_BRB});rxSave();render();return}if(n==='__try'){const what=prompt('Which product goes in the Try Me bottle?');if(what)L.push({n:what.trim(),p:RX_TRY,t:'t'});rxSave();render();return}
       const sv=RX_SVC[R.kind].find(x=>x[0]===n);const pr=plist.find(x=>x[0]===n);const ex=Object.values(RX_PROD).find(x=>x[0]===n);
       L.push(sv?(()=>{const p=rxPrice(R.kind,n),reg=sv[1];return reg!==p?{n,p,t:'s',reg}:{n,p,t:'s'}})():{n,p:pr[1],t:'p',why:ex?ex[2]:'',full:pr[1]});rxSave();render()});
-    return h('div',{class:'rxadd'},h('label',{class:'fld'},cat),h('label',{class:'fld'},sel))};
+    /* folded under "Add A Service Or Product +" so the two pickers don't read as part of the card (Alexandra, Oct 20 2026) */
+    const d=h('details',Object.assign({class:'rxaddd'},RX_ADDOPEN.has(L)||cur?{open:''}:{}),h('summary',{},h('span',{},'Add A Service Or Product'),h('span',{class:'pm','aria-hidden':'true'})),
+      h('div',{class:'rxadd'},h('label',{class:'fld'},cat),h('label',{class:'fld'},sel)));
+    d.addEventListener('toggle',()=>{if(d.open)RX_ADDOPEN.add(L);else{RX_ADDOPEN.delete(L);RX_ADDCAT.delete(L)}});
+    return d};
   const badge=t=>b==null?null:h('span',{class:'rxbadge '+(t<=b?'ok':'over')},t<=b?rxMoney(b-t)+' under budget':rxMoney(t-b)+' over budget');
   /* the same names her card shows: the higher total is All In, the other Worth The Wait, none when they tie (Alexandra, Oct 20 2026) */
   const tots=R.opts.map(o=>rxTotal(o.lines)), hiI=tots.length===2&&tots[0]!==tots[1]?tots.indexOf(Math.max(...tots)):-1;
