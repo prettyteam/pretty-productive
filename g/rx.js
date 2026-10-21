@@ -91,7 +91,7 @@ const RX_PROD={
   skMask:['Biologique Recherche Masque VIVANT',95,'Weekly mask for oily, blemish-prone skin']
 };
 const RX_TRY=6; /* Try Me bottle: 1 oz of any backbar product */
-/* Taffeta BR Bottle: the skin version of a Try Me. About 85 drops of a BR backbar product (e.g. Collagène Originel), $25, lasts about 2 weeks (Alexandra, Oct 20 2026) */
+/* Taffeta BR Bottle: the skin version of a Try Me. A sample bottle of a BR backbar product (e.g. Collagène Originel) with enough for about 2 weeks at 1–2 drops, $25 (Alexandra, Oct 20 2026) */
 const RX_BRB=25, RX_BRB_N='Taffeta BR Bottle';
 const rxBrbAsk=()=>{const w=prompt('Which BR product goes in the Taffeta BR Bottle?','Collagène Originel');return w&&w.trim()?RX_BRB_N+': '+w.trim():null};
 const RX_ALLIN_SKIN=400; /* skin: nothing suggested past a $400 ticket (Alexandra, Oct 16 2026) */
@@ -165,7 +165,7 @@ function rxPriceList(kind){
         return [mine.length?h('div',{},h('span',{class:'lbl'},'★ My Go-Tos'),...mine.map(row)):null,
           ...rxByBrand(items.filter(([n])=>!favs.includes(n))).map(([b,L])=>{const d=h('details',{class:'invg'},h('summary',{},h('h2',{style:'font-size:17px'},b),h('span',{class:'soft invc'},String(L.length)),h('span',{class:'tplus','aria-hidden':'true'},'+')),
             h('div',{class:'sec2'},...L.map(row)));if(q)d.open=true;return d})]})(),
-      h('p',{class:'soft'},(kind==='skin'?'Skin has no Try Me bottles: the skin version is the Taffeta BR Bottle, about 85 drops of a BR product for $25 (lasts about 2 weeks).':'Try Me bottle: 1 oz of any backbar product, $6.')+' Retail prices from Paired Plus; ring up from the POS.')));
+      h('p',{class:'soft'},(kind==='skin'?'Skin has no Try Me bottles: the skin version is the Taffeta BR Bottle, a $25 sample bottle of a BR product with enough for about 2 weeks.':'Try Me bottle: 1 oz of any backbar product, $6.')+' Retail prices from Paired Plus; ring up from the POS.')));
   if(q) d.open=true;
   return d;
 }
@@ -438,7 +438,7 @@ function rxGenerateHair(R,g){
    Estimates for using it as directed; Carolyn can correct any of them. */
 function rxLasts(n){n=String(n||'');
   if(/Skin Box/.test(n))return '4-week skincare routine';
-  if(n.startsWith(RX_BRB_N))return 'about 2 weeks';   /* Taffeta BR Bottle: about 85 drops, 2-3 drops morning and night */
+  if(n.startsWith(RX_BRB_N))return 'about 2 weeks';   /* Taffeta BR Bottle: a 2-week sample, 1–2 drops */
   const oz=Number((n.match(/\(([\d.]+) oz\)/)||[])[1])||0;
   if(/Lait|Démaquillante|Micellaire/.test(n))return oz&&oz<2?'about 1 month':oz>=8?'about 5 months':'about 3 months';
   if(/Lotion P50|Eauxyg/.test(n))return oz&&oz<2?'about 1 month':oz>=8?'about 5 months':'about 3 months';
@@ -898,7 +898,8 @@ function rxSavedView(me){
 /* generic directions by product type, in Carolyn's own words (Alexandra, Oct 14 2026). A product with its own
    directions in the take-home builder (g/regimen.js) uses those instead. Face and neck only. */
 function rxHowTo(n){n=String(n||'');
-  if(n.startsWith(RX_BRB_N+': ')){const b=n.slice(RX_BRB_N.length+2);return rxHowTo(/Sérum|Serum|Collag/i.test(b)?'Sérum '+b:b)||rxHowTo('Sérum')}
+  /* Taffeta BR Bottle: a sample, so 1–2 drops (Alexandra, Oct 20 2026) */
+  if(n.startsWith(RX_BRB_N+': ')){const b=n.slice(RX_BRB_N.length+2);return (rxHowTo(/Sérum|Serum|Collag/i.test(b)?'Sérum '+b:b)||rxHowTo('Sérum')).replace(/2–3 drops/g,'1–2 drops')}
   if(/Skin Box/.test(n))return 'Morning and night, in this order:\nCleanser: With dry hands and a dry face, 1 pump in the morning, 2–3 at night. Massage over face and neck for 1–2 minutes, remove with a wet cloth, then rinse with cool water. Double cleanse at night if you’re wearing makeup.\nP50: Put 1–2 pumps on a cotton round and press into your face and neck in an upward motion. No rubbing. Don’t rinse.\nSerum: Apply 2–3 drops directly onto skin and gently pat over face and neck.\nMoisturizer: Emulsify a pea-size amount between your fingers and press into face and neck.';
   if(/Lait|Démaquillante|Micellaire|Cleans/i.test(n))return 'With dry hands and a dry face, cleanse with 1 pump in the morning and 2–3 pumps at night. Massage over face and neck for 1–2 minutes. Remove with a wet cloth, then rinse with cool water. At night, if you’re wearing makeup, double cleanse to remove the first layer.';
   if(/Lotion MC 110/.test(n))return 'Use 2–3 times a week. Apply 1–2 pumps to a cotton round and tap onto the affected areas. Also great for fine lines.';
@@ -966,7 +967,7 @@ function rxTakeHomeView(me){
   const toast=h('p',{class:'soft',style:'text-align:center;margin:0'});
   const toRG=()=>{const cat=typeof rgCatalog==='function'?rgCatalog(kind):[], whens=RG_WHEN[kind];
     RG=rgBlank(); RG.guest=x.guest; RG.next=d.m&&d.m.when||''; RG.rid=x.id;   /* her card id: saving again replaces the desk's copy */
-    RG.picks=x.home.map(p=>{if(String(p.n).startsWith(RX_BRB_N+': '))return {n:String(p.n),how:rxHowTo(p.n)+' About 85 drops: lasts about 2 weeks.',when:whens[0],step:''};const b=rgNorm(rgBase(String(p.n).replace(/^Try Me: /,''))), it=cat.find(c=>rgNorm(c.n)===b||c.sizes.includes(p.n))||cat.find(c=>{const k=rgNorm(c.n);return k.length>8&&(b.startsWith(k)||k.startsWith(b))});
+    RG.picks=x.home.map(p=>{if(String(p.n).startsWith(RX_BRB_N+': '))return {n:String(p.n),how:rxHowTo(p.n)+' Lasts about 2 weeks.',when:whens[0],step:''};const b=rgNorm(rgBase(String(p.n).replace(/^Try Me: /,''))), it=cat.find(c=>rgNorm(c.n)===b||c.sizes.includes(p.n))||cat.find(c=>{const k=rgNorm(c.n);return k.length>8&&(b.startsWith(k)||k.startsWith(b))});
       const nm=it?it.n:String(p.n).replace(/^Try Me: /,''), gen=kind==='skin'?rxHowTo(nm):'';
       return it?{n:it.n,how:it.how||gen,when:it.w0&&whens.includes(it.w0)?it.w0:whens[0],step:it.step}:{n:nm,how:gen,when:whens[0],step:''}});
     if(kind==='skin') RG.picks.sort((a,b)=>RX_HOW_STEP(a.n)-RX_HOW_STEP(b.n))};
