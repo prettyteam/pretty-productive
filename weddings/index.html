@@ -886,7 +886,9 @@ function sheetHTML(s,ver,editable){
   h+='<div class="sp"></div>';
   if(!plan.cols.length){h+='<p style="text-align:center;color:#5d554e;font-family:var(--serif)">Add an artist and the people getting ready to build the schedule.</p></div>';return {html:h,plan}}
   h+='<table class="tl"><thead><tr>'+(sameSlot?'<th>Time</th>':'');
-  plan.cols.forEach(c=>{h+='<th>'+(c.service==="hair"?"Hair":"Makeup")+(c.artist.name?'<small>'+esc(c.artist.name)+'</small>':'')+'</th>'});
+  // bride's copy shows artists by first name only (Alexandra, Oct 21 2026)
+  const who=n=>ver==="bride"?String(n).trim().split(/\s+/)[0]:n;
+  plan.cols.forEach(c=>{h+='<th>'+(c.service==="hair"?"Hair":"Makeup")+(c.artist.name?'<small>'+esc(who(c.artist.name))+'</small>':'')+'</th>'});
   h+='</tr></thead><tbody>';
   for(let r=0;r<rows;r++){
     h+='<tr>';
