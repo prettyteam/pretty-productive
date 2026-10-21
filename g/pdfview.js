@@ -21,6 +21,8 @@
 .pdfv-bar button{font:inherit;font-size:12.5px;letter-spacing:.16em;text-transform:uppercase;border:1px solid var(--ink,#000);background:transparent;color:var(--ink,#000);border-radius:999px;height:38px;padding:0 18px;cursor:pointer}
 .pdfv-bar .pdfv-name{flex:1;min-width:0;text-align:center;font-size:13px;color:var(--muted,#2b2b2b);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .pdfv-body{flex:1;overflow:auto;-webkit-overflow-scrolling:touch;padding:16px max(12px,env(safe-area-inset-right,0px)) calc(24px + env(safe-area-inset-bottom,0px)) max(12px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;align-items:center;gap:12px}
+.pdfv-tip{font-size:12.5px;color:var(--muted,#2b2b2b);margin:0 0 10px;text-align:center;max-width:640px}
+.pdfv-body img{width:100%;max-width:640px;height:auto;background:#fff;box-shadow:0 1px 6px rgba(0,0,0,.08);-webkit-touch-callout:default;-webkit-user-select:auto;user-select:auto}
 .pdfv-body canvas{width:100%;max-width:640px;height:auto;background:#fff;box-shadow:0 1px 6px rgba(0,0,0,.08)}
 .pdfv-body iframe{width:100%;max-width:640px;flex:1;min-height:70vh;border:0;background:#fff}
 .pdfv-msg{font-size:14px;color:var(--muted,#2b2b2b);margin:24px 0}`;
@@ -58,12 +60,15 @@
     try{
       const pdfjs=await lib(); const doc=await pdfjs.getDocument({data:new Uint8Array(await blob.arrayBuffer())}).promise;
       if(open!==o) return; msg.remove();
+      const tip=document.createElement('p');tip.className='pdfv-tip';tip.textContent='Hold your finger on the picture to copy it or save it to Photos, then paste it in a text.';body.append(tip);
       const w=Math.min(body.clientWidth-24,640), dpr=Math.min(window.devicePixelRatio||1,3);
       for(let i=1;i<=doc.numPages;i++){
         if(open!==o) return;
         const pg=await doc.getPage(i), vp0=pg.getViewport({scale:1}), vp=pg.getViewport({scale:w/vp0.width*dpr});
         const c=document.createElement('canvas');c.width=vp.width;c.height=vp.height;c.setAttribute('aria-label','Page '+i);
         body.append(c); await pg.render({canvasContext:c.getContext('2d'),viewport:vp}).promise;
+        /* as a picture, so she can hold her finger on it to copy or save it and text it (Alexandra, Oct 20 2026) */
+        try{const im=document.createElement('img');im.src=c.toDataURL('image/png');im.alt=(nm.textContent||'PDF')+(doc.numPages>1?' page '+i:'');c.replaceWith(im)}catch(e){}
       }
     }catch(e){
       if(open!==o) return;

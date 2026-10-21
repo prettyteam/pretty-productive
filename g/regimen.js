@@ -426,12 +426,13 @@ async function rgPdf(me,R,kind){
   const [lib,logo,script]=await Promise.all([rgLib(),rgLogo(),rgScriptFont()]);
   /* laid out twice: once to measure, then for real with the spare room shared evenly between the sections, so a
      short sheet fills the page instead of bunching at the top (Alexandra, Oct 20 2026) */
-  const mk=()=>{const d=new lib.jsPDF({unit:'pt',format:[396,612]});
+  let H=612;
+  const mk=()=>{const d=new lib.jsPDF({unit:'pt',format:[396,H]});
     if(script){try{d.addFileToVFS('CormorantLightItalic.ttf',script);d.addFont('CormorantLightItalic.ttf','CormorantLI','italic');SF='CormorantLI'}catch(e){SF='times'}}return d};
   let SF='times', doc=mk(), pad=0, gaps=0;
   const np=me?await rgNamePic(rgFirst(me)):null;
   const big=SF==='times'?1:1.12;
-  const W=396, H=612, M=34, CW=W-M*2, ink=[18,18,18], soft=[95,91,85], choc=[18,18,18], line=[226,222,213];
+  const W=396, M=34, CW=W-M*2, ink=[18,18,18], soft=[95,91,85], choc=[18,18,18], line=[226,222,213];
   let y=0;
   const bg=()=>{doc.setFillColor(248,246,240);doc.rect(0,0,W,H,'F');doc.setFillColor(255,255,255);doc.rect(12,12,W-24,H-24,'F');
     /* the app's double frame: a thin black line and a finer charcoal line just inside (Alexandra, Oct 15 2026) */
@@ -439,7 +440,7 @@ async function rgPdf(me,R,kind){
   const foot=()=>{doc.setDrawColor(...line);doc.line(M,H-40,W-M,H-40);doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.setTextColor(...soft);
     /* the logo already says Taffeta Salon & Spa (Alexandra, Oct 20 2026) */
     doc.setFontSize(7);doc.text(['219 Bellevue Ave, Hammonton NJ 08037',RG_PHONE,RG_SITE,'@'+(RG_IG[kind]||RG_IG.hair)].join('  ·  '),W/2,H-26,{align:'center'})};
-  const page=()=>{foot();doc.addPage([396,612]);bg();y=M+6};
+  const page=()=>{foot();doc.addPage([396,H]);bg();y=M+6};
   const need=n=>{if(y+n>H-52)page()};
   const para=(t,size,font,style,color,gap,indent)=>{doc.setFont(font,style);doc.setFontSize(size);doc.setTextColor(...color);
     const lines=doc.splitTextToSize(t,CW-(indent||0)), lh=size*1.32;
@@ -518,6 +519,8 @@ async function rgPdf(me,R,kind){
   /* the extra room goes before each section and the sign-off; if that tips it onto a second page, ease off until it fits */
   if(doc.getNumberOfPages()===1&&gaps){const room=Math.min(70,Math.max(0,(H-60-y)/gaps));
     for(const f of [1,.75,.5,0]){pad=room*f;doc=mk();gaps=0;draw();if(doc.getNumberOfPages()===1)break}}
+  /* still more than one page: one longer page instead, so nothing (like the date) spills onto a second (Alexandra, Oct 20 2026) */
+  if(doc.getNumberOfPages()>1){pad=0;H=4000;doc=mk();gaps=0;draw();H=Math.max(612,Math.ceil(y+110));doc=mk();gaps=0;draw()}
   return doc.output('blob');
 }
 const rgFile=(R,kind)=>'Taffeta '+(kind==='skin'?'Skincare':'Hair Care')+' Regimen'+(R.guest.trim()?' - '+rgFirst(R.guest):'')+'.pdf';
