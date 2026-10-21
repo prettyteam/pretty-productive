@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#f8f6f0"><meta name="robots" content="noindex">
+<title>A Note from Your Taffeta Artist</title>
+<meta property="og:title" content="A little thank you from Taffeta Weddings">
+<link rel="icon" href="../icon.png"><link rel="apple-touch-icon" href="../icon.png">
+<link rel="stylesheet" href="../g/base.css">
+<script src="../g/config.js?v=3"></script>
+<style>
+/* Artist thank-you card (Alexandra, Oct 21 2026): a bridal party guest scans the code on the artist's Gratuity tab, or the
+   artist AirDrops this link. ?a=Jennifer&r=hair puts in the artist's first name and what she did; &s=1 (artists who also
+   work in the salon) adds the salon booking button, otherwise it is a short thank-you and the review stars. */
+:root{--ivory:#f8f6f0;--ink:#121212;--soft:#555250;--line:#2b2a28}
+html,body{background:var(--ivory)}
+main{padding:22px 16px 48px;gap:0}
+.card{background:#fff;border:1px solid var(--line);outline:1px solid var(--line);outline-offset:-8px;padding:40px 26px 34px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:18px}
+.card img.logo{width:74px}
+.eyebrow{display:flex;align-items:center;justify-content:center;gap:12px;font-size:11px;letter-spacing:.18em;color:var(--ink)}
+.eyebrow::before,.eyebrow::after{content:"";width:26px;height:1px;background:var(--line)}
+.hi{font-family:var(--display);font-style:italic;font-size:36px;line-height:1.1;margin:0}
+.role{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--soft);margin-top:-8px}
+.note{font-family:var(--display);font-style:italic;font-size:19px;line-height:1.5;max-width:330px;text-wrap:balance}
+.sign{font-family:var(--display);font-style:italic;font-size:17px;color:var(--soft)}
+.rule{width:44px;height:1px;background:var(--line);margin:4px auto}
+.btn{display:block;text-transform:none;letter-spacing:normal;border-radius:0;width:100%;max-width:320px;padding:15px 14px;border:1px solid var(--line);background:#fff;color:var(--ink);text-decoration:none;font-family:var(--display);font-size:16.5px;line-height:1.3}
+.btn small{display:block;font-weight:400;font-family:var(--body);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--soft);margin-top:4px}
+.btn:active{background:#f3f1ec}
+.stars{display:flex;flex-direction:column;align-items:center;gap:10px;text-decoration:none;color:var(--ink);padding:6px 10px}
+.stars svg{width:190px;height:auto;overflow:visible}
+.stars b{font-family:var(--display);font-style:italic;font-weight:400;font-size:18px}
+.stars span{font-size:13.5px;color:var(--soft);max-width:280px}
+.foot{text-align:center;font-size:12px;color:var(--soft);margin-top:22px;line-height:1.7}
+.foot a{color:inherit}
+[hidden]{display:none!important}
+</style>
+</head><body><main>
+<div class="card">
+  <img class="logo" src="../g/logo.png" alt="Taffeta">
+  <div class="eyebrow" id="eb">Thank You</div>
+  <h1 class="hi" id="hi">It was so nice to meet you</h1>
+  <div class="role" id="role" hidden></div>
+  <p class="note">It was really nice to meet you. I hope to work with you again.</p>
+  <p class="sign" id="sign">xo, your Taffeta artist</p>
+  <div class="rule"></div>
+  <a class="btn" id="book" target="_blank" rel="noopener">Come visit me for your other hair needs in the salon<small>Book online</small></a>
+  <div class="rule"></div>
+  <a class="stars" id="rev" target="_blank" rel="noopener" aria-label="Leave Taffeta Weddings a Google review">
+    <svg viewBox="0 0 190 34" aria-hidden="true" id="starsvg"></svg>
+    <b>Loved your look? Tap the stars</b>
+    <span>to leave Taffeta Weddings a Google review. It means the world to us.</span>
+  </a>
+</div>
+<p class="foot">Taffeta Salon &amp; Spa · 219 Bellevue Ave, Hammonton, NJ<br><a href="tel:+16093835504">(609) 383-5504</a> · <a href="https://taffetadesign.com" target="_blank" rel="noopener">taffetadesign.com</a></p>
+</main>
+<script>
+(function(){
+  const q=new URLSearchParams(location.search), clean=s=>String(s||"").replace(/[^\p{L}\p{M}' .-]/gu,"").trim().slice(0,30);
+  const name=clean(q.get("a")).split(/\s+/)[0]||"", role=(q.get("r")||"").toLowerCase();
+  if(name){document.getElementById("hi").textContent="Hi, it's "+name+"!";document.getElementById("sign").textContent="xo, "+name;document.title="A Note from "+name+" at Taffeta"}
+  const R={hair:"Your hair artist",makeup:"Your makeup artist",both:"Your hair & makeup artist"}[role];
+  if(R){const el=document.getElementById("role");el.textContent=R+" · Taffeta Weddings";el.hidden=false}
+  /* the salon button says hair or makeup to match the artist */
+  if(role==="makeup")document.getElementById("book").firstChild.textContent="Come visit me in the salon for your other beauty needs";
+  const book=window.TAFFETA_BOOKING||"", rev=(window.TAFFETA_REVIEWS||{}).weddings||"";
+  const b=document.getElementById("book"); if(book&&q.get("s")==="1")b.href=book; else{b.hidden=true;b.nextElementSibling.hidden=true}
+  const s=document.getElementById("rev"); if(rev)s.href=rev; else s.hidden=true;
+  /* five outlined stars, same shape as the review stars on the aftercare PDFs */
+  let p="";for(let k=0;k<5;k++){const cx=17+k*39,cy=17,r=16,pts=[];for(let i=0;i<10;i++){const a=-Math.PI/2+i*Math.PI/5,rr=i%2?r*.42:r;pts.push((cx+rr*Math.cos(a)).toFixed(2)+","+(cy+rr*Math.sin(a)).toFixed(2))}
+    p+='<polygon points="'+pts.join(" ")+'" fill="none" stroke="#121212" stroke-width="1.3" stroke-linejoin="round"/>'}
+  document.getElementById("starsvg").innerHTML=p;
+})();
+</script>
+</body></html>
