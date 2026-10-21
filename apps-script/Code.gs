@@ -112,6 +112,7 @@ function doPost(e) {
       psh.appendRow([now, clean_(d.first, 60), clean_(d.last, 60), clean_(d.phone, 30), clean_(d.email, 120),
         clean_(d.address, 200), clean_(d.birthday, 20), clean_(d.allergies, 500), clean_(d.notes, 1000),
         clean_(d.changes, 1000), d.texts ? 'Yes' : 'No', 'New', '']);
+      psh.getRange(psh.getLastRow(), 7).setNumberFormat('@').setValue(clean_(d.birthday, 20)); // appendRow can still turn it into a date, so write it again as text
       alert_('Profile update: ' + who, who + ' sent new details. Update her file in Paired Plus.', 'memo');
       deskPush_('Profile update', deskFirst_(d.first) + ' sent new details for Paired Plus.');
     }
