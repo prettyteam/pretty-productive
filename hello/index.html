@@ -22,7 +22,7 @@ main{padding:22px 16px 48px;gap:0}
 .role{font-size:11px;letter-spacing:.18em;line-height:1.9;text-transform:uppercase;color:var(--soft);margin-top:-8px}
 .note{font-family:var(--display);font-style:italic;font-size:19px;line-height:1.5;max-width:330px;text-wrap:balance}
 .rule{width:44px;height:1px;background:var(--line);margin:4px auto}
-.btn{display:block;text-transform:none;letter-spacing:normal;border-radius:0;width:100%;max-width:320px;padding:15px 14px;border:1px solid var(--line);background:#fff;color:var(--ink);text-decoration:none;font-family:var(--display);font-size:16.5px;line-height:1.3}
+.btn{display:block;text-transform:none;letter-spacing:normal;border-radius:0;width:fit-content;max-width:290px;padding:10px 16px 9px;text-wrap:balance;border:1px solid var(--line);background:#fff;color:var(--ink);text-decoration:none;font-family:var(--display);font-size:16.5px;line-height:1.3}
 .btn small{display:block;font-weight:400;font-family:var(--body);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--soft);margin-top:14px}
 .btn:active{background:#f3f1ec}
 .offer{display:flex;flex-direction:column;align-items:center;gap:2px;margin-top:-6px}
@@ -81,6 +81,10 @@ main{padding:22px 16px 48px;gap:0}
   if(d&&!isNaN(d)){d.setMonth(d.getMonth()+3);const w=document.getElementById("offerWhen");w.textContent="Mention this card when you reserve or upon check in.";w.append(document.createElement("br"),"Valid through "+d.toLocaleDateString("en-US",{month:"long",day:"numeric",year:"numeric"})+".")}
   const b=document.getElementById("book"); if(book&&q.get("s")==="1")b.href=book; else{b.hidden=true;document.getElementById("offer").hidden=true;document.getElementById("offer").nextElementSibling.hidden=true}
   const s=document.getElementById("rev"); if(rev)s.href=rev; else s.hidden=true;
+  /* hug the box to the longest line of the button words (a wrapped line otherwise leaves the box wide) */
+  const hug=()=>{if(b.hidden)return;b.style.width="";const r=document.createRange();r.selectNodeContents(b.firstChild);
+    const w=Math.max(...[...r.getClientRects()].map(x=>x.width));if(w>0)b.style.width=Math.ceil(w+34)+"px"};
+  (document.fonts&&document.fonts.ready||Promise.resolve()).then(hug);addEventListener("resize",hug);
   /* five outlined stars, same shape as the review stars on the aftercare PDFs */
   let p="";for(let k=0;k<5;k++){const cx=17+k*39,cy=17,r=16,pts=[];for(let i=0;i<10;i++){const a=-Math.PI/2+i*Math.PI/5,rr=i%2?r*.42:r;pts.push((cx+rr*Math.cos(a)).toFixed(2)+","+(cy+rr*Math.sin(a)).toFixed(2))}
     p+='<polygon points="'+pts.join(" ")+'" fill="none" stroke="#121212" stroke-width="1.3" stroke-linejoin="round"/>'}
