@@ -108,10 +108,12 @@ function doPost(e) {
     } else if (d.type === 'guestprofile') {
       const who = clean_(d.first, 60) + ' ' + clean_(d.last, 60);
       const psh = tab_(TABS.profile);
-      psh.getRange(psh.getLastRow() + 1, 7).setNumberFormat('@'); // keep "March 5" as text so Sheets doesn't turn it into a date
+      const bd = clean_(d.birthday, 20);
       psh.appendRow([now, clean_(d.first, 60), clean_(d.last, 60), clean_(d.phone, 30), clean_(d.email, 120),
-        clean_(d.address, 200), clean_(d.birthday, 20), clean_(d.allergies, 500), clean_(d.notes, 1000),
+        clean_(d.address, 200), bd, clean_(d.allergies, 500), clean_(d.notes, 1000),
         clean_(d.changes, 1000), d.texts ? 'Yes' : 'No', 'New', '']);
+      // appendRow turns "March 5" into a date, so rewrite the birthday as plain text in the row it just added
+      psh.getRange(psh.getLastRow(), 7).setNumberFormat('@').setValue(bd);
       alert_('Profile update: ' + who, who + ' sent new details. Update her file in Paired Plus.', 'memo');
       deskPush_('Profile update', deskFirst_(d.first) + ' sent new details for Paired Plus.');
     }
