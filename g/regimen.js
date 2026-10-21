@@ -200,7 +200,7 @@ const RG_NEXT=['2 weeks','3 weeks','4 weeks','6 weeks','8 weeks','10–12 weeks'
 /* sign-off follows today's service: brows or lashes only say Pretty Brows / Pretty Lashes instead of Pretty Skin (Alexandra, Oct 20 2026) */
 const rgPretty=(kind,sv)=>{if(kind!=='skin')return 'Pretty Hair by ';const b=sv.includes('Brow Sculpt'),l=sv.includes('Lift & Tint');
   return sv.length&&sv.every(x=>x==='Brow Sculpt'||x==='Lift & Tint')?(b&&l?'Pretty Brows & Lashes by ':b?'Pretty Brows by ':'Pretty Lashes by '):'Pretty Skin by '};
-const RG_PHONE='(609) 383-5504', RG_SITE='taffetadesign.com';
+const RG_PHONE='(609) 383-5504', RG_SITE='taffetadesign.com', RG_IG='';   /* Instagram handle for the PDF footer, without the @ */
 
 const rgKind=()=>(S.mine&&S.mine.role==='esthetician')?'skin':'hair';
 const rgKey=()=>'pp-regimen:'+((S.mine&&S.mine.staff&&S.mine.staff.slug)||(typeof ID!=='undefined'?ID:'x'));
@@ -379,7 +379,10 @@ function regimenView(){
 
 /* what goes on the PDF: sections in routine order */
 function rgSections(kind,R){
-  return RG_GROUPS[kind].map(([title,ws])=>[title,R.picks.filter(p=>ws.includes(p.when))]).filter(([,a])=>a.length);
+  const S=RG_GROUPS[kind].map(([title,ws])=>[title,R.picks.filter(p=>ws.includes(p.when))]).filter(([,a])=>a.length);
+  /* skin: when morning and evening are the same products, one "Morning & Night" section instead of "Same as above" (Oct 20 2026) */
+  if(kind==='skin'&&S.length>1&&S[0][0]==='Every morning'&&S[1][0]==='Every evening'&&S[0][1].length===S[1][1].length&&S[0][1].every((p,i)=>p===S[1][1][i])) return [['Morning & Night',S[0][1]],...S.slice(2)];
+  return S;
 }
 const rgDate=()=>new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
 
@@ -420,7 +423,8 @@ async function rgPdf(me,R,kind){
     /* the app's double frame: a thin black line and a finer charcoal line just inside (Alexandra, Oct 15 2026) */
     doc.setDrawColor(18,18,18);doc.setLineWidth(.7);doc.rect(12,12,W-24,H-24,'S');doc.setDrawColor(43,42,40);doc.setLineWidth(.3);doc.rect(17,17,W-34,H-34,'S');doc.setLineWidth(.2)};
   const foot=()=>{doc.setDrawColor(...line);doc.line(M,H-40,W-M,H-40);doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.setTextColor(...soft);
-    doc.text('Taffeta Salon & Spa  ·  219 Bellevue Ave, Hammonton NJ  ·  '+RG_PHONE+'  ·  '+RG_SITE,W/2,H-26,{align:'center'})};
+    /* the logo already says Taffeta Salon & Spa (Alexandra, Oct 20 2026) */
+    doc.text(['219 Bellevue Ave, Hammonton NJ 08037',RG_PHONE,RG_SITE].concat(RG_IG?['@'+RG_IG]:[]).join('  ·  '),W/2,H-26,{align:'center'})};
   const page=()=>{foot();doc.addPage([396,612]);bg();y=M+6};
   const need=n=>{if(y+n>H-52)page()};
   const para=(t,size,font,style,color,gap,indent)=>{doc.setFont(font,style);doc.setFontSize(size);doc.setTextColor(...color);
@@ -451,7 +455,20 @@ async function rgPdf(me,R,kind){
       doc.setFont('times','normal');doc.setFontSize(11.5);doc.setTextColor(...choc);doc.text(String(i+1),M,y+11);
       para(p.n,11.5,'times','bold',ink,1,16);
       if(seen.has(p)) para('Same as above.',9.5,'helvetica','italic',soft,6,16);
-      else if(p.how.trim()) para(p.how.trim(),9.5,'helvetica','normal',soft,8,16); else y+=6;
+      else if(p.how.trim()){
+        /* step by step bullets instead of a paragraph (Alexandra, Oct 20 2026): one line per step, or per sentence */
+        const t=p.how.trim(), steps=t.includes('\n')?t.split(/\n+/):t.split(/(?<=[.!])\s+(?=[A-Z0-9“"])/);
+        steps.map(x=>x.trim()).filter(Boolean).forEach((x,k,a)=>{const lead=k===0&&a.length>1&&/:$/.test(x);
+          if(lead){para(x,9.5,'helvetica','italic',soft,2,16);return}
+          need(14);doc.setFont('helvetica','normal');doc.setFontSize(9.5);doc.setTextColor(...soft);doc.text('•',M+18,y+9.5);
+          const m=x.match(/^([A-Z][\w ]{1,18}):\s+(.*)$/);
+          if(m){doc.setFont('helvetica','bold');doc.setFontSize(9.5);const lw=doc.getTextWidth(m[1]+': ');doc.setTextColor(...ink);doc.text(m[1]+':',M+28,y+9.5);
+            const L=doc.splitTextToSize(m[2],CW-28);doc.setFont('helvetica','normal');doc.setTextColor(...soft);
+            const first=doc.splitTextToSize(m[2],CW-28-lw)[0];doc.text(first,M+28+lw,y+9.5);y+=9.5*1.32;
+            const rest=m[2].slice(first.length).trim(); if(rest) para(rest,9.5,'helvetica','normal',soft,0,28); y+=2}
+          else para(x,9.5,'helvetica','normal',soft,2,28)});
+        y+=6}
+      else y+=6;
       seen.add(p);
     });
   });
@@ -464,7 +481,9 @@ async function rgPdf(me,R,kind){
     y+=10; need(70);
     const top=y; y+=12;
     if(R.msg.trim()) para('“'+R.msg.trim()+'”',11*big,SF,'italic',ink,6,12);
-    if(rgBack(R)) para('We look forward to seeing you '+rgBack(R)+'. Call or text '+RG_PHONE+' to reserve.',9.5,'helvetica','bold',choc,2,12);
+    /* centered in the box, with the phone number kept on one line (Alexandra, Oct 20 2026) */
+    if(rgBack(R)){doc.setFont('helvetica','bold');doc.setFontSize(9.5);doc.setTextColor(...choc);
+      ['We look forward to seeing you '+rgBack(R)+'.','Call or text '+RG_PHONE+' to reserve.'].forEach(t=>doc.splitTextToSize(t,CW-12).forEach(l=>{need(13);doc.text(l,W/2,y+9.5,{align:'center'});y+=9.5*1.32}));y+=2}
     y+=8; doc.setDrawColor(43,42,40); doc.setLineWidth(.4); doc.rect(M-8,top,CW+16,y-top,'S'); doc.setLineWidth(.2);
   }
   if(kind==='skin'&&R.picks.some(p=>/^Biologique Recherche/.test(p.n))){y+=10;para('Remember, Biologique Recherche is very concentrated, so only a small amount is needed. If you have questions, reach out any time!',9.5,'helvetica','italic',soft,2)}
