@@ -678,7 +678,10 @@ function rxBuild(R,me){
     tap:o=>{const L=rxGoalList(R);R.goal=L.includes(o)?L.filter(x=>x!==o):[...L,o]}};
   const nowQ={key:'now',q:sk?'What is her skin going through right now, this season?':'Scalp Condition',
     opts:RX_NOW[R.kind],multi:true,get:()=>R.now,tap:o=>{const i=R.now.indexOf(o);i<0?R.now.push(o):R.now.splice(i,1)}};
-  const order=[goalQ,...(sk?[nowQ,...routine]:[...routine,nowQ])];
+  /* skin, right after what her skin is going through: known allergies, yes or no (Alexandra, Oct 20 2026) */
+  const allergyQ={key:'allergy',q:'Does she have any known allergies to skincare products we should be aware of?',opts:['Yes','No'],multi:false,
+    get:()=>[].concat(R.a.allergy||[]).filter(Boolean),tap:o=>{R.a.allergy=R.a.allergy===o?'':o}};
+  const order=[goalQ,...(sk?[nowQ,allergyQ,...routine]:[...routine,nowQ])];
   const nextOpen=after=>{const i=order.findIndex(x=>x.key===after);const L=[...order.slice(i+1),...order.slice(0,Math.max(i,0))];const n=L.find(x=>!x.get().length);return n?n.key:null};
   if(RX_DD.card!==R||RX_DD.kind!==R.kind){RX_DD={card:R,kind:R.kind,open:(order.find(x=>!x.get().length)||{}).key||null}}
   const dd=x=>{const sel=x.get(), isOpen=RX_DD.open===x.key, unsure=sel.includes(IDK);
@@ -697,7 +700,8 @@ function rxBuild(R,me){
   /* skin: Her Skin Instant comes right after the guest, then her routine (Alexandra, Oct 16 2026) */
   /* every question starts with "I don't know" (what the girls say); tapping it tells her to go ask (Alexandra, Oct 15 2026) */
   const s2=h('section',{class:'card2'},h('span',{class:'lbl'},(sk?'3':'2')+' · Her Routine'),...routine.map(dd));
-  const s3=h('section',{class:'card2'},h('span',{class:'lbl'},sk?'2 · Her Skin Instant':'3 · Right Now'),dd(nowQ));
+  const s3=h('section',{class:'card2'},h('span',{class:'lbl'},sk?'2 · Her Skin Instant':'3 · Right Now'),dd(nowQ),
+    sk?dd(allergyQ):null,sk&&R.a.allergy==='Yes'?h('small',{class:'rxfind'},'Ask what she’s allergic to, and check every product before you suggest it.'):null);
   const done=order.filter(x=>x.get().length).length;
   /* no options until a budget is typed in (Alexandra, Oct 16 2026): "No set budget" is gone */
   const ready=rxGoalList(R).length&&Number(R.budget)>0&&R.now.length;
