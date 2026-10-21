@@ -521,7 +521,13 @@ async function rgPdf(me,R,kind){
   if(notes.length){label('Aftercare');notes.forEach(n=>{need(16);doc.setTextColor(...choc);doc.setFontSize(9.5);doc.text('•',M+2,y+9.5);para(n,9.5,'helvetica','normal',ink,3,14)})}
 
   gaps++; y+=pad;
-  if(rgBack(R)||R.msg.trim()){
+  if(kind==='skin'&&R.picks.some(p=>/^Biologique Recherche/.test(p.n))){y+=10;
+    /* centered (Alexandra, Oct 21 2026) */
+    doc.setFont('helvetica','italic');doc.setFontSize(9.5);doc.setTextColor(...soft);
+    doc.splitTextToSize('Remember, Biologique Recherche is very concentrated, so only a small amount is needed. If you have questions, reach out any time!',CW-20).forEach(l=>{need(13);doc.text(l,W/2,y+9.5,{align:'center'});y+=9.5*1.32});y+=2}
+  /* five stars that open our Google review page (Alexandra, Oct 21 2026) */
+  if(window.pdfReview&&(window.TAFFETA_REVIEWS||{}).salon){y+=14;need(56);y+=window.pdfReview(doc,W,y,SF,ink,soft)}
+  if(rgBack(R)||R.msg.trim()){   /* below the review stars, just above the sign-off (Alexandra, Oct 21 2026) */
     y+=10; need(70);
     const top=y; y+=9; let bw=0;
     if(R.msg.trim()){para('“'+R.msg.trim()+'”',11*big,SF,'italic',ink,6,12);bw=CW}
@@ -531,12 +537,6 @@ async function rgPdf(me,R,kind){
     /* the box hugs the text instead of running edge to edge (Alexandra, Oct 21 2026) */
     y+=7; bw=Math.min(CW+16,bw+36); doc.setDrawColor(43,42,40); doc.setLineWidth(.4); doc.rect(W/2-bw/2,top,bw,y-top,'S'); doc.setLineWidth(.2);
   }
-  if(kind==='skin'&&R.picks.some(p=>/^Biologique Recherche/.test(p.n))){y+=10;
-    /* centered (Alexandra, Oct 21 2026) */
-    doc.setFont('helvetica','italic');doc.setFontSize(9.5);doc.setTextColor(...soft);
-    doc.splitTextToSize('Remember, Biologique Recherche is very concentrated, so only a small amount is needed. If you have questions, reach out any time!',CW-20).forEach(l=>{need(13);doc.text(l,W/2,y+9.5,{align:'center'});y+=9.5*1.32});y+=2}
-  /* five stars that open our Google review page (Alexandra, Oct 21 2026) */
-  if(window.pdfReview&&(window.TAFFETA_REVIEWS||{}).salon){y+=14;need(56);y+=window.pdfReview(doc,W,y,SF,ink,soft)}
   y+=12; need(20);
   /* sign-off with the artist's first name in Antoinetta (a picture, as the font license allows) */
   doc.setFont(SF,'italic');doc.setFontSize(13*big);doc.setTextColor(...choc);
