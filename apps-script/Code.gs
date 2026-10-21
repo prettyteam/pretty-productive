@@ -76,7 +76,7 @@ function doPost(e) {
   lock.waitLock(20000);
   try {
     const d = JSON.parse(e.postData.contents || '{}');
-    if (['clock', 'timeoff', 'cover', 'take', 'profile', 'sign', 'stock', 'model', 'regimen'].indexOf(d.type) >= 0) return teamPost_(d);
+    if (['clock', 'timeoff', 'cover', 'take', 'profile', 'sign', 'stock', 'model', 'regimen', 'rgmine'].indexOf(d.type) >= 0) return teamPost_(d);
     if (['rxpin', 'rxlogin', 'rxsync'].indexOf(d.type) >= 0) return rxPost_(d);
     if (d.type === 'rxdesk') return rxDeskSet_(d);
     if (d.type === 'deskseen') return deskSeenSet_(d);
@@ -523,7 +523,7 @@ function rxPost_(d) {
 function teamPost_(d) {
   let me = member_(d.slug, d.t);
   // the salon iPad signs in with a PIN (the rxlogin key), not her app link: let it save home care too (Alexandra, Oct 20 2026)
-  if (!me && d.type === 'regimen' && d.tk && d.tk === rxTok_(String(d.slug || ''))) {
+  if (!me && (d.type === 'regimen' || d.type === 'rgmine') && d.tk && d.tk === rxTok_(String(d.slug || ''))) {
     const r = tvals_(TT.team).find(x => String(x[1]) === String(d.slug));
     if (r && String(r[4]).toLowerCase() !== 'no') me = { name: String(r[0]), slug: String(r[1]) };
   }
@@ -592,6 +592,13 @@ function teamPost_(d) {
     }
     return json_({ ok: true });
   }
+  if (d.type === 'rgmine') {   // her saved home care sheets, newest first, to search and edit (Alexandra, Oct 20 2026)
+    const rsh = tab_(TABS.regimen), n = rsh.getLastRow(); if (n < 2) return json_({ ok: true, list: [] });
+    const out = [];
+    rsh.getRange(2, 1, n - 1, 8).getValues().forEach((v, i) => { if (String(v[1]) !== me.name) return; let o = null; try { o = JSON.parse(String(v[5])); } catch (e) {}
+      out.push({ row: i + 2, at: v[0] instanceof Date ? v[0].getTime() : 0, guest: String(v[2]), kind: String(v[3]), summary: String(v[4]), status: String(v[6] || 'New'), data: o }); });
+    return json_({ ok: true, list: out.reverse().slice(0, 300) });
+  }
   if (d.type === 'regimen') {   // an artist saved an at-home regimen: it waits on the Front Desk page's Home care list to be texted
     const r = d.data || {}, guest = clean_(d.guest, 80), kind = d.kind === 'skin' ? 'skin' : 'hair';
     const data = JSON.stringify({ guest: guest, services: [].concat(r.services || []).slice(0, 12), type: clean_(r.type, 40),
@@ -603,7 +610,10 @@ function teamPost_(d) {
     // saved again from the same RX card before the desk texted it: replace that one instead of adding a second (Alexandra, Oct 20 2026)
     const rid = JSON.parse(data).rid, rsh = tab_(TABS.regimen), row = [now, me.name, guest, kind === 'skin' ? 'Skincare' : 'Hair care', products, data, 'New', ''];
     let at = -1;
-    if (rid && rsh.getLastRow() > 1) {
+    // edited from her Saved Cards: replace that one unless the desk already texted it (Alexandra, Oct 20 2026)
+    const er = Number(d.replaceRow);
+    if (er >= 2 && er <= rsh.getLastRow()) { const v = rsh.getRange(er, 1, 1, 8).getValues()[0]; if (String(v[1]) === me.name && String(v[6]) !== 'Sent') at = er; }
+    if (at < 0 && rid && rsh.getLastRow() > 1) {
       const vals = rsh.getRange(2, 1, rsh.getLastRow() - 1, 8).getValues();
       for (let i = vals.length - 1; i >= 0; i--) { let o = {}; try { o = JSON.parse(String(vals[i][5])); } catch (e) {} if (o.rid === rid && String(vals[i][6]) !== 'Sent') { at = i + 2; break; } }
     }

@@ -292,9 +292,35 @@ function rgStarToggle(it){
 }
 let RG_VIEW=(()=>{try{return store.get('pp-rgview')||'brand'}catch(e){return 'brand'}})();
 
+/* Saved Cards for home care (Alexandra, Oct 20 2026): her saved sheets from the desk list, searchable, with Edit */
+let RG_TAB='build', RG_MINE=null, RG_MQ='', RG_MBUSY=false, RG_MERR='';
+function rgMineLoad(){ const st=(S.mine&&S.mine.staff)||{}; if(RG_MBUSY) return; if(!window.TAFFETA_ENDPOINT||!(st.t||st.tk)){RG_MERR='Saved cards show here once you’re signed in.';return}
+  RG_MBUSY=true; RG_MERR='';
+  fetch(window.TAFFETA_ENDPOINT,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({type:'rgmine',slug:st.slug,t:st.t,tk:st.tk})})
+    .then(r=>r.json()).then(j=>{if(j.ok)RG_MINE=j.list||[];else RG_MERR='Couldn’t load your saved cards.'}).catch(()=>{RG_MERR='Couldn’t load your saved cards. Check the Wi-Fi.'})
+    .then(()=>{RG_MBUSY=false;if(RG_TAB==='saved')render()}) }
+function rgTabs(){ return h('div',{class:'seg',style:'justify-content:center;margin-bottom:10px'},
+  h('button',{type:'button','aria-pressed':String(RG_TAB==='build'),onclick:()=>{RG_TAB='build';render()}},'Build'),
+  h('button',{type:'button','aria-pressed':String(RG_TAB==='saved'),onclick:()=>{RG_TAB='saved';RG_MINE=null;render()}},'Saved Cards')) }
+function rgSavedView(me){
+  if(RG_MINE===null&&!RG_MBUSY&&!RG_MERR) rgMineLoad();
+  const q=RG_MQ.trim().toLowerCase(), L=(RG_MINE||[]).filter(x=>!q||String(x.guest).toLowerCase().includes(q)||String(x.summary).toLowerCase().includes(q));
+  const s=h('input',{type:'search',id:'rgfind',value:RG_MQ,placeholder:'Search by guest’s name or product',autocomplete:'off'});
+  s.addEventListener('input',()=>{RG_MQ=s.value;const pos=s.selectionStart;render();const n=document.getElementById('rgfind');if(n){n.focus();try{n.setSelectionRange(pos,pos)}catch(e){}}});
+  const toast=h('p',{class:'toast'});
+  const day=t=>t?new Date(t).toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'}):'';
+  const row=x=>{const d=x.data||{}, kind=/skin/i.test(x.kind)?'skin':'hair';
+    return h('div',{class:'rxl'},h('div',{class:'rxn'},h('b',{},x.guest),h('small',{class:'soft'},[x.kind,day(x.at),x.status==='Sent'?'Texted to her':'Waiting at the desk'].filter(Boolean).join(' · ')),x.summary?h('small',{class:'soft'},x.summary):null),
+      h('button',{type:'button',class:'tab',onclick:()=>{RG=Object.assign(rgBlank(),d,{guest:d.guest||x.guest,editRow:x.row,editSent:x.status==='Sent'});RG_TOAST='';rgSave();RG_TAB='build';render();window.scrollTo(0,0)}},'Edit'),
+      h('button',{type:'button',class:'tab',onclick:()=>rgPreview(me,toast,Object.assign(rgBlank(),d,{guest:d.guest||x.guest}),kind)},'Preview'))};
+  return [h('div',{class:'hub'},rgTabs(),h('section',{class:'card2'},h('span',{class:'lbl'},'Saved Cards'),h('label',{class:'fld'},s),toast,
+    RG_MBUSY&&RG_MINE===null?h('p',{class:'soft'},'Loading…'):RG_MERR?h('p',{class:'soft'},RG_MERR):!L.length?h('p',{class:'soft'},q?'No saved card for “'+RG_MQ+'”.':'Home care cards you save show up here.'):null,
+    ...L.slice(0,60).map(row)))];
+}
 function regimenView(){
   const kind=rgKind(), R=rgLoad(), whens=RG_WHEN[kind];
   const me=(S.mine&&(S.mine.name||(S.mine.staff&&S.mine.staff.name)))||'';
+  if(RG_TAB==='saved') return rgSavedView(me);
   /* each word capitalized, "or" lowercase (Alexandra, Oct 15 2026); saved values keep their spelling */
   const rgTitle=o=>String(o).replace(/(^|[\s(\-\/])([a-z])/g,(m,p,c)=>p+c.toUpperCase()).replace(/ Or /g,' or ');
   const chips=(opts,isOn,onTap)=>h('div',{class:'seg'},opts.map(o=>h('button',{type:'button','aria-pressed':String(!!isOn(o)),onclick:()=>{onTap(o);rgSave();render()}},rgTitle(o))));
@@ -387,7 +413,8 @@ function regimenView(){
     send,h('div',{class:'seg',style:'justify-content:center'},prev,clear),toast,
     h('small',{class:'soft'},'Save sends it to the front desk, and they text it to her. Your screen clears for your next guest.'));
 
-  return [h('div',{class:'hub'},head,guest,products,plan,care,out)];
+  const editing=R.editRow?h('p',{class:'soft',style:'text-align:center;margin:0 0 6px'},R.editSent?'Editing '+(R.guest||'her')+'’s saved card. The desk already texted the first one, so this saves as a new one.':'Editing '+(R.guest||'her')+'’s saved card. Save & send to desk replaces the one on the desk.'):null;
+  return [h('div',{class:'hub'},rgTabs(),editing,head,guest,products,plan,care,out)];
 }
 
 /* what goes on the PDF: sections in routine order */
@@ -554,7 +581,7 @@ async function rgSave2(me,toast,btn){
   btn.disabled=true; toast.textContent='Saving…';
   try{
     const r=await fetch(window.TAFFETA_ENDPOINT,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
-      body:JSON.stringify({type:'regimen',slug:st.slug,t:st.t,tk:st.tk,artist:me,guest:RG.guest.trim(),kind,data:rgBake(RG)})});
+      body:JSON.stringify({type:'regimen',slug:st.slug,t:st.t,tk:st.tk,artist:me,guest:RG.guest.trim(),kind,data:rgBake(RG),replaceRow:RG.editRow||undefined})});
     const j=await r.json();
     if(!j.ok) throw new Error(j.error||'no');
     const who=rgFirst(RG.guest);
