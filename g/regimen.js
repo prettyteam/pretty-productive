@@ -521,16 +521,22 @@ async function rgPdf(me,R,kind){
   if(notes.length){label('Aftercare');notes.forEach(n=>{need(16);doc.setTextColor(...choc);doc.setFontSize(9.5);doc.text('•',M+2,y+9.5);para(n,9.5,'helvetica','normal',ink,3,14)})}
 
   gaps++; y+=pad;
-  if(rgBack(R)||R.msg.trim()){
+  if(kind==='skin'&&R.picks.some(p=>/^Biologique Recherche/.test(p.n))){y+=10;
+    /* centered (Alexandra, Oct 21 2026) */
+    doc.setFont('helvetica','italic');doc.setFontSize(9.5);doc.setTextColor(...soft);
+    doc.splitTextToSize('Remember, Biologique Recherche is very concentrated, so only a small amount is needed. If you have questions, reach out any time!',CW-20).forEach(l=>{need(13);doc.text(l,W/2,y+9.5,{align:'center'});y+=9.5*1.32});y+=2}
+  /* five stars that open our Google review page (Alexandra, Oct 21 2026) */
+  if(window.pdfReview&&(window.TAFFETA_REVIEWS||{}).salon){y+=14;need(56);y+=window.pdfReview(doc,W,y,SF,ink,soft)}
+  if(rgBack(R)||R.msg.trim()){   /* below the review stars, just above the sign-off (Alexandra, Oct 21 2026) */
     y+=10; need(70);
-    const top=y; y+=12;
-    if(R.msg.trim()) para('“'+R.msg.trim()+'”',11*big,SF,'italic',ink,6,12);
+    const top=y; y+=9; let bw=0;
+    if(R.msg.trim()){para('“'+R.msg.trim()+'”',11*big,SF,'italic',ink,6,12);bw=CW}
     /* centered in the box, with the phone number kept on one line (Alexandra, Oct 20 2026) */
     if(rgBack(R)){doc.setFont('helvetica','bold');doc.setFontSize(9.5);doc.setTextColor(...choc);
-      ['We look forward to seeing you '+rgBack(R)+'.','Call or text '+RG_PHONE+' to reserve.'].forEach(t=>doc.splitTextToSize(t,CW-12).forEach(l=>{need(13);doc.text(l,W/2,y+9.5,{align:'center'});y+=9.5*1.32}));y+=2}
-    y+=8; doc.setDrawColor(43,42,40); doc.setLineWidth(.4); doc.rect(M-8,top,CW+16,y-top,'S'); doc.setLineWidth(.2);
+      ['We look forward to seeing you '+rgBack(R)+'.','Call or text '+RG_PHONE+' to reserve.'].forEach(t=>doc.splitTextToSize(t,CW-12).forEach(l=>{need(13);bw=Math.max(bw,doc.getTextWidth(l));doc.text(l,W/2,y+9.5,{align:'center'});y+=9.5*1.32}));y+=1}
+    /* the box hugs the text instead of running edge to edge (Alexandra, Oct 21 2026) */
+    y+=7; bw=Math.min(CW+16,bw+36); doc.setDrawColor(43,42,40); doc.setLineWidth(.4); doc.rect(W/2-bw/2,top,bw,y-top,'S'); doc.setLineWidth(.2);
   }
-  if(kind==='skin'&&R.picks.some(p=>/^Biologique Recherche/.test(p.n))){y+=10;para('Remember, Biologique Recherche is very concentrated, so only a small amount is needed. If you have questions, reach out any time!',9.5,'helvetica','italic',soft,2)}
   y+=12; need(20);
   /* sign-off with the artist's first name in Antoinetta (a picture, as the font license allows) */
   doc.setFont(SF,'italic');doc.setFontSize(13*big);doc.setTextColor(...choc);
@@ -546,8 +552,9 @@ async function rgPdf(me,R,kind){
   /* the extra room goes before each section and the sign-off; if that tips it onto a second page, ease off until it fits */
   if(doc.getNumberOfPages()===1&&gaps){const room=Math.min(70,Math.max(0,(H-60-y)/gaps));
     for(const f of [1,.75,.5,0]){pad=room*f;doc=mk();gaps=0;draw();if(doc.getNumberOfPages()===1)break}}
-  /* still more than one page: one longer page instead, so nothing (like the date) spills onto a second (Alexandra, Oct 20 2026) */
-  if(doc.getNumberOfPages()>1){pad=0;H=4000;doc=mk();gaps=0;draw();H=Math.max(612,Math.ceil(y+110));doc=mk();gaps=0;draw()}
+  /* still more than one page: one longer page instead, so nothing (like the date) spills onto a second (Alexandra, Oct 20 2026),
+     cut just below the date so there is no empty space at the bottom (Oct 21 2026) */
+  if(doc.getNumberOfPages()>1){pad=0;H=4000;doc=mk();gaps=0;draw();H=Math.max(612,Math.ceil(y+72));doc=mk();gaps=0;draw()}
   return doc.output('blob');
 }
 const rgFile=(R,kind)=>'Taffeta '+(kind==='skin'?'Skincare':'Hair Care')+' Regimen'+(R.guest.trim()?' - '+rgFirst(R.guest):'')+'.pdf';
