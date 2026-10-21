@@ -87,6 +87,9 @@ button:focus-visible,select:focus-visible{outline:2px solid var(--brown);outline
 .chips{display:flex;flex-wrap:wrap;gap:6px}
 .chip{font-size:13px;border:1px solid var(--line);border-radius:999px;padding:2px 10px;background:var(--ivory)}
 .chip.add{border-color:var(--gold);color:var(--ink)}
+.ucbox{border:1.5px solid var(--choc,var(--brown));border-radius:14px;padding:12px 14px;margin:4px 0 12px;background:var(--ivory)}
+.ucbox h3{margin:0 0 2px;font-size:16px}
+.ucbox small{display:block;font-size:12.5px;margin-bottom:4px}
 .try{font-size:15px}
 .try em{font-family:var(--display);color:var(--ink)}
 
@@ -1822,7 +1825,13 @@ function colorRoomView(){
   const fullHead=svc('Foil (Full)');
   const costs=[['Full head foil',fullHead],['Single process',svc('Single Process')],['Glaze',svc('Glaze')]].filter(x=>x[1]!=null);
   const est=onScale?t.over/(onScale/100):null, r5=v=>Math.round(v/5)*5;
-  const look=R.look||R.artists.filter(a=>a[7]).map(a=>[a[0],a[7]]);
+  /* mixed but not charged, or charged less (Alexandra, Oct 21 2026): one line per artist from the audit flags; their matching pills fold in here */
+  const UCK={'Color mixed, no color service charged':'no color charged','Color mixed, no ticket found':'no ticket found','Charged differs from what was mixed':'charged a smaller service'};
+  const ucBy={};Object.entries(R.flags||{}).forEach(([k,rows])=>{if(UCK[k]) rows.forEach(r=>(ucBy[r[1]]||=[]).push([k,r]))});
+  const uc=Object.entries(ucBy).sort((x,y)=>y[1].length-x[1].length);
+  const ucSum=rows=>Object.keys(UCK).map(k=>[k,rows.filter(r=>r[0]===k).length]).filter(x=>x[1]).map(([k,n])=>n+' '+UCK[k]).join(' · ');
+  const first=n=>String(n).trim().split(/\s+/)[0].toLowerCase(), ucNames=new Set(uc.map(x=>first(x[0])));
+  const look=(R.look||R.artists.filter(a=>a[7]).map(a=>[a[0],a[7]])).filter(([a,x])=>!(ucNames.has(first(a))&&/no colou?r charged|no ticket|under-?charg|charged (for )?(less|something else)|not charg/i.test(x)));
   const wk=String(R.week).replace(/, \d{4}$/,'').replace(/^(\w+) (\d+) – \1 /,'$1 $2 – ');
   const L=R.links||{};
   return [
@@ -1832,7 +1841,12 @@ function colorRoomView(){
         stat('$'+Math.round(t.over),'over-mixed this week'),stat(chg?t.notWeighed+' of '+chg:String(t.notWeighed),'color services not weighed')),
       onScale!=null?h('div',{class:'bar',style:'height:8px;margin-top:14px'},h('i',{style:'width:'+onScale+'%'})):null,
       onScale!=null?h('p',{class:'soft',style:'font-size:13px;margin:6px 0 0'},onScale+'% of color services went on the scale · goal 100%'):null),
-    h('section',{class:'section'},h('h2',{},'Worth a look'),h('div',{class:'sec2'},
+    h('section',{class:'section'},h('h2',{},'Worth a look'),
+      uc.length?h('div',{class:'ucbox'},h('h3',{},'Mixing but not charging, or charging less'),
+        h('small',{class:'soft'},'Color went on the scale, but the ticket has no color, no ticket was found, or a smaller service was rung up.'),
+        uc.map(([a,rows])=>h('details',{class:'tryd'},h('summary',{},h('span',{class:'tlabel'},h('b',{},a),' · '+ucSum(rows)),h('span',{class:'tplus','aria-hidden':'true'},'+')),
+          h('div',{class:'sec2'},rows.map(([k,[d,,c,m,ch,g]])=>h('div',{class:'lrow'},h('span',{},h('b',{},c),h('small',{},d+(m&&m!=='—'?' · mixed '+m:'')+' · '+(ch&&ch!=='—'?'charged '+ch:UCK[k]))),g?h('span',{class:'soft',style:'font-size:13px;white-space:nowrap'},g+' g'):null)))))):null,
+      h('div',{class:'sec2'},
       look.map(([a,x])=>h('div',{class:'lrow'},h('b',{},a),h('span',{class:'chip',style:'white-space:nowrap'},x)))),
       h('p',{class:'soft',style:'font-size:13px;margin:8px 0 0'},'Not accusations. Name spellings or guests moved between artists can explain some.')),
     h('section',{class:'section'},h('h2',{},'What it costs us'),h('div',{class:'sec2'},
