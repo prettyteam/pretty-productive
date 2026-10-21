@@ -35,6 +35,11 @@ async function seal(obj, secret, pin) {
   if (JSON.stringify(back) !== JSON.stringify(obj)) throw new Error('round-trip mismatch');
   return { v: 1, iter: ITER, salt: b64(salt), iv: b64(iv), ct: b64(ct) };
 }
+async function unseal(o, secret, pin) {
+  const bk = await crypto.subtle.importKey('raw', enc.encode(secret + ':' + pin), 'PBKDF2', false, ['deriveKey']);
+  const key = await crypto.subtle.deriveKey({ name: 'PBKDF2', salt: Buffer.from(o.salt, 'base64'), iterations: o.iter, hash: 'SHA-256' }, bk, { name: 'AES-GCM', length: 256 }, false, ['decrypt']);
+  return JSON.parse(new TextDecoder().decode(await crypto.subtle.decrypt({ name: 'AES-GCM', iv: Buffer.from(o.iv, 'base64') }, key, Buffer.from(o.ct, 'base64'))));
+}
 const newKey = (pinLen) => ({ id: b64url(rand(9)), secret: b64url(rand(18)), pin: pinOf(pinLen) });
 const linkFor = (kind, k) => `${base}#${kind}.${k.id}.${k.secret}`;
 
@@ -268,6 +273,14 @@ for (const p of pages) {
     const r = data.week.rows.find((x) => x && x.slug === p.slug), t = data.week.team || {};
     mine.week = { weekLabel: data.week.weekLabel || '', me: r ? { service: r.service ?? null, retail: r.retail ?? null, addons: r.addons ?? null } : null, team: { retail: t.retail || null, addons: t.addons || null } };
   }
+  // Yesterday (Oct 21 2026): when the date rolls over, the day on her last page becomes mine.prev for the ‹ Yesterday arrow.
+  // Later updates the same day carry it forward. Only her own lineup, goals and wrap, nothing about the team.
+  try {
+    const old = await unseal(JSON.parse(fs.readFileSync(path.join(outDir, k.id + '.json'), 'utf8')), k.secret, k.pin);
+    const od = old.daily && old.daily.date, nd = data.daily && data.daily.date, om = old.mine || {};
+    if (od && nd && od !== nd) mine.prev = { date: od, dateLabel: old.daily.dateLabel || null, onBooks: om.onBooks !== false && !!om.goals, clients: om.clients || [], goals: om.goals || null, wrap: om.wrap || null };
+    else if (od === nd && om.prev) mine.prev = om.prev;
+  } catch (e) { /* first publish for this person, or the file was resealed with a new PIN */ }
   fs.writeFileSync(path.join(outDir, k.id + '.json'), JSON.stringify(await seal({ daily: staffDaily, mine }, k.secret, k.pin)));
   n++;
 }

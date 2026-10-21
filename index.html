@@ -526,11 +526,43 @@ function wrapBlock(p){
         h('div',{},h('span',{class:'label'},'Tomorrow’s focus: '+w.focus),h('p',{},w.fix)))));
 }
 
+/* Yesterday (Kelly asked, Oct 21 2026): the morning update saves the day before into mine.prev (tools/publish.mjs),
+   and a ‹ Yesterday arrow on Today opens it. Read only: no check-ins or guest checks on a day that's done. */
+function dayArrows(p){
+  if(EDITION!=='stylist'||!p.prev) return null;
+  const lbl=p.prev.dateLabel||niceDay(p.prev.date);
+  return h('div',{style:'display:flex;justify-content:space-between;align-items:center;margin:0 0 6px'},
+    S.dayBack?h('span',{class:'soft',style:'font-size:14px'},lbl):h('button',{type:'button',class:'obtn sm',onclick:()=>{S.dayBack=true;render();window.scrollTo(0,0)}},'‹ Yesterday'),
+    S.dayBack?h('button',{type:'button',class:'obtn sm',onclick:()=>{S.dayBack=false;render();window.scrollTo(0,0)}},'Today ›'):h('span'));
+}
+function yesterdayPage(p){
+  const y=p.prev, lbl=y.dateLabel||niceDay(y.date), parts=[dayArrows(p)];
+  if(!y.onBooks||!y.goals){parts.push(h('div',{class:'empty'},h('h3',{},'You were off '+lbl),h('p',{},'Nothing on the books that day.')));return parts}
+  const g=y.goals, cl=y.clients||[];
+  parts.push(h('section',{class:'section'},
+    h('h2',{class:'lineup',style:'text-align:center'},'Yesterday’s lineup'),
+    cl.length?h('div',{class:'chair'},cl.map(c=>h('div',{class:'client'},
+      h('div',{class:'who'},h('strong',{},(c.time?c.time+' · ':'')+c.client,c.isNew?h('span',{class:'chip add',style:'margin-left:8px;font-weight:500'},'New guest'):null),
+        h('span',{class:'muted num',style:'font-size:14px'},money((c.services||[]).reduce((a,s)=>a+s.price,0)))),
+      (c.services||[]).length?h('div',{class:'chips'},c.services.map(s=>h('span',{class:'chip'+(s.addon?' add':'')},s.name+(s.addon?' · add-on':'')))):null,
+      (c.retail||[]).length?h('p',{class:'muted',style:'font-size:14px'},'Took home: '+c.retail.map(r=>r.name).join(', ')):null))):
+      h('p',{class:'soft'},'No guests on the books.')));
+  parts.push(h('section',{class:'section'},h('h2',{},'How your goals came out'),
+    h('div',{class:'goals'},
+      g.service?goalRow('Service sales',g.service.actual,g.service.goal,money,'Not hit'):null,
+      g.retail?goalRow('Retail',g.retail.actual,g.retail.goal,money,'Not hit'):null,
+      g.addons?goalRow('Add-on services',g.addons.actual,g.addons.goal,n=>String(n),'Not hit'):null,
+      g.rebook?goalRow('Rebooked before leaving',g.rebook.actual,g.rebook.goal,n=>String(n),'Not hit'):null)));
+  const w=wrapBlock(y); if(w){const t=w.querySelector('h2');if(t)t.textContent='How '+lbl+' went';parts.push(w)}
+  return parts;
+}
 function stylistPage(p){
+  if(EDITION==='stylist'&&S.dayBack&&p.prev) return yesterdayPage(p);
   if(!p.goals&&p.onBooks!==false) return [h('div',{class:'empty'},h('h3',{},'No goals today'),h('p',{},'Your time clock and schedule are on the Home tab.'))];
   const d=S.daily||{}, g=p.goals;
   const parts=[];
   if(EDITION==='team'&&S.isAdmin) parts.push(h('button',{class:'back',onclick:()=>{S.open=null;render()}},'← Back to the team board'));
+  parts.push(dayArrows(p));
   parts.push(h('section',{class:'affirm'},h('blockquote',{},d.affirmation||'')));
   if(!p.onBooks){
     parts.push(h('div',{class:'empty'},h('h3',{},'Not on the books today'),h('p',{},'Enjoy the day off. Your goals will be here next time you are in.')));
@@ -770,7 +802,7 @@ function render(){
   else if(!S.open) parts=teamBoard();
   else { const p=S.pages.find(x=>x.slug===S.open); parts=p?stylistPage(p):teamBoard(); }
   const d=S.daily;
-  if(d&&d.checkins&&(EDITION==='team'?S.rtab==='today':S.tab==='today')) parts.push(h('footer',{class:'schedule'},h('span',{class:'muted'},'Numbers update at'),
+  if(d&&d.checkins&&!S.dayBack&&(EDITION==='team'?S.rtab==='today':S.tab==='today')) parts.push(h('footer',{class:'schedule'},h('span',{class:'muted'},'Numbers update at'),
     d.checkins.map(c=>h('span',{class:'pill'+(c.done?' done':'')},c.time)),
     d.lastUpdated?h('span',{class:'muted'},'· last updated '+d.lastUpdated):null));
   if(EDITION==='team'&&S.isAdmin&&!S.open&&S.rtab==='today') parts.unshift(runCard());
@@ -1633,7 +1665,7 @@ function homeKey(){const t=staffTabs().map(x=>x[0]);return t.includes('home')?'h
 function navGo(k,fromHistory){
   if(k==='mkt'){NAV_OPEN=false;HOME_OPEN='';openMkt();render();return}
   if(!fromHistory&&k!==S.tab){const d=((history.state&&history.state.d)||0)+1;try{history.pushState({pp:k,d},'',location.href)}catch(e){}}
-  NAV_OPEN=false;S.tab=k;store.set('pp-tab:'+ID,k);render();window.scrollTo(0,0);
+  NAV_OPEN=false;S.tab=k;S.dayBack=false;store.set('pp-tab:'+ID,k);render();window.scrollTo(0,0);
   if(k==='home'||k==='off'||k==='inv'||k==='skin'||k==='growth'||k==='cards'||k==='me'||k==='prices'||k==='rx'||k==='tip'||k==='promo')hubGet();
 }
 function navGroups(tabs){
