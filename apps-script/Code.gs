@@ -68,7 +68,7 @@ function doGet(e) {
   if (p.key !== DESK_KEY) return json_({ ok: false, error: 'key' });
   if (p.rxall) return json_({ ok: true, rxall: rxDeskList_(0) });          // every saved RX card, for the desk's filing
   if (p.rxcard) return json_(rxDeskCard_(p.rxcard));
-  return json_({ ok: true, now: Date.now(), concierge: rows_(TABS.concierge, 2), consult: rows_(TABS.consult, 60), profiles: rows_(TABS.profile, 60), todo: todoRows_(), regimen: rows_(TABS.regimen, 14), rx: rxDeskList_(21) });
+  return json_({ ok: true, now: Date.now(), concierge: rows_(TABS.concierge, 2), consult: rows_(TABS.consult, 60), profiles: rows_(TABS.profile, 60), todo: todoRows_(), regimen: rows_(TABS.regimen, 14), rx: rxDeskList_(21), seen: deskSeen_() });
 }
 
 function doPost(e) {
@@ -79,6 +79,7 @@ function doPost(e) {
     if (['clock', 'timeoff', 'cover', 'take', 'profile', 'sign', 'stock', 'model', 'regimen'].indexOf(d.type) >= 0) return teamPost_(d);
     if (['rxpin', 'rxlogin', 'rxsync'].indexOf(d.type) >= 0) return rxPost_(d);
     if (d.type === 'rxdesk') return rxDeskSet_(d);
+    if (d.type === 'deskseen') return deskSeenSet_(d);
     if (d.type === 'rxopen') return rxOpened_(d);
     if (d.website) return json_({ ok: true });                       // spam trap
     const now = new Date();
@@ -414,6 +415,19 @@ const rxPinHash_ = (slug, pin) => sign_('pin:' + slug + ':' + pin);
 const rxTok_ = slug => sign_('rx:' + slug + ':' + day_(new Date()));   // the iPad's key for her, good until midnight
 /* ---- RX cards on the Front Desk (Alexandra, Oct 17 2026): the artist taps Save & Send To Desk, the guest scans the
    QR at the station, and if she doesn't open it the desk texts her the link. Every saved card is filed for the desk. */
+/* "Opened" on the Front Desk cards, shared by every desk device (Alexandra, Oct 20 2026): card key -> first time tapped */
+function deskSeen_() { try { return JSON.parse(PropertiesService.getScriptProperties().getProperty('DESK_SEEN') || '{}'); } catch (e) { return {}; } }
+function deskSeenSet_(d) {
+  if (d.key !== DESK_KEY) return json_({ ok: false, error: 'key' });
+  const k = String(d.k || '').slice(0, 80); if (!/^desk-seen:[\w]+:\d+:\d+$/.test(k)) return json_({ ok: false });
+  const lock = LockService.getScriptLock(); lock.waitLock(10000);
+  try {
+    const m = deskSeen_(); if (!m[k]) m[k] = Date.now();
+    const keys = Object.keys(m).sort((a, b) => m[b] - m[a]).slice(0, 600), out = {}; keys.forEach(x => out[x] = m[x]);
+    PropertiesService.getScriptProperties().setProperty('DESK_SEEN', JSON.stringify(out));
+    return json_({ ok: true });
+  } finally { lock.releaseLock(); }
+}
 function rxDeskHead_(sh) {
   if (sh.getRange(1, 7).getValue() !== 'Desk') sh.getRange(1, 7, 1, 3).setValues([['Desk', 'Desk at', 'Opened at']]).setFontWeight('bold').setBackground('#121212').setFontColor('#f8f6f0');
 }

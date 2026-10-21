@@ -267,10 +267,10 @@ function ago(t){const m=Math.round((Date.now()-t)/60000);if(m<1)return'just now'
    time someone at the desk taps the card on this device. */
 const fullAt=t=>{const d=new Date(Number(t)||t);return isNaN(d)?'':d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'})+' · '+d.toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})};
 const tmOf=t=>new Date(Number(t)).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'});
-const seenKey=(t,r)=>'desk-seen:'+t+':'+r.row+':'+r.at, seenAt=(t,r)=>Number(store.get(seenKey(t,r)))||0;
+const seenKey=(t,r)=>'desk-seen:'+t+':'+r.row+':'+r.at, seenAt=(t,r)=>{const k=seenKey(t,r);return Number((typeof data!=='undefined'&&data&&data.seen||{})[k])||Number(store.get(k))||0};   /* shared by every desk device */
 function rcv(t,r,tag){const o=seenAt(t,r);
   return `<div class="rcv"><span>Received ${esc(fullAt(r.at))}</span>${tag!==undefined?tag:`<span class="pill${o?'':' un'}">${o?'Opened '+esc(tmOf(o)):'Unopened'}</span>`}</div>`}
-document.addEventListener('click',e=>{const c=e.target.closest('[data-seen]');if(!c)return;const k=c.dataset.seen;if(store.get(k))return;store.set(k,String(Date.now()));setTimeout(()=>{if(typeof render==='function')render()},400)});
+document.addEventListener('click',e=>{const c=e.target.closest('[data-seen]');if(!c)return;const k=c.dataset.seen;if(store.get(k)||(typeof data!=='undefined'&&data&&data.seen&&data.seen[k]))return;store.set(k,String(Date.now()));if(!DEMO&&window.TAFFETA_ENDPOINT&&KEY)fetch(window.TAFFETA_ENDPOINT,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({type:'deskseen',key:KEY,k})}).catch(()=>{});setTimeout(()=>{if(typeof render==='function')render()},400)});
 const isToday=t=>new Date(t).toDateString()===new Date().toDateString();
 const st=r=>pending[r.row+':'+r.at]||r.status||'New';
 
@@ -524,7 +524,7 @@ async function load(){
     const r=await fetch(window.TAFFETA_ENDPOINT+'?key='+encodeURIComponent(KEY)+'&t='+Date.now(),{cache:'no-store'});
     const j=await r.json();
     if(!j.ok){if(j.error==='key')lockView();return}
-    data={concierge:j.concierge||[],consult:j.consult||[],profiles:j.profiles||[],todo:j.todo||[],regimen:j.regimen||[],rx:j.rx||[]};showTodo(Array.isArray(j.todo));lastOk=Date.now();
+    data={concierge:j.concierge||[],consult:j.consult||[],profiles:j.profiles||[],todo:j.todo||[],regimen:j.regimen||[],rx:j.rx||[],seen:j.seen||{}};showTodo(Array.isArray(j.todo));lastOk=Date.now();
     for(const k in pending){const [row,at]=k.split(':');const all=[...data.concierge,...data.consult,...data.profiles,...(data.todo||[]),...(data.regimen||[])];const m=all.find(x=>String(x.row)===row&&String(x.at)===at);if(m&&m.status===pending[k])delete pending[k]}
     render();
   }catch(e){}
