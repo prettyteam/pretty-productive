@@ -172,14 +172,24 @@ function who_(d) {
 function load_(who) {
   const weddings = weddings_();
   if (who.role === 'office') {
-    const ci = calInfo_();
-    return { role: 'office', weddings: weddings.map(w => Object.assign(w.d, ci[w.d.id] ? { calTime: ci[w.d.id].time, calInfo: ci[w.d.id] } : {})), team: members_().map(m => Object.assign({}, m)), alerts: pushOnIds_() };
+    const ci = calInfo_(), jobs = {};
+    /* her Yes / No on the job offer, per wedding and artist id, so Team on site can show it (Dominique on Whitney's wedding, Oct 21 2026) */
+    jobRows_().forEach(j => { if (j.status === 'Yes' || j.status === 'No') (jobs[j.weddingId] = jobs[j.weddingId] || {})[j.artistId] = j.status; });
+    return { role: 'office', weddings: weddings.map(w => Object.assign(w.d, ci[w.d.id] ? { calTime: ci[w.d.id].time, calInfo: ci[w.d.id] } : {}, jobs[w.d.id] ? { jobAnswers: jobs[w.d.id] } : {})), team: members_().map(m => Object.assign({}, m)), alerts: pushOnIds_() };
   }
   const m = who.member, email = String(m.email || '').toLowerCase();
   const mine = weddings.map(w => w.d).filter(w => (w.artists || []).some(a =>
     a.uid === m.id || (email && String(a.email || '').toLowerCase() === email)));
   const ci = calInfo_();
-  mine.forEach(w => { delete w.cal; if (ci[w.id]) { w.calTime = ci[w.id].time; w.calInfo = calInfoForArtist_(ci[w.id], m.preferredName || m.legalName); } });
+  mine.forEach(w => {
+    const sent = ci[w.id] ? myInviteAnswer_(w, m, email) : '';
+    delete w.cal;
+    if (ci[w.id]) {
+      w.calTime = ci[w.id].time; w.calInfo = calInfoForArtist_(ci[w.id], m.preferredName || m.legalName);
+      /* the invite the app sent her counts too: a Yes there clears "Please answer" (Dominique on Whitney's wedding, Oct 21 2026) */
+      if (sent && sent !== 'waiting' && w.calInfo.mine !== 'yes' && w.calInfo.mine !== 'no') w.calInfo.mine = sent;
+    }
+  });
   const me = Object.assign({}, m); delete me.secret;
   const payouts = rowsOf_(TABS.payouts.name).filter(r => r[1] === m.id)
     .map(r => ({ sentAt: iso_(r[0]), bride: r[2], date: r[3], type: r[4], total: r[5] }));
@@ -208,7 +218,7 @@ function members_() {
 /* ---------- weddings ---------- */
 function saveWedding_(w) {
   if (!w || typeof w !== 'object') return { ok: false, error: 'bad_request' };
-  delete w.calTime; delete w.calInfo;   // shown from the calendar on each load, never saved
+  delete w.calTime; delete w.calInfo; delete w.jobAnswers;   // shown from the calendar and job offers on each load, never saved
   const sh = sheet_(TABS.weddings.name);
   const list = weddings_();
   const found = w.id && list.find(x => x.d.id === w.id);
@@ -319,6 +329,20 @@ function sendInvites_(weddingId, events) {
   w.d.cal = cal;
   writeWedding_(w);
   return { ok: true, sent: sent, cal: cal };
+}
+
+/** Her live answer on the wedding invite the app sent her ("Taffeta Wedding · Bride · Hair"), as yes/no/maybe/waiting, or ''. */
+function myInviteAnswer_(d, m, email) {
+  const cal = d.cal || {};
+  const a = (d.artists || []).find(x => cal['w:' + x.id] && (x.uid === m.id || (email && String(x.email || '').toLowerCase() === email)));
+  const c = a && cal['w:' + a.id];
+  if (!c) return '';
+  const map = { YES: 'yes', NO: 'no', MAYBE: 'maybe', INVITED: 'waiting', OWNER: 'yes' };
+  try {
+    const ev = cal_().getEventById(c.eventId), g = ev && ev.getGuestByEmail(c.email);
+    if (g) return map[String(g.getGuestStatus())] || '';
+  } catch (_) {}
+  return { accepted: 'yes', declined: 'no', tentative: 'maybe', needsAction: 'waiting' }[c.status] || '';
 }
 
 function checkInvites_(weddingId) {

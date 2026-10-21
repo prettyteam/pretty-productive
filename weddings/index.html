@@ -952,8 +952,15 @@ function fillForm(){
 /* an artist's answer: the invite the app sent, else her answer on the wedding's own Google Calendar event
    (artists added straight from the calendar, like Kat on Katie Leyden, Oct 15 2026) */
 function rsvpOf(a){
+  const w=docId&&allWeddings.find(x=>x.id===docId);
+  /* a Yes on her job offer counts as confirmed unless she said No or Maybe on a calendar invite (Dominique on Whitney's wedding, Oct 21 2026) */
+  const job=a.uid&&w&&w.d.jobAnswers&&w.d.jobAnswers[a.uid];
+  const st=calRsvp(a,w);
+  return job==="Yes"&&(!st||st==="needsAction")?"accepted":st;
+}
+function calRsvp(a,w){
   const sent=S.cal&&S.cal["w:"+a.id]&&S.cal["w:"+a.id].status; if(sent) return sent;
-  const w=docId&&allWeddings.find(x=>x.id===docId), team=(w&&w.d.calInfo&&w.d.calInfo.team)||[];
+  const team=(w&&w.d.calInfo&&w.d.calInfo.team)||[];
   const first=n=>String(n||"").trim().toLowerCase().split(/\s+/)[0];
   const t=team.find(t=>t.name&&a.name&&(t.name.toLowerCase()===a.name.toLowerCase()||first(t.name)===first(a.name)));
   return t?({yes:"accepted",no:"declined",maybe:"tentative",waiting:"needsAction",invited:"needsAction"}[String(t.status||"").toLowerCase()]||""):"";
