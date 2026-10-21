@@ -34,6 +34,9 @@ main{max-width:640px;gap:20px;padding-bottom:110px}
 .row{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
 .who{font-family:var(--display);font-size:22px;overflow-wrap:anywhere}
 .when{font-size:13px;color:var(--soft);white-space:nowrap}
+.rcv{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;font-size:12.5px;color:var(--soft);margin-top:-4px}
+.pill{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;border:1px solid var(--ink,#121212);border-radius:999px;padding:3px 10px;color:var(--ink,#121212);white-space:nowrap}
+.pill.un{background:var(--ink,#121212);color:#fff;font-weight:600}
 .lbl{font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--soft)}
 .chips{display:flex;flex-wrap:wrap;gap:6px}
 .chip{border:1px solid var(--brown);padding:4px 10px;font-size:14px}
@@ -260,6 +263,14 @@ const setTicks=(k,a)=>store.set('desk-chk:'+k+':'+today(),JSON.stringify(a));
 function ago(t){const m=Math.round((Date.now()-t)/60000);if(m<1)return'just now';if(m<60)return m+' min ago';
   const d=new Date(t),today=new Date();const tm=d.toLocaleTimeString([],{hour:'numeric',minute:'2-digit'});
   return d.toDateString()===today.toDateString()?tm:d.toLocaleDateString([],{weekday:'short',month:'short',day:'numeric'})+', '+tm}
+/* received date + time and a clear Unopened / Opened tag on every card (Alexandra, Oct 20 2026). "Opened" is the first
+   time someone at the desk taps the card on this device. */
+const fullAt=t=>{const d=new Date(Number(t)||t);return isNaN(d)?'':d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'})+' · '+d.toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})};
+const tmOf=t=>new Date(Number(t)).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'});
+const seenKey=(t,r)=>'desk-seen:'+t+':'+r.row+':'+r.at, seenAt=(t,r)=>Number(store.get(seenKey(t,r)))||0;
+function rcv(t,r,tag){const o=seenAt(t,r);
+  return `<div class="rcv"><span>Received ${esc(fullAt(r.at))}</span>${tag!==undefined?tag:`<span class="pill${o?'':' un'}">${o?'Opened '+esc(tmOf(o)):'Unopened'}</span>`}</div>`}
+document.addEventListener('click',e=>{const c=e.target.closest('[data-seen]');if(!c)return;const k=c.dataset.seen;if(store.get(k))return;store.set(k,String(Date.now()));setTimeout(()=>{if(typeof render==='function')render()},400)});
 const isToday=t=>new Date(t).toDateString()===new Date().toDateString();
 const st=r=>pending[r.row+':'+r.at]||r.status||'New';
 
@@ -277,7 +288,7 @@ function consult(r){
   const story=String(r.story||'').split(' | ').map(x=>{const m=x.match(/^(Hair|Skin): (.*)$/);return m?`<p class="story"><b>${m[1]}:</b> ${esc(m[2])}</p>`:x?`<p class="story">${esc(x)}</p>`:''}).join('');
   const budget=[r.budget?'$'+esc(String(r.budget).replace(/^\$/,''))+' per visit':'',r.sameBudget==='Yes'?'same budget every visit':''].filter(Boolean).join(' · ')||'Not given';
   const pics=[r.photoNow?`<a href="${esc(r.photoNow)}" target="_blank" rel="noopener">View today’s photo</a>`:'',r.photoGoal?`<a href="${esc(r.photoGoal)}" target="_blank" rel="noopener">View inspiration</a>`:''].join('');
-  return `<div class="${s==='Booked'?'req done':s==='Contacted'?'req doing':'req'}"><div class="row"><span class="who">${esc((r.first+' '+(r.last||'')).trim())}</span><span class="when">${esc(ago(r.at))}</span></div>
+  return `<div class="${s==='Booked'?'req done':s==='Contacted'?'req doing':'req'}" data-seen="${esc(seenKey('consult',r))}"><div class="row"><span class="who">${esc((r.first+' '+(r.last||'')).trim())}</span><span class="when">${esc(ago(r.at))}</span></div>${rcv('consult',r)}
   <div class="badges">${hair.length?'<span class="badge">Hair</span>':''}${skin.length?'<span class="badge s">Skin &amp; Spa</span>':''}</div>
   <span class="lbl">Interested in</span><div class="chips">${[...hair,...skin].map(i=>`<span class="chip">${esc(i)}</span>`).join('')}</div>
   <div class="kv"><span>Budget</span><span>${budget}</span><span>Reach by</span><span>${esc(r.reach||'Text')} · ${tel?`<a href="tel:${esc(tel)}">${esc(r.phone)}</a>`:''}</span>${r.email?`<span>Email</span><span>${esc(r.email)}</span>`:''}</div>
@@ -293,7 +304,7 @@ function bday(v){
 function profile(r){
   const s=st(r), tel=String(r.phone||'').replace(/[^\d+]/g,'');
   const rows=[['Phone',tel?`<a href="tel:${esc(tel)}">${esc(r.phone)}</a>`:''],['Email',esc(r.email)],['Address',esc(r.address)],['Birthday',esc(bday(r.birthday))],['Reach by',esc(r.reach)],['Receipt by',esc(r.receipt)],['Texts OK',r.texts==='Yes'?'Yes':'No']].filter(x=>x[1]);
-  return `<div class="${s==='Updated'?'req done':'req'}"><div class="row"><span class="who">${esc((r.first+' '+(r.last||'')).trim())}</span><span class="when">${esc(ago(r.at))}</span></div>
+  return `<div class="${s==='Updated'?'req done':'req'}" data-seen="${esc(seenKey('profile',r))}"><div class="row"><span class="who">${esc((r.first+' '+(r.last||'')).trim())}</span><span class="when">${esc(ago(r.at))}</span></div>${rcv('profile',r)}
   ${r.changes?`<span class="lbl">What changed</span><p class="note">“${esc(r.changes)}”</p>`:''}
   ${r.allergies?`<span class="lbl">Allergies or sensitivities</span><div class="chips"><span class="chip">${esc(r.allergies)}</span></div>`:''}
   ${r.notes?`<span class="lbl">Good to know</span><p class="note">${esc(r.notes)}</p>`:''}
@@ -308,7 +319,8 @@ const money=n=>'$'+Math.round(Number(n)||0).toLocaleString('en-US');
 function rxCard(r,full){
   const s=rxSt(r), d=r.day?new Date(r.day+'T12:00').toLocaleDateString('en-US',{month:'short',day:'numeric'}):'';
   const tag=s==='Opened'?'She opened it':s==='Sent'?'Texted to her':s==='New'?'Waiting':'';
-  return `<div class="${s==='New'?'req':'req done'}"><div class="row"><span class="who">${esc(r.guest||'Guest')}</span><span class="when">${esc(full?d:ago(r.at))}</span></div>
+  const pill=s==='Opened'||r.openedAt?`<span class="pill">She opened it${r.openedAt?' '+esc(fullAt(r.openedAt)):''}</span>`:s==='Sent'?`<span class="pill">Texted${r.deskAt?' '+esc(fullAt(r.deskAt)):''}</span>`:`<span class="pill un">Not opened yet</span>`;
+  return `<div class="${s==='New'?'req':'req done'}"><div class="row"><span class="who">${esc(r.guest||'Guest')}</span><span class="when">${esc(full?d:ago(r.at))}</span></div>${rcv('rx',r,pill)}
   <div class="badges"><span class="badge${r.kind==='Skin'?' s':''}">${esc(r.kind)}</span>${tag?`<span class="badge">${tag}</span>`:''}</div>
   <div class="kv"><span>From</span><span>${esc(r.artist)}</span>${(r.totals||[]).length?`<span>Options</span><span>${(r.totals||[]).map(money).join(' or ')}</span>`:''}${r.budget?`<span>Her budget</span><span>${money(r.budget)}</span>`:''}${r.next?`<span>Next visit</span><span>in about ${esc(r.next)}</span>`:''}</div>
   <div class="act"><button data-rxs="${r.row}" data-id="${esc(r.id)}" data-g="${esc(r.guest)}">Text card</button><button data-rxv="${r.row}">Open</button>${s==='New'?`<button data-rxm="${r.row}" data-id="${esc(r.id)}">Mark sent</button>`:''}</div>
@@ -333,7 +345,7 @@ function rxMark(row,id,status){rxPend[row]=status;render();
 const rgData=r=>{try{return JSON.parse(r.data||'{}')}catch(e){return null}};
 function regimenCard(r,i){
   const s=st(r), sent=s==='Sent', d=rgData(r)||{}, when=[...new Set((d.picks||[]).map(p=>p.when))].join(' · ');
-  return `<div class="${sent?'req done':'req'}"><div class="row"><span class="who">${esc(r.guest)}</span><span class="when">${esc(ago(r.at))}</span></div>
+  return `<div class="${sent?'req done':'req'}" data-seen="${esc(seenKey('regimen',r))}"><div class="row"><span class="who">${esc(r.guest)}</span><span class="when">${esc(ago(r.at))}</span></div>${rcv('regimen',r,sent?`<span class="pill">Sent${r.sentAt?' '+esc(fullAt(r.sentAt)):''}</span>`:undefined)}
   <div class="badges"><span class="badge${r.kind==='Skincare'?' s':''}">${esc(r.kind)}</span></div>
   <div class="kv"><span>From</span><span>${esc(r.artist)}</span>${(d.services||[]).length?`<span>Service</span><span>${esc(d.services.join(', '))}</span>`:''}<span>Products</span><span>${esc(r.summary||'Aftercare notes only')}</span></div>
   <div class="act"><button data-rgs="${i}">Text PDF</button><button data-rgv="${i}">Preview</button>${sent?`<button class="on" disabled style="cursor:default">✓ Sent</button>`:`<button data-t="regimen" data-r="${r.row}" data-a="${r.at}" data-s="Sent">Mark sent</button>`}</div>
