@@ -334,6 +334,9 @@ function rxView(){
   if(!rxAll){h+=`<p class="empty">${rxBusy?'Loading…':'Couldn’t load the saved cards. Check the Wi-Fi.'}</p>`;if(!rxBusy)rxLoadAll()}
   else h+=hits.length?hits.slice(0,60).map(r=>rxCard(r,1)).join('')+(hits.length>60?`<p class="empty">${hits.length-60} more. Search by name to find one.</p>`:''):`<p class="empty">${q?'No saved card for “'+esc(rxQ)+'”.':'No saved cards yet.'}</p>`;
   return h}
+let rgAll=null, rgQ='', rgBusy=false;
+function rgLoadAll(){if(DEMO){rgAll=(data.regimen||[]).slice().reverse();return}if(rgBusy||!KEY)return;rgBusy=true;
+  fetch(window.TAFFETA_ENDPOINT+'?key='+encodeURIComponent(KEY)+'&rgall=1&t='+Date.now(),{cache:'no-store'}).then(r=>r.json()).then(j=>{if(j.ok)rgAll=j.rgall||[]}).catch(()=>{}).then(()=>{rgBusy=false;if(area==='G'&&tab==='H')render()})}
 function rxLoadAll(){if(DEMO){rxAll=data.rx||[];return}if(rxBusy||!KEY)return;rxBusy=true;
   fetch(window.TAFFETA_ENDPOINT+'?key='+encodeURIComponent(KEY)+'&rxall=1&t='+Date.now(),{cache:'no-store'}).then(r=>r.json()).then(j=>{if(j.ok)rxAll=j.rxall||[]}).catch(()=>{}).then(()=>{rxBusy=false;if(area==='G'&&tab==='R')render()})}
 async function rxLinkOf(row){const r=await fetch(window.TAFFETA_ENDPOINT+'?key='+encodeURIComponent(KEY)+'&rxcard='+row+'&t='+Date.now(),{cache:'no-store'});const j=await r.json();if(!j.ok||!j.link)throw new Error('no');return j.link}
@@ -343,12 +346,12 @@ function rxMark(row,id,status){rxPend[row]=status;render();
 
 /* Home care: at-home regimens the artists saved in their app. The desk texts each guest her PDF, then taps Mark sent. */
 const rgData=r=>{try{return JSON.parse(r.data||'{}')}catch(e){return null}};
-function regimenCard(r,i){
+function regimenCard(r,i,all){
   const s=st(r), sent=s==='Sent', d=rgData(r)||{}, when=[...new Set((d.picks||[]).map(p=>p.when))].join(' · ');
   return `<div class="${sent?'req done':'req'}" data-seen="${esc(seenKey('regimen',r))}"><div class="row"><span class="who">${esc(r.guest)}</span><span class="when">${esc(ago(r.at))}</span></div>${rcv('regimen',r,sent?`<span class="pill">Sent${r.sentAt?' '+esc(fullAt(r.sentAt)):''}</span>`:undefined)}
   <div class="badges"><span class="badge${r.kind==='Skincare'?' s':''}">${esc(r.kind)}</span></div>
   <div class="kv"><span>From</span><span>${esc(r.artist)}</span>${(d.services||[]).length?`<span>Service</span><span>${esc(d.services.join(', '))}</span>`:''}<span>Products</span><span>${esc(r.summary||'Aftercare notes only')}</span></div>
-  <div class="act"><button data-rgs="${i}">Text PDF</button><button data-rgv="${i}">Preview</button>${sent?`<button class="on" disabled style="cursor:default">✓ Sent</button>`:`<button data-t="regimen" data-r="${r.row}" data-a="${r.at}" data-s="Sent">Mark sent</button>`}</div>
+  <div class="act"><button data-rgs="${i}"${all?' data-src="all"':''}>Text PDF</button><button data-rgv="${i}"${all?' data-src="all"':''}>Preview</button>${sent?`<button class="on" disabled style="cursor:default">✓ Sent</button>`:`<button data-t="regimen" data-r="${r.row}" data-a="${r.at}" data-s="Sent">Mark sent</button>`}</div>
   <p class="status rgst" style="margin:0"></p></div>`}
 
 function guests(){
@@ -364,7 +367,13 @@ function guests(){
   if(tab==='R') return rxView();
   if(tab==='H'){
     let h=hOpen.length?hOpen.map(r=>regimenCard(r,rg.indexOf(r))).join(''):'<p class="empty">No home care PDFs waiting. When an artist saves one, it shows up here.</p>';
-    if(hDone.length)h+=`<details class="more"><summary>Sent (${hDone.length}) +</summary><div class="list">${hDone.map(r=>regimenCard(r,rg.indexOf(r))).join('')}</div></details>`;return h}
+    if(hDone.length)h+=`<details class="more"><summary>Sent (${hDone.length}) +</summary><div class="list">${hDone.map(r=>regimenCard(r,rg.indexOf(r))).join('')}</div></details>`;
+    /* every saved home care card, searchable, like the RX filing (Alexandra, Oct 20 2026) */
+    const q=rgQ.trim().toLowerCase(), hits=rgAll?rgAll.map((r,i)=>[r,i]).filter(([r])=>!q||String(r.guest).toLowerCase().includes(q)||String(r.artist).toLowerCase().includes(q)||String(r.summary||'').toLowerCase().includes(q)):[];
+    h+=`<p class="sub" style="margin:18px 0 0">All saved home care cards</p><input type="search" class="rgq" placeholder="Search by guest, artist or product" value="${esc(rgQ)}" style="padding:12px;font:inherit;border:1px solid var(--line,#ddd);border-radius:10px;width:100%;box-sizing:border-box">`;
+    if(!rgAll){h+=`<p class="empty">${rgBusy?'Loading…':'Couldn’t load the saved cards. Check the Wi-Fi.'}</p>`;if(!rgBusy)rgLoadAll()}
+    else h+=hits.length?hits.slice(0,60).map(([r,i])=>regimenCard(r,i,1)).join('')+(hits.length>60?`<p class="empty">${hits.length-60} more. Search by name to find one.</p>`:''):`<p class="empty">${q?'No saved card for “'+esc(rgQ)+'”.':'No saved cards yet.'}</p>`;
+    return h}
   if(tab==='C'){
     let h=cOpen.length?cOpen.map(concierge).join(''):'<p class="empty">No requests right now. Every guest is taken care of.</p>';
     if(cDone.length)h+=`<p class="sub">Handled today</p>`+cDone.map(concierge).join('');return h}
@@ -534,6 +543,7 @@ function status(){$('#st').textContent=lastOk?(Date.now()-lastOk>120000?'Can’t
 function lockView(){$('#body').innerHTML='<div class="lock"><p>This page needs the full Front Desk link (the long one). Open it in Safari first, then add it to the Home Screen from there. Ask Alexandra to resend it if needed.</p></div>';$('#st').textContent=''}
 
 document.addEventListener('input',e=>{if(e.target.classList.contains('tdaddr'))drafts[e.target.dataset.k]=e.target.value;
+  if(e.target.classList.contains('rgq')){rgQ=e.target.value;const pos=e.target.selectionStart;render();const n=document.querySelector('.rgq');if(n){n.focus();try{n.setSelectionRange(pos,pos)}catch(_){}}}
   if(e.target.classList.contains('rxq')){rxQ=e.target.value;const pos=e.target.selectionStart;RX_TYPING=1;render();RX_TYPING=0;const n=document.querySelector('.rxq');if(n){n.focus();try{n.setSelectionRange(pos,pos)}catch(_){}}}});
 document.addEventListener('click',e=>{
   const sv=e.target.closest('.tdsave');
@@ -563,7 +573,7 @@ document.addEventListener('click',e=>{
     }).catch(()=>{if(w)w.close();t.textContent='This card couldn’t be opened. Check the Wi-Fi and try again.'});
     return}
   const rb=e.target.closest('[data-rgs],[data-rgv]');
-  if(rb){const r=(data.regimen||[])[Number(rb.dataset.rgs!=null?rb.dataset.rgs:rb.dataset.rgv)], d=r&&rgData(r), t=rb.closest('.req').querySelector('.rgst');
+  if(rb){const r=(rb.dataset.src==='all'?(rgAll||[]):(data.regimen||[]))[Number(rb.dataset.rgs!=null?rb.dataset.rgs:rb.dataset.rgv)], d=r&&rgData(r), t=rb.closest('.req').querySelector('.rgst');
     if(!d){t.textContent='This one couldn’t be opened. Ask the artist to save it again.';return}
     const kind=r.kind==='Skincare'?'skin':'hair', R=Object.assign({guest:'',services:[],type:'',picks:[],notes:[],own:'',next:'',nextDate:'',msg:''},d);
     if(rb.dataset.rgs!=null) rgShare(r.artist,R,kind,t); else rgPreview(r.artist,t,R,kind);
