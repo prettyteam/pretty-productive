@@ -464,8 +464,10 @@ async function rgPdf(me,R,kind){
           const m=x.match(/^([A-Z][\w ]{1,18}):\s+(.*)$/);
           if(m){doc.setFont('helvetica','bold');doc.setFontSize(9.5);const lw=doc.getTextWidth(m[1]+':')+doc.getTextWidth('  ');doc.setTextColor(...ink);doc.text(m[1]+':',M+28,y+9.5);
             const L=doc.splitTextToSize(m[2],CW-28);doc.setFont('helvetica','normal');doc.setTextColor(...soft);
-            const first=doc.splitTextToSize(m[2],CW-28-lw)[0];doc.text(first,M+28+lw,y+9.5);y+=9.5*1.32;
-            const rest=m[2].slice(first.length).trim(); if(rest) para(rest,9.5,'helvetica','normal',soft,0,28); y+=2}
+            /* fill the first line word by word, so no letters get lost at the wrap (Oct 20 2026) */
+            const ws=m[2].split(/\s+/);let first='';while(ws.length&&doc.getTextWidth((first?first+' ':'')+ws[0])<=CW-28-lw)first+=(first?' ':'')+ws.shift();
+            doc.text(first,M+28+lw,y+9.5);y+=9.5*1.32;
+            const rest=ws.join(' '); if(rest) para(rest,9.5,'helvetica','normal',soft,0,28); y+=2}
           else para(x,9.5,'helvetica','normal',soft,2,28)});
         y+=6}
       else y+=6;
