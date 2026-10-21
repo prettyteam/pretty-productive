@@ -19,7 +19,7 @@ main{padding:22px 16px 48px;gap:0}
 .eyebrow{display:flex;align-items:center;justify-content:center;gap:12px;font-size:11px;letter-spacing:.18em;color:var(--ink)}
 .eyebrow::before,.eyebrow::after{content:"";width:26px;height:1px;background:var(--line)}
 .hi{font-family:var(--display);font-style:italic;font-size:36px;line-height:1.1;margin:0}
-.role{font-size:10.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--soft);margin-top:-8px}
+.role{font-size:11px;letter-spacing:.18em;line-height:1.9;text-transform:uppercase;color:var(--soft);margin-top:-8px}
 .note{font-family:var(--display);font-style:italic;font-size:19px;line-height:1.5;max-width:330px;text-wrap:balance}
 .sign{font-family:var(--display);font-style:italic;font-size:17px;color:var(--soft)}
 .rule{width:44px;height:1px;background:var(--line);margin:4px auto}
@@ -64,7 +64,7 @@ main{padding:22px 16px 48px;gap:0}
   const name=clean(q.get("a")).split(/\s+/)[0]||"", role=(q.get("r")||"").toLowerCase();
   if(name){document.getElementById("hi").textContent="Hi, it's "+name+"!";document.getElementById("sign").textContent="xo, "+name;document.title="A Note from "+name+" at Taffeta"}
   const R={hair:"Your hair artist",makeup:"Your makeup artist",both:"Your hair & makeup artist"}[role];
-  if(R){const el=document.getElementById("role");el.textContent=R+" · Taffeta Weddings";el.hidden=false}
+  if(R){const el=document.getElementById("role");el.textContent=R;el.append(document.createElement("br"),"Taffeta Weddings");el.hidden=false}
   /* the salon button says hair or makeup to match the artist */
   if(role==="makeup")document.getElementById("book").firstChild.textContent="Come visit me in the salon for your other beauty needs";
   /* some artists' buttons name what they do in the salon (Alexandra, Oct 21 2026): Carolyn is our esthetician,
