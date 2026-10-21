@@ -1244,7 +1244,7 @@ function promoView(){
   return [h('div',{class:'hub'},
     h('div',{},h('span',{class:'lbl'},'Grow your book'),h('h1',{style:'font-size:28px'},'Self Promotion'),
       h('p',{class:'soft',style:'margin:6px 0 0'},'Fresh post ideas for you every Sunday. '+(soc&&soc.week?soc.week+'.':''))),
-    h('div',{class:'gcard'},h('h2',{},gIcon('✧'),'This week’s post ideas'),
+    h('div',{class:'gcard'},h('h2',{},gIcon('✧'),soc&&soc.own?'Your ideas this week':'This week’s post ideas'),
       posts.length?posts.map(([t,x],i)=>h('div',{class:'grule'},h('div',{class:'gn'},String(i+1)),h('p',{},t,h('small',{},x)))):
         h('p',{class:'soft'},'New ideas go up Sunday. Check back then.')),
     h('div',{class:'gcard'},h('h2',{},gIcon('♡'),'Every post'),

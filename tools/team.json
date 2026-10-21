@@ -1,5 +1,5 @@
 {
-  "note": "Team app defaults used when a run's data.json has no 'team' section. clock = who sees the time clock. extra = people who need an app page even when they are not on the book. fullGuide = who gets the private Employment Guide button (the doc link itself lives in the keys file, not here). adv = associate advancement progress by person: {skillId: models done}; leave a person out until their progress is known. Models associates check off in the app (Model Log tab of the Team Hub sheet) are added on top of adv in the app, so don't also add them here. docsGuide = who gets the Desk guide PDF tabs (the handbook PDF is for everyone). social = this week’s post ideas (hair for stylists/associates, esti for estheticians); the Sunday run replaces it. invOwners = who gets the private Inventory tab (color report, backbar and retail lists). invHide = numbers left out of one person’s Inventory tab (cpb = cost per bowl/mix). cards = who gets the Thank-you cards tab (new guests list from Paired Plus, marked done one by one). spaCost = who sees spa supply costs and backbar cost per spa service (a Spa sub-tab of Inventory); estheticians see the spa supply list without costs.",
+  "note": "Team app defaults used when a run's data.json has no 'team' section. clock = who sees the time clock. extra = people who need an app page even when they are not on the book. fullGuide = who gets the private Employment Guide button (the doc link itself lives in the keys file, not here). adv = associate advancement progress by person: {skillId: models done}; leave a person out until their progress is known. Models associates check off in the app (Model Log tab of the Team Hub sheet) are added on top of adv in the app, so don't also add them here. docsGuide = who gets the Desk guide PDF tabs (the handbook PDF is for everyone). social = this week’s Self Promotion post ideas (people = each person’s own 5 by slug; hair/esti are the fallback for anyone not in people); the Sunday run replaces it. invOwners = who gets the private Inventory tab (color report, backbar and retail lists). invHide = numbers left out of one person’s Inventory tab (cpb = cost per bowl/mix). cards = who gets the Thank-you cards tab (new guests list from Paired Plus, marked done one by one). spaCost = who sees spa supply costs and backbar cost per spa service (a Spa sub-tab of Inventory); estheticians see the spa supply list without costs.",
   "clock": [
     "adriana",
     "alyssa",
@@ -147,7 +147,427 @@
         "Overwhelmed by the treatment menu?",
         "Film a guest scanning the QR sign to browse the digital menu and concierge, then filling out the consultation form so you can plan her treatment before she lies down."
       ]
-    ]
+    ],
+    "people": {
+      "alexandra": [
+        [
+          "Wondering who's behind the chair?",
+          "Film a quick hello from the owner's chair: why you opened Taffeta and the one thing every guest should feel when she walks in."
+        ],
+        [
+          "Paying for skincare that doesn't change much?",
+          "Show one Biologique Recherche product on your own routine and say why Taffeta is the only South Jersey partner for it."
+        ],
+        [
+          "Color looking flat between visits?",
+          "Film a glaze going on and the before and after shine, then say how often guests book it."
+        ],
+        [
+          "Want a salon that cares about the planet too?",
+          "Give a 20-second tour of our little green habits: second-hand glasses, filtered water, reused bamboo towels and our homemade cleaner."
+        ],
+        [
+          "Not sure which service to book?",
+          "Show a guest scanning the QR sign and using the digital menu and concierge to pick the right service and artist."
+        ]
+      ],
+      "amanda": [
+        [
+          "Balayage grown out and blotchy?",
+          "Film a soft balayage refresh with a before and after and say when to book the next one."
+        ],
+        [
+          "Box dye gone wrong?",
+          "Show a color correction before and after (with her OK) and explain why it can take more than one visit."
+        ],
+        [
+          "Want longer hair by the wedding?",
+          "Film a quick extensions reveal and the three things to know before your first set."
+        ],
+        [
+          "Blowout falls flat by lunch?",
+          "Demo your round-brush blowout and the one product that keeps it full all day."
+        ],
+        [
+          "Nervous to tell a new stylist what you want?",
+          "Film a guest filling out our online consultation form and how her answers shaped the color plan."
+        ]
+      ],
+      "angelina-h": [
+        [
+          "Tired of curling your lashes every morning?",
+          "Film a Korean lash lift before and after and say how long the curl lasts."
+        ],
+        [
+          "Lashes point straight down?",
+          "Show the lift step by step in under 30 seconds, from shield to final curl."
+        ],
+        [
+          "Lash lift or lash tint?",
+          "Show both side by side and who each one is best for."
+        ],
+        [
+          "Afraid a lift will damage your lashes?",
+          "Share the aftercare from your lash card: keep them dry at first, then a lash serum after the first 24 hours."
+        ],
+        [
+          "First facial-room visit nerves?",
+          "Film a guest scanning the QR sign and booking her lash lift through the concierge."
+        ]
+      ],
+      "ashley-b": [
+        [
+          "Frizz takes over your morning?",
+          "Film a Brazilian Blowout before and after, and time how fast she dries her hair now."
+        ],
+        [
+          "Your smoothing treatment fading fast?",
+          "Show the sulfate-free aftercare shampoo you send home and why it matters."
+        ],
+        [
+          "Fade growing out in a week?",
+          "Film a clean men's fade, start to finish, sped up."
+        ],
+        [
+          "Bridal makeup that lasts through the dancing?",
+          "Show your long-wear prep and setting steps on a trial."
+        ],
+        [
+          "Not sure if smoothing is right for you?",
+          "Film a guest filling out our online consultation form and how it helped pick her treatment."
+        ]
+      ],
+      "carolyn": [
+        [
+          "Brows that never match?",
+          "Film brow mapping with the string and a before and after of the sculpt."
+        ],
+        [
+          "Brows look washed out?",
+          "Show a brow tint before and after and how long the color lasts."
+        ],
+        [
+          "Skin feels different every season?",
+          "Show how you pick one Biologique Recherche step for her skin today, and why we are the only South Jersey partner."
+        ],
+        [
+          "Bridal makeup that photographs well?",
+          "Film your bridal skin prep before foundation, so makeup sits smooth in photos."
+        ],
+        [
+          "Don't know which facial to book?",
+          "Film a guest filling out the online consultation form, then how you planned her treatment from it."
+        ]
+      ],
+      "dominique": [
+        [
+          "Highlights look stripy?",
+          "Film a full foil with soft blending and a before and after."
+        ],
+        [
+          "Humidity ruins your hair?",
+          "Show a Brazilian Blowout before and after on a frizzy day."
+        ],
+        [
+          "Planning wedding hair and makeup?",
+          "Share the 3 things to decide before your trial, as the person who books our brides."
+        ],
+        [
+          "Want a cut he'll actually like?",
+          "Film a quick men's cut and the one product you style it with."
+        ],
+        [
+          "Overwhelmed by the menu?",
+          "Show a guest scanning the QR sign to open the digital menu and concierge before her visit."
+        ]
+      ],
+      "emily-b": [
+        [
+          "Nails peel and break?",
+          "Film the cuticle and nail prep from our signature manicure and the oil you'd send home."
+        ],
+        [
+          "Polish chips in two days?",
+          "Show the 3 steps that make polish last: clean prep, thin coats and capping the edges."
+        ],
+        [
+          "Hands look dry all winter?",
+          "Demo the massage and hand care part of the manicure."
+        ],
+        [
+          "Can't pick a color?",
+          "Show 3 fall shades on one hand and which skin tones each one suits."
+        ],
+        [
+          "Never booked a manicure here?",
+          "Film a guest scanning the QR sign and booking a manicure through the concierge."
+        ]
+      ],
+      "isabella": [
+        [
+          "Brassy highlights?",
+          "Film a glaze toning her highlights and the before and after."
+        ],
+        [
+          "Foils feel like they take forever?",
+          "Show a sped-up full foil and say about how long the real appointment is."
+        ],
+        [
+          "Cut that's easy to style?",
+          "Film a haircut and a 2-minute at-home styling demo."
+        ],
+        [
+          "Behind the scenes of a Taffeta post?",
+          "Show how you film a before and after in good light at the salon."
+        ],
+        [
+          "Hard to describe your dream color?",
+          "Film a guest filling out our online consultation form with photos and how you used it."
+        ]
+      ],
+      "jen-m": [
+        [
+          "Gray coming back fast?",
+          "Film a single process root touch-up and how often to book it."
+        ],
+        [
+          "Color fading between visits?",
+          "Show a glaze refresh and the at-home shampoo that keeps it."
+        ],
+        [
+          "Hair that won't hold a shape?",
+          "Film a haircut with a quick tip on how to style it at home."
+        ],
+        [
+          "Afraid to go darker for fall?",
+          "Show a soft fall color change before and after."
+        ],
+        [
+          "First visit with a new stylist?",
+          "Film a guest scanning the QR sign and using the concierge to book with you."
+        ]
+      ],
+      "jennifer-c": [
+        [
+          "Thin ends making hair look short?",
+          "Film a haircut that removes see-through ends and a before and after."
+        ],
+        [
+          "Want volume for a big day?",
+          "Show an extensions reveal for an event or wedding."
+        ],
+        [
+          "Updo or down for the wedding?",
+          "Film two bridal styles on one model and who each suits."
+        ],
+        [
+          "Color looking dull?",
+          "Show a color refresh and the shine at the end."
+        ],
+        [
+          "Not sure what to ask for?",
+          "Film a guest filling out our online consultation form and how it planned her service."
+        ]
+      ],
+      "joanna": [
+        [
+          "Want brighter without full foils?",
+          "Show a minimum foil around the face and the before and after."
+        ],
+        [
+          "Blowout that lasts days?",
+          "Demo your blowout and the second-day refresh."
+        ],
+        [
+          "His cut looks messy fast?",
+          "Film a men's cut and how often to book it."
+        ],
+        [
+          "Bridal hair falling by the reception?",
+          "Show the pinning trick that keeps a style in all night."
+        ],
+        [
+          "Overwhelmed by the menu?",
+          "Film a guest scanning the QR sign to pick between a full and partial foil."
+        ]
+      ],
+      "kat": [
+        [
+          "Makeup creases by noon?",
+          "Film your eye prep and setting steps that stop creasing."
+        ],
+        [
+          "Want a soft everyday look?",
+          "Do a 5-minute makeup look with 5 products."
+        ],
+        [
+          "Bridal party makeup?",
+          "Show one look done on two different skin tones."
+        ],
+        [
+          "Hair and makeup for an event?",
+          "Film a quick before and after of a full event look."
+        ],
+        [
+          "Not sure what to book for your event?",
+          "Film a guest scanning the QR sign and booking makeup through the concierge."
+        ]
+      ],
+      "kelly": [
+        [
+          "Skin feels rough and dull?",
+          "Film the exfoliation step of a facial and the smoother skin after."
+        ],
+        [
+          "Pores look bigger lately?",
+          "Show your extraction prep and the at-home step that keeps pores clear."
+        ],
+        [
+          "Is a facial worth it?",
+          "Walk through what happens in a facial, room to robe, in 30 seconds."
+        ],
+        [
+          "Skin dry and tight in the cold?",
+          "Show the hydrating mask you use and the home care product that matches."
+        ],
+        [
+          "First facial nerves?",
+          "Film a guest filling out the online consultation form before her first facial."
+        ]
+      ],
+      "lexi": [
+        [
+          "Growing out bangs?",
+          "Show 3 ways to style bangs while they grow."
+        ],
+        [
+          "Long hair that feels heavy?",
+          "Film a long layer cut and how it moves after."
+        ],
+        [
+          "Short men's cut that grows out well?",
+          "Film a men's cut and what to ask for next time."
+        ],
+        [
+          "Want bridal hair that lasts?",
+          "Show your bridal prep before any curling."
+        ],
+        [
+          "Not sure if a big change is right?",
+          "Film a guest filling out our online consultation form with her inspiration photos."
+        ]
+      ],
+      "mia": [
+        [
+          "Blowout won't last?",
+          "Film your blowout and the dry shampoo trick for day two."
+        ],
+        [
+          "Hair looks dull?",
+          "Show a glaze before and after under the same light."
+        ],
+        [
+          "Roots showing already?",
+          "Film a single process root color and the at-home root spray between visits."
+        ],
+        [
+          "Hair feels heavy and shapeless?",
+          "Show a cut that adds shape, with a before and after."
+        ],
+        [
+          "Not sure what to book?",
+          "Film a guest scanning the QR sign to see the menu and book a blowout."
+        ]
+      ],
+      "neva-l": [
+        [
+          "Want brighter without a full head?",
+          "Film a face-frame highlight before and after."
+        ],
+        [
+          "Half foil or full foil?",
+          "Show the difference on two guests and who each one suits."
+        ],
+        [
+          "Cut you can air dry?",
+          "Film a haircut and how it looks air dried."
+        ],
+        [
+          "Extensions that blend?",
+          "Show a before and after and how you match the color."
+        ],
+        [
+          "Unsure how much color you need?",
+          "Film a guest filling out the online consultation form and how you chose a half foil."
+        ]
+      ],
+      "sara": [
+        [
+          "Afraid to change your color?",
+          "Film a color consultation: what you ask, and what you look at."
+        ],
+        [
+          "Gray coverage fading fast?",
+          "Show single process and the tip that keeps it looking fresh longer."
+        ],
+        [
+          "Color too dark after a re-app?",
+          "Explain why a gloss can lift shine, with a before and after."
+        ],
+        [
+          "Hair dull after summer?",
+          "Film a glaze and blowout combo before and after."
+        ],
+        [
+          "Can't put your color into words?",
+          "Film a guest filling out the online consultation form, then the color you made from it."
+        ]
+      ],
+      "adriana": [
+        [
+          "Fade looks uneven?",
+          "Film a men's fade sped up from start to finish."
+        ],
+        [
+          "Long hair with no shape?",
+          "Show a long-hair cut with face-framing layers."
+        ],
+        [
+          "Gray roots and short on time?",
+          "Show a quick gray coverage root touch-up."
+        ],
+        [
+          "Wondering what makes Taffeta different?",
+          "Film writing a new guest's thank-you card."
+        ],
+        [
+          "New to the salon?",
+          "Film a guest scanning the QR sign and using the concierge to book."
+        ]
+      ],
+      "rose": [
+        [
+          "Blowout tips from the associate program?",
+          "Film a blowout on a model and one thing you learned this week."
+        ],
+        [
+          "Gray coverage that looks natural?",
+          "Show a gray coverage before and after on a model."
+        ],
+        [
+          "Ever wonder what the front desk does?",
+          "Film a day at the desk: checking in, rebooking and restocking."
+        ],
+        [
+          "Frizzy and puffy hair?",
+          "Show a smoothing service on a model and the aftercare shampoo."
+        ],
+        [
+          "First time at Taffeta?",
+          "Film the QR sign and how guests use the concierge to book."
+        ]
+      ]
+    }
   },
   "invOwners": [
     "alexandra",
