@@ -69,6 +69,13 @@ body.tw-home header.top{display:none}
 .ao .qr svg{width:200px;height:200px;display:block}
 .ao .pay{display:flex;align-items:center;justify-content:center;width:260px;height:46px;border:1px solid #121212;background:#fff;font:400 12px var(--sans);letter-spacing:.16em;text-transform:uppercase;color:#121212;text-decoration:none;cursor:pointer}
 .ao .pay[aria-pressed="true"]{background:#121212;color:#fff}
+/* team names pop up as she types (Alexandra, Oct 21 2026), like the client names on the saved-card search */
+.tsug{position:absolute;z-index:60;background:var(--panel);border:1px solid var(--ink);border-top:0;max-height:240px;overflow:auto;box-shadow:0 6px 18px rgba(0,0,0,.12)}
+.tsug button{display:flex;justify-content:space-between;gap:10px;width:100%;text-align:left;background:none;border:0;border-bottom:1px solid var(--line);padding:10px 11px;font:400 14px var(--sans);color:var(--ink);cursor:pointer}
+.tsug button:last-child{border-bottom:0}.tsug button:hover,.tsug button.on{background:var(--soft)}
+.tsug small{color:var(--muted);white-space:nowrap}
+.poc{font-size:11px;padding:3px 8px;border:1px solid var(--line);background:none;color:var(--muted);border-radius:999px;cursor:pointer;white-space:nowrap}
+.poc.on{border-color:var(--ink);background:var(--ink);color:#fff}
 </style>
 </head><body>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -959,25 +966,70 @@ function renderArtists(){
     const chip=st?'<span class="pill rsvp-'+st+'">'+({accepted:"Confirmed",declined:"Declined",tentative:"Maybe",needsAction:"Waiting"}[st]||st)+'</span>':'';
     const opts='<option value="">Pick from team…</option>'+profiles.map(pr=>'<option value="'+esc(pr._id)+'"'+(pr._id===a.uid?' selected':'')+'>'+esc(pr.preferredName||pr.legalName||"Unnamed")+'</option>').join("");
     d.innerHTML='<select aria-label="Role" id="ar-'+a.id+'"><option value="hair">Hair</option><option value="mu">Makeup</option></select><input id="an-'+a.id+'" placeholder="Artist name" value="'+esc(a.name)+'"><button class="x" aria-label="Remove artist">×</button>'
-      +'<select class="pick" id="ap-'+a.id+'" aria-label="Team member" style="grid-column:1/2"'+(profiles.length?'':' hidden')+'>'+opts+'</select><input id="ae-'+a.id+'" type="email" placeholder="Email for calendar invite" value="'+esc(a.email||"")+'" style="grid-column:2/3"><span>'+chip+'</span>';
+      +'<select class="pick" id="ap-'+a.id+'" aria-label="Team member" style="grid-column:1/2"'+(profiles.length?'':' hidden')+'>'+opts+'</select><input id="ae-'+a.id+'" type="email" placeholder="Email for calendar invite" value="'+esc(a.email||"")+'" style="grid-column:2/3"><span style="display:flex;gap:4px;align-items:center;flex-wrap:wrap">'+chip+(a.name.trim()?'<button type="button" class="poc'+(isPoc(a)?' on':'')+'" title="Day-of contact on the sheet">'+(isPoc(a)?'★ Contact':'Make contact')+'</button>':'')+'</span>';
     d.querySelector("#ar-"+a.id).value=a.role;
     d.querySelector("#ar-"+a.id).onchange=e=>{a.role=e.target.value;changed()};
     d.querySelector("#an-"+a.id).oninput=e=>{a.name=e.target.value;changed()};
     d.querySelector("#ae-"+a.id).oninput=e=>{a.email=e.target.value.trim();queueSave()};
     d.querySelector("#ap-"+a.id).onchange=e=>{const pr=profiles.find(x=>x._id===e.target.value);a.uid=pr?pr._id:"";if(pr){a.name=pr.preferredName||pr.legalName||a.name;a.email=pr.email||a.email;if(!a.phone)a.phone=pr.phone||""}renderArtists();changed()};
     d.querySelector(".x").onclick=()=>{S.artists=S.artists.filter(x=>x!==a);renderArtists();changed()};
-    const nm=d.querySelector("#an-"+a.id);nm.setAttribute("list","team-names");nm.setAttribute("autocomplete","off");
-    nm.addEventListener("change",e=>{   // typed a team member's name: fill in her email from Team records
+    const pb=d.querySelector(".poc");if(pb)pb.onclick=()=>setPoc(a);
+    const nm=d.querySelector("#an-"+a.id);nm.setAttribute("autocomplete","off");
+    teamSuggest(nm,pr=>{a.uid=pr._id;a.name=pr.preferredName||pr.legalName||a.name;a.email=pr.email||a.email;a.phone=pr.phone||a.phone||"";
+      if(!(S.contactName||"").trim()&&!(S.contactPhone||"").trim())setPoc(a,1);   // the first artist picked is the day-of contact until she taps another
+      renderArtists();changed()});
+    nm.addEventListener("change",e=>{   // typed a team member's whole name without tapping it: fill in the same
       const v=e.target.value.trim().toLowerCase();
       const pr=profiles.find(x=>[x.preferredName,x.legalName].some(n=>(n||"").trim().toLowerCase()===v));
-      if(pr){a.uid=pr._id;a.name=pr.preferredName||pr.legalName||a.name;a.email=pr.email||a.email;if(!a.phone)a.phone=pr.phone||"";renderArtists();changed()}
+      if(pr&&pr._id!==a.uid){a.uid=pr._id;a.name=pr.preferredName||pr.legalName||a.name;a.email=pr.email||a.email;a.phone=pr.phone||a.phone||"";renderArtists();changed()}
     });
     box.appendChild(d);
   });
-  let dl=$("#team-names");if(!dl){dl=document.createElement("datalist");dl.id="team-names";document.body.appendChild(dl)}
-  dl.innerHTML=[...new Set(profiles.flatMap(pr=>[pr.preferredName,pr.legalName]).filter(Boolean))].map(n=>'<option value="'+esc(n)+'">').join("");
   renderCalTeam();
 }
+/* Team names pop up as she types an artist or the day-of contact (Alexandra, Oct 21 2026), the same way client names
+   pop up on the saved-card search. Tapping a name fills her cell. Names that start with what she typed come first. */
+function teamSuggest(inp,onPick){
+  let box=null,hits=[],at=-1;
+  const close=()=>{if(box){box.remove();box=null}at=-1};
+  const pick=pr=>{close();onPick(pr)};
+  const show=()=>{
+    const q=inp.value.trim().toLowerCase();close();if(!q||!profiles.length)return;
+    const nm=pr=>[pr.preferredName,pr.legalName].filter(Boolean).map(n=>n.toLowerCase());
+    hits=profiles.filter(pr=>nm(pr).some(n=>n.includes(q)))
+      .sort((x,y)=>(nm(y).some(n=>n.split(/\s+/).some(w=>w.startsWith(q)))-nm(x).some(n=>n.split(/\s+/).some(w=>w.startsWith(q))))||(x.preferredName||x.legalName||"").localeCompare(y.preferredName||y.legalName||""))
+      .slice(0,8);
+    if(!hits.length||(hits.length===1&&nm(hits[0]).includes(q)&&(hits[0].preferredName||hits[0].legalName||"").toLowerCase()===q))return;
+    const r=inp.getBoundingClientRect();
+    box=document.createElement("div");box.className="tsug";box.setAttribute("role","listbox");
+    box.style.left=(r.left+scrollX)+"px";box.style.top=(r.bottom+scrollY)+"px";box.style.width=Math.max(r.width,220)+"px";
+    box.innerHTML=hits.map((pr,i)=>'<button type="button" role="option" data-i="'+i+'"><span>'+esc(pr.preferredName||pr.legalName)+'</span><small>'+esc(pr.phone||"no cell saved")+'</small></button>').join("");
+    box.addEventListener("pointerdown",e=>e.preventDefault());   // keep the keyboard up until she picks
+    box.onclick=e=>{const b=e.target.closest("button");if(b)pick(hits[+b.dataset.i])};
+    document.body.appendChild(box);
+  };
+  inp.addEventListener("input",show);
+  inp.addEventListener("focus",show);
+  inp.addEventListener("blur",()=>setTimeout(close,150));
+  inp.addEventListener("keydown",e=>{
+    if(!box)return;const bs=[...box.querySelectorAll("button")];
+    if(e.key==="ArrowDown"||e.key==="ArrowUp"){e.preventDefault();at=(at+(e.key==="ArrowDown"?1:-1)+bs.length)%bs.length;bs.forEach((b,i)=>b.classList.toggle("on",i===at))}
+    else if(e.key==="Enter"&&at>=0){e.preventDefault();pick(hits[at])}
+    else if(e.key==="Escape")close();
+  });
+}
+/* the day-of contact (POC) on the sheet: one tap on an artist's "Make contact" puts her name and cell there */
+function isPoc(a){const n=(S.contactName||"").trim().toLowerCase();return !!n&&n===(a.name||"").trim().toLowerCase()}
+function setPoc(a,quiet){
+  const pr=profiles.find(p=>p._id===a.uid);
+  S.contactName=(a.name||"").trim();S.contactPhone=a.phone||(pr&&pr.phone)||"";
+  $("#contactName").value=S.contactName;$("#contactPhone").value=S.contactPhone;
+  if(!S.contactPhone)toast("No cell saved for "+S.contactName+". Add it on the Team tab.");else if(!quiet)toast(S.contactName+" is the day-of contact");
+  if(!quiet){renderArtists();changed()}
+}
+teamSuggest($("#contactName"),pr=>{S.contactName=pr.preferredName||pr.legalName||"";S.contactPhone=pr.phone||S.contactPhone||"";
+  $("#contactName").value=S.contactName;$("#contactPhone").value=S.contactPhone;renderArtists();changed()});
+$("#contactName").setAttribute("autocomplete","off");
 /* ---------- calendar tab ---------- */
 function renderCalPicker(){
   const sel=$("#cal-wedding"),today=new Date().toISOString().slice(0,10);
