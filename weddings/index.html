@@ -103,6 +103,8 @@ header.top{display:flex;flex-wrap:wrap;align-items:center;gap:12px 20px;justify-
 .tabs>*{flex:1 1 auto;min-width:0;text-align:center;white-space:nowrap}
 .tab-title{display:flex;align-items:center;justify-content:center;font-family:"Cormorant Garamond",Georgia,serif;font-style:italic;font-weight:300;font-size:20px;line-height:1;color:var(--muted);padding:4px 14px;min-width:130px}
 .tab-title:empty{display:none}
+.savebar{position:sticky;top:0;z-index:20;display:flex;justify-content:space-between;align-items:center;gap:12px;margin:0 0 12px;padding:8px 12px;background:#fff;border:1px solid var(--line);font-size:14px}
+.savebar.unsaved{border-color:#2b2a28;font-weight:600}
 .foot{display:flex;justify-content:center;align-items:center;gap:14px;margin-top:56px;padding-top:20px;border-top:1px solid var(--line)}   /* sign out lives at the very bottom */
 .tabs button{border:0;background:transparent;color:var(--ink);font:500 13px var(--sans);padding:10px 8px;cursor:pointer;letter-spacing:.05em;text-transform:uppercase;font-size:11px}
 .tabs button[aria-selected="true"]{background:var(--accent);color:var(--accent-ink)}
@@ -287,6 +289,7 @@ input,select,textarea{background:#fff;border-radius:0}
   </section>
 
   <section id="view-build" hidden>
+    <div class="savebar" id="savebar" hidden><span id="saveState">Saved</span><button class="btn small" id="saveNow">Save</button></div>
     <div class="grid2">
       <div class="rail">
         <div class="card">
@@ -1397,7 +1400,22 @@ function showTab(t){if(!TABS.includes(t))t="home";document.body.classList.toggle
 TABS.forEach(k=>$("#tab-"+k).onclick=()=>showTab(k));
 
 /* ---------- storage ---------- */
-function setStatus(t){$("#status").textContent=t}
+/* a Save bar at the top of the Timeline tab, so it's clear changes stuck (Alexandra, Oct 21 2026). Changes still save on their own. */
+function setStatus(t){
+  $("#status").textContent=t;
+  const bar=$("#savebar");if(!bar)return;
+  bar.hidden=!canWrite;
+  const draft=/^Draft/.test(t), done=t==="Saved"||t==="Opened";
+  const idle=t==="Office"||t==="New wedding";
+  $("#saveState").textContent=t==="Opened"?"Saved":draft?"Draft from Google Calendar, not saved yet. Check it, then tap Save.":idle?"Changes save as you type. Tap Save any time to be sure.":t;
+  bar.classList.toggle("unsaved",!done&&!idle&&t!=="Saving…");
+  $("#saveNow").textContent=done?"Saved ✓":"Save";
+}
+$("#saveNow").onclick=()=>{
+  if(!canWrite)return;
+  if(!S.bride.trim()){setStatus("Add the bride's name to save");return}
+  clearTimeout(saveTimer);setStatus("Saving…");save();
+};
 function queueSave(){
   if(!canWrite){setStatus(ROLE?"View only":"Not signed in");return}
   if(!S.bride.trim()){setStatus("Add the bride's name to save");return}
@@ -1448,7 +1466,7 @@ $("#saved").onchange=e=>{
   const w=allWeddings.find(x=>x.id===id);if(!w)return;
   docId=id;
   const dr=Array.isArray(w.d.people)?null:calDraft(w.d);
-  S=Object.assign(starter(),JSON.parse(JSON.stringify(w.d)),dr||{});delete S.calDraft;fillForm();setStatus(dr?"Draft from Google Calendar. Check it, then Save.":"Opened");
+  S=Object.assign(starter(),JSON.parse(JSON.stringify(w.d)),dr||{});delete S.calDraft;fillForm();setStatus(dr?"Draft from Google Calendar. Check it, then tap Save.":"Opened");
 };
 
 /* ---------- team view ---------- */
