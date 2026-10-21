@@ -15,7 +15,7 @@
 <script src="../g/coach.js?v=1"></script>
 <link rel="stylesheet" href="../g/coach.css?v=1">
 <script src="../g/qr.js?v=1"></script>
-<script src="../g/config.js?v=3"></script>
+<script src="../g/config.js?v=4"></script>
 <style>:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;padding:0}img{max-width:100%}</style>
 <script src="/refresh.js?v=4" defer></script>
 <script src="/g/bats.js?v=2" defer></script>
@@ -1287,8 +1287,7 @@ function renderAddon(){
 
 /* Gratuity (Alexandra, Oct 21 2026): each bridesmaid scans the artist's own code and tips her straight to the Venmo on
    her profile. Separate from Add-On Services, which pays the Taffeta Weddings Venmo. The Venmo is also kept on her phone,
-   so her code shows even before the Sheet has a Venmo column. A second code opens the Taffeta Weddings Google review page. */
-const TW_REVIEW_URL=(window.TAFFETA_REVIEWS||{}).weddings||"";   // set in g/config.js; the review code shows once it is filled in
+   so her code shows even before the Sheet has a Venmo column. A second code opens her thank-you card (My Card, below). */
 function venmoKey(){return "tw-venmo:"+((ME&&ME.id)||"me")}
 function venmoUser(v){return String(v||"").trim().replace(/^https?:\/\/(www\.|account\.)?venmo\.com\/(u\/)?/i,"").replace(/[/?#].*$/,"").replace(/^@/,"")}
 // Suggested tip is 20% of what she was charged (Alexandra, Oct 21 2026): the artist types the service total ($150 fills
@@ -1296,6 +1295,24 @@ function venmoUser(v){return String(v||"").trim().replace(/^https?:\/\/(www\.|ac
 const TIP_PCT=.2; let TIP_TOTAL="150";
 const tipOf=t=>Math.round((parseFloat(String(t).replace(/[^0-9.]/g,""))||0)*TIP_PCT);
 function venmoTipUrl(v,amt){return amt?"https://venmo.com/"+encodeURIComponent(v)+"?txn=pay&amount="+amt+"&note="+encodeURIComponent("Thank you! ✨"):"https://venmo.com/u/"+encodeURIComponent(v)}
+/* My Card (Alexandra, Oct 21 2026): in place of the review code, a thank-you card from the artist (hello/). The guest scans
+   it or the artist AirDrops it, so nobody collects phone numbers. The card has the review stars. Artists who also work in
+   the salon get the salon booking button on theirs. */
+/* Salon artists are matched on the first name of her preferred name OR her legal name, so a profile that goes by a
+   nickname ("Dom", "Kat") or a different spelling still gets her salon box (Alexandra, Oct 21 2026). */
+const SALON_K={carolyn:"skin",kat:"mh",katherine:"mh",kathryn:"mh",ashley:"mcce",dominique:"mcce",dom:"mcce",domenique:"mcce",dominque:"mcce",
+  amanda:"cce",lexi:"cce",alexis:"cce",joanna:"cce",neva:"cce"};   // her salon services line on the card (hello/)
+function myCardUrl(){
+  const full=String(myName()).trim(),first=full.split(/\s+/)[0]||"",legal=String((ME&&ME.legalName)||"").trim(),role=String((ME&&ME.role)||"").toLowerCase();
+  const keys=[first,legal.split(/\s+/)[0]].map(n=>String(n||"").toLowerCase().replace(/[^a-z]/g,""));
+  const jen=/^jen(nifer)?\b.*\bcurley\b/i.test(full+" "+legal)||/\bcurley\b/i.test(legal);   // Jen Curley: color, cuts and extensions
+  const k=keys.map(n=>SALON_K[n]).find(Boolean)||(jen?"cce":""), salon=!!k;
+  const r=/hair/.test(role)&&/makeup/.test(role)?"both":/makeup/.test(role)?"makeup":/hair/.test(role)?"hair":"";
+  return new URL("../hello/?a="+encodeURIComponent(first)+(r?"&r="+r:"")+(salon?"&s=1&k="+k+"&d="+cardDay():""),location.href).href}
+const cardDay=()=>{const t=new Date();return t.getFullYear()+"-"+String(t.getMonth()+1).padStart(2,"0")+"-"+String(t.getDate()).padStart(2,"0")};   // the $20 offer runs 3 months from the day the guest scans it
+async function shareCard(){const url=myCardUrl();
+  if(navigator.share){try{await navigator.share({title:"A little thank you from Taffeta Weddings",url})}catch(e){}return}
+  try{await navigator.clipboard.writeText(url);toast("Card link copied.")}catch(e){prompt("Copy your card link:",url)}}
 function renderTip(){
   const box=$("#view-tip");if(!box)return;
   const v=venmoUser((ME&&ME.venmo)||lsGet(venmoKey())),first=String(myName()).trim().split(/\s+/)[0]||"",ok=v&&!/\s/.test(v);
@@ -1305,11 +1322,12 @@ function renderTip(){
   else h+='<p>Thank you for having '+(first?esc(first):"me")+' on your day! Scan to send a tip with Venmo.</p><div class="qr">'+qrSvg(venmoTipUrl(v,tipOf(TIP_TOTAL)))+'</div>'
    +'<span class="lbl" id="tipLbl" style="font-size:11px;letter-spacing:.16em;text-transform:uppercase"></span>'
    +'<label class="f" style="flex-direction:row;align-items:center;gap:8px;justify-content:center">Service total $<input id="tipTotal" inputmode="decimal" style="width:110px;text-align:center" value="'+esc(TIP_TOTAL)+'"></label>';
-  if(TW_REVIEW_URL)h+='<div class="mhead" style="margin-top:12px">Leave Us a Review</div><p>Loved your look? Scan to leave Taffeta Weddings a Google review.</p><div class="qr">'+qrSvg(TW_REVIEW_URL)+'</div>'
-   +'<span class="lbl" style="font-size:11px;letter-spacing:.16em;text-transform:uppercase">Google review · Taffeta Weddings</span>';
+  h+='<div class="mhead" style="margin-top:12px">My Card</div><p>A little thank-you from '+(first?esc(first):"me")+'. Scan to open it, then tap the stars to leave us a review.</p><div class="qr" id="cardQr">'+qrSvg(myCardUrl())+'</div>'
+   +'<span class="lbl" style="font-size:11px;letter-spacing:.16em;text-transform:uppercase">Thank-you card · Taffeta Weddings</span>'
+   +'<button type="button" class="pay" id="cardShare">Share my card</button><p style="font-size:14px">Standing next to her? Tap Share my card, then AirDrop. She taps Accept and it opens.</p>';
   if(ok)h+='<p style="font-size:14px">Turn your screen brightness up so the codes scan easily. Tips go straight to your own Venmo.</p>';
   box.innerHTML=h+'</div>';const ti=$("#tipTotal"),say=()=>{const t=tipOf(TIP_TOTAL);$("#tipLbl").textContent="Venmo · @"+v+(t?" · 20% tip $"+t:" · any amount")};
-  if(ti){say();ti.oninput=()=>{TIP_TOTAL=ti.value;box.querySelector(".qr").innerHTML=qrSvg(venmoTipUrl(v,tipOf(TIP_TOTAL)));say()}}const g=$("#tipGo");if(g)g.onclick=()=>goTab("info");
+  if(ti){say();ti.oninput=()=>{TIP_TOTAL=ti.value;box.querySelector(".qr").innerHTML=qrSvg(venmoTipUrl(v,tipOf(TIP_TOTAL)));say()}}const g=$("#tipGo");if(g)g.onclick=()=>goTab("info");const cs=$("#cardShare");if(cs)cs.onclick=shareCard;
 }
 
 /* ---------- tabs ---------- */
