@@ -1,5 +1,5 @@
 {
-  "note": "Team app defaults used when a run's data.json has no 'team' section. clock = who sees the time clock. extra = people who need an app page even when they are not on the book. fullGuide = who gets the private Employment Guide button (the doc link itself lives in the keys file, not here). adv = associate advancement progress by person: {skillId: models done}; leave a person out until their progress is known. Models associates check off in the app (Model Log tab of the Team Hub sheet) are added on top of adv in the app, so don't also add them here. docsGuide = who gets the Desk guide PDF tabs (the handbook PDF is for everyone). social = this week’s Self Promotion post ideas (people = each person’s own 5 by slug; hair/esti are the fallback for anyone not in people); the Sunday run replaces it. invOwners = who gets the private Inventory tab (color report, backbar and retail lists). invHide = numbers left out of one person’s Inventory tab (cpb = cost per bowl/mix). cards = who gets the Thank-you cards tab (new guests list from Paired Plus, marked done one by one). spaCost = who sees spa supply costs and backbar cost per spa service (a Spa sub-tab of Inventory); estheticians see the spa supply list without costs.",
+  "note": "Team app defaults used when a run's data.json has no 'team' section. clock = who sees the time clock. extra = people who need an app page even when they are not on the book. fullGuide = who gets the private Employment Guide button (the doc link itself lives in the keys file, not here). adv = associate advancement progress by person: {skillId: models done}; leave a person out until their progress is known. Models associates check off in the app (Model Log tab of the Team Hub sheet) are added on top of adv in the app, so don't also add them here. docsGuide = who gets the Desk guide PDF tabs (the handbook PDF is for everyone). social = this week’s general post ideas (hair for stylists/associates, esti for estheticians); the Sunday social run replaces it. promo = each person’s own 5 Self Promotion ideas by slug (people), written by the Sunday Self Promotion run from tools/promo-people.json; anyone not in it gets the social set. invOwners = who gets the private Inventory tab (color report, backbar and retail lists). invHide = numbers left out of one person’s Inventory tab (cpb = cost per bowl/mix). cards = who gets the Thank-you cards tab (new guests list from Paired Plus, marked done one by one). spaCost = who sees spa supply costs and backbar cost per spa service (a Spa sub-tab of Inventory); estheticians see the spa supply list without costs.",
   "clock": [
     "adriana",
     "alyssa",
@@ -147,7 +147,117 @@
         "Overwhelmed by the treatment menu?",
         "Film a guest scanning the QR sign to browse the digital menu and concierge, then filling out the consultation form so you can plan her treatment before she lies down."
       ]
-    ],
+    ]
+  },
+  "invOwners": [
+    "alexandra",
+    "rose"
+  ],
+  "cards": [
+    "adriana"
+  ],
+  "spaCost": [
+    "alexandra"
+  ],
+  "invHide": {
+    "rose": [
+      "cpb"
+    ]
+  },
+  "pk": {
+    "week": "Oct 17",
+    "groups": [
+      {
+        "name": "Hair Care",
+        "brands": [
+          {
+            "name": "Oribe",
+            "title": "New for curly and coily hair",
+            "blurb": "Four new Moisture & Control products, plus three tips from the launch.",
+            "url": "https://behindthechair.com/articles/3-curly-and-coily-hair-tips-we-learned-at-oribes-new-launch/",
+            "cta": "Read",
+            "week": "Oct 17"
+          },
+          {
+            "name": "K18",
+            "title": "TripleBright purple shampoo",
+            "blurb": "K18’s new shampoo for blondes. Know it before your next blonde guest asks.",
+            "url": "https://behindthechair.com/articles/k18-triplebright-purple-shampoo-debuts-on-blonde-like-new-tour/",
+            "cta": "Read",
+            "week": "Oct 17"
+          },
+          {
+            "name": "Brazilian Blowout",
+            "title": "Why guests love it",
+            "blurb": "10 reasons the service sells. Send every guest home with the aftercare shampoo.",
+            "url": "https://behindthechair.com/articles/10-reasons-why-you-should-be-doing-brazilian-blowouts/",
+            "cta": "Read",
+            "week": "Oct 17"
+          },
+          {
+            "name": "Davines",
+            "title": "Heart of Glass Silkening Shampoo",
+            "blurb": "Brightens blonde and adds shine. A perfect pick after a glaze.",
+            "url": "https://behindthechair.com/product-announcements/heart-of-glass-silkening-shampoo/",
+            "cta": "Read",
+            "week": "Oct 17"
+          },
+          {
+            "name": "Rossano Ferretti",
+            "title": "Five lines, five hair types",
+            "blurb": "Prodigio, Intenso, Vita, Dolce, Grandioso. Learn which one fits each guest.",
+            "url": "https://www.fourseasons.com/philadelphia/spa/rossano-ferretti-hair-care/",
+            "cta": "Read",
+            "week": "Oct 17"
+          },
+          {
+            "name": "IGK",
+            "title": "Meet the lineup",
+            "blurb": "Famous for dry shampoo. Match a spray to every blowout.",
+            "url": "https://spacenk.com/us/brands/i/igk-hair",
+            "cta": "Read",
+            "week": "Oct 17"
+          }
+        ]
+      },
+      {
+        "name": "Skincare",
+        "brands": [
+          {
+            "name": "Cool as a Cucumber",
+            "title": "The calm-skin line",
+            "blurb": "Soothe Operator cleanser and Hydralixir serum: know who each one is for.",
+            "url": "https://shop.advancedderm.com/collections/cool-as-a-cucumber",
+            "cta": "Read",
+            "week": "Oct 17"
+          },
+          {
+            "name": "Biologique Recherche",
+            "title": "Lotion P50 guide",
+            "blurb": "Which P50 fits which skin. The heart of every BR routine.",
+            "url": "https://www.biologique-recherche.com/en-us/pages/choose-a-lotion-p50",
+            "cta": "Read",
+            "week": "Oct 17"
+          }
+        ]
+      },
+      {
+        "name": "Makeup",
+        "brands": [
+          {
+            "name": "Taffeta Makeup",
+            "title": "7 looks guests want this fall",
+            "blurb": "Toasted monochrome and smudgy shadow are easy with our palettes.",
+            "url": "https://www.whowhatwear.com/beauty/makeup/fall-makeup-trends-2026",
+            "cta": "Read",
+            "week": "Oct 17"
+          }
+        ]
+      }
+    ]
+  },
+  "promo": {
+    "week": "Week of Oct 19",
     "people": {
       "alexandra": [
         [
@@ -568,112 +678,5 @@
         ]
       ]
     }
-  },
-  "invOwners": [
-    "alexandra",
-    "rose"
-  ],
-  "cards": [
-    "adriana"
-  ],
-  "spaCost": [
-    "alexandra"
-  ],
-  "invHide": {
-    "rose": [
-      "cpb"
-    ]
-  },
-  "pk": {
-    "week": "Oct 17",
-    "groups": [
-      {
-        "name": "Hair Care",
-        "brands": [
-          {
-            "name": "Oribe",
-            "title": "New for curly and coily hair",
-            "blurb": "Four new Moisture & Control products, plus three tips from the launch.",
-            "url": "https://behindthechair.com/articles/3-curly-and-coily-hair-tips-we-learned-at-oribes-new-launch/",
-            "cta": "Read",
-            "week": "Oct 17"
-          },
-          {
-            "name": "K18",
-            "title": "TripleBright purple shampoo",
-            "blurb": "K18’s new shampoo for blondes. Know it before your next blonde guest asks.",
-            "url": "https://behindthechair.com/articles/k18-triplebright-purple-shampoo-debuts-on-blonde-like-new-tour/",
-            "cta": "Read",
-            "week": "Oct 17"
-          },
-          {
-            "name": "Brazilian Blowout",
-            "title": "Why guests love it",
-            "blurb": "10 reasons the service sells. Send every guest home with the aftercare shampoo.",
-            "url": "https://behindthechair.com/articles/10-reasons-why-you-should-be-doing-brazilian-blowouts/",
-            "cta": "Read",
-            "week": "Oct 17"
-          },
-          {
-            "name": "Davines",
-            "title": "Heart of Glass Silkening Shampoo",
-            "blurb": "Brightens blonde and adds shine. A perfect pick after a glaze.",
-            "url": "https://behindthechair.com/product-announcements/heart-of-glass-silkening-shampoo/",
-            "cta": "Read",
-            "week": "Oct 17"
-          },
-          {
-            "name": "Rossano Ferretti",
-            "title": "Five lines, five hair types",
-            "blurb": "Prodigio, Intenso, Vita, Dolce, Grandioso. Learn which one fits each guest.",
-            "url": "https://www.fourseasons.com/philadelphia/spa/rossano-ferretti-hair-care/",
-            "cta": "Read",
-            "week": "Oct 17"
-          },
-          {
-            "name": "IGK",
-            "title": "Meet the lineup",
-            "blurb": "Famous for dry shampoo. Match a spray to every blowout.",
-            "url": "https://spacenk.com/us/brands/i/igk-hair",
-            "cta": "Read",
-            "week": "Oct 17"
-          }
-        ]
-      },
-      {
-        "name": "Skincare",
-        "brands": [
-          {
-            "name": "Cool as a Cucumber",
-            "title": "The calm-skin line",
-            "blurb": "Soothe Operator cleanser and Hydralixir serum: know who each one is for.",
-            "url": "https://shop.advancedderm.com/collections/cool-as-a-cucumber",
-            "cta": "Read",
-            "week": "Oct 17"
-          },
-          {
-            "name": "Biologique Recherche",
-            "title": "Lotion P50 guide",
-            "blurb": "Which P50 fits which skin. The heart of every BR routine.",
-            "url": "https://www.biologique-recherche.com/en-us/pages/choose-a-lotion-p50",
-            "cta": "Read",
-            "week": "Oct 17"
-          }
-        ]
-      },
-      {
-        "name": "Makeup",
-        "brands": [
-          {
-            "name": "Taffeta Makeup",
-            "title": "7 looks guests want this fall",
-            "blurb": "Toasted monochrome and smudgy shadow are easy with our palettes.",
-            "url": "https://www.whowhatwear.com/beauty/makeup/fall-makeup-trends-2026",
-            "cta": "Read",
-            "week": "Oct 17"
-          }
-        ]
-      }
-    ]
   }
 }

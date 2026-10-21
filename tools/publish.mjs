@@ -213,6 +213,7 @@ const guideUrl = keys.team && keys.team.guideUrl;
 const guideSet = new Set((data.team && data.team.docsGuide) || teamDefaults.docsGuide || []);
 const socialAll = (data.team && data.team.social) || teamDefaults.social || null;
 const pkAll = (data.team && data.team.pk) || teamDefaults.pk || null;
+const promoAll = (data.team && data.team.promo) || teamDefaults.promo || null;
 const schedMap = (data.schedule && data.schedule.people) || {};
 const cardsSet = new Set((data.team && data.team.cards) || teamDefaults.cards || []);
 const spaCost = new Set((data.team && data.team.spaCost) || teamDefaults.spaCost || []);
@@ -256,8 +257,12 @@ for (const p of pages) {
   if (spaFor.list && p.role === 'esthetician') mine.spaList = spaFor.list;
   if (schedMap[p.slug]) mine.schedule = { weeks: schedMap[p.slug], updated: (data.schedule && data.schedule.updated) || null };
   if (pkAll) mine.pk = pkAll; // PK Knowledge tab: same brand reads for everyone (Oct 17 2026)
-  // Self Promotion page: her own 5 ideas when the Sunday run wrote some (Oct 21 2026), else the hair or skin set.
-  if (socialAll) { const own = socialAll.people && socialAll.people[p.slug]; mine.social = { week: socialAll.week, posts: own || (p.role === 'esthetician' ? socialAll.esti : socialAll.hair), ...(own ? { own: true } : {}) }; }
+  // Self Promotion page: her own 5 ideas from team.json promo (Oct 21 2026), else the hair or skin set.
+  {
+    const own = promoAll && promoAll.people && promoAll.people[p.slug];
+    if (own) mine.social = { week: promoAll.week, posts: own, own: true };
+    else if (socialAll) mine.social = { week: socialAll.week, posts: p.role === 'esthetician' ? socialAll.esti : socialAll.hair };
+  }
   // This week: only this person's own row plus the team's retail and add-ons (never the team's service sales or anyone else's row).
   if (data.week && Array.isArray(data.week.rows)) {
     const r = data.week.rows.find((x) => x && x.slug === p.slug), t = data.week.team || {};
