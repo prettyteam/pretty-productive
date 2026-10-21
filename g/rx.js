@@ -611,7 +611,7 @@ function rxQR(text){
 
 function rxView(){
   rxPull();
-  try{const e=JSON.parse(sessionStorage.getItem('rx-edit')||'null');if(e){sessionStorage.removeItem('rx-edit');const c=Date.now()-e.t<30*60000&&rxSaved().find(y=>y.id===e.id);if(c&&c.draft){RX=Object.assign(rxBlank(c.kind),c.draft);rxSave();RX_VIEW='build';RX_SHOW=null}}}catch(e){}
+  try{const e=JSON.parse(sessionStorage.getItem('rx-edit')||'null');if(e){sessionStorage.removeItem('rx-edit');const c=Date.now()-e.t<30*60000&&rxSaved().find(y=>y.id===e.id);if(c&&e.to==='home'){RX_HOME=c.id;RX_MSG='';RX_SHOW=null;RX_VIEW='home'}else if(c&&c.draft){RX=Object.assign(rxBlank(c.kind),c.draft);rxSave();RX_VIEW='build';RX_SHOW=null}}}catch(e){}
   const R=rxLoad(), me=(S.mine&&(S.mine.name||(S.mine.staff&&S.mine.staff.name)))||'';
   rxSetCut(me); const spNow=rxSetSP();
   const tabs=h('div',{class:'seg',style:'justify-content:center'},
