@@ -135,9 +135,17 @@ html,body{background:#f8f6f0}
   /* artist or desk preview (?p=1): a Go back button to get back to editing; guests never see it (Alexandra, Oct 20 2026) */
   const prev=/[?&]p=1/.test(location.search);
   const goBack=prev?el('button',{type:'button',style:'display:block;margin:0 auto 18px;padding:11px 22px;border:1px solid #121212;border-radius:999px;background:#fff;color:#121212;font:inherit;font-size:12px;letter-spacing:.16em;text-transform:uppercase;cursor:pointer'},'‹ Go Back To Edit'):null;
+  /* from the artist's app (Open Her Card): a What She Takes Home button next to Go Back, so she doesn't have to save again
+     to get there (Alexandra, Oct 20 2026). The desk's preview doesn't get it. */
+  let fromApp=null; try{fromApp=JSON.parse(sessionStorage.getItem('rx-edit')||'null')}catch(e){}
+  const BTN='display:block;margin:0;padding:11px 18px;border:1px solid #121212;border-radius:999px;background:#fff;color:#121212;font:inherit;font-size:12px;letter-spacing:.16em;text-transform:uppercase;cursor:pointer';
+  const takeHome=prev&&fromApp&&fromApp.id?el('button',{type:'button',style:BTN},'What She Takes Home'):null;
+  if(takeHome)takeHome.onclick=()=>{try{sessionStorage.setItem('rx-edit',JSON.stringify({id:fromApp.id,t:Date.now(),to:'home'}))}catch(e){}history.back()};
+  if(goBack&&takeHome)goBack.style.cssText=BTN;
+  const goBackRow=takeHome?el('div',{style:'display:flex;justify-content:center;flex-wrap:wrap;gap:10px;margin:0 auto 18px'},goBack,takeHome):goBack;
   if(goBack)goBack.onclick=()=>{if(history.length>1){history.back();return}try{window.close()}catch(e){}setTimeout(()=>{location.href=document.referrer||'https://prettyteam.taffetadesign.com/cards/'},300)};
   app.append(el('div',{class:'page'},
-    goBack,
+    goBackRow,
     el('div',{class:'top'},el('img',{src:'../g/logo.png',alt:'Taffeta Salon & Spa'})),
     el('div',{class:'rxh'},el('span',{class:'rx'},'Rx'),el('p',{},'Personal plan from today’s consultation and what your next visit looks like.')),
     /* date small at the top as 10/15/26 (Alexandra, Oct 15 2026) */
