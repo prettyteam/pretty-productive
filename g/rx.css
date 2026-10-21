@@ -42,3 +42,11 @@
 .rxqrd .pm::before{content:"+";font-size:20px;line-height:1;letter-spacing:0}
 .rxqrd[open] .pm::before{content:"\2212"}
 .rxqrb{display:flex;flex-direction:column;align-items:center;gap:8px;padding:4px 0 14px}
+
+/* the Add pickers fold under "Add A Service Or Product +" (Alexandra, Oct 20 2026) */
+.rxaddd{border-top:1px solid var(--line);margin-top:6px}
+.rxaddd summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;padding:10px 2px;font-size:11px;letter-spacing:.18em;text-transform:uppercase}
+.rxaddd summary::-webkit-details-marker{display:none}
+.rxaddd .pm::before{content:"+";font-size:20px;line-height:1;letter-spacing:0}
+.rxaddd[open] .pm::before{content:"\2212"}
+.rxaddd .rxadd{margin:0 0 8px}
