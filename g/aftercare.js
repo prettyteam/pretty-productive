@@ -83,6 +83,7 @@ async function acPdf(sheet,guest){
   para('Questions? Call or text us at '+AC_PHONE+'.',9.5,'helvetica','bold',choc,8);
   /* five stars that open our Google review page (Alexandra, Oct 21 2026) */
   if(window.pdfReview&&(window.TAFFETA_REVIEWS||{}).salon){y+=4;need(56);y+=window.pdfReview(doc,W,y,SF,ink,soft)}
+  y+=14;   /* the Pretty ... by Taffeta line sits a little lower (Alexandra, Oct 21 2026) */
   doc.setFont(SF,'italic');doc.setFontSize(13*big);doc.setTextColor(...choc);need(20);doc.text(sheet.kind==='hair'?'Pretty Hair by Taffeta xo':sheet.id==='brow'?'Pretty Brows by Taffeta xo':sheet.id==='lash'?'Pretty Lashes by Taffeta xo':'Pretty Skin by Taffeta xo',W/2,y+12,{align:'center'});y+=20;
   need(14);doc.setFont('helvetica','normal');doc.setFontSize(8.5);doc.setTextColor(...soft);doc.text(new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}),W/2,y+8,{align:'center'});
   foot()};
