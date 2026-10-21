@@ -68,6 +68,19 @@ body.tw-home header.top{display:none}
 .ao .qr svg{width:200px;height:200px;display:block}
 .ao .pay{display:flex;align-items:center;justify-content:center;width:260px;height:46px;border:1px solid #121212;background:#fff;font:400 12px var(--sans);letter-spacing:.16em;text-transform:uppercase;color:#121212;text-decoration:none;cursor:pointer}
 .ao .pay[aria-pressed="true"]{background:#121212;color:#fff}
+.ao .aof{width:100%;max-width:320px;display:flex;flex-direction:column;gap:12px;text-align:left}
+.ao .aof .row{gap:10px}
+.ao .aotot{font-family:"TaffetaJ",Georgia,serif;font-size:22px;color:#121212;text-align:center}
+.ao .aofor{font:400 12px var(--sans);letter-spacing:.1em;text-transform:uppercase;color:#121212;line-height:1.6}
+.ao .aobtns{display:flex;flex-direction:column;align-items:center;gap:8px}
+.ao .aobtns .btn{width:260px}
+.aolog{width:100%;max-width:560px;text-align:left;border-top:1px solid var(--line);padding-top:14px}
+.aolog h4{margin:14px 0 6px;font:500 11px var(--sans);letter-spacing:.14em;text-transform:uppercase;color:#121212}
+.aolog .aor{display:flex;gap:10px;align-items:flex-start;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--line);font-size:14px}
+.aolog .aor small{display:block;color:var(--muted);font-size:12px}
+.aolog .aor.np{opacity:.5;text-decoration:line-through}
+.aolog .aoamt{font-weight:500;white-space:nowrap}
+.aolog .chk{font-size:12px}
 </style>
 </head><body>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1259,27 +1272,126 @@ function homePhoto(file){
   img.onerror=()=>{URL.revokeObjectURL(url);toast("That photo didn't open. Try another.")};
   img.src=url;
 }
-/* Wedding day add-ons: the guest scans to pay Taffeta Weddings by Venmo, or card / Apple Pay through Stripe */
-let AO_SHOW="venmo";
+/* Wedding day add-ons: the guest scans to pay Taffeta Weddings by Venmo, or card / Apple Pay through Stripe.
+   The artist picks the wedding and the add-on first, so the Venmo code carries the amount and a note, and the
+   app logs it on the "Add-on payments" tab for the office (Alexandra, Oct 21 2026). The app can't see Venmo:
+   Cherish ticks "Paid, confirmed" once she finds the payment. */
+const AO_MENU=[   // suggested day-of prices (Oct 21 2026); waiting on Alexandra's final OK
+  {name:"Add-on formal style",each:175},
+  {name:"Add-on makeup application",each:175},
+  {name:"Add-on eyelash application",each:35},
+  {name:"Add-on clip-in extension application",each:75},
+  {name:"Add-on touch-up hours",each:150,unit:"hour"}];
+const AO_SHARE=.5;   // the artist earns half of each add-on she collects for
+let AO_SHOW="venmo", myAddons=[], AO={wid:"",item:0,qty:1,guest:"",cur:null,busy:false,filter:"open"};
 function payLinks(){const p=window.TW_PAY||{};const v=String(p.venmo||"").replace(/^@/,"");
   return {venmo:v?"https://venmo.com/u/"+encodeURIComponent(v):"",venmoName:v,card:p.stripe||""}}
+function venmoCharge(user,amount,note){return "https://venmo.com/?txn=pay&audience=private&recipients="+encodeURIComponent(user)+"&amount="+amount.toFixed(2)+"&note="+encodeURIComponent(note)}
 function qrSvg(text){if(!window.qrcode||!text)return"";const q=qrcode(0,"M");q.addData(text);q.make();const n=q.getModuleCount();let r="";
   for(let y=0;y<n;y++)for(let x=0;x<n;x++)if(q.isDark(y,x))r+='M'+x+' '+y+'h1v1h-1z';
   return '<svg viewBox="-1 -1 '+(n+2)+' '+(n+2)+'" shape-rendering="crispEdges" role="img" aria-label="QR code"><path d="'+r+'" fill="#121212"/></svg>'}
+const aoMoney=n=>"$"+(Math.round(n*100)%100?n.toFixed(2):String(Math.round(n)));
+function aoWeddings(){   // her weddings: today first, then upcoming, then the last two weeks
+  const t=new Date();t.setHours(0,0,0,0);const iso=t.toISOString().slice(0,10),back=new Date(t-14*864e5).toISOString().slice(0,10);
+  return allWeddings.filter(w=>!w.d.date||w.d.date>=back).sort((a,b)=>{const ka=(a.d.date||"9")<iso?"1"+(a.d.date||""):"0"+(a.d.date||"9"),kb=(b.d.date||"9")<iso?"1"+(b.d.date||""):"0"+(b.d.date||"9");return ka.localeCompare(kb)})}
+function aoQrBlock(L,link){
+  return '<div class="qr">'+qrSvg(link)+'</div><span class="lbl" style="font-size:11px;letter-spacing:.16em;text-transform:uppercase">'+(AO_SHOW==="card"?"Card or Apple Pay":"Venmo"+(L.venmoName?" · @"+esc(L.venmoName):""))+'</span>'
+   +(L.venmo?'<button type="button" class="pay" data-s="venmo" aria-pressed="'+(AO_SHOW==="venmo")+'">Pay with Venmo</button>':'')
+   +(L.card?'<button type="button" class="pay" data-s="card" aria-pressed="'+(AO_SHOW==="card")+'">Card or Apple Pay</button>':'')
+   +(L.venmo&&L.card?'<p style="font-size:14px">Tap a button to show that code.</p>':'')}
 function renderAddon(){
   const box=$("#view-addon");if(!box)return;const L=payLinks();
   if(AO_SHOW==="card"&&!L.card)AO_SHOW="venmo";if(AO_SHOW==="venmo"&&!L.venmo&&L.card)AO_SHOW="card";
-  const link=AO_SHOW==="card"?L.card:L.venmo;
   let h='<div class="ao"><div class="mhead">Wedding Day Add-Ons</div>';
   if(!L.venmo&&!L.card){h+='<p>The payment links are being set up. Check back soon.</p></div>';box.innerHTML=h;return}
-  h+='<p>Adding a service today? Scan to pay Taffeta Weddings.</p><div class="qr">'+qrSvg(link)+'</div>'
-   +'<span class="lbl" style="font-size:11px;letter-spacing:.16em;text-transform:uppercase">'+(AO_SHOW==="card"?"Card or Apple Pay":"Venmo"+(L.venmoName?" · @"+esc(L.venmoName):""))+'</span>';
-  if(L.venmo)h+='<button type="button" class="pay" data-s="venmo" aria-pressed="'+(AO_SHOW==="venmo")+'">Pay with Venmo</button>';
-  if(L.card)h+='<button type="button" class="pay" data-s="card" aria-pressed="'+(AO_SHOW==="card")+'">Card or Apple Pay</button>';
-  if(L.venmo&&L.card)h+='<p style="font-size:14px">Tap a button to show that code.</p>';
-  h+='</div>';
-  box.innerHTML=h;box.querySelectorAll(".pay").forEach(b=>b.onclick=()=>{AO_SHOW=b.dataset.s;renderAddon()});
+  if(ROLE==="office"){h+=aoOfficeLog()+'<details class="aolog"><summary class="hint" style="cursor:pointer">Show the plain payment code (no amount)</summary><div class="ao">'+aoQrBlock(L,AO_SHOW==="card"?L.card:L.venmo)+'</div></details></div>';box.innerHTML=h;aoWire(box);return}
+  const c=AO.cur;
+  if(c){
+    const note="Taffeta add-on: "+c.addon.replace(/^Add-on /i,"")+(c.qty>1?" x"+c.qty:"")+" · "+(c.bride||"wedding")+(c.date?" "+shortDate(c.date):"")+" · "+(myName()||"artist")+(c.guest?" · for "+c.guest:"");
+    const link=AO_SHOW==="card"?L.card:(L.venmoName?venmoCharge(L.venmoName,c.total,note):L.venmo);
+    h+='<div class="aotot">'+aoMoney(c.total)+'</div><div class="aofor">'+esc(c.addon)+(c.qty>1?" × "+c.qty:"")+'<br>'+esc(c.bride||"")+(c.guest?" · "+esc(c.guest):"")+'</div>'
+     +'<p>Have her scan to pay Taffeta Weddings.'+(AO_SHOW==="card"?" She'll type the amount on the card page.":" The amount and note are filled in.")+'</p>'+aoQrBlock(L,link)
+     +(c.unsaved?'<p style="color:#9a3b2e;font-style:normal;font-size:14px">This one isn\'t saved yet.</p><button type="button" class="btn" id="aoRetry">Save it again</button>':'')
+     +'<div class="aobtns"><button type="button" class="btn" id="aoDone">She paid, next guest</button><button type="button" class="btn ghost" id="aoNo">She didn\'t pay</button></div>';
+  }else{
+    const ws=aoWeddings();
+    if(!ws.some(w=>w.id===AO.wid))AO.wid=ws.length?ws[0].id:"";
+    const it=AO_MENU[AO.item]||AO_MENU[0],tot=it.each*AO.qty;
+    h+='<p>Adding a service today? Pick it first, then show her the code.</p>';
+    if(!ws.length)h+='<p>Your weddings show here once the office adds you to one.</p>';
+    else h+='<div class="aof"><label class="f">Wedding<select id="aoW">'+ws.map(w=>'<option value="'+esc(w.id)+'"'+(w.id===AO.wid?" selected":"")+'>'+esc((w.d.date?shortDate(w.d.date)+" · ":"")+(w.d.bride||"Untitled"))+'</option>').join("")+'</select></label>'
+      +'<label class="f">Add-on<select id="aoI">'+AO_MENU.map((m,i)=>'<option value="'+i+'"'+(i===AO.item?" selected":"")+'>'+esc(m.name)+' · '+aoMoney(m.each)+(m.unit?" an "+m.unit:"")+'</option>').join("")+'</select></label>'
+      +'<div class="row"><label class="f" style="flex:0 0 96px">'+(it.unit?"Hours":"How many")+'<input id="aoQ" type="number" min="1" max="20" inputmode="numeric" value="'+AO.qty+'"></label>'
+      +'<label class="f" style="flex:1 1 auto">Who it\'s for (optional)<input id="aoG" maxlength="80" placeholder="e.g. Aunt Linda" value="'+esc(AO.guest)+'"></label></div>'
+      +'<div class="aotot" id="aoT">'+aoMoney(tot)+'</div>'
+      +'<div class="aobtns"><button type="button" class="btn" id="aoGo"'+(AO.busy?" disabled":"")+'>'+(AO.busy?"Saving…":"Show her the payment code")+'</button></div></div>';
+  }
+  h+=aoMyLog()+'</div>';
+  box.innerHTML=h;aoWire(box);
 }
+function aoWire(box){
+  box.querySelectorAll(".pay").forEach(b=>b.onclick=()=>{AO_SHOW=b.dataset.s;renderAddon()});
+  const on=(id,ev,fn)=>{const el=box.querySelector("#"+id);if(el)el[ev]=fn};
+  on("aoW","onchange",e=>{AO.wid=e.target.value});
+  on("aoI","onchange",e=>{AO.item=Number(e.target.value)||0;renderAddon()});
+  on("aoQ","oninput",e=>{AO.qty=Math.max(1,Math.min(20,Math.round(Number(e.target.value)||1)));const it=AO_MENU[AO.item];$("#aoT").textContent=aoMoney(it.each*AO.qty)});
+  on("aoG","oninput",e=>{AO.guest=e.target.value});
+  on("aoGo","onclick",aoLog);
+  on("aoRetry","onclick",()=>aoSave(AO.cur));
+  on("aoDone","onclick",()=>{AO.cur=null;AO.qty=1;AO.guest="";renderAddon();toast("Logged for the office")});
+  on("aoNo","onclick",async()=>{const c=AO.cur;AO.cur=null;renderAddon();if(c.unsaved){myAddons=myAddons.filter(x=>x!==c);renderAddon();return}
+    c.status="Not paid";renderAddon();try{await api("setAddon",{id:c.id,status:"Not paid"})}catch(e){c.status="Collected";renderAddon();toast("Couldn't update that. Try again.")}});
+  on("aoFilter","onchange",e=>{AO.filter=e.target.value;renderAddon()});
+  box.querySelectorAll("[data-aoconfirm]").forEach(cb=>cb.onchange=async()=>{
+    const a=myAddons.find(x=>x.id===cb.dataset.aoconfirm);if(!a)return;const was=a.status,st=cb.checked?"Confirmed":"Collected";
+    a.status=st;a.confirmedBy=cb.checked?officeWho():"";renderAddon();
+    try{await api("setAddon",{id:a.id,status:st,by:officeWho()})}catch(e){a.status=was;renderAddon();toast("Couldn't save that. Try again.")}});
+  box.querySelectorAll("[data-aonotpaid]").forEach(b=>b.onclick=async()=>{
+    const a=myAddons.find(x=>x.id===b.dataset.aonotpaid);if(!a)return;const was=a.status;a.status=was==="Not paid"?"Collected":"Not paid";renderAddon();
+    try{await api("setAddon",{id:a.id,status:a.status,by:officeWho()})}catch(e){a.status=was;renderAddon();toast("Couldn't save that. Try again.")}});
+}
+async function aoLog(){
+  const w=allWeddings.find(x=>x.id===AO.wid),it=AO_MENU[AO.item];if(!w||!it)return;
+  const rec={id:"",weddingId:w.id,bride:w.d.bride||"",date:w.d.date||"",addon:it.name,qty:AO.qty,each:it.each,total:it.each*AO.qty,guest:AO.guest.trim(),
+    method:AO_SHOW==="card"?"Card":"Venmo",status:"Collected",loggedAt:new Date().toISOString()};
+  AO.busy=true;renderAddon();await aoSave(rec);AO.busy=false;AO.cur=rec;renderAddon();
+}
+async function aoSave(rec){
+  if(!myAddons.includes(rec))myAddons.push(rec);
+  try{const j=await api("logAddon",{addon:rec});Object.assign(rec,j.addon||{});rec.unsaved=false}
+  catch(e){rec.unsaved=true;toast(e&&e.message&&e.code==="not_found"?e.message:"Couldn't reach the office. The code still works.")}
+  if(AO.cur===rec)renderAddon();
+}
+function aoRow(a,office){
+  const np=a.status==="Not paid",ok=a.status==="Confirmed";
+  const when=a.loggedAt?new Date(a.loggedAt).toLocaleString("en-US",{month:"numeric",day:"numeric",hour:"numeric",minute:"2-digit"}):"";
+  return '<div class="aor'+(np?" np":"")+'"><div>'+(office?'<b>'+esc(a.artist||"")+'</b> · ':'')+esc(a.addon)+(a.qty>1?" × "+a.qty:"")
+    +'<small>'+esc([a.guest?"for "+a.guest:"",a.method||"",when,np?"didn't pay":ok?"confirmed"+(a.confirmedBy?" by "+a.confirmedBy:""):a.unsaved?"not saved":"waiting for the office to confirm"].filter(Boolean).join(" · "))+'</small></div>'
+    +'<div style="text-align:right"><div class="aoamt">'+aoMoney(a.total)+'</div>'
+    +(office&&!np?'<label class="chk"><input type="checkbox" data-aoconfirm="'+esc(a.id)+'"'+(ok?" checked":"")+'> Paid, confirmed</label>':'')
+    +(office&&!ok?'<button type="button" class="hint" style="border:0;background:none;padding:2px 0;cursor:pointer;text-decoration:underline" data-aonotpaid="'+esc(a.id)+'">'+(np?"Undo didn't pay":"Didn't pay")+'</button>':'')
+    +'</div></div>'}
+function aoGroups(list){const g={};list.forEach(a=>{const k=a.weddingId||a.bride;(g[k]=g[k]||[]).push(a)});
+  return Object.values(g).sort((a,b)=>(b[0].date||"").localeCompare(a[0].date||""))}
+function aoMyLog(){
+  const mine=myAddons.slice().sort((a,b)=>(b.loggedAt||"").localeCompare(a.loggedAt||""));if(!mine.length)return"";
+  let h='<div class="aolog"><div class="mhead">Add-ons you logged</div>';
+  aoGroups(mine).slice(0,8).forEach(g=>{const paid=g.filter(a=>a.status!=="Not paid").reduce((s,a)=>s+a.total,0);
+    h+='<h4>'+esc((g[0].date?shortDate(g[0].date)+" · ":"")+(g[0].bride||"Wedding"))+' · '+aoMoney(paid)+' · you earn '+aoMoney(paid*AO_SHARE)+'</h4>'+g.map(a=>aoRow(a,false)).join("")});
+  return h+'</div>'}
+function aoOfficeLog(){
+  const all=myAddons.slice().sort((a,b)=>(b.loggedAt||"").localeCompare(a.loggedAt||""));
+  const list=AO.filter==="open"?all.filter(a=>a.status==="Collected"):all;
+  const open=all.filter(a=>a.status==="Collected"),openSum=open.reduce((s,a)=>s+a.total,0);
+  let h='<p>Add-ons the artists collected for, beyond what each wedding booked. Tick “Paid, confirmed” once you find it in the Taffeta Weddings Venmo.</p>'
+   +'<div class="aolog"><div class="row" style="justify-content:space-between;align-items:center"><span class="hint">'+(open.length?open.length+" to confirm · "+aoMoney(openSum):"Nothing waiting")+'</span>'
+   +'<select id="aoFilter" style="max-width:200px"><option value="open"'+(AO.filter==="open"?" selected":"")+'>Waiting to confirm</option><option value="all"'+(AO.filter==="all"?" selected":"")+'>Everything</option></select></div>';
+  if(!list.length)h+='<p class="hint" style="margin-top:12px">'+(all.length?"Everything is confirmed.":"No add-ons logged yet. They show here as soon as an artist picks one on her phone.")+'</p>';
+  aoGroups(list).forEach(g=>{const sum=g.filter(a=>a.status!=="Not paid").reduce((s,a)=>s+a.total,0),pay={};
+    g.filter(a=>a.status!=="Not paid").forEach(a=>{pay[a.artist]=(pay[a.artist]||0)+a.total*AO_SHARE});
+    h+='<h4>'+esc((g[0].date?shortDate(g[0].date)+" · ":"")+(g[0].bride||"Wedding"))+' · '+aoMoney(sum)+'</h4>'+g.map(a=>aoRow(a,true)).join("")
+     +(Object.keys(pay).length?'<p class="hint" style="margin:6px 0 0">Artist pay (half): '+esc(Object.entries(pay).map(([n,v])=>(n.split(" ")[0]||n)+" "+aoMoney(v)).join(" · "))+'</p>':'')});
+  return h+'</div>'}
 
 /* ---------- tabs ---------- */
 const TABS=["home","addon","build","team","cal","jobs","prev","booked","pipe","coach","todo","tpl","info","pay","admin"];
@@ -2205,6 +2317,7 @@ $("#si-go").onclick=async()=>{
 $("#si-code").addEventListener("keydown",e=>{if(e.key==="Enter")$("#si-go").click()});
 function applyData(j){
   allWeddings=(j.weddings||[]).map(d=>({id:d.id,d}));
+  myAddons=(j.addons||[]).concat(myAddons.filter(x=>x.unsaved));if(!$("#view-addon").hidden)renderAddon();
   if(ROLE==="office"){const al=j.alerts||[];profiles=(j.team||[]).map(m=>Object.assign({_id:m.id,alerts:al.includes(m.id)},m));renderAdmin();renderArtists()}
   else{myPayouts=j.payouts||[];renderMine()}
   if(docId&&S.cal){const w=allWeddings.find(x=>x.id===docId);if(w&&w.d.cal)S.cal=w.d.cal}

@@ -115,6 +115,9 @@ function doPost(e) {
       case 'load': return json_(Object.assign({ ok: true }, load_(who)));
       case 'saveProfile': return json_(saveProfile_(office ? d.memberId : who.member.id, d.profile));
       case 'logPayout': return json_(logPayout_(who, d.request));
+      case 'addons': return json_({ ok: true, addons: addons_(who) });
+      case 'logAddon': return json_(logAddon_(who, d.addon));
+      case 'setAddon': return json_(setAddon_(who, d.id, d.status, d.by));
       case 'previews': return json_(previews_(who));
       case 'savePreview': return json_(savePreview_(who, d.key, d.info));
       case 'addPhoto': return json_(addPhoto_(who, d.key, d.photo));
@@ -173,7 +176,7 @@ function load_(who) {
   const weddings = weddings_();
   if (who.role === 'office') {
     const ci = calInfo_();
-    return { role: 'office', weddings: weddings.map(w => Object.assign(w.d, ci[w.d.id] ? { calTime: ci[w.d.id].time, calInfo: ci[w.d.id] } : {})), team: members_().map(m => Object.assign({}, m)), alerts: pushOnIds_() };
+    return { role: 'office', weddings: weddings.map(w => Object.assign(w.d, ci[w.d.id] ? { calTime: ci[w.d.id].time, calInfo: ci[w.d.id] } : {})), team: members_().map(m => Object.assign({}, m)), alerts: pushOnIds_(), addons: addons_(who) };
   }
   const m = who.member, email = String(m.email || '').toLowerCase();
   const mine = weddings.map(w => w.d).filter(w => (w.artists || []).some(a =>
@@ -183,7 +186,7 @@ function load_(who) {
   const me = Object.assign({}, m); delete me.secret;
   const payouts = rowsOf_(TABS.payouts.name).filter(r => r[1] === m.id)
     .map(r => ({ sentAt: iso_(r[0]), bride: r[2], date: r[3], type: r[4], total: r[5] }));
-  return { role: 'artist', me: me, weddings: mine, payouts: payouts };
+  return { role: 'artist', me: me, weddings: mine, payouts: payouts, addons: addons_(who) };
 }
 
 function weddings_() {
