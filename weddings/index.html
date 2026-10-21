@@ -15,6 +15,7 @@
 <script src="../g/coach.js?v=1"></script>
 <link rel="stylesheet" href="../g/coach.css?v=1">
 <script src="../g/qr.js?v=1"></script>
+<script src="../g/config.js?v=3"></script>
 <style>:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;padding:0}img{max-width:100%}</style>
 <script src="/refresh.js?v=4" defer></script>
 <script src="/g/bats.js?v=2" defer></script>
@@ -248,6 +249,7 @@ input,select,textarea{background:#fff;border-radius:0}
       <span id="pageTitle" class="tab-title" aria-live="polite"></span>
       <button id="tab-home" role="tab" aria-selected="false" hidden>Home</button>
       <button id="tab-addon" role="tab" aria-selected="false" hidden>Add-On Services</button>
+      <button id="tab-tip" role="tab" aria-selected="false" hidden>Gratuity</button>
       <button id="tab-booked" role="tab" aria-selected="true" hidden>Booked weddings</button>
       <button id="tab-pipe" role="tab" aria-selected="false" hidden>Pipeline</button>
       <button id="tab-todo" role="tab" aria-selected="false" hidden>To do</button>
@@ -266,6 +268,7 @@ input,select,textarea{background:#fff;border-radius:0}
 
   <section id="view-home" hidden></section>
   <section id="view-addon" hidden></section>
+  <section id="view-tip" hidden></section>
 
   <section id="view-signin" hidden>
     <div class="card" style="max-width:420px;margin:40px auto">
@@ -509,6 +512,7 @@ input,select,textarea{background:#fff;border-radius:0}
             </label>
             <label class="f">Instagram<input id="pf-instagram" placeholder="@"></label>
           </div>
+          <label class="f">Venmo username (for your Gratuity code)<input id="pf-venmo" placeholder="@" autocapitalize="off" autocorrect="off"></label>
           <div class="row" style="align-items:center;margin-top:6px">
             <button class="btn" id="pf-save2">Save my info</button>
             <span class="status pf-st"></span>
@@ -1204,11 +1208,11 @@ $("#txTeam").onclick=textTeam;
 $("#cf-text-team").onclick=textTeam;
 
 /* ---------- homepage (Alexandra, Oct 17 2026) ---------- */
-const PAGE_LABEL={booked:"Booked Weddings",build:"Timeline",team:"Schedule",cal:"Calendar",pipe:"Pipeline",coach:"Call Coach",todo:"To Do",tpl:"Texts",jobs:"Jobs",admin:"Team Records",pay:"Payout Form",prev:"Bridal Preview",addon:"Add-On Services",info:"My Info"};
+const PAGE_LABEL={booked:"Booked Weddings",build:"Timeline",team:"Schedule",cal:"Calendar",pipe:"Pipeline",coach:"Call Coach",todo:"To Do",tpl:"Texts",jobs:"Jobs",admin:"Team Records",pay:"Payout Form",prev:"Bridal Preview",addon:"Add-On Services",tip:"Gratuity",info:"My Info"};
 function homeGroups(){
   if(ROLE==="office")return [["Weddings",["booked","build","team","cal"]],["Sales",["pipe","coach","todo","tpl"]],["Bridal Team",["jobs","admin","pay"]],["Preview & Add-Ons",["prev","addon"]]];   // always an even number of squares (Alexandra, Oct 17 2026)
   PAGE_LABEL.team="My Weddings";PAGE_LABEL.jobs="Job Offers";
-  return [["My Weddings",["team"]],["Job Offers",["jobs"]],["Add-On Services",["addon"]],["Bridal Preview",["prev"]],["Get Paid",["pay"]],["My Profile",["info"]]];
+  return [["My Weddings",["team"]],["Job Offers",["jobs"]],["Add-Ons & Gratuity",["addon","tip"]],["Bridal Preview",["prev"]],["Get Paid",["pay"]],["My Profile",["info"]]];
 }
 const NAME_PICS=['adriana','alexandra','alyssa','amanda','angelina','ashley','carolyn','dominique','emily','isabella','jen','jennifer','joanna','kelly','lexi','mia','neva','sara'];
 const OFFICE_PEOPLE=["Alexandra","Dominique","Cherish"];   // Cherish runs payroll (Alexandra, Oct 17 2026)
@@ -1281,9 +1285,36 @@ function renderAddon(){
   box.innerHTML=h;box.querySelectorAll(".pay").forEach(b=>b.onclick=()=>{AO_SHOW=b.dataset.s;renderAddon()});
 }
 
+/* Gratuity (Alexandra, Oct 21 2026): each bridesmaid scans the artist's own code and tips her straight to the Venmo on
+   her profile. Separate from Add-On Services, which pays the Taffeta Weddings Venmo. The Venmo is also kept on her phone,
+   so her code shows even before the Sheet has a Venmo column. A second code opens the Taffeta Weddings Google review page. */
+const TW_REVIEW_URL=(window.TAFFETA_REVIEWS||{}).weddings||"";   // set in g/config.js; the review code shows once it is filled in
+function venmoKey(){return "tw-venmo:"+((ME&&ME.id)||"me")}
+function venmoUser(v){return String(v||"").trim().replace(/^https?:\/\/(www\.|account\.)?venmo\.com\/(u\/)?/i,"").replace(/[/?#].*$/,"").replace(/^@/,"")}
+// Suggested tip is 20% of what she was charged (Alexandra, Oct 21 2026): the artist types the service total ($150 fills
+// in $30, add-ons included) and Venmo opens with that tip. A blank total lets the guest type her own amount.
+const TIP_PCT=.2; let TIP_TOTAL="150";
+const tipOf=t=>Math.round((parseFloat(String(t).replace(/[^0-9.]/g,""))||0)*TIP_PCT);
+function venmoTipUrl(v,amt){return amt?"https://venmo.com/"+encodeURIComponent(v)+"?txn=pay&amount="+amt+"&note="+encodeURIComponent("Thank you! ✨"):"https://venmo.com/u/"+encodeURIComponent(v)}
+function renderTip(){
+  const box=$("#view-tip");if(!box)return;
+  const v=venmoUser((ME&&ME.venmo)||lsGet(venmoKey())),first=String(myName()).trim().split(/\s+/)[0]||"",ok=v&&!/\s/.test(v);
+  let h='<div class="ao"><div class="mhead">Gratuity</div>';
+  if(!ok)h+='<p>'+(v?"Your Venmo has a space in it. Use your Venmo username, the @ name, like @Jane-Smith-12.":"Add your Venmo username on My Profile and your tip code shows here.")+'</p>'
+    +'<button type="button" class="pay" id="tipGo">Go to My Profile</button>';
+  else h+='<p>Thank you for having '+(first?esc(first):"me")+' on your day! Scan to send a tip with Venmo.</p><div class="qr">'+qrSvg(venmoTipUrl(v,tipOf(TIP_TOTAL)))+'</div>'
+   +'<span class="lbl" id="tipLbl" style="font-size:11px;letter-spacing:.16em;text-transform:uppercase"></span>'
+   +'<label class="f" style="flex-direction:row;align-items:center;gap:8px;justify-content:center">Service total $<input id="tipTotal" inputmode="decimal" style="width:110px;text-align:center" value="'+esc(TIP_TOTAL)+'"></label>';
+  if(TW_REVIEW_URL)h+='<div class="mhead" style="margin-top:12px">Leave Us a Review</div><p>Loved your look? Scan to leave Taffeta Weddings a Google review.</p><div class="qr">'+qrSvg(TW_REVIEW_URL)+'</div>'
+   +'<span class="lbl" style="font-size:11px;letter-spacing:.16em;text-transform:uppercase">Google review · Taffeta Weddings</span>';
+  if(ok)h+='<p style="font-size:14px">Turn your screen brightness up so the codes scan easily. Tips go straight to your own Venmo.</p>';
+  box.innerHTML=h+'</div>';const ti=$("#tipTotal"),say=()=>{const t=tipOf(TIP_TOTAL);$("#tipLbl").textContent="Venmo · @"+v+(t?" · 20% tip $"+t:" · any amount")};
+  if(ti){say();ti.oninput=()=>{TIP_TOTAL=ti.value;box.querySelector(".qr").innerHTML=qrSvg(venmoTipUrl(v,tipOf(TIP_TOTAL)));say()}}const g=$("#tipGo");if(g)g.onclick=()=>goTab("info");
+}
+
 /* ---------- tabs ---------- */
-const TABS=["home","addon","build","team","cal","jobs","prev","booked","pipe","coach","todo","tpl","info","pay","admin"];
-function showTab(t){if(!TABS.includes(t))t="home";document.body.classList.toggle("tw-home",t==="home");if(t==="home")renderHome();if(t==="addon")renderAddon();TABS.forEach(k=>{$("#tab-"+k).setAttribute("aria-selected",k===t);$("#view-"+k).hidden=k!==t});$("#pageTitle").textContent=$("#tab-"+t).textContent;try{localStorage.setItem("tt-tab",t)}catch(e){}}
+const TABS=["home","addon","tip","build","team","cal","jobs","prev","booked","pipe","coach","todo","tpl","info","pay","admin"];
+function showTab(t){if(!TABS.includes(t))t="home";document.body.classList.toggle("tw-home",t==="home");if(t==="home")renderHome();if(t==="addon")renderAddon();if(t==="tip")renderTip();TABS.forEach(k=>{$("#tab-"+k).setAttribute("aria-selected",k===t);$("#view-"+k).hidden=k!==t});$("#pageTitle").textContent=$("#tab-"+t).textContent;try{localStorage.setItem("tt-tab",t)}catch(e){}}
 TABS.forEach(k=>$("#tab-"+k).onclick=()=>showTab(k));
 
 /* ---------- storage ---------- */
@@ -1506,7 +1537,7 @@ $("#teamImg").onclick=()=>{const w=allWeddings.find(x=>x.id===teamSel);if(w)save
 
 
 /* ---------- team info, payout link, records ---------- */
-const PF=["legalName","preferredName","phone","email","address","city","state","zip","role","instagram","area","availability","square","emergencyName","emergencyPhone","notes"];
+const PF=["legalName","preferredName","phone","email","address","city","state","zip","role","instagram","area","availability","square","emergencyName","emergencyPhone","notes","venmo"];
 const SKILLS=["Bridal hair","Bridal makeup","Airbrush","Extensions","Lashes","Barber"];
 $("#pf-skills").innerHTML=SKILLS.map((k,i)=>'<label class="chk"><input type="checkbox" id="pf-sk'+i+'" value="'+k+'"> '+k+'</label>').join("");
 let profiles=[];
@@ -1517,7 +1548,7 @@ $("#pf-save").onclick=async()=>{
   body.skills=SKILLS.filter((k,i)=>$("#pf-sk"+i).checked);
   if(!body.legalName&&!body.preferredName){pfSay("Add your name first.");return}
   pfSay("Saving…");$("#pf-save").disabled=$("#pf-save2").disabled=true;
-  try{await api("saveProfile",{profile:body});ME=Object.assign(ME||{},body);pfDraftClear();pfSay("Saved. Thank you!")}
+  try{await api("saveProfile",{profile:body});ME=Object.assign(ME||{},body);lsSet(venmoKey(),body.venmo);pfDraftClear();pfSay("Saved. Thank you!")}
   catch(e){pfSay("That didn't save. Check your connection and tap Save again.")}
   finally{$("#pf-save").disabled=$("#pf-save2").disabled=false}
 };
@@ -2214,7 +2245,7 @@ async function start(){
   const j=await api("load");
   ROLE=j.role;canWrite=ROLE==="office";
   $("#view-signin").hidden=true;$("#signOut").hidden=false;
-  const tabs=ROLE==="office"?["home","booked","pipe","coach","todo","tpl","build","team","cal","jobs","prev","admin","pay","addon"]:["home","team","jobs","addon","prev","info","pay"];
+  const tabs=ROLE==="office"?["home","booked","pipe","coach","todo","tpl","build","team","cal","jobs","prev","admin","pay","addon"]:["home","team","jobs","addon","tip","prev","info","pay"];
   TABS.forEach(k=>$("#tab-"+k).hidden=!tabs.includes(k));
   $("#tab-team").textContent=ROLE==="office"?"Schedule":"My weddings";
   $("#tab-jobs").textContent=ROLE==="office"?"Jobs":"Job offers";
@@ -2310,9 +2341,9 @@ async function jbCheckNew(){
   }catch(e){}
 }
 showTab=function(t){
-  const allowed=ROLE==="office"?["home","booked","pipe","coach","todo","tpl","build","team","cal","jobs","prev","admin","pay","addon"]:["home","team","jobs","addon","prev","info","pay"];
+  const allowed=ROLE==="office"?["home","booked","pipe","coach","todo","tpl","build","team","cal","jobs","prev","admin","pay","addon"]:["home","team","jobs","addon","tip","prev","info","pay"];
   if(!allowed.includes(t))t="home";
-  document.body.classList.toggle("tw-home",t==="home");if(t==="home")renderHome();if(t==="addon")renderAddon();
+  document.body.classList.toggle("tw-home",t==="home");if(t==="home")renderHome();if(t==="addon")renderAddon();if(t==="tip")renderTip();
   TABS.forEach(k=>{$("#tab-"+k).setAttribute("aria-selected",k===t);$("#view-"+k).hidden=k!==t});
   $("#pageTitle").textContent=$("#tab-"+t).textContent;
   if(t==="prev")loadPreviews();
