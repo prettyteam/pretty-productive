@@ -50,18 +50,19 @@ async function acPdf(sheet,guest){
   const [lib,logo,script]=await Promise.all([acLib(),acLogo(),acScriptFont()]);
   /* laid out twice: once to measure, then for real with the spare room shared evenly between the sections, so a
      short sheet fills the page instead of bunching at the top (Alexandra, Oct 20 2026) */
-  const mk=()=>{const d=new lib.jsPDF({unit:'pt',format:[396,612]});
+  let H=612;
+  const mk=()=>{const d=new lib.jsPDF({unit:'pt',format:[396,H]});
     if(script){try{d.addFileToVFS('CormorantLightItalic.ttf',script);d.addFont('CormorantLightItalic.ttf','CormorantLI','italic');SF='CormorantLI'}catch(e){SF='times'}}return d};
   let SF='times', doc=mk(), pad=0, gaps=0;
   const big=SF==='times'?1:1.12;
-  const W=396,H=612,M=34,CW=W-M*2,ink=[18,18,18],soft=[95,91,85],choc=[18,18,18],line=[226,222,213];
+  const W=396,M=34,CW=W-M*2,ink=[18,18,18],soft=[95,91,85],choc=[18,18,18],line=[226,222,213];
   let y=0;
   const bg=()=>{doc.setFillColor(248,246,240);doc.rect(0,0,W,H,'F');doc.setFillColor(255,255,255);doc.rect(12,12,W-24,H-24,'F');
     /* the app's double frame: a thin black line and a finer charcoal line just inside (Alexandra, Oct 15 2026) */
     doc.setDrawColor(18,18,18);doc.setLineWidth(.7);doc.rect(12,12,W-24,H-24,'S');doc.setDrawColor(43,42,40);doc.setLineWidth(.3);doc.rect(17,17,W-34,H-34,'S');doc.setLineWidth(.2)};
   const foot=()=>{doc.setDrawColor(...line);doc.line(M,H-40,W-M,H-40);doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.setTextColor(...soft);
     doc.text('Taffeta Salon & Spa  ·  219 Bellevue Ave, Hammonton NJ  ·  '+AC_PHONE+'  ·  '+AC_SITE,W/2,H-26,{align:'center'})};
-  const need=n=>{if(y+n>H-52){foot();doc.addPage([396,612]);bg();y=M+6}};
+  const need=n=>{if(y+n>H-52){foot();doc.addPage([396,H]);bg();y=M+6}};
   const para=(t,size,font,style,color,gap,indent)=>{doc.setFont(font,style);doc.setFontSize(size);doc.setTextColor(...color);
     const ls=doc.splitTextToSize(t,CW-(indent||0)),lh=size*1.32;ls.forEach(l=>{need(lh);doc.text(l,M+(indent||0),y+size);y+=lh});y+=gap||0};
   const label=t=>{gaps++;y+=pad;need(50);y+=4;doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.setTextColor(...ink);doc.setCharSpace(1.6);
@@ -89,6 +90,9 @@ async function acPdf(sheet,guest){
   /* the extra room goes before each section and the sign-off; if that tips it onto a second page, ease off until it fits */
   if(doc.getNumberOfPages()===1&&gaps){const room=Math.min(70,Math.max(0,(H-60-y)/gaps));
     for(const f of [1,.75,.5,0]){pad=room*f;doc=mk();gaps=0;draw();if(doc.getNumberOfPages()===1)break}}
+  /* still more than one page (the review stars can tip a long sheet over): one longer page cut just below the date,
+     same as the Home care PDFs, so nothing spills onto a second page (Oct 21 2026) */
+  if(doc.getNumberOfPages()>1){pad=0;H=4000;doc=mk();gaps=0;draw();H=Math.max(612,Math.ceil(y+72));doc=mk();gaps=0;draw()}
   return doc.output('blob');
 }
 const acFile=(s,g)=>'Taffeta '+s.name.replace(/&/g,'and')+' Aftercare'+(g?' - '+g:'')+'.pdf';

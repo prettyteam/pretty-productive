@@ -548,8 +548,9 @@ async function rgPdf(me,R,kind){
   /* the extra room goes before each section and the sign-off; if that tips it onto a second page, ease off until it fits */
   if(doc.getNumberOfPages()===1&&gaps){const room=Math.min(70,Math.max(0,(H-60-y)/gaps));
     for(const f of [1,.75,.5,0]){pad=room*f;doc=mk();gaps=0;draw();if(doc.getNumberOfPages()===1)break}}
-  /* still more than one page: one longer page instead, so nothing (like the date) spills onto a second (Alexandra, Oct 20 2026) */
-  if(doc.getNumberOfPages()>1){pad=0;H=4000;doc=mk();gaps=0;draw();H=Math.max(612,Math.ceil(y+110));doc=mk();gaps=0;draw()}
+  /* still more than one page: one longer page instead, so nothing (like the date) spills onto a second (Alexandra, Oct 20 2026),
+     cut just below the date so there is no empty space at the bottom (Oct 21 2026) */
+  if(doc.getNumberOfPages()>1){pad=0;H=4000;doc=mk();gaps=0;draw();H=Math.max(612,Math.ceil(y+72));doc=mk();gaps=0;draw()}
   return doc.output('blob');
 }
 const rgFile=(R,kind)=>'Taffeta '+(kind==='skin'?'Skincare':'Hair Care')+' Regimen'+(R.guest.trim()?' - '+rgFirst(R.guest):'')+'.pdf';
