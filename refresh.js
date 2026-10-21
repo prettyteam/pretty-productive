@@ -2,6 +2,7 @@
    the time this copy was loaded, and "Update ready" when a newer version of the page is on the site. */
 (function(){
   if(window.__refreshBar) return; window.__refreshBar=1;
+  try{if(window.self!==window.top) return}catch(e){return}   /* inside another page (her card in the app): that page has its own Refresh */
   const css=`.rbar{position:fixed;left:0;right:0;bottom:0;z-index:4;display:flex;align-items:center;justify-content:space-between;gap:12px;box-sizing:border-box;margin:0;padding:10px 20px calc(10px + env(safe-area-inset-bottom));border:0;border-top:1px solid #dcd6cb;border-radius:0;background:#f8f6f0;color:#121212;font:14px/1.3 "Libertinus Sans",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif}
 body{padding-bottom:calc(56px + env(safe-area-inset-bottom))}
 .rbar small{font-size:13px;color:#121212}
