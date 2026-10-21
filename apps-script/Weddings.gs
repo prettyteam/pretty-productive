@@ -22,9 +22,9 @@ const TABS = {
   team: { name: 'Team',
     headers: ['Id', 'Link key', 'Active', 'Name', 'Legal name', 'Cell', 'Email', 'Address', 'City', 'State', 'ZIP', 'Does',
               'Specialties', 'Instagram', 'Travel area', 'Availability', 'Square direct deposit', 'Emergency contact',
-              'Emergency phone', 'Notes', 'Updated', 'Added'],
+              'Emergency phone', 'Notes', 'Updated', 'Added', 'Venmo'],
     keys: ['id', 'secret', 'active', 'preferredName', 'legalName', 'phone', 'email', 'address', 'city', 'state', 'zip', 'role',
-           'skills', 'instagram', 'area', 'availability', 'square', 'emergencyName', 'emergencyPhone', 'notes', 'updatedAt', 'addedAt'] },
+           'skills', 'instagram', 'area', 'availability', 'square', 'emergencyName', 'emergencyPhone', 'notes', 'updatedAt', 'addedAt', 'venmo'] },
   payouts: { name: 'Payout requests', headers: ['Sent', 'Artist', 'Bride', 'Event date', 'Event type', 'Total'] },
   previews: { name: 'Previews',
     headers: ['Key', 'Preview date', 'Preview', 'Extensions', 'Length', 'Color', 'Pieces', 'Needs from the office', 'Notes', 'Photos',
@@ -32,7 +32,7 @@ const TABS = {
 };
 const PREVIEW_WORD = /preview/i;           // calendar events with this in the title show on the Bridal preview tab
 const PHOTO_FOLDER = 'Taffeta Weddings Preview Photos';
-const PROFILE_KEYS = TABS.team.keys.slice(3, 20);
+const PROFILE_KEYS = TABS.team.keys.slice(3, 20).concat('venmo');   // Venmo (Oct 21 2026) is the last column, for the Gratuity code
 
 /** Run once from the editor (▶ Run). Makes the tabs and the office code. */
 function setup() {
@@ -248,6 +248,8 @@ function saveProfile_(id, p) {
   PROFILE_KEYS.forEach(k => { if (k in p) m[k] = k === 'skills' ? list_(p[k]) : clean_(p[k], 500); });
   if (Array.isArray(m.skills)) m.skills = m.skills.join(', ');
   m.updatedAt = new Date().toISOString();
+  const vc = TABS.team.keys.length;   // add the Venmo heading the first time someone saves
+  if (!sheet_(TABS.team.name).getRange(1, vc).getValue()) sheet_(TABS.team.name).getRange(1, vc).setValue('Venmo');
   sheet_(TABS.team.name).getRange(m._row, 1, 1, TABS.team.keys.length).setValues([TABS.team.keys.map(k => m[k])]);
   return { ok: true, updatedAt: m.updatedAt };
 }
