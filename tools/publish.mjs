@@ -256,7 +256,8 @@ for (const p of pages) {
   if (spaFor.list && p.role === 'esthetician') mine.spaList = spaFor.list;
   if (schedMap[p.slug]) mine.schedule = { weeks: schedMap[p.slug], updated: (data.schedule && data.schedule.updated) || null };
   if (pkAll) mine.pk = pkAll; // PK Knowledge tab: same brand reads for everyone (Oct 17 2026)
-  if (socialAll) mine.social = { week: socialAll.week, posts: p.role === 'esthetician' ? socialAll.esti : socialAll.hair };
+  // Self Promotion page: her own 5 ideas when the Sunday run wrote some (Oct 21 2026), else the hair or skin set.
+  if (socialAll) { const own = socialAll.people && socialAll.people[p.slug]; mine.social = { week: socialAll.week, posts: own || (p.role === 'esthetician' ? socialAll.esti : socialAll.hair), ...(own ? { own: true } : {}) }; }
   // This week: only this person's own row plus the team's retail and add-ons (never the team's service sales or anyone else's row).
   if (data.week && Array.isArray(data.week.rows)) {
     const r = data.week.rows.find((x) => x && x.slug === p.slug), t = data.week.team || {};
