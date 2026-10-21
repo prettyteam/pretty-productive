@@ -523,12 +523,13 @@ async function rgPdf(me,R,kind){
   gaps++; y+=pad;
   if(rgBack(R)||R.msg.trim()){
     y+=10; need(70);
-    const top=y; y+=12;
-    if(R.msg.trim()) para('“'+R.msg.trim()+'”',11*big,SF,'italic',ink,6,12);
+    const top=y; y+=9; let bw=0;
+    if(R.msg.trim()){para('“'+R.msg.trim()+'”',11*big,SF,'italic',ink,6,12);bw=CW}
     /* centered in the box, with the phone number kept on one line (Alexandra, Oct 20 2026) */
     if(rgBack(R)){doc.setFont('helvetica','bold');doc.setFontSize(9.5);doc.setTextColor(...choc);
-      ['We look forward to seeing you '+rgBack(R)+'.','Call or text '+RG_PHONE+' to reserve.'].forEach(t=>doc.splitTextToSize(t,CW-12).forEach(l=>{need(13);doc.text(l,W/2,y+9.5,{align:'center'});y+=9.5*1.32}));y+=2}
-    y+=8; doc.setDrawColor(43,42,40); doc.setLineWidth(.4); doc.rect(M-8,top,CW+16,y-top,'S'); doc.setLineWidth(.2);
+      ['We look forward to seeing you '+rgBack(R)+'.','Call or text '+RG_PHONE+' to reserve.'].forEach(t=>doc.splitTextToSize(t,CW-12).forEach(l=>{need(13);bw=Math.max(bw,doc.getTextWidth(l));doc.text(l,W/2,y+9.5,{align:'center'});y+=9.5*1.32}));y+=1}
+    /* the box hugs the text instead of running edge to edge (Alexandra, Oct 21 2026) */
+    y+=7; bw=Math.min(CW+16,bw+36); doc.setDrawColor(43,42,40); doc.setLineWidth(.4); doc.rect(W/2-bw/2,top,bw,y-top,'S'); doc.setLineWidth(.2);
   }
   if(kind==='skin'&&R.picks.some(p=>/^Biologique Recherche/.test(p.n))){y+=10;para('Remember, Biologique Recherche is very concentrated, so only a small amount is needed. If you have questions, reach out any time!',9.5,'helvetica','italic',soft,2)}
   /* five stars that open our Google review page (Alexandra, Oct 21 2026) */
