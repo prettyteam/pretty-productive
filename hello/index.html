@@ -21,7 +21,6 @@ main{padding:22px 16px 48px;gap:0}
 .hi{font-family:var(--display);font-style:italic;font-size:36px;line-height:1.1;margin:0}
 .role{font-size:11px;letter-spacing:.18em;line-height:1.9;text-transform:uppercase;color:var(--soft);margin-top:-8px}
 .note{font-family:var(--display);font-style:italic;font-size:19px;line-height:1.5;max-width:330px;text-wrap:balance}
-.sign{font-family:var(--display);font-style:italic;font-size:17px;color:var(--soft)}
 .rule{width:44px;height:1px;background:var(--line);margin:4px auto}
 .btn{display:block;text-transform:none;letter-spacing:normal;border-radius:0;width:100%;max-width:320px;padding:15px 14px;border:1px solid var(--line);background:#fff;color:var(--ink);text-decoration:none;font-family:var(--display);font-size:16.5px;line-height:1.3}
 .btn small{display:block;font-weight:400;font-family:var(--body);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--soft);margin-top:4px}
@@ -44,7 +43,6 @@ main{padding:22px 16px 48px;gap:0}
   <h1 class="hi" id="hi">It was so nice to meet you</h1>
   <div class="role" id="role" hidden></div>
   <p class="note" id="note">It was really nice to meet you. I hope to work with you again.</p>
-  <p class="sign" id="sign">Your Taffeta artist</p>
   <div class="rule"></div>
   <a class="btn" id="book" target="_blank" rel="noopener">Come visit me for your other hair needs in the salon<small>Book online</small></a>
   <!-- $20 thank-you for anyone in the bridal party who gets the card, new or returning (Alexandra, Oct 21 2026); shows with the booking button -->
@@ -62,7 +60,7 @@ main{padding:22px 16px 48px;gap:0}
 (function(){
   const q=new URLSearchParams(location.search), clean=s=>String(s||"").replace(/[^\p{L}\p{M}' .-]/gu,"").trim().slice(0,30);
   const name=clean(q.get("a")).split(/\s+/)[0]||"", role=(q.get("r")||"").toLowerCase();
-  if(name){document.getElementById("hi").textContent="Hi, it's "+name+"!";document.getElementById("sign").textContent=name;document.title="A Note from "+name+" at Taffeta"}
+  if(name){document.getElementById("hi").textContent="Hi, it's "+name+"!";document.title="A Note from "+name+" at Taffeta"}
   const R={hair:"Your hair artist",makeup:"Your makeup artist",both:"Your hair & makeup artist"}[role];
   if(R){const el=document.getElementById("role");el.textContent=R;el.append(document.createElement("br"),"Taffeta Weddings");el.hidden=false}
   /* the salon button says hair or makeup to match the artist */
