@@ -404,7 +404,7 @@ button{color:var(--ink)}
    RX cards come from the front desk script and leave this iPad when she switches out or walks away for 20 minutes. */
 function h(tag,attrs,...kids){const e=document.createElement(tag);for(const[k,v]of Object.entries(attrs||{})){if(v==null)continue;if(k==='class')e.className=v;else if(k.startsWith('on'))e.addEventListener(k.slice(2),v);else e.setAttribute(k,v)}for(const c of kids.flat()){if(c==null||c===false)continue;e.append(c.nodeType?c:document.createTextNode(String(c)))}return e}
 const store={get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
-const TEAM=[['Adriana','stylist'],['Alexandra','stylist'],['Alyssa','stylist'],['Amanda','stylist'],['Ashley B','stylist'],['Dominique','stylist'],['Emily B','stylist'],['Isabella','stylist'],['Jen M','stylist'],['Jennifer C','stylist'],['Joanna','stylist'],['Lexi','stylist'],['Mia','stylist'],['Neva L','stylist'],['Sara','stylist'],['Angelina H','esthetician'],['Carolyn','esthetician'],['Kelly','esthetician']];
+const TEAM=[['Adriana','stylist'],['Alexandra','stylist'],['Amanda','stylist'],['Ashley B','stylist'],['Dominique','stylist'],['Isabella','stylist'],['Jen M','stylist'],['Jennifer C','stylist'],['Joanna','stylist'],['Kat','stylist'],['Lexi','stylist'],['Mia','stylist'],['Neva L','stylist'],['Rose','stylist'],['Sara','stylist'],['Angelina H','esthetician'],['Carolyn','esthetician'],['Kelly','esthetician']];
 const slugOf=n=>n.toLowerCase().replace(/\s+/g,'-');
 let S={mine:null}, CARD='', UNLOCKED=false, SETUP=/[?&]setup\b/.test(location.search);
 let PICK=null, AMSG='', ABUSY=false, LAST=Date.now();
