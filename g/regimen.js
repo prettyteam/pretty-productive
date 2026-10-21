@@ -526,7 +526,8 @@ async function rgPreview(me,toast,R,kind){
 /* Artist taps Save PDF: the regimen goes to the Home care list in the front desk app, and her screen clears for the next guest */
 /* On once the live Apps Script has the Home care handler: its staff reply carries regimen:true. The old script answers ok
    to any post, so saving before then would clear the artist's screen without anything reaching the desk. */
-const rgDeskOn=()=>typeof HUB!=='undefined'&&!!(HUB.data&&HUB.data.regimen);
+/* on the salon iPad there's no HUB, but her PIN sign-in (tk) can save to the desk (Alexandra, Oct 20 2026) */
+const rgDeskOn=()=>(typeof HUB!=='undefined'&&!!(HUB.data&&HUB.data.regimen))||!!(S.mine&&S.mine.staff&&S.mine.staff.tk&&window.TAFFETA_ENDPOINT);
 async function rgSave2(me,toast,btn){
   if(!rgDeskOn()){toast.textContent='The front desk list isn’t switched on yet. Your regimen stays saved on this screen, so tap again once it is.';return}
   const st=(S.mine&&S.mine.staff)||{}, kind=rgKind();
@@ -534,7 +535,7 @@ async function rgSave2(me,toast,btn){
   btn.disabled=true; toast.textContent='Saving…';
   try{
     const r=await fetch(window.TAFFETA_ENDPOINT,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
-      body:JSON.stringify({type:'regimen',slug:st.slug,t:st.t,artist:me,guest:RG.guest.trim(),kind,data:RG})});
+      body:JSON.stringify({type:'regimen',slug:st.slug,t:st.t,tk:st.tk,artist:me,guest:RG.guest.trim(),kind,data:RG})});
     const j=await r.json();
     if(!j.ok) throw new Error(j.error||'no');
     const who=rgFirst(RG.guest);

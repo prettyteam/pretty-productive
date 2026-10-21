@@ -507,7 +507,12 @@ function rxPost_(d) {
 }
 
 function teamPost_(d) {
-  const me = member_(d.slug, d.t);
+  let me = member_(d.slug, d.t);
+  // the salon iPad signs in with a PIN (the rxlogin key), not her app link: let it save home care too (Alexandra, Oct 20 2026)
+  if (!me && d.type === 'regimen' && d.tk && d.tk === rxTok_(String(d.slug || ''))) {
+    const r = tvals_(TT.team).find(x => String(x[1]) === String(d.slug));
+    if (r && String(r[4]).toLowerCase() !== 'no') me = { name: String(r[0]), slug: String(r[1]) };
+  }
   if (!me) return json_({ ok: false, error: 'link' });
   const now = new Date();
   if (d.type === 'clock') {
