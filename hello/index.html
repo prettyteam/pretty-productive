@@ -48,7 +48,7 @@ main{padding:22px 16px 48px;gap:0}
   <div class="rule"></div>
   <a class="btn" id="book" target="_blank" rel="noopener">Come visit me for your other hair needs in the salon<small>Book online</small></a>
   <!-- first-visit thank-you (Alexandra, Oct 21 2026); shows with the booking button -->
-  <div class="offer" id="offer"><b>$20 off your first salon visit</b><span>Just mention this card when you book or check in.</span></div>
+  <div class="offer" id="offer"><b>$20 off your first salon visit</b><span id="offerWhen">Just mention this card when you book or check in. Good for 3 months.</span></div>
   <div class="rule"></div>
   <a class="stars" id="rev" target="_blank" rel="noopener" aria-label="Leave Taffeta Weddings a Google review">
     <svg viewBox="0 0 190 34" aria-hidden="true" id="starsvg"></svg>
@@ -78,6 +78,9 @@ main{padding:22px 16px 48px;gap:0}
   const book=window.TAFFETA_BOOKING||"", rev=(window.TAFFETA_REVIEWS||{}).weddings||"";
   /* artists who only do weddings get a short thank-you instead (Alexandra, Oct 21 2026) */
   if(q.get("s")!=="1")document.getElementById("note").textContent="Thank you for letting me be part of your day!";
+  /* the $20 offer is good for 3 months from the wedding day (?d= is the day the guest scanned it or got the AirDrop) */
+  const d=/^\d{4}-\d{2}-\d{2}$/.test(q.get("d")||"")?new Date(q.get("d")+"T12:00:00"):null;
+  if(d&&!isNaN(d)){d.setMonth(d.getMonth()+3);const w=document.getElementById("offerWhen");w.textContent="Just mention this card when you book or check in.";w.append(document.createElement("br"),"Valid through "+d.toLocaleDateString("en-US",{month:"long",day:"numeric",year:"numeric"})+".")}
   const b=document.getElementById("book"); if(book&&q.get("s")==="1")b.href=book; else{b.hidden=true;document.getElementById("offer").hidden=true;document.getElementById("offer").nextElementSibling.hidden=true}
   const s=document.getElementById("rev"); if(rev)s.href=rev; else s.hidden=true;
   /* five outlined stars, same shape as the review stars on the aftercare PDFs */
