@@ -352,6 +352,7 @@ body .rbar.new button{background:none;color:#2b2a28;font-weight:700;text-decorat
 /* guide basics + advancement */
 .pkg{display:flex;flex-direction:column;gap:12px}.pkh{display:flex;align-items:center;justify-content:space-between;gap:10px}.pkt{font-family:var(--display);font-size:17px;line-height:1.3}.pkgo{display:inline-flex;align-items:center;text-decoration:none;align-self:flex-start}
 .tipcard{align-items:center;text-align:center}.tipqr{width:min(72vw,260px);background:#fff;border:1px solid #2b2a28;outline:1px solid #2b2a28;outline-offset:-6px;padding:22px;line-height:0}.tipqr svg{display:block;width:100%;height:auto}
+.tipamt{flex-direction:row;align-items:center;justify-content:center;gap:8px}.tipamt input{width:110px;text-align:center}
 .tipme{width:72px;height:72px;border-radius:50%;object-fit:cover}.tiphi{font-family:var(--display);font-size:22px;margin:0}
 .gcard{background:#fff;border:1px solid var(--ink);border-radius:6px;padding:20px;display:flex;flex-direction:column;gap:12px}
 .gcard h2{font-family:var(--display);font-weight:400;font-size:21px;display:flex;align-items:center;gap:10px;margin:0}
@@ -1747,6 +1748,11 @@ function venmoUser(v){return String(v||'').trim().replace(/^https?:\/\/(www\.|ac
 function qrSvg(text){const q=qrcode(0,'M');q.addData(text);q.make();const n=q.getModuleCount();let r='';
   for(let y=0;y<n;y++)for(let x=0;x<n;x++)if(q.isDark(y,x))r+='M'+x+' '+y+'h1v1h-1z';
   return '<svg viewBox="-1 -1 '+(n+2)+' '+(n+2)+'" shape-rendering="crispEdges" role="img" aria-label="QR code"><path d="'+r+'" fill="#121212"/></svg>'}
+/* Suggested tip is 20% of what the guest was charged (Alexandra, Oct 21 2026): she types the service total ($150 fills in
+   $30) and Venmo opens with that tip filled in. A blank total lets the guest type her own amount. */
+const TIP_PCT=.2; let TIP_TOTAL='150';
+const tipOf=t=>Math.round((parseFloat(String(t).replace(/[^0-9.]/g,''))||0)*TIP_PCT);
+function venmoTipUrl(v,amt){return amt?'https://venmo.com/'+encodeURIComponent(v)+'?txn=pay&amount='+amt+'&note='+encodeURIComponent('Thank you! ✨'):'https://venmo.com/u/'+encodeURIComponent(v)}
 function qrEl(text){const d=h('div',{class:'tipqr'});d.innerHTML=qrSvg(text);return d}
 function tipView(){
   const info=(HUB.data&&HUB.data.info)||{}, v=venmoUser(info.venmo), ok=v&&!/\s/.test(v), fn=firstName(S.mine.name), ph=myPhoto();
@@ -1758,8 +1764,11 @@ function tipView(){
     h('div',{class:'gcard tipcard'},
       ph?h('img',{class:'tipme',src:ph,alt:''}):null,
       h('p',{class:'tiphi'},'Thank you for visiting ',fn,'!'),
-      qrEl('https://venmo.com/u/'+encodeURIComponent(v)),
-      h('span',{class:'lbl'},'Venmo · @'+v),
+      ...(()=>{const qr=qrEl(venmoTipUrl(v,tipOf(TIP_TOTAL))), lb=h('span',{class:'lbl'}),
+        say=()=>{const t=tipOf(TIP_TOTAL);lb.textContent='Venmo · @'+v+(t?' · 20% tip $'+t:' · any amount')};say();
+        const inp=h('input',{type:'text',inputmode:'decimal',value:TIP_TOTAL,'aria-label':'Service total',placeholder:'0',
+          oninput:e=>{TIP_TOTAL=e.target.value;qr.innerHTML=qrSvg(venmoTipUrl(v,tipOf(TIP_TOTAL)));say()}});
+        return [qr,lb,h('label',{class:'fld tipamt'},'Service total $',inp)]})(),
       h('p',{class:'soft',style:'margin:0;font-size:14px'},'Open your phone camera and point it at the code to send a tip with Venmo.'));
   const rev=SALON_REVIEW_URL?h('div',{class:'gcard tipcard'},
     h('p',{class:'tiphi'},'Leave us a review'),

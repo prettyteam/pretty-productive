@@ -1291,18 +1291,25 @@ function renderAddon(){
 const TW_REVIEW_URL=(window.TAFFETA_REVIEWS||{}).weddings||"";   // set in g/config.js; the review code shows once it is filled in
 function venmoKey(){return "tw-venmo:"+((ME&&ME.id)||"me")}
 function venmoUser(v){return String(v||"").trim().replace(/^https?:\/\/(www\.|account\.)?venmo\.com\/(u\/)?/i,"").replace(/[/?#].*$/,"").replace(/^@/,"")}
+// Suggested tip is 20% of what she was charged (Alexandra, Oct 21 2026): the artist types the service total ($150 fills
+// in $30, add-ons included) and Venmo opens with that tip. A blank total lets the guest type her own amount.
+const TIP_PCT=.2; let TIP_TOTAL="150";
+const tipOf=t=>Math.round((parseFloat(String(t).replace(/[^0-9.]/g,""))||0)*TIP_PCT);
+function venmoTipUrl(v,amt){return amt?"https://venmo.com/"+encodeURIComponent(v)+"?txn=pay&amount="+amt+"&note="+encodeURIComponent("Thank you! ✨"):"https://venmo.com/u/"+encodeURIComponent(v)}
 function renderTip(){
   const box=$("#view-tip");if(!box)return;
   const v=venmoUser((ME&&ME.venmo)||lsGet(venmoKey())),first=String(myName()).trim().split(/\s+/)[0]||"",ok=v&&!/\s/.test(v);
   let h='<div class="ao"><div class="mhead">Gratuity</div>';
   if(!ok)h+='<p>'+(v?"Your Venmo has a space in it. Use your Venmo username, the @ name, like @Jane-Smith-12.":"Add your Venmo username on My Profile and your tip code shows here.")+'</p>'
     +'<button type="button" class="pay" id="tipGo">Go to My Profile</button>';
-  else h+='<p>Thank you for having '+(first?esc(first):"me")+' on your day! Scan to send a tip with Venmo.</p><div class="qr">'+qrSvg("https://venmo.com/u/"+encodeURIComponent(v))+'</div>'
-   +'<span class="lbl" style="font-size:11px;letter-spacing:.16em;text-transform:uppercase">Venmo · @'+esc(v)+'</span>';
+  else h+='<p>Thank you for having '+(first?esc(first):"me")+' on your day! Scan to send a tip with Venmo.</p><div class="qr">'+qrSvg(venmoTipUrl(v,tipOf(TIP_TOTAL)))+'</div>'
+   +'<span class="lbl" id="tipLbl" style="font-size:11px;letter-spacing:.16em;text-transform:uppercase"></span>'
+   +'<label class="f" style="flex-direction:row;align-items:center;gap:8px;justify-content:center">Service total $<input id="tipTotal" inputmode="decimal" style="width:110px;text-align:center" value="'+esc(TIP_TOTAL)+'"></label>';
   if(TW_REVIEW_URL)h+='<div class="mhead" style="margin-top:12px">Leave Us a Review</div><p>Loved your look? Scan to leave Taffeta Weddings a Google review.</p><div class="qr">'+qrSvg(TW_REVIEW_URL)+'</div>'
    +'<span class="lbl" style="font-size:11px;letter-spacing:.16em;text-transform:uppercase">Google review · Taffeta Weddings</span>';
   if(ok)h+='<p style="font-size:14px">Turn your screen brightness up so the codes scan easily. Tips go straight to your own Venmo.</p>';
-  box.innerHTML=h+'</div>';const g=$("#tipGo");if(g)g.onclick=()=>goTab("info");
+  box.innerHTML=h+'</div>';const ti=$("#tipTotal"),say=()=>{const t=tipOf(TIP_TOTAL);$("#tipLbl").textContent="Venmo · @"+v+(t?" · 20% tip $"+t:" · any amount")};
+  if(ti){say();ti.oninput=()=>{TIP_TOTAL=ti.value;box.querySelector(".qr").innerHTML=qrSvg(venmoTipUrl(v,tipOf(TIP_TOTAL)));say()}}const g=$("#tipGo");if(g)g.onclick=()=>goTab("info");
 }
 
 /* ---------- tabs ---------- */
