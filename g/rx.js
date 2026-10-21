@@ -845,13 +845,27 @@ function rxQrView(x){
     x.id&&typeof rgSave2==='function'?h('button',{type:'button',class:'obtn rxqbig',onclick:()=>{RX_HOME=x.id;RX_MSG='';RX_SHOW=null;RX_VIEW='home';render();window.scrollTo(0,0)}},'Next: What She Takes Home'):null,
     h('div',{class:'rxqrow'},
       /* same tab, so Go Back To Edit on her card comes back here with this card open to edit (Alexandra, Oct 20 2026) */
-      h('a',{href:x.link.replace('/rx/#','/rx/?p=1#'),class:'obtn',onclick:()=>{try{if(x.id)sessionStorage.setItem('rx-edit',JSON.stringify({id:x.id,t:Date.now()}))}catch(e){}}},'Open Her Card'),
+      h('button',{type:'button',class:'obtn',onclick:()=>rxCardOverlay(x)},'Open Her Card'),
       x.id?h('button',{type:'button',class:'obtn',onclick:()=>rxEditSaved(x.id)},'Edit Her Card'):null),
     qr,
     h('button',{type:'button',class:'tab',onclick:()=>{RX_VIEW='build';RX_SHOW=null;render()}},'Done'));
 }
 /* coming back from her card with the Back button (the page may be restored as it was): open the card to edit */
 window.addEventListener('pageshow',e=>{try{if(e.persisted&&sessionStorage.getItem('rx-edit')&&typeof render==='function')render()}catch(_){}});
+/* Her card opens on top of the app instead of leaving it, so the artist stays signed in, with Go Back To Edit and
+   What She Takes Home right there (Alexandra, Oct 20 2026) */
+function rxCardOverlay(x){
+  const old=document.getElementById('rxov'); if(old) old.remove();
+  const close=()=>{ov.remove();document.documentElement.style.overflow=''};
+  const B='padding:10px 16px;border:1px solid #121212;border-radius:999px;background:#fff;color:#121212;font:inherit;font-size:11px;letter-spacing:.16em;text-transform:uppercase;cursor:pointer;white-space:nowrap';
+  const bar=h('div',{style:'display:flex;gap:8px;justify-content:center;flex-wrap:wrap;padding:10px 12px calc(10px + env(safe-area-inset-top,0px));padding-top:calc(10px + env(safe-area-inset-top,0px));background:#f8f6f0;border-bottom:1px solid #dcd6cb'},
+    h('button',{type:'button',style:B,onclick:()=>{close();if(x.id)rxEditSaved(x.id)}},'‹ Go Back To Edit'),
+    x.id&&typeof rgSave2==='function'?h('button',{type:'button',style:B,onclick:()=>{close();RX_HOME=x.id;RX_MSG='';RX_SHOW=null;RX_VIEW='home';render();window.scrollTo(0,0)}},'What She Takes Home'):null,
+    h('button',{type:'button',style:B,'aria-label':'Close',onclick:close},'×'));
+  const fr=h('iframe',{src:x.link.replace('/rx/#','/rx/?p=2#'),title:'Her RX card',style:'flex:1;width:100%;border:0;background:#fff'});
+  const ov=h('div',{id:'rxov',style:'position:fixed;inset:0;z-index:50;display:flex;flex-direction:column;background:#fff'},bar,fr);
+  document.body.append(ov); document.documentElement.style.overflow='hidden';
+}
 function rxEditSaved(id){
   const c=rxSaved().find(y=>y.id===id); if(!c||!c.draft) return false;
   RX=Object.assign(rxBlank(c.kind),c.draft); rxSave(); RX_VIEW='build'; RX_SHOW=null; render(); window.scrollTo(0,0); return true;
