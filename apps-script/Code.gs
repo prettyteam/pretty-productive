@@ -595,7 +595,7 @@ function teamPost_(d) {
   if (d.type === 'regimen') {   // an artist saved an at-home regimen: it waits on the Front Desk page's Home care list to be texted
     const r = d.data || {}, guest = clean_(d.guest, 80), kind = d.kind === 'skin' ? 'skin' : 'hair';
     const data = JSON.stringify({ guest: guest, services: [].concat(r.services || []).slice(0, 12), type: clean_(r.type, 40),
-      picks: [].concat(r.picks || []).slice(0, 40).map(p => ({ n: clean_(p.n, 120), how: clean_(p.how, 600), when: clean_(p.when, 30), step: clean_(p.step, 40) })),
+      picks: [].concat(r.picks || []).slice(0, 40).map(p => ({ n: clean_(p.n, 120), how: String(p.how == null ? '' : p.how).split(/\r?\n/).map(x => clean_(x, 600)).filter(Boolean).join('\n').slice(0, 1600), when: clean_(p.when, 30), step: clean_(p.step, 40) })),   // keeps the step-by-step lines (Oct 20 2026)
       notes: [].concat(r.notes || []).slice(0, 20).map(n => clean_(n, 200)), own: clean_(r.own, 1500), next: clean_(r.next, 20),
       nextDate: /^\d{4}-\d{2}-\d{2}$/.test(String(r.nextDate || '')) ? r.nextDate : '', msg: clean_(r.msg, 500), rid: clean_(r.rid, 40) });
     if (!guest) return json_({ ok: false, error: 'guest' });
