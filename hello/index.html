@@ -44,7 +44,7 @@ main{padding:22px 16px 48px;gap:0}
   <div class="role" id="role" hidden></div>
   <p class="note" id="note">It was really nice to meet you. I hope to work with you again.</p>
   <div class="rule"></div>
-  <a class="btn" id="book" target="_blank" rel="noopener">Come visit me for your other hair needs in the salon<small>Book online</small></a>
+  <a class="btn" id="book" target="_blank" rel="noopener">Visit me in my salon &amp; spa home for future hair needs<small>Book online</small></a>
   <!-- $20 thank-you for anyone in the bridal party who gets the card, new or returning (Alexandra, Oct 21 2026); shows with the booking button -->
   <div class="offer" id="offer"><b>$20 off your next salon visit</b><span id="offerWhen">Just mention this card when you book or check in. Good for 3 months.</span></div>
   <div class="rule"></div>
@@ -64,14 +64,14 @@ main{padding:22px 16px 48px;gap:0}
   const R={hair:"Your hair artist",makeup:"Your makeup artist",both:"Your hair & makeup artist"}[role];
   if(R){const el=document.getElementById("role");el.textContent=R;el.append(document.createElement("br"),"Taffeta Weddings");el.hidden=false}
   /* the salon button says hair or makeup to match the artist */
-  if(role==="makeup")document.getElementById("book").firstChild.textContent="Come visit me in the salon for your other beauty needs";
+  if(role==="makeup")document.getElementById("book").firstChild.textContent="Visit me in my salon & spa home for future makeup needs";
   /* some artists' buttons name what they do in the salon (Alexandra, Oct 21 2026): Carolyn is our esthetician,
      Kat does makeup and hair, Ashley and Dominique do makeup, color, cuts and extensions, Amanda, Lexi, Joanna, Neva and
      Jen Curley do color, cuts and extensions. */
-  const K={skin:"Come see me at my salon & spa home. I'd love to take care of your skin",
-    mh:"Come visit me in the salon for your makeup and hair needs",
-    mcce:"Come visit me in the salon for makeup, color, cuts or extensions",
-    cce:"Come visit me in the salon for all things hair: color, cuts and extensions"}[q.get("k")];
+  const K={skin:"Visit me in my salon & spa home for future skin care needs",
+    mh:"Visit me in my salon & spa home for future makeup & hair needs",
+    mcce:"Visit me in my salon & spa home for future makeup, color, cut & extension needs",
+    cce:"Visit me in my salon & spa home for future color, cut & extension needs"}[q.get("k")];
   if(K)document.getElementById("book").firstChild.textContent=K;
   const book=window.TAFFETA_BOOKING||"", rev=(window.TAFFETA_REVIEWS||{}).weddings||"";
   /* artists who only do weddings get a short thank-you instead (Alexandra, Oct 21 2026) */
