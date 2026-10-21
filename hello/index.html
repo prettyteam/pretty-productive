@@ -26,10 +26,10 @@ main{padding:22px 16px 48px;gap:0}
 .btn .svc{display:block;font-family:var(--body);font-size:13px;letter-spacing:.04em;text-transform:none;color:var(--soft);margin-top:6px}
 .btn small{display:block;font-weight:400;font-family:var(--body);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--soft);margin-top:14px}
 .btn:active{background:#f3f1ec}
-.offer{display:flex;flex-direction:column;align-items:center;gap:2px;margin-top:-6px}
+.offer{display:flex;flex-direction:column;align-items:center;gap:2px}
 .offer b{font-family:var(--display);font-style:italic;font-weight:400;font-size:17px}
 .offer span{font-size:13px;color:var(--soft);margin-top:16px}
-.stars{display:flex;flex-direction:column;align-items:center;gap:10px;text-decoration:none;color:var(--ink);padding:6px 10px}
+.stars{margin-top:8px;display:flex;flex-direction:column;align-items:center;gap:10px;text-decoration:none;color:var(--ink);padding:6px 10px}
 .stars svg{width:190px;height:auto;overflow:visible}
 .stars b{font-family:var(--display);font-style:italic;font-weight:400;font-size:18px}
 .stars span{font-size:13.5px;color:var(--soft);max-width:280px}
@@ -46,14 +46,14 @@ main{padding:22px 16px 48px;gap:0}
   <p class="note" id="note">It was really nice to meet you. I hope to work with you again.</p>
   <div class="rule"></div>
   <a class="btn" id="book" target="_blank" rel="noopener">Visit me in my salon &amp; spa home<span class="svc" id="svc">Hair</span><small>Book online</small></a>
-  <!-- $20 thank-you for anyone in the bridal party who gets the card, new or returning (Alexandra, Oct 21 2026); shows with the booking button -->
-  <div class="offer" id="offer"><b>A $20 Gift For You</b><span id="offerWhen">Mention this card when you reserve or upon check in. Good for 3 months.</span></div>
-  <div class="rule"></div>
   <a class="stars" id="rev" target="_blank" rel="noopener" aria-label="Leave Taffeta Weddings a Google review">
     <svg viewBox="0 0 190 34" aria-hidden="true" id="starsvg"></svg>
     <b>Loved your look? Tap the stars</b>
     <span>It means the world to us, xo</span>
   </a>
+  <div class="rule" id="offerRule"></div>
+  <!-- $20 thank-you for anyone in the bridal party who gets the card, new or returning (Alexandra, Oct 21 2026); shows with the booking button -->
+  <div class="offer" id="offer"><b>A $20 Gift For You</b><span id="offerWhen">Mention this card when you reserve or upon check in. Good for 3 months.</span></div>
 </div>
 <p class="foot">Taffeta Salon &amp; Spa · 219 Bellevue Ave, Hammonton, NJ<br><a href="tel:+16093835504">(609) 383-5504</a> · <a href="https://taffetadesign.com" target="_blank" rel="noopener">taffetadesign.com</a><br><a href="https://www.instagram.com/taffetasalonandspa/" target="_blank" rel="noopener">@taffetasalonandspa</a></p>
 </main>
@@ -79,7 +79,7 @@ main{padding:22px 16px 48px;gap:0}
   /* the $20 offer is good for 3 months from the wedding day (?d= is the day the guest scanned it or got the AirDrop) */
   const d=/^\d{4}-\d{2}-\d{2}$/.test(q.get("d")||"")?new Date(q.get("d")+"T12:00:00"):null;
   if(d&&!isNaN(d)){d.setMonth(d.getMonth()+3);const w=document.getElementById("offerWhen");w.textContent="Mention this card when you reserve or upon check in.";w.append(document.createElement("br"),"Valid through "+d.toLocaleDateString("en-US",{month:"long",day:"numeric",year:"numeric"})+".")}
-  const b=document.getElementById("book"); if(book&&q.get("s")==="1")b.href=book; else{b.hidden=true;document.getElementById("offer").hidden=true;document.getElementById("offer").nextElementSibling.hidden=true}
+  const b=document.getElementById("book"); if(book&&q.get("s")==="1")b.href=book; else["book","offerRule","offer"].forEach(id=>document.getElementById(id).hidden=true)
   const s=document.getElementById("rev"); if(rev)s.href=rev; else s.hidden=true;
   /* five outlined stars, same shape as the review stars on the aftercare PDFs */
   let p="";for(let k=0;k<5;k++){const cx=17+k*39,cy=17,r=16,pts=[];for(let i=0;i<10;i++){const a=-Math.PI/2+i*Math.PI/5,rr=i%2?r*.42:r;pts.push((cx+rr*Math.cos(a)).toFixed(2)+","+(cy+rr*Math.sin(a)).toFixed(2))}
