@@ -900,16 +900,17 @@ function rxSavedView(me){
 function rxHowTo(n){n=String(n||'');
   /* Taffeta BR Bottle: a sample, so 1–2 drops (Alexandra, Oct 20 2026) */
   if(n.startsWith(RX_BRB_N+': ')){const b=n.slice(RX_BRB_N.length+2);return (rxHowTo(/Sérum|Serum|Collag/i.test(b)?'Sérum '+b:b)||rxHowTo('Sérum')).replace(/2–3 drops/g,'1–2 drops')}
-  if(/Skin Box/.test(n))return 'Morning and night, in this order:\nCleanser: With dry hands and a dry face, 1 pump in the morning, 2–3 at night. Massage over face and neck for 1–2 minutes, remove with a wet cloth, then rinse with cool water. Double cleanse at night if you’re wearing makeup.\nP50 Toner: Put 1–2 pumps on a cotton round and press into your face and neck in an upward motion. No rubbing. Don’t rinse.\nMoisturizer: Emulsify a pea-size amount between your fingers and press into face and neck.';
+  if(/Skin Box/.test(n))return 'Morning and night, in this order:\nCleanser: With dry hands and a dry face, 1 pump in the morning, 2–3 at night. Massage over face and neck for 1–2 minutes, remove with a wet cloth, then rinse with cool water. Double cleanse at night if you’re wearing makeup.\nP50 Toner: Put 1–2 drops on a cotton round and press into your face and neck in an upward motion. No rubbing. Avoid the eye area. Don’t rinse.\nMoisturizer: Emulsify a pea-size amount between your fingers and press into face and neck.';
   if(/Lait|Démaquillante|Micellaire|Cleans/i.test(n))return 'With dry hands and a dry face, cleanse with 1 pump in the morning and 2–3 pumps at night. Massage over face and neck for 1–2 minutes. Remove with a wet cloth, then rinse with cool water. At night, if you’re wearing makeup, double cleanse to remove the first layer.';
   if(/Lotion MC 110/.test(n))return 'Use 2–3 times a week. Apply 1–2 pumps to a cotton round and tap onto the affected areas. Also great for fine lines.';
-  if(/Lotion P50|Eauxyg/.test(n))return 'After cleansing, put 1–2 pumps of your P50 on a cotton round and press it into your face and neck in an upward motion. No rubbing. A light tingle is normal. Don’t rinse.';
+  if(/Lotion P50|Eauxyg/.test(n))return 'After cleansing, put 1–2 drops of your P50 on a cotton round and press it into your face and neck in an upward motion. No rubbing. Avoid the eye area. A light tingle is normal. Don’t rinse.';
   if(/Sérum Vivant/.test(n))return 'At night, apply 2–3 drops onto blemished areas and pat into skin.';
   if(/Sérum|Serum|Fluide|Amniotique|Collag|Élastine|Placenta|Tensil|Oligo|Dermopore|Silk Plus|Iribiol|Tissulaires|Colostrum|Spectral/.test(n))return 'After your P50, apply 2–3 drops directly onto skin. Gently pat to spread the product evenly over face and neck.';
   if(/Contour des Yeux|Eye/.test(n))return 'Tap a rice-grain amount around the orbital bone with your ring finger, from the inner corner out.';
   if(/Masque|Mask/.test(n))return 'Apply an even layer to clean skin, avoiding the eyes. Leave on 10–15 minutes, then rinse with lukewarm water.';
   if(/Crème|Émulsion|Cream/.test(n))return 'Use a pea-size amount all over face and neck. Emulsify between your fingers and press into skin. Use a little more if needed.';
   return ''}
+const RX_NEWP50='New to P50: Dilute your cotton round with water first. For the first few applications, use it 1–2 times a week, then add more days once your skin is used to it.';
 const RX_HOW_STEP=n=>/Skin Box/.test(n)?0:/Lait|Démaquillante|Micellaire/.test(n)?1:/Lotion P50|MC 110|Eauxyg/.test(n)?2:/Masque|Mask/.test(n)?5:/Contour des Yeux|Eye/.test(n)?4:/Crème|Émulsion|Cream/.test(n)?4.5:3;
 function rxTakeHomeView(me){
   const list=rxSaved(), x=list.find(r=>r.id===RX_HOME); if(!x){RX_VIEW='saved';return rxSavedView(me)}
@@ -970,6 +971,8 @@ function rxTakeHomeView(me){
     RG.picks=x.home.map(p=>{if(String(p.n).startsWith(RX_BRB_N+': '))return {n:String(p.n),how:rxHowTo(p.n)+' Lasts about 2 weeks.',when:whens[0],step:''};const b=rgNorm(rgBase(String(p.n).replace(/^Try Me: /,''))), it=cat.find(c=>rgNorm(c.n)===b||c.sizes.includes(p.n))||cat.find(c=>{const k=rgNorm(c.n);return k.length>8&&(b.startsWith(k)||k.startsWith(b))});
       const nm=it?it.n:String(p.n).replace(/^Try Me: /,''), gen=kind==='skin'?rxHowTo(nm):'';
       return it?{n:it.n,how:it.how||gen,when:it.w0&&whens.includes(it.w0)?it.w0:whens[0],step:it.step}:{n:nm,how:gen,when:whens[0],step:''}});
+    /* New to P50 (Alexandra, Oct 20 2026): the artist checks it and her P50 step gets the dilute / ease-in line */
+    if(kind==='skin'&&x.newP50) RG.picks.forEach(p=>{if(/Skin Box/.test(p.n))p.how=p.how.replace(/(P50 Toner:[^\n]*)/,'$1\n'+RX_NEWP50);else if(/Lotion P50/.test(p.n))p.how=p.how+'\n'+RX_NEWP50});
     if(kind==='skin') RG.picks.sort((a,b)=>RX_HOW_STEP(a.n)-RX_HOW_STEP(b.n))};
   const send=h('button',{type:'button',class:'obtn',onclick:async()=>{if(!x.home.length){toast.textContent='Pick what she’s taking home first.';return}
     toRG(); await rgSave2(me,toast,send); if(!RG.guest){RX_MSG=x.guest+'’s Home Care PDF is on the front desk list to text her.';x.sent=new Date().toISOString();put();RX_VIEW='saved';RX_FIND=x.guest;render();window.scrollTo(0,0)}}},'Save & Send To Desk');
@@ -983,6 +986,9 @@ function rxTakeHomeView(me){
       h('p',{class:'soft',id:'rxthpicked',style:'margin:0'},x.home.length?'Picked: '+x.home.map(q=>q.n.replace(/^Biologique Recherche /,'BR ')).join(', '):'Nothing picked yet.'),
       h('p',{class:'rxover',id:'rxthover',hidden:left<0?null:''},rxMoney(-left)+' over her budget: let her know before ringing it up.')),
     listSec,
+    kind==='skin'&&x.home.some(q=>/Lotion P50|Skin Box/.test(q.n))?h('section',{class:'card2'},h('span',{class:'lbl'},'P50 Options'),
+      h('button',{type:'button',class:'rxth'+(x.newP50?' on':''),'aria-pressed':String(!!x.newP50),onclick:()=>{x.newP50=!x.newP50;put();render()}},
+        h('span',{class:'rxbx','aria-hidden':'true'},x.newP50?'✓':''),h('span',{class:'rxthn'},h('b',{},'She’s new to P50'),h('small',{},'Adds to her PDF: dilute the cotton round, start 1–2 times a week, then add more days once her skin is used to it.')))):null,
     h('section',{class:'card2',style:'align-items:center;text-align:center'},send,prev,toast,
       h('small',{class:'soft'},'Her Home Care PDF goes to the front desk app’s Home Care list, and the desk texts it to her at checkout. Changed your mind at the end of her service? Change the picks and tap Save & Send To Desk again: it replaces the one on the desk.'))];
 }

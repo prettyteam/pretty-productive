@@ -15,7 +15,7 @@ const RG_GROUPS={
 
 const RG_HOW={
   milk:'With dry hands and a dry face, cleanse with 1 pump in the morning and 2–3 pumps at night. Massage over face and neck for 1–2 minutes. Remove with a wet cloth, then rinse with cool water. At night, if you’re wearing makeup, double cleanse to remove the first layer.',
-  p50:'After cleansing, put 1–2 pumps of your P50 on a cotton round and press it into your face and neck in an upward motion. No rubbing. A light tingle is normal. Don’t rinse.',
+  p50:'After cleansing, put 1–2 drops of your P50 on a cotton round and press it into your face and neck in an upward motion. No rubbing. Avoid the eye area. A light tingle is normal. Don’t rinse.',
   /* serum and cream in Carolyn's own words (Oct 14 2026) */
   serum:'After your P50, apply 2–3 drops directly onto skin. Gently pat to spread the product evenly over face and neck.',
   cream:'Use a pea-size amount all over face and neck. Emulsify between your fingers and press into skin. Use a little more if needed.',
@@ -457,12 +457,12 @@ async function rgPdf(me,R,kind){
       if(seen.has(p)) para('Same as above.',9.5,'helvetica','italic',soft,6,16);
       else if(p.how.trim()){
         /* step by step bullets instead of a paragraph (Alexandra, Oct 20 2026): one line per step, or per sentence */
-        const t=p.how.trim(), steps=t.includes('\n')?t.split(/\n+/):t.split(/(?<=[.!])\s+(?=[A-Z0-9“"])/);
+        const t=p.how.trim(), steps=t.split(/\n+/).flatMap(x=>/^[A-Z][\w ]{1,18}:\s/.test(x)||/:$/.test(x.trim())?[x]:x.split(/(?<=[.!])\s+(?=[A-Z0-9“"])/).reduce((o,y)=>{if(o.length&&y.length<30&&!/:\s/.test(o[o.length-1].slice(0,20)))o[o.length-1]+=' '+y;else o.push(y);return o},[]));   /* short sentences join the step before */
         steps.map(x=>x.trim()).filter(Boolean).forEach((x,k,a)=>{const lead=k===0&&a.length>1&&/:$/.test(x);
           if(lead){para(x,9.5,'helvetica','italic',soft,2,16);return}
           need(14);doc.setFont('helvetica','normal');doc.setFontSize(9.5);doc.setTextColor(...soft);doc.text('•',M+18,y+9.5);
           const m=x.match(/^([A-Z][\w ]{1,18}):\s+(.*)$/);
-          if(m){doc.setFont('helvetica','bold');doc.setFontSize(9.5);const lw=doc.getTextWidth(m[1]+': ');doc.setTextColor(...ink);doc.text(m[1]+':',M+28,y+9.5);
+          if(m){doc.setFont('helvetica','bold');doc.setFontSize(9.5);const lw=doc.getTextWidth(m[1]+':')+doc.getTextWidth('  ');doc.setTextColor(...ink);doc.text(m[1]+':',M+28,y+9.5);
             const L=doc.splitTextToSize(m[2],CW-28);doc.setFont('helvetica','normal');doc.setTextColor(...soft);
             const first=doc.splitTextToSize(m[2],CW-28-lw)[0];doc.text(first,M+28+lw,y+9.5);y+=9.5*1.32;
             const rest=m[2].slice(first.length).trim(); if(rest) para(rest,9.5,'helvetica','normal',soft,0,28); y+=2}
