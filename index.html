@@ -1315,14 +1315,7 @@ function invReport(R){
   const KIND={'Color charged, no bowl weighed':'Charged, never weighed','Color mixed, no ticket found':'Mixed, no ticket found','Color mixed, no color service charged':'Mixed, no color charged','Charged under another artist':'Rung up under another artist','Extra bowl (2 bowls for a 1-bowl service)':'Extra bowl','Mixed 20%+ over recommended':'20%+ over the recipe','Date differs (mixed vs. charged)':'Different day','Charged differs from what was mixed':'Charged for something else'};
   return [
     h('p',{class:'soft',style:'font-size:13.5px;margin:0'},'Week of '+R.week+' · ran '+R.ran),
-    h('section',{class:'section'},h('div',{class:'teamgrid'},
-      t.cpb!=null?stat('Cost per bowl',money(t.cpb),t.avgMix):null,stat('Bowls mixed',String(t.bowls),t.grams.toLocaleString()+' g'),
-      stat('Over-mixed',money(t.over),'over the scale recipe'),stat('Not weighed',String(t.notWeighed),'color services'))),
-    h('section',{class:'section'},h('h2',{},'Cost per service'),h('div',{class:'sec2'},
-      R.services.map(([s,n,cb,f,tot])=>h('div',{class:'lrow'},h('span',{},h('b',{},s),h('small',{},n+' last week'+(f?' · '+f+' foils':''))),h('b',{},money(tot)))),
-      h('div',{class:'lrow'},h('span',{},h('b',{},'Brazilian Blowout'),h('small',{},'about 3/4 oz solution · not on the scale yet')),h('b',{},money(R.bb))))),
-    h('section',{class:'section'},h('h2',{},'Foils per service'),h('div',{class:'sec2'},
-      R.foils.map(([n,c,cost])=>h('div',{class:'lrow'},h('span',{},h('b',{},n),h('small',{},'about '+c+' foils')),h('b',{},money(cost)))))),
+    /* no cost per bowl, cost per service or foil costs here (Alexandra, Oct 21 2026): Artists, Details, then ordering */
     h('section',{class:'section'},h('h2',{},'Artists'),h('p',{class:'soft',style:'font-size:13px;margin:0'},'Worth a look, not a verdict.'),h('div',{class:'sec2'},
       R.artists.map(([a,b,v,o20,oc,cs,nw,fl])=>h('div',{class:'lrow'},h('span',{},h('b',{},a),h('small',{},(b?b+' bowls · '+invPct(v)+' vs recipe':'no bowls weighed')+(nw?' · '+nw+' not weighed':''))),
         fl?h('span',{class:'chip'+(fl==='Over-mixing'?'':' add'),style:'white-space:nowrap'},fl):h('span',{class:'soft',style:'font-size:13px'},'✓'))))),
