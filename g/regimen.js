@@ -200,7 +200,7 @@ const RG_NEXT=['2 weeks','3 weeks','4 weeks','6 weeks','8 weeks','10–12 weeks'
 /* sign-off follows today's service: brows or lashes only say Pretty Brows / Pretty Lashes instead of Pretty Skin (Alexandra, Oct 20 2026) */
 const rgPretty=(kind,sv)=>{if(kind!=='skin')return 'Pretty Hair by ';const b=sv.includes('Brow Sculpt'),l=sv.includes('Lift & Tint');
   return sv.length&&sv.every(x=>x==='Brow Sculpt'||x==='Lift & Tint')?(b&&l?'Pretty Brows & Lashes by ':b?'Pretty Brows by ':'Pretty Lashes by '):'Pretty Skin by '};
-const RG_PHONE='(609) 383-5504', RG_SITE='taffetadesign.com', RG_IG='';   /* Instagram handle for the PDF footer, without the @ */
+const RG_PHONE='(609) 383-5504', RG_SITE='taffetadesign.com', RG_IG={skin:'spa.taffeta',hair:'taffetasalonandspa'};   /* Instagram for the PDF footer: the spa account on skin sheets, the salon's on hair (Oct 20 2026) */
 
 const rgKind=()=>(S.mine&&S.mine.role==='esthetician')?'skin':'hair';
 const rgKey=()=>'pp-regimen:'+((S.mine&&S.mine.staff&&S.mine.staff.slug)||(typeof ID!=='undefined'?ID:'x'));
@@ -424,7 +424,7 @@ async function rgPdf(me,R,kind){
     doc.setDrawColor(18,18,18);doc.setLineWidth(.7);doc.rect(12,12,W-24,H-24,'S');doc.setDrawColor(43,42,40);doc.setLineWidth(.3);doc.rect(17,17,W-34,H-34,'S');doc.setLineWidth(.2)};
   const foot=()=>{doc.setDrawColor(...line);doc.line(M,H-40,W-M,H-40);doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.setTextColor(...soft);
     /* the logo already says Taffeta Salon & Spa (Alexandra, Oct 20 2026) */
-    doc.text(['219 Bellevue Ave, Hammonton NJ 08037',RG_PHONE,RG_SITE].concat(RG_IG?['@'+RG_IG]:[]).join('  ·  '),W/2,H-26,{align:'center'})};
+    doc.setFontSize(7);doc.text(['219 Bellevue Ave, Hammonton NJ 08037',RG_PHONE,RG_SITE,'@'+(RG_IG[kind]||RG_IG.hair)].join('  ·  '),W/2,H-26,{align:'center'})};
   const page=()=>{foot();doc.addPage([396,612]);bg();y=M+6};
   const need=n=>{if(y+n>H-52)page()};
   const para=(t,size,font,style,color,gap,indent)=>{doc.setFont(font,style);doc.setFontSize(size);doc.setTextColor(...color);
