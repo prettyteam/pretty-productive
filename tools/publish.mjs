@@ -86,6 +86,31 @@ const docsFor = (slug, leader) => {
   if (keys.docs.fg && (leader || guideSet.has(slug))) o.fg = { k: keys.docs.fg.key, name: keys.docs.fg.name, tabs: keys.docs.fg.tabs };
   return Object.keys(o).length ? o : null;
 };
+// My Binder (Oct 22 2026): the printed associate binder pages from Canva. --binder <dir> holds <id>.pdf for each team.json binder.pages id.
+// Each page is encrypted with its own key (keys.binder[id]), and a person's sealed page data carries only the keys of the pages she may see.
+// A run without --binder keeps the last files.
+keys.binder ||= {};
+const binderCfg = (() => { try { return JSON.parse(fs.readFileSync(path.join(root, 'tools', 'team.json'), 'utf8')).binder || null; } catch (e) { return null; } })();
+if (args.binder && binderCfg) {
+  fs.mkdirSync(path.join(root, 'docs'), { recursive: true });
+  for (const pg of binderCfg.pages || []) {
+    const src = path.join(args.binder, pg.id + '.pdf'); if (!fs.existsSync(src)) continue;
+    const bytes = fs.readFileSync(src), sha = createHash('sha256').update(bytes).digest('hex');
+    const b = (keys.binder[pg.id] ||= { key: Buffer.from(rand(32)).toString('base64') });
+    if (b.sha !== sha || !b.file || !fs.existsSync(path.join(root, 'docs', b.file + '.enc'))) {
+      if (b.file) { try { fs.unlinkSync(path.join(root, 'docs', b.file + '.enc')); } catch (e) {} }
+      b.file = 'bd-' + createHash('sha256').update(b.key + sha).digest('hex').slice(0, 16);
+      fs.writeFileSync(path.join(root, 'docs', b.file + '.enc'), await sealBytes(bytes, b.key)); b.sha = sha;
+    }
+  }
+}
+const binderFor = (slug) => {
+  if (!binderCfg) return null;
+  const sets = Object.entries(binderCfg.sets || {}).filter(([, who]) => (who || []).includes(slug)).map(([s]) => s);
+  const list = (binderCfg.pages || []).filter((pg) => (pg.only ? pg.only.includes(slug) : sets.includes(pg.set)) && keys.binder[pg.id] && keys.binder[pg.id].file)
+    .map((pg) => ({ id: pg.id, title: pg.title, sec: pg.sec, desc: pg.desc || '', pages: pg.pages || null, file: keys.binder[pg.id].file, k: keys.binder[pg.id].key }));
+  return list.length ? list : null;
+};
 // Weekly commission reports (Weekly CR tab). --cr <dir> holds meta.json {weeks:[{week,label,people:{slug:{service,retail,comm}}}]}
 // and <dir>/<week>/<slug>.pdf. Each person's PDFs are encrypted with their OWN key, which travels only inside their sealed page data.
 // History (newest 12 weeks) is remembered in keys.cr[slug].weeks, so a run without --cr keeps the tab.
@@ -253,6 +278,7 @@ for (const p of pages) {
   { const rt = ((data.team && data.team.commission) || {})[p.slug]; if (rt) mine.rate = Number(rt); }
   if (guideUrl && fullGuideSet.has(p.slug)) mine.fullGuide = guideUrl;
   if (advMap[p.slug]) mine.adv = advMap[p.slug];
+  { const bd = binderFor(p.slug); if (bd) mine.binder = bd; }
   const dd = docsFor(p.slug, false); if (dd) { mine.docs = dd; if (dd.fg) delete mine.fullGuide; }
   if (keys.cr[p.slug] && keys.cr[p.slug].weeks.length) mine.cr = { k: keys.cr[p.slug].key, weeks: keys.cr[p.slug].weeks.map(({ week, label, file, service, retail, comm }) => ({ week, label, file, service, retail, comm })) };
   if (keys.inv && keys.inv.file && invOwners.has(p.slug)) mine.inv = invFor[p.slug] || { k: keys.inv.key, file: keys.inv.file, updated: keys.inv.updated };
