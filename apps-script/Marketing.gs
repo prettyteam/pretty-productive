@@ -4,7 +4,7 @@
  * so the proofs page works anywhere without signing in to Claude. Every call needs the marketing passcode
  * (only its SHA-256 is kept here). Hooked into doPost with: if (d.action === 'mkt') return json_(mkt_(d));
  */
-const MKT_CODE_SHA = '5442577916fa38cbbb5f383bff864e949b874c619c4c950dd32dd22877258288';
+const MKT_CODE_SHA = '2b8630dbf5d56e63b0c846ff886289dfccf5049b29a395c76cd0287cc101859a';
 
 function mktHex_(s) { return Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, String(s || ''), Utilities.Charset.UTF_8).map(b => ('0' + (b & 255).toString(16)).slice(-2)).join(''); }
 
