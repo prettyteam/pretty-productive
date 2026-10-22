@@ -712,6 +712,17 @@
         "canva": "DAHCPfdNFYY"
       },
       {
+        "id": "nda",
+        "title": "Non-Compete & Confidentiality Agreement",
+        "sec": "start",
+        "only": [
+          "isabella"
+        ],
+        "pages": 4,
+        "desc": "Keeping salon info private",
+        "drive": "1J0NjtXZZPJ1JrfojaTc-wUqWF3_xxok7"
+      },
+      {
         "id": "trial",
         "title": "Trial Agreement Period",
         "sec": "start",
