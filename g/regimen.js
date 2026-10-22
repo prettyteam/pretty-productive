@@ -310,7 +310,7 @@ function rgSavedView(me){
   const toast=h('p',{class:'toast'});
   const day=t=>t?new Date(t).toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'}):'';
   const row=x=>{const d=x.data||{}, kind=/skin/i.test(x.kind)?'skin':'hair';
-    return h('div',{class:'rxl'},h('div',{class:'rxn'},h('b',{},x.guest),h('small',{class:'soft'},[x.kind,day(x.at),x.status==='Sent'?'Texted to her':x.status==='Draft'?'Waiting for you to finish':'Waiting at the desk'].filter(Boolean).join(' · ')),x.summary?h('small',{class:'soft'},x.summary):d.plan?h('small',{class:'soft'},d.plan):null),
+    return h('div',{class:'rxl'},h('div',{class:'rxn'},h('b',{},x.guest),h('small',{class:'soft'},[x.kind,day(x.at),x.status==='Sent'?'Texted to her':x.status==='Draft'?'Waiting for your review':'Waiting at the desk'].filter(Boolean).join(' · ')),x.summary?h('small',{class:'soft'},x.summary):d.plan?h('small',{class:'soft'},d.plan):null),
       h('button',{type:'button',class:'tab',onclick:()=>{RG=Object.assign(rgBlank(),d,{guest:d.guest||x.guest,editRow:x.row,editSent:x.status==='Sent'});RG_TOAST='';rgSave();RG_TAB='build';render();window.scrollTo(0,0)}},'Edit'),
       h('button',{type:'button',class:'tab',onclick:()=>rgPreview(me,toast,Object.assign(rgBlank(),d,{guest:d.guest||x.guest}),kind)},'Preview'))};
   return [h('div',{class:'hub'},rgTabs(),h('section',{class:'card2'},h('span',{class:'lbl'},'Saved Cards'),h('label',{class:'fld'},s),toast,
@@ -363,7 +363,8 @@ function regimenView(){
     return d;
   };
   const mine=shown.filter(it=>rgStarred(it,favs)), rest=shown.filter(it=>!rgStarred(it,favs));
-  const bucket=f=>{const g=new Map();rest.forEach(it=>{const k=f(it);g.has(k)||g.set(k,[]);g.get(k).push(it)});return [...g]};
+  const az=n=>String(n).replace(/^Biologique Recherche /,'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+  const bucket=f=>{const g=new Map();rest.forEach(it=>{const k=f(it);g.has(k)||g.set(k,[]);g.get(k).push(it)});g.forEach(L=>L.sort((a,b)=>az(a.n).localeCompare(az(b.n),'en',{numeric:true})));return [...g]};   /* A to Z in each group (Oct 22 2026) */
   const lists=RG_VIEW==='brand'
     ?bucket(it=>it.brand).sort((a,b)=>kind==='skin'?((RG_SKIN_BRANDS.indexOf(a[0])+1||99)-(RG_SKIN_BRANDS.indexOf(b[0])+1||99)):RX_BRANDS_ORDER(a[0])-RX_BRANDS_ORDER(b[0]))
     :bucket(it=>it.step);
