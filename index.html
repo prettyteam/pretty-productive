@@ -409,6 +409,29 @@ body .rbar.new button{background:none;color:#2b2a28;font-weight:700;text-decorat
 .mbtn{width:34px;height:34px;border-radius:50%;border:1px solid #121212;background:#f8f6f0;color:#121212;font-size:20px;line-height:1;display:flex;align-items:center;justify-content:center;padding:0;cursor:pointer}
 .mbtn:active{background:#121212;color:#f8f6f0}.mbtn:focus-visible{outline:2px solid #121212;outline-offset:3px}
 .mtoast{position:fixed;left:16px;right:16px;bottom:calc(80px + env(safe-area-inset-bottom));z-index:7;max-width:520px;margin:0 auto;box-shadow:0 4px 14px rgba(18,18,18,.18);display:flex;align-items:center;justify-content:space-between;gap:10px;background:#121212;color:#f8f6f0;border-radius:12px;padding:10px 14px;font-size:14px}
+.mpgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.mpslot{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;aspect-ratio:3/4;border:1px dashed #121212;border-radius:6px;background:#f8f6f0;cursor:pointer;overflow:hidden;font-size:14px;text-align:center}
+.mpslot img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.mpslot .mptag{position:absolute;left:6px;top:6px;z-index:1;background:#121212;color:#f8f6f0;border-radius:999px;padding:2px 10px;font-size:11px;letter-spacing:.08em;text-transform:uppercase}
+.mpslot input{position:absolute;opacity:0;width:1px;height:1px}
+.mpf{display:flex;flex-direction:column;gap:6px;font-size:13px;color:var(--muted)}
+.mpf select,.mpf input,.mpf textarea{font:inherit;font-size:15px;color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:9px 10px;background:#fff;width:100%;box-sizing:border-box}
+.mpgo{border:1px solid #121212;background:#121212;color:#f8f6f0;border-radius:999px;padding:11px 18px;font-size:15px;cursor:pointer}.mpgo[disabled]{opacity:.5}
+.mpadd{border:1px solid #121212;background:#f8f6f0;color:#121212;border-radius:999px;padding:10px 18px;font-size:15px;cursor:pointer}
+.alb-names{display:flex;flex-wrap:wrap;gap:8px}
+.alb-names a{border:1px solid #121212;border-radius:999px;padding:5px 14px;font-size:14px;color:#121212;text-decoration:none;background:#fff}
+.alb-entry{border-top:1px solid var(--line);padding:14px 0 4px}.alb-entry:first-of-type{border-top:0;padding-top:4px}
+.alb-entry b{font-family:var(--display);font-weight:400;font-size:17px}
+.alb-pair{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.alb-pair figure{margin:0;position:relative}
+.alb-pair button{display:block;width:100%;padding:0;border:0;background:#f2f1ec;border-radius:6px;overflow:hidden;aspect-ratio:3/4;cursor:zoom-in}
+.alb-pair img{width:100%;height:100%;object-fit:cover;display:block}
+.alb-pair figcaption{position:absolute;left:6px;top:6px;background:#121212;color:#f8f6f0;border-radius:999px;padding:2px 10px;font-size:11px;letter-spacing:.08em;text-transform:uppercase}
+.alb-none{display:flex;align-items:center;justify-content:center;aspect-ratio:3/4;border:1px dashed var(--line);border-radius:6px;font-size:13px;color:var(--muted)}
+.alb-big{position:fixed;inset:0;z-index:20;background:rgba(18,18,18,.92);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:20px}
+.alb-big img{max-width:100%;max-height:80vh;border-radius:6px}
+.alb-big button{background:none;border:1px solid #f8f6f0;color:#f8f6f0;border-radius:999px;padding:6px 16px;font-size:14px;cursor:pointer}
+.alb-big p{color:#f8f6f0;margin:0;font-size:14px}
 .mtoast button{background:none;border:1px solid #f8f6f0;color:#f8f6f0;border-radius:999px;padding:4px 12px;font-size:13px;cursor:pointer}
 table.mtab{width:100%;border-collapse:collapse;font-size:14.5px}
 table.mtab th{font-weight:400;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);text-align:right;padding:4px 4px 6px;border-bottom:1px solid var(--line)}
@@ -797,6 +820,7 @@ function render(){
   else if(S.rtab==='off') parts=adminOffView();
   else if(S.rtab==='month') parts=monthView();
   else if(S.rtab==='color') parts=colorRoomView();
+  else if(S.rtab==='photos') parts=albumView();
   else if(S.rtab==='guide') parts=leaderGuideView();
   else if(S.rtab==='access') parts=accessView();
   else if(!S.open) parts=teamBoard();
@@ -1080,7 +1104,58 @@ function advView(adv0){
     MTOAST?h('div',{class:'mtoast',role:'status'},h('span',{},MTOAST.msg),h('button',{onclick:()=>modelUndo(MTOAST.m)},'Undo')):null,
     logged.length?h('div',{class:'sec2'},h('span',{class:'lbl'},'Your models'),logged.slice(-6).reverse().map(m=>{const sk=ADV.flatMap(x=>x[1]).find(x=>x[0]===m.id);
       return h('div',{class:'lrow'},h('span',{},sk?sk[1]:m.id),h('span',{class:'soft'},niceDay(m.date)))})):null,
-    canTap?h('p',{class:'soft',style:'font-size:13px;text-align:center;margin:0'},'Tap + after each model you finish. It saves with today’s date.'):null];
+    canTap?h('p',{class:'soft',style:'font-size:13px;text-align:center;margin:0'},'Tap + after each model you finish. It saves with today’s date.'):null,
+    canTap?mpCard(next,logged):null];
+}
+/* Model photos (Alexandra, Oct 22 2026): a before and an after of each model. They go to Alexandra's album in
+   The Pretty Report (Team → Model Photos), grouped by name, and to Drive. Pictures are shrunk on the phone first. */
+let MP={open:false,skill:'',date:'',note:'',before:null,after:null,busy:false,msg:''};
+function mpShrink(file,max,q){return new Promise((res,rej)=>{const u=URL.createObjectURL(file),im=new Image();
+  im.onload=()=>{const k=Math.min(1,max/Math.max(im.naturalWidth,im.naturalHeight)),c=document.createElement('canvas');
+    c.width=Math.round(im.naturalWidth*k);c.height=Math.round(im.naturalHeight*k);c.getContext('2d').drawImage(im,0,0,c.width,c.height);URL.revokeObjectURL(u);res(c.toDataURL('image/jpeg',q))};
+  im.onerror=()=>{URL.revokeObjectURL(u);rej(new Error('img'))};im.src=u})}
+async function mpPick(which,file){
+  if(!file) return;
+  try{MP[which]={full:await mpShrink(file,1600,.82),small:await mpShrink(file,480,.75)};MP.msg=''}
+  catch(e){MP.msg='That picture didn’t open. Try another one.'}
+  render();
+}
+async function mpSave(){
+  const sk=ADV.flatMap(x=>x[1]).find(x=>x[0]===MP.skill), st=S.mine.staff;
+  if(!sk||!(MP.before||MP.after)) return;
+  MP.busy=true;MP.msg='';render();
+  try{const r=await fetch(API(),{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({type:'mphoto',id:sk[0],skill:sk[1],date:MP.date,note:MP.note,
+      before:MP.before&&MP.before.full,beforeT:MP.before&&MP.before.small,after:MP.after&&MP.after.full,afterT:MP.after&&MP.after.small,slug:st.slug,t:st.t})});
+    const j=await r.json(); if(!j.ok) throw new Error(j.error||'x');
+    MP={open:false,skill:'',date:'',note:'',before:null,after:null,busy:false,msg:'Saved! Your '+sk[1].toLowerCase()+' photos are in Alexandra’s album.'};
+    hubGet(); setTimeout(()=>{if(!MP.open&&MP.msg){MP.msg='';render()}},6000);}
+  catch(e){MP.busy=false;MP.msg='That didn’t send. Check your signal and tap Save again.'}
+  render();
+}
+function mpCard(next,logged){
+  const on=HUB.data&&HUB.data.mphoto, mine=(HUB.data&&HUB.data.mphotos)||[];
+  const head=[h('span',{class:'lbl'},'Model photos'),h('p',{class:'soft',style:'font-size:13.5px;margin:0'},'Add a before and an after of each model. They go to Alexandra’s album.')];
+  if(HUB.data&&!on) return h('div',{class:'gcard'},...head,h('p',{class:'soft',style:'font-size:13px;margin:0'},'Photo uploads switch on soon.'));
+  if(!MP.open) return h('div',{class:'gcard'},...head,
+    MP.msg?h('p',{style:'font-size:14px;margin:0'},MP.msg):null,
+    h('button',{type:'button',class:'mpadd',onclick:()=>{const last=logged.length?logged[logged.length-1].id:null;
+      MP={open:true,skill:last||(next?next[0]:'bd-basic'),date:ymd(new Date()),note:'',before:null,after:null,busy:false,msg:''};render()}},'+ Add model photos'),
+    mine.length?h('div',{class:'sec2'},h('span',{class:'lbl',style:'font-size:10px'},'You’ve added '+mine.length+(mine.length===1?' set':' sets')),
+      mine.slice(-4).reverse().map(m=>h('div',{class:'lrow'},h('span',{},m.skill),h('span',{class:'soft'},(m.before&&m.after?'Before & after · ':m.after?'After · ':'Before · ')+niceDay(m.date))))):null);
+  const slot=which=>{const ph=MP[which];
+    return h('label',{class:'mpslot'},h('span',{class:'mptag'},which==='before'?'Before':'After'),ph?h('img',{src:ph.small,alt:which+' photo'}):null,
+      ph?null:h('span',{style:'font-size:28px;line-height:1'},'+'),ph?null:h('span',{},'Add the '+which),
+      h('input',{type:'file',accept:'image/*',onchange:e=>mpPick(which,e.target.files[0])}))};
+  const sel=h('select',{onchange:e=>{MP.skill=e.target.value}},ADV.map(([ph,sk])=>h('optgroup',{label:ph},sk.map(([id,l])=>h('option',{value:id,selected:id===MP.skill?'':null},l)))));
+  return h('div',{class:'gcard'},...head,
+    h('label',{class:'mpf'},'Which skill',sel),
+    h('div',{class:'mpgrid'},slot('before'),slot('after')),
+    h('label',{class:'mpf'},'Model date',h('input',{type:'date',value:MP.date,max:ymd(new Date()),onchange:e=>{MP.date=e.target.value||ymd(new Date())}})),
+    h('label',{class:'mpf'},'Note (optional)',h('textarea',{rows:'2',maxlength:'300',placeholder:'Formula, products, what you’d do next time',oninput:e=>{MP.note=e.target.value}},MP.note)),
+    MP.msg?h('p',{role:'alert',style:'font-size:14px;margin:0'},MP.msg):null,
+    h('div',{style:'display:flex;gap:10px;justify-content:space-between;align-items:center'},
+      h('button',{type:'button',class:'tab',onclick:()=>{MP={open:false,skill:'',date:'',note:'',before:null,after:null,busy:false,msg:''};render()}},'Cancel'),
+      h('button',{type:'button',class:'mpgo',disabled:(MP.busy||!(MP.before||MP.after))?'':null,onclick:mpSave},MP.busy?'Saving…':'Save photos')));
 }
 
 const STAR='M32 4 L40.2 22.6 L60.5 24.7 L45.3 38.3 L49.6 58.3 L32 48 L14.4 58.3 L18.7 38.3 L3.5 24.7 L23.8 22.6 Z';
@@ -1630,6 +1705,8 @@ function cardsView(){
 /* Taffeta Marketing Proofs (Alexandra, Oct 17 2026): the weekly social posts board lives on Claude (one link that updates
    in place). Dominique and Isabella get a Marketing Proofs square that opens it, and so does The Pretty Report. */
 const MKT_URL='https://prettyteam.taffetadesign.com/mkt/', MKT_SLUGS=['dominique','isabella'];
+/* Customer Cards (RX card + Home care) for people without daily goals (Alexandra, Oct 22 2026: Kat and Isabella). */
+const CC_SLUGS=['kat','isabella'];
 function openMkt(){const w=window.open(MKT_URL,'_blank','noopener');if(!w)location.href=MKT_URL}
 function staffTabs(){
   const p=S.mine||{}, st=p.staff||{}, t=[];
@@ -1639,8 +1716,8 @@ function staffTabs(){
   if(p.cards&&p.cards.file) t.push(['cards','Thank-You Cards']);
   if(isGoalsPerson(p)) t.push(['today','Today']);
   if(isGoalsPerson(p)) t.push(['tomorrow',st.clock?'Tomorrow':'Coming Up']);
-  if(isGoalsPerson(p)) t.push(['rx','RX Card']);
-  if(isGoalsPerson(p)) t.push(['reg','Home Care']);
+  if(isGoalsPerson(p)||CC_SLUGS.includes(st.slug)) t.push(['rx','RX Card']);
+  if(isGoalsPerson(p)||CC_SLUGS.includes(st.slug)) t.push(['reg','Home Care']);
   if(isGoalsPerson(p)||p.adv) t.push(['growth',p.adv?'Associate Program':'Growth']);
   if(p.cr&&p.cr.weeks&&p.cr.weeks.length) t.push(['cr','Weekly CR']);
   if(st.slug) t.push(['off','Time Off']);
@@ -1843,6 +1920,39 @@ function tipView(){
     ok?h('p',{class:'soft',style:'font-size:13px'},'Turn your screen brightness up so the codes scan easily. Tips go straight to your own Venmo.'):null)];
 }
 
+/* leadership: Model Photos (Oct 22 2026). Every associate's before and after photos in one album, grouped by name, newest first. */
+let ALB={data:null,err:null,loading:false,big:null};
+async function albLoad(){
+  if(!S.hubKey||!API()){ALB.err='setup';render();return}
+  ALB.loading=true;
+  try{const r=await fetch(API()+'?admin='+encodeURIComponent(S.hubKey)+'&mphotos=1&_='+Date.now());const j=await r.json();if(!j.ok)throw 0;ALB.data=j;ALB.err=null}
+  catch(e){ALB.err='offline'}
+  ALB.loading=false;render();
+}
+async function albBig(x,which){
+  ALB.big={src:x[which+'T'],cap:x.name+' · '+x.skill+' · '+(which==='before'?'Before':'After')};render();
+  try{const r=await fetch(API()+'?admin='+encodeURIComponent(S.hubKey)+'&mpfull='+encodeURIComponent(x[which])+'&_='+Date.now());const j=await r.json();
+    if(j.ok&&j.src&&ALB.big){ALB.big.src=j.src;render()}}catch(e){}
+}
+function albumView(){
+  if(!ALB.data&&!ALB.loading&&!ALB.err) albLoad();
+  const head=[h('h1',{style:'font-size:28px'},'Model Photos'),h('p',{class:'soft',style:'font-size:13.5px;margin:-14px 0 0'},'Every before and after the associates add, by name. Newest first.')];
+  if(!ALB.data) return [h('div',{class:'hub'},...head,h('p',{class:'dmsg'},ALB.err==='setup'?'The album switches on with the next app update.':ALB.err?'Couldn’t open the album right now. Check your signal and try again.':'Opening…'))];
+  const by={}; (ALB.data.photos||[]).forEach(x=>{(by[x.name]||(by[x.name]=[])).push(x)});
+  const names=Object.keys(by), slug=n=>'alb-'+String(n).toLowerCase().replace(/[^a-z0-9]+/g,'-');
+  const pic=(x,w)=>x[w]?h('figure',{},h('button',{type:'button','aria-label':'Open '+w+' photo',onclick:()=>albBig(x,w)},h('img',{src:x[w+'T'],alt:x.name+' '+x.skill+' '+w,loading:'lazy'})),h('figcaption',{},w==='before'?'Before':'After')):
+    h('div',{class:'alb-none'},'No '+w+' photo');
+  return [h('div',{class:'hub'},...head,
+    names.length?h('div',{class:'alb-names'},names.map(n=>h('a',{href:'#'+slug(n),onclick:e=>{e.preventDefault();const el=document.getElementById(slug(n));if(el)el.scrollIntoView({behavior:'smooth'})}},n+' · '+by[n].length))):
+      h('div',{class:'card2'},h('p',{class:'soft',style:'margin:0'},'No photos yet. When an associate adds a before and after from her Associate Program page, it shows up here.')),
+    names.map(n=>h('div',{class:'card2',id:slug(n)},h('h2',{style:'margin:0;font-size:22px'},n,h('small',{class:'soft',style:'font-size:13px;margin-left:8px'},by[n].length+(by[n].length===1?' model':' models'))),
+      by[n].map(x=>h('div',{class:'alb-entry'},h('b',{},x.skill),h('div',{class:'soft',style:'font-size:13px'},niceDay(x.date)+(x.note?' · '+x.note:'')),
+        h('div',{class:'alb-pair'},pic(x,'before'),pic(x,'after')))))),
+    ALB.data.folder?h('p',{class:'soft',style:'font-size:13px;text-align:center;margin:0'},'Full-size copies are in Google Drive: ',h('a',{href:ALB.data.folder,target:'_blank',rel:'noopener'},'Associate Model Photos')):null),
+    ALB.big?h('div',{class:'alb-big',role:'dialog','aria-label':ALB.big.cap,onclick:e=>{if(e.target===e.currentTarget){ALB.big=null;render()}}},
+      h('img',{src:ALB.big.src,alt:ALB.big.cap}),h('p',{},ALB.big.cap),h('button',{type:'button',onclick:()=>{ALB.big=null;render()}},'Close ✕')):null];
+}
+
 /* leadership: Payroll + Month */
 let ADM={week:null,data:null,err:null,loading:false};
 function weekStartOf(d){const x=new Date(d);x.setHours(0,0,0,0);x.setDate(x.getDate()-((x.getDay()+6)%7));return x}
@@ -1990,14 +2100,15 @@ function prPhotoKey(){return 'pp-photo:'+ID+':'+prWho()}
 function reportGroups(){
   // always 6 squares (Alexandra, Oct 17 2026): Access sits under Team; without the Color Room, Payroll and Month & Trends share one
   return [['Today',['today']]].concat(S.inv?[['Payroll',['payroll']],['Month & Trends',['month']],['Color Room',['color']]]:[['Payroll & Trends',['payroll','month']]])
-    .concat([['Team',['off','guide','access']],['Marketing Proofs',['mkt']]]);
+    .concat([['Team',['off','photos','guide','access']],['Marketing Proofs',['mkt']]]);
 }
-const PR_LABEL={mkt:'Marketing Proofs',home:'Home',today:'Today',payroll:'Payroll',month:'Month & Trends',color:'Color Room',off:'Time Off',guide:'Culture',access:'Access'};
+const PR_LABEL={mkt:'Marketing Proofs',photos:'Model Photos',home:'Home',today:'Today',payroll:'Payroll',month:'Month & Trends',color:'Color Room',off:'Time Off',guide:'Culture',access:'Access'};
 let PR_OPEN='',PR_NAV=false;
 function prGo(k,fromHistory){
   if(k==='mkt'){PR_NAV=false;PR_OPEN='';openMkt();render();return}
   if(!fromHistory&&k!==S.rtab){const d=((history.state&&history.state.d)||0)+1;try{history.pushState({pr:k,d},'',location.href)}catch(e){}}
   PR_OPEN='';PR_NAV=false;S.rtab=k;S.open=null;render();window.scrollTo(0,0);
+  if(k==='photos'&&!ALB.loading){ALB.err=null;albLoad()}
 }
 addEventListener('popstate',e=>{const st=e.state;if(EDITION==='team'&&S.isAdmin){prGo(st&&st.pr?st.pr:'home',true)}});
 function reportHome(){
