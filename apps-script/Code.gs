@@ -607,22 +607,25 @@ function teamPost_(d) {
     const data = JSON.stringify({ guest: guest, services: [].concat(r.services || []).slice(0, 12), type: clean_(r.type, 40),
       picks: [].concat(r.picks || []).slice(0, 40).map(p => ({ n: clean_(p.n, 120), how: String(p.how == null ? '' : p.how).split(/\r?\n/).map(x => clean_(x, 600)).filter(Boolean).join('\n').slice(0, 1600), when: clean_(p.when, 30), step: clean_(p.step, 40) })),   // keeps the step-by-step lines (Oct 20 2026)
       notes: [].concat(r.notes || []).slice(0, 20).map(n => clean_(n, 200)), own: clean_(r.own, 1500), next: clean_(r.next, 20),
-      nextDate: /^\d{4}-\d{2}-\d{2}$/.test(String(r.nextDate || '')) ? r.nextDate : '', msg: clean_(r.msg, 500), rid: clean_(r.rid, 40) });
+      nextDate: /^\d{4}-\d{2}-\d{2}$/.test(String(r.nextDate || '')) ? r.nextDate : '', msg: clean_(r.msg, 500), rid: clean_(r.rid, 40), plan: clean_(r.plan, 120) });
     if (!guest) return json_({ ok: false, error: 'guest' });
     const products = JSON.parse(data).picks.map(p => p.n.replace(/^Biologique Recherche /, '')).join(', ');
     // saved again from the same RX card before the desk texted it: replace that one instead of adding a second (Alexandra, Oct 20 2026)
-    const rid = JSON.parse(data).rid, rsh = tab_(TABS.regimen), row = [now, me.name, guest, kind === 'skin' ? 'Skincare' : 'Hair care', products, data, 'New', ''];
+    // draft (Oct 22 2026): she chose an option; the artist finishes the products at the end, then it's New for the desk
+    const rid = JSON.parse(data).rid, rsh = tab_(TABS.regimen), row = [now, me.name, guest, kind === 'skin' ? 'Skincare' : 'Hair care', products, data, d.draft ? 'Draft' : 'New', ''];
     let at = -1;
     // edited from her Saved Cards: replace that one unless the desk already texted it (Alexandra, Oct 20 2026)
     const er = Number(d.replaceRow);
     if (er >= 2 && er <= rsh.getLastRow()) { const v = rsh.getRange(er, 1, 1, 8).getValues()[0]; if (String(v[1]) === me.name && String(v[6]) !== 'Sent') at = er; }
     if (at < 0 && rid && rsh.getLastRow() > 1) {
       const vals = rsh.getRange(2, 1, rsh.getLastRow() - 1, 8).getValues();
-      for (let i = vals.length - 1; i >= 0; i--) { let o = {}; try { o = JSON.parse(String(vals[i][5])); } catch (e) {} if (o.rid === rid && String(vals[i][6]) !== 'Sent') { at = i + 2; break; } }
+      for (let i = vals.length - 1; i >= 0; i--) { let o = {}; try { o = JSON.parse(String(vals[i][5])); } catch (e) {} if (o.rid === rid && String(vals[i][6]) !== 'Sent') { if (d.draft && String(vals[i][6]) === 'New') return json_({ ok: true, kept: true }); at = i + 2; break; } }
     }
-    if (at > 0) { rsh.getRange(at, 1, 1, row.length).setValues([row]); return json_({ ok: true, replaced: true }); }
+    if (at > 0) { const was = String(rsh.getRange(at, 7).getValue()); rsh.getRange(at, 1, 1, row.length).setValues([row]);
+      if (!d.draft && was === 'Draft') deskPush_('Home care PDF to send', me.name + ' finished ' + deskFirst_(guest) + '’s at-home ' + (kind === 'skin' ? 'skincare' : 'hair care') + ' PDF.');
+      return json_({ ok: true, replaced: true }); }
     rsh.appendRow(row);
-    deskPush_('Home care PDF to send', me.name + ' made ' + deskFirst_(guest) + '’s at-home ' + (kind === 'skin' ? 'skincare' : 'hair care') + ' PDF.');
+    if (!d.draft) deskPush_('Home care PDF to send', me.name + ' made ' + deskFirst_(guest) + '’s at-home ' + (kind === 'skin' ? 'skincare' : 'hair care') + ' PDF.');
     return json_({ ok: true });
   }
   if (d.type === 'stock') {

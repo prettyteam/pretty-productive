@@ -836,6 +836,28 @@ async function rxRelink(x,me){
   if(!d||!Array.isArray(d.opts)||!d.m||!d.opts.every(o=>(o.lines||[]).every(l=>l&&l.t))) return x.link;
   try{return await rxLink(Object.assign(rxBlank(d.kind),d),me,x.date)}catch(e){return x.link}
 }
+/* She chose an option (Alexandra, Oct 22 2026): a home care card for that option's budget waits, unfinished, in the
+   artist's Saved Cards and on the front desk's Home Care list. At the end of the service the artist plugs in the exact
+   products and saves; that replaces the draft and the desk texts her the PDF. */
+const rxOptNames=x=>{const o=(x.draft&&x.draft.opts)||[], t=o.map(q=>rxTotal(q.lines)), hi=t.length===2&&t[0]!==t[1]?t.indexOf(Math.max(...t)):1;return o.map((q,i)=>i===hi?'All In':'Worth The Wait')};
+const rxHcBudget=(x,i)=>{const o=((x.draft&&x.draft.opts)||[])[i];return o?rxTotal(o.lines.filter(l=>l.t!=='s')):0};
+async function rxDraftHome(x){
+  const st=(S.mine&&S.mine.staff)||{}, me=(S.mine&&(S.mine.name||st.name))||'';
+  if(!window.TAFFETA_ENDPOINT||!(st.t||st.tk)) return false;
+  const i=x.chosen, nm=rxOptNames(x)[i]||'', b=rxHcBudget(x,i), d=x.draft||{};
+  const data={guest:x.guest,services:[],type:'',picks:[],notes:[],own:'',next:(d.m&&d.m.when)||'',nextDate:'',msg:'',rid:x.id,
+    plan:'She chose '+nm+(b?': '+rxMoney(b)+' of home care':'')};
+  try{const r=await fetch(window.TAFFETA_ENDPOINT,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify({type:'regimen',draft:true,slug:st.slug,t:st.t,tk:st.tk,artist:me,guest:x.guest,kind:x.kind==='skin'?'skin':'hair',data})});
+    const j=await r.json(); return !!j.ok}catch(e){return false}
+}
+function rxChoose(x,i,toast){
+  const L=rxSaved(), k=L.findIndex(r=>r.id===x.id); if(k<0) return;
+  L[k].chosen=i; L[k].home=null; store.set(rxSavedKey(),JSON.stringify(L));
+  toast.textContent='Saving…';
+  rxDraftHome(L[k]).then(ok=>{RX_CHOSE_MSG=ok?'Her home care card is waiting in your Saved Cards and at the front desk. Finish it when she’s getting dressed.':'Saved on this device. The desk copy didn’t go through, so check the Wi-Fi and tap her option again.';render()});
+}
+let RX_CHOSE_MSG='';
 function rxQrView(x){
   /* the team mostly shows or talks her through the card, so the QR folds under "Client QR Code +" and the next steps
      are the main part of the screen (Alexandra, Oct 20 2026) */
@@ -845,6 +867,10 @@ function rxQrView(x){
   return h('section',{class:'card2 out',style:'align-items:center;text-align:center'},
     h('h2',{},rxGuestName(x.guest)+'’s RX card'),
     h('small',{class:'soft'},'Saved and sent to the front desk. If she doesn’t open it, the desk texts it to her.'),
+    (()=>{const sv=rxSaved().find(r=>r.id===x.id); if(!sv||!sv.draft||!(sv.draft.opts||[]).length) return null;
+      const nm=rxOptNames(sv), t=h('small',{class:'soft'},RX_CHOSE_MSG);
+      return h('div',{class:'rxchose'},h('span',{class:'lbl'},'Which option did she choose?'),
+        h('div',{class:'rxqrow'},nm.map((n,i)=>h('button',{type:'button',class:'obtn'+(sv.chosen===i?' on':''),'aria-pressed':String(sv.chosen===i),onclick:()=>{RX_CHOSE_MSG='';rxChoose(sv,i,t)}},(sv.chosen===i?'✓ ':'')+n+' · '+rxMoney(rxTotal(sv.draft.opts[i].lines))))),t)})(),
     /* one flow (Alexandra, Oct 20 2026): straight to what she takes home; she can come back and change it at the end */
     x.id&&typeof rgSave2==='function'?h('button',{type:'button',class:'obtn rxqbig',onclick:()=>{RX_HOME=x.id;RX_MSG='';RX_SHOW=null;RX_VIEW='home';render();window.scrollTo(0,0)}},'Next: What She Takes Home'):null,
     h('div',{class:'rxqrow'},
@@ -880,7 +906,12 @@ function rxSavedView(me){
   const s=h('input',{type:'search',id:'rxfind',value:RX_FIND,placeholder:'Search by guest’s name',autocomplete:'off'});
   s.addEventListener('input',()=>{RX_FIND=s.value;const pos=s.selectionStart;render();const n=document.getElementById('rxfind');if(n){n.focus();try{n.setSelectionRange(pos,pos)}catch(e){}}});
   const hits=q?list.filter(x=>x.guest.toLowerCase().includes(q)):[];
-  return h('section',{class:'card2'},h('label',{class:'fld'},s),
+  const fin=list.filter(x=>x.chosen!=null&&!x.sent).slice(0,12);
+  return h('section',{class:'card2'},
+    fin.length?h('div',{class:'rxfin'},h('span',{class:'lbl'},'Home Care To Finalize'),...fin.map(x=>h('div',{class:'rxl'},
+      h('div',{class:'rxn'},h('b',{},x.guest),h('small',{class:'soft'},'She chose '+(rxOptNames(x)[x.chosen]||'')+(rxHcBudget(x,x.chosen)?' · '+rxMoney(rxHcBudget(x,x.chosen))+' of home care':''))),
+      h('button',{type:'button',class:'obtn',onclick:()=>{RX_HOME=x.id;RX_MSG='';RX_VIEW='home';render();window.scrollTo(0,0)}},'Finalize')))):null,
+    h('label',{class:'fld'},s),
     !list.length?h('p',{class:'soft'},'Cards you save show up here. Search by her name.'):null,
     q&&!hits.length?h('p',{class:'soft'},'No saved card for “'+RX_FIND+'”.'):null,
     ...hits.slice(0,20).map(x=>h('div',{class:'rxl'},

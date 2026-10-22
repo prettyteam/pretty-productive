@@ -310,7 +310,7 @@ function rgSavedView(me){
   const toast=h('p',{class:'toast'});
   const day=t=>t?new Date(t).toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'}):'';
   const row=x=>{const d=x.data||{}, kind=/skin/i.test(x.kind)?'skin':'hair';
-    return h('div',{class:'rxl'},h('div',{class:'rxn'},h('b',{},x.guest),h('small',{class:'soft'},[x.kind,day(x.at),x.status==='Sent'?'Texted to her':'Waiting at the desk'].filter(Boolean).join(' · ')),x.summary?h('small',{class:'soft'},x.summary):null),
+    return h('div',{class:'rxl'},h('div',{class:'rxn'},h('b',{},x.guest),h('small',{class:'soft'},[x.kind,day(x.at),x.status==='Sent'?'Texted to her':x.status==='Draft'?'Waiting for you to finish':'Waiting at the desk'].filter(Boolean).join(' · ')),x.summary?h('small',{class:'soft'},x.summary):d.plan?h('small',{class:'soft'},d.plan):null),
       h('button',{type:'button',class:'tab',onclick:()=>{RG=Object.assign(rgBlank(),d,{guest:d.guest||x.guest,editRow:x.row,editSent:x.status==='Sent'});RG_TOAST='';rgSave();RG_TAB='build';render();window.scrollTo(0,0)}},'Edit'),
       h('button',{type:'button',class:'tab',onclick:()=>rgPreview(me,toast,Object.assign(rgBlank(),d,{guest:d.guest||x.guest}),kind)},'Preview'))};
   return [h('div',{class:'hub'},rgTabs(),h('section',{class:'card2'},h('span',{class:'lbl'},'Saved Cards'),h('label',{class:'fld'},s),toast,
