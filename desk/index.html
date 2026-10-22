@@ -15,7 +15,7 @@
 <script src="../g/coach.js?v=1"></script>
 <link rel="stylesheet" href="../g/coach.css?v=1">
 <script>window.RG_BASE='../'</script>
-<script src="../g/regimen.js?v=43"></script>
+<script src="../g/regimen.js?v=44"></script>
 <style>
 main{max-width:640px;gap:20px;padding-bottom:110px}
 .head{display:flex;align-items:center;gap:14px}
@@ -348,6 +348,11 @@ function rxMark(row,id,status){rxPend[row]=status;render();
 /* Home care: at-home regimens the artists saved in their app. The desk texts each guest her PDF, then taps Mark sent. */
 const rgData=r=>{try{return JSON.parse(r.data||'{}')}catch(e){return null}};
 function regimenCard(r,i,all){
+  if(st(r)==='Draft'){const d=rgData(r)||{};
+    return `<div class="req doing"><div class="row"><span class="who">${esc(r.guest)}</span><span class="when">${esc(ago(r.at))}</span></div>${rcv('regimen',r,'<span class="pill">Waiting for '+esc(r.artist)+'</span>')}
+    <div class="badges"><span class="badge${r.kind==='Skincare'?' s':''}">${esc(r.kind)}</span></div>
+    <div class="kv"><span>From</span><span>${esc(r.artist)}</span>${d.plan?`<span>Plan</span><span>${esc(d.plan)}</span>`:''}</div>
+    <p class="note" style="margin:0">${esc(r.artist)} picks her exact products after the service. It moves up to the list to text when it’s ready.</p></div>`}
   const s=st(r), sent=s==='Sent', d=rgData(r)||{}, when=[...new Set((d.picks||[]).map(p=>p.when))].join(' · ');
   return `<div class="${sent?'req done':'req'}" data-seen="${esc(seenKey('regimen',r))}"><div class="row"><span class="who">${esc(r.guest)}</span><span class="when">${esc(ago(r.at))}</span></div>${rcv('regimen',r,sent?`<span class="pill">Sent${r.sentAt?' '+esc(fullAt(r.sentAt)):''}</span>`:undefined)}
   <div class="badges"><span class="badge${r.kind==='Skincare'?' s':''}">${esc(r.kind)}</span></div>
@@ -360,7 +365,7 @@ function guests(){
   const cOpen=cToday.filter(r=>st(r)!=='Done'), cDone=cToday.filter(r=>st(r)==='Done'&&isToday(r.handledAt||r.at));
   const kOpen=data.consult.filter(r=>st(r)!=='Booked'), kDone=data.consult.filter(r=>st(r)==='Booked');
   const pOpen=data.profiles.filter(r=>st(r)!=='Updated'), pDone=data.profiles.filter(r=>st(r)==='Updated'&&(pending[r.row+':'+r.at]||Date.now()-(Number(r.updatedAt)||Number(r.at))<2*864e5));   /* updated profiles drop off after 2 days */
-  const rg=data.regimen||[], hOpen=rg.filter(r=>st(r)!=='Sent'), hDone=rg.filter(r=>st(r)==='Sent'&&(pending[r.row+':'+r.at]||Date.now()-(Number(r.sentAt)||Number(r.at))<2*864e5));
+  const rg=data.regimen||[], hOpen=rg.filter(r=>st(r)!=='Sent'&&st(r)!=='Draft'), hDraft=rg.filter(r=>st(r)==='Draft'), hDone=rg.filter(r=>st(r)==='Sent'&&(pending[r.row+':'+r.at]||Date.now()-(Number(r.sentAt)||Number(r.at))<2*864e5));
   const rxw=(data.rx||[]).filter(r=>rxSt(r)==='New'), nR=rxw.length;
   const nC=cOpen.length, nK=kOpen.filter(r=>st(r)==='New').length, nP=pOpen.filter(r=>st(r)==='New').length, nH=hOpen.length;
   $('#nC').textContent=nC||'';$('#nK').textContent=nK||'';$('#nP').textContent=nP||'';$('#nR').textContent=nR||'';$('#nH').textContent=nH||'';$('#nG').textContent=(nC+nK+nP+nR+nH)||'';
@@ -368,6 +373,8 @@ function guests(){
   if(tab==='R') return rxView();
   if(tab==='H'){
     let h=hOpen.length?hOpen.map(r=>regimenCard(r,rg.indexOf(r))).join(''):'<p class="empty">No home care PDFs waiting. When an artist saves one, it shows up here.</p>';
+    /* drafts (Oct 22 2026): the guest chose her option; the artist finishes the products after the service */
+    if(hDraft.length)h+=`<p class="sub" style="margin:18px 0 0">Waiting for the artist to finish (${hDraft.length})</p>`+hDraft.map(r=>regimenCard(r,rg.indexOf(r))).join('');
     if(hDone.length)h+=`<details class="more"><summary>Sent (${hDone.length}) +</summary><div class="list">${hDone.map(r=>regimenCard(r,rg.indexOf(r))).join('')}</div></details>`;
     /* every saved home care card, searchable, like the RX filing (Alexandra, Oct 20 2026) */
     const q=rgQ.trim().toLowerCase(), hits=rgAll?rgAll.map((r,i)=>[r,i]).filter(([r])=>!q||String(r.guest).toLowerCase().includes(q)||String(r.artist).toLowerCase().includes(q)||String(r.summary||'').toLowerCase().includes(q)):[];
