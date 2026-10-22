@@ -109,7 +109,7 @@ const RX_PRICES={
 };
 /* the skin (BR) product list in A to Z order (Alexandra, Oct 22 2026), sizes small to large */
 (()=>{const k=n=>String(n).replace(/^Biologique Recherche /,'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
-  RX_PRICES.skin.sort((a,b)=>k(a[0]).localeCompare(k(b[0]),'en',{numeric:true}))})();
+  ['skin','hair'].forEach(t=>RX_PRICES[t].sort((a,b)=>k(a[0]).localeCompare(k(b[0]),'en',{numeric:true})))})();   /* hair too (Oct 22 2026) */
 
 /* Retail grouped by brand (Alexandra, Oct 15 2026: a drop-down per brand, less scrolling) */
 const RX_BRANDS=['Taffeta','Oribe','K18','Davines','IGK','Brazilian Blowout','Rossano Ferretti','Aluram','Olaplex','Kenra','Biologique Recherche','Cool Cucumber','Jolie','EHP','Ergo','T3'];
