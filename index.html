@@ -380,6 +380,13 @@ body .rbar.new button{background:none;color:#2b2a28;font-weight:700;text-decorat
 .grule .gn small{display:block;font-family:var(--body);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-top:4px}
 .grule p{font-size:14.5px;line-height:1.35;margin:0}
 .grule p small{display:block;color:var(--muted);font-size:12.5px;margin-top:2px}
+.bchips{display:flex;flex-wrap:wrap;gap:7px}
+.bchips button{border:1px solid var(--ink);background:transparent;color:var(--ink);border-radius:999px;padding:6px 13px;font:inherit;font-size:13px}
+.bchips button[aria-current=true]{background:var(--ink);color:var(--marshmallow)}
+.brow{display:flex;gap:14px;align-items:center;width:100%;padding:12px 0;border:0;border-top:1px solid var(--line);background:none;font:inherit;color:var(--ink);text-align:left;cursor:pointer}
+.brow .bth{width:38px;height:48px;flex:none;box-sizing:border-box;border:1px solid var(--line);border-radius:3px;background:linear-gradient(#fbf9f5,#efe9de);font-size:10px;color:var(--muted);display:flex;align-items:flex-end;justify-content:center;padding-bottom:4px}
+.brow .btx{flex:1;min-width:0}.brow .btx b{display:block;font-weight:400;font-size:15px}.brow .btx small{display:block;color:var(--muted);font-size:12.5px;margin-top:2px}
+.brow .bgo{font-size:18px}
 .gbar{height:4px;background:var(--line);border-radius:4px;overflow:hidden}.gbar b{display:block;height:100%;background:var(--choc)}
 .gprog{font-size:12.5px;color:var(--muted);text-align:center}
 .gchk{display:flex;gap:12px;align-items:flex-start;font-size:14.5px;line-height:1.35;padding:8px 0;border:0;border-bottom:1px solid var(--line);background:none;text-align:left;width:100%;color:var(--ink);font-family:inherit}
@@ -1083,6 +1090,34 @@ function advView(adv0){
     canTap?h('p',{class:'soft',style:'font-size:13px;text-align:center;margin:0'},'Tap + after each model you finish. It saves with today’s date.'):null];
 }
 
+/* My Binder (Alexandra, Oct 22 2026): her printed associate binder from Canva, on the phone, in sections.
+   Hair pages go to the hair team and spa pages to the spa team (team.json binder). Each page is its own encrypted PDF;
+   tapping one opens it full size with a Back button. */
+const BINDER_SECS=[['start','Getting started','1'],['adv','Advancement','2'],['edu','Education','3'],['book','Grow your book','4'],['std','Salon standards','5']];
+let BOPEN='', BMSG='';
+async function binderOpen(pg){
+  BOPEN=pg.id; BMSG=''; render();
+  try{const b=await docBytes(pg.file,pg.k); window.pdfOverlay(new Blob([b],{type:'application/pdf'}),pg.title+'.pdf')}
+  catch(e){BMSG='Couldn’t open '+pg.title+'. Check your signal and try again.'}
+  BOPEN=''; render();
+}
+function binderView(){
+  const all=S.mine.binder||[], secs=BINDER_SECS.filter(([k])=>all.some(x=>x.sec===k));
+  const cur=secs.some(([k])=>k===S.bsec)?S.bsec:'all';
+  const row=pg=>h('button',{type:'button',class:'brow',onclick:()=>binderOpen(pg)},
+    h('span',{class:'bth','aria-hidden':'true'},pg.pages?pg.pages+' pg':''),
+    h('span',{class:'btx'},h('b',{},pg.title),pg.desc?h('small',{},pg.desc):null),
+    h('span',{class:'bgo','aria-hidden':'true'},BOPEN===pg.id?'…':'›'));
+  return [h('div',{class:'hub'},
+    h('div',{},h('span',{class:'lbl'},'Associate program'),h('h1',{style:'font-size:28px'},'My Binder'),
+      h('p',{class:'soft',style:'margin:6px 0 0'},'Everything from your printed associate binder, right on your phone. Tap any page to open it full size.')),
+    secs.length>1?h('div',{class:'bchips',role:'tablist'},[['all','All']].concat(secs).map(([k,l])=>
+      h('button',{type:'button',role:'tab','aria-current':String(cur===k),onclick:()=>{S.bsec=k;render()}},l))):null,
+    BMSG?h('p',{class:'toast'},BMSG):null,
+    ...secs.filter(([k])=>cur==='all'||cur===k).map(([k,l,n])=>h('div',{class:'gcard'},h('h2',{},gIcon(n),l),
+      all.filter(x=>x.sec===k).map(row))))];
+}
+
 const STAR='M32 4 L40.2 22.6 L60.5 24.7 L45.3 38.3 L49.6 58.3 L32 48 L14.4 58.3 L18.7 38.3 L3.5 24.7 L23.8 22.6 Z';
 let starN=0;
 function starSvg(p){
@@ -1642,6 +1677,7 @@ function staffTabs(){
   if(isGoalsPerson(p)) t.push(['rx','RX Card']);
   if(isGoalsPerson(p)) t.push(['reg','Home Care']);
   if(isGoalsPerson(p)||p.adv) t.push(['growth',p.adv?'Associate Program':'Growth']);
+  if(p.binder&&p.binder.length) t.push(['binder','My Binder']);
   if(p.cr&&p.cr.weeks&&p.cr.weeks.length) t.push(['cr','Weekly CR']);
   if(st.slug) t.push(['off','Time Off']);
   if(st.slug) t.push(['prices','Prices']);
@@ -1655,7 +1691,7 @@ function staffTabs(){
   return t;
 }
 /* One menu instead of a row of tabs (Alexandra, Oct 2026). Sections are grouped; Customer cards holds RX card and Home care. */
-const NAV_GROUPS=[['Appointments',['home','today','tomorrow','tip']],['Customer Cards',['rx','reg']],['Goals',['growth','cr']],
+const NAV_GROUPS=[['Appointments',['home','today','tomorrow','tip']],['Customer Cards',['rx','reg']],['Goals',['growth','binder','cr']],
   ['Salon & Spa',['prices','pk','inv','skin','cards','off']],['Taffeta',['guide','hb','fg']],['Self Promotion',['promo']],['Marketing Proofs',['mkt']],['My Profile',['me']]];
 let NAV_OPEN=false;
 /* Disco ball = Home, Back arrow = the page before (Alexandra, Oct 15 2026). Each page change is a browser history step,
@@ -1785,6 +1821,7 @@ function staffRender(){
   if(S.tab==='prices') return pricesView();
   if(S.tab==='pk') return pkView();
   if(S.tab==='growth') return growthView();
+  if(S.tab==='binder') return binderView();
   if(S.tab==='cr') return crView();
   if(S.tab==='inv') return invView();
   if(S.tab==='skin') return skinView();

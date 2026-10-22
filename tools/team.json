@@ -678,5 +678,158 @@
         ]
       ]
     }
+  },
+  "binder": {
+    "note": "My Binder: the printed associate binder from Canva. sets = who sees each set; a page with 'only' goes just to those people. Ids match the PDFs passed with --binder.",
+    "sets": {
+      "hair": [
+        "kat",
+        "rose",
+        "amanda",
+        "ashley-b",
+        "adriana",
+        "isabella"
+      ],
+      "spa": []
+    },
+    "pages": [
+      {
+        "id": "new-hire",
+        "title": "New Hire Information",
+        "sec": "start",
+        "set": "hair",
+        "pages": 6,
+        "desc": "Salon associate and stylist welcome info",
+        "canva": "DAGK2GWB4iY"
+      },
+      {
+        "id": "spa-onboarding",
+        "title": "Spa Onboarding Booklet",
+        "sec": "start",
+        "set": "spa",
+        "pages": 6,
+        "desc": "Welcome booklet for spa associates",
+        "canva": "DAHCPfdNFYY"
+      },
+      {
+        "id": "nda",
+        "title": "Non-Compete & Confidentiality Agreement",
+        "sec": "start",
+        "only": [
+          "isabella"
+        ],
+        "pages": 4,
+        "desc": "Keeping salon info private",
+        "drive": "1J0NjtXZZPJ1JrfojaTc-wUqWF3_xxok7"
+      },
+      {
+        "id": "trial",
+        "title": "Trial Agreement Period",
+        "sec": "start",
+        "set": "hair",
+        "pages": 1,
+        "desc": "What your trial period looks like",
+        "canva": "DAHCPNrxFyk"
+      },
+      {
+        "id": "guide",
+        "title": "Associate Guide",
+        "sec": "adv",
+        "set": "hair",
+        "pages": 14,
+        "desc": "The full associate program, step by step",
+        "canva": "DAG14Uf_vYs"
+      },
+      {
+        "id": "advancement",
+        "title": "Associate Advancement",
+        "sec": "adv",
+        "set": "hair",
+        "pages": 1,
+        "desc": "Your path from associate to stylist",
+        "canva": "DAFhH1pOhU4"
+      },
+      {
+        "id": "spa-advancement",
+        "title": "Spa Associate Advancement",
+        "sec": "adv",
+        "set": "spa",
+        "pages": 1,
+        "desc": "Your path on the spa side",
+        "canva": "DAHCN9gp3p8"
+      },
+      {
+        "id": "formula",
+        "title": "Associate Formula Guide",
+        "sec": "edu",
+        "set": "hair",
+        "pages": 5,
+        "desc": "Go-to color formulas",
+        "canva": "DAHGsdBgB7M"
+      },
+      {
+        "id": "layers",
+        "title": "Round vs. Square Layers",
+        "sec": "edu",
+        "set": "hair",
+        "pages": 1,
+        "desc": "Cutting reference",
+        "canva": "DAG3U64Uh3k"
+      },
+      {
+        "id": "extensions",
+        "title": "Extension Consult & Cost Guide",
+        "sec": "edu",
+        "set": "hair",
+        "pages": 2,
+        "desc": "How to consult and price extensions",
+        "canva": "DAE-7gz48Hc"
+      },
+      {
+        "id": "model-tracker",
+        "title": "Associate Model Tracker",
+        "sec": "edu",
+        "set": "hair",
+        "pages": 16,
+        "desc": "Log your model practice",
+        "canva": "DAG3q7k0s5w"
+      },
+      {
+        "id": "build-book",
+        "title": "How to Build a Book",
+        "sec": "book",
+        "set": "hair",
+        "pages": 2,
+        "desc": "Steps to fill your chair",
+        "canva": "DAGLPV4Y0zk"
+      },
+      {
+        "id": "consult-retail",
+        "title": "Consult Options with Retail",
+        "sec": "book",
+        "set": "hair",
+        "pages": 4,
+        "desc": "Build retail into every consult",
+        "canva": "DAGLPTjSgKY"
+      },
+      {
+        "id": "social-policy",
+        "title": "Social Media Self-Promotion",
+        "sec": "book",
+        "set": "hair",
+        "pages": 1,
+        "desc": "Our posting policy",
+        "canva": "DAG5oairtyU"
+      },
+      {
+        "id": "cleaning",
+        "title": "Cleaning Checklist",
+        "sec": "std",
+        "set": "hair",
+        "pages": 2,
+        "desc": "Daily and weekly cleaning",
+        "canva": "DAGGntHWY4Y"
+      }
+    ]
   }
 }
