@@ -87,6 +87,9 @@ const RX_PROD={
   skSerPore:['Biologique Recherche Dermopore (0.3 oz)',60,'Tightens pores and keeps breakouts in check'],
   skLaitO2:['Biologique Recherche Lait VIP O2 (5.1 oz)',60,'The cleansing milk that goes with your P50'],
   skCreamGM:['Biologique Recherche Crème Grand Millésime',225,'Rich, firming cream for dry skin and fine lines'],
+  /* anti-aging, the way Carolyn would recommend it (Oct 22 2026) */
+  skCollagen:['Biologique Recherche Collagène Originel (0.3 oz)',85,'Firms and plumps. Sérum Grand Millésime works well too'],
+  skSplendide:['Biologique Recherche Crème Splendide',195,'Firming cream for fine lines. Crème Grand Millésime works well too'],
   skClean:['Biologique Recherche Lait VIP O2 (1.7 oz)',35,'A gentle cleansing milk to start a real routine'],
   skMask:['Biologique Recherche Masque VIVANT',95,'Weekly mask for oily, blemish-prone skin']
 };
@@ -277,11 +280,12 @@ function rxNeeds(R){
     const brk=now.includes('Breakouts')||now.includes('Large pores')||now.includes('Oily');
     const spots=now.includes('Dark spots');
     const dry=now.includes('Dehydration')||a.feel==='Dry or tight', dull=now.includes('Dullness or uneven tone'), lines=now.includes('Fine lines');
+    const firm=lines||rxGoalList(R).some(g=>/Anti-Aging|Fine Lines|Firm/i.test(g));   /* anti-aging: collagen serum + Crème Splendide (Carolyn, Oct 22 2026) */
     add(sens?'skSens':brk?'skBreak':spots?'skBright':'skP50V');
-    add(spots?'skSerPigm':(lines||dull||dry)?'skSpectral':sens?'skSerSens':brk?'skSerPore':'skSpectral');
+    add(spots?'skSerPigm':firm?'skCollagen':(dull||dry)?'skSpectral':sens?'skSerSens':brk?'skSerPore':'skSpectral');
     const lovesFull=a.steps==='Full routine'&&a.prod==='Professional'&&a.love==='Yes';
     if(!lovesFull) add('skLaitO2');
-    if(dry||lines||a.steps==='Nothing'||a.steps==='Cleanser only') add('skCreamGM');
+    if(firm) add('skSplendide'); else if(dry||a.steps==='Nothing'||a.steps==='Cleanser only') add('skCreamGM');
     return out;
   }
   const feel=[].concat(a.feel||[]), color=[].concat(a.color||[]);
