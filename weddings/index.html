@@ -76,6 +76,21 @@ body.tw-home header.top{display:none}
 .tsug small{color:var(--muted);white-space:nowrap}
 .poc{font-size:11px;padding:3px 8px;border:1px solid var(--line);background:none;color:var(--muted);border-radius:999px;cursor:pointer;white-space:nowrap}
 .poc.on{border-color:var(--ink);background:var(--ink);color:#fff}
+/* Timeline on a phone (Alexandra, Oct 22 2026): iPhone time and date boxes kept their own width and ran past the card, the
+   Confirmed chip was black on black, and the chip + Make contact squeezed the email. They now sit on their own line. */
+input[type="time"],input[type="date"]{-webkit-appearance:none;appearance:none;display:block;min-height:34px;text-align:left}
+input[type="time"]::-webkit-date-and-time-value,input[type="date"]::-webkit-date-and-time-value{text-align:left}
+.pill.rsvp-accepted{color:#fff}
+.item.artist{grid-template-columns:minmax(0,120px) minmax(0,1fr) auto}
+.item.artist .aemail{grid-column:2/-1}
+.item.artist .astat{grid-column:1/-1;display:flex;gap:6px;align-items:center;justify-content:flex-end;flex-wrap:wrap}
+.item.artist .astat:empty{display:none}
+.savebar{top:var(--navh,0px)}
+/* a Save button at the bottom of each Timeline section, so she can see what she typed stuck (Alexandra, Oct 22 2026) */
+.csave{display:flex;justify-content:flex-end;align-items:center;gap:10px;margin-top:4px;padding-top:10px;border-top:1px solid var(--line)}
+.csave .status{flex:1 1 auto;text-align:right}
+.csave .btn{flex:0 0 auto;min-width:92px}
+.tsug small.addr{white-space:normal;text-align:right}
 </style>
 </head><body>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -976,7 +991,7 @@ function renderArtists(){
     const chip=st?'<span class="pill rsvp-'+st+'">'+({accepted:"Confirmed",declined:"Declined",tentative:"Maybe",needsAction:"Waiting"}[st]||st)+'</span>':'';
     const opts='<option value="">Pick from team…</option>'+profiles.map(pr=>'<option value="'+esc(pr._id)+'"'+(pr._id===a.uid?' selected':'')+'>'+esc(pr.preferredName||pr.legalName||"Unnamed")+'</option>').join("");
     d.innerHTML='<select aria-label="Role" id="ar-'+a.id+'"><option value="hair">Hair</option><option value="mu">Makeup</option></select><input id="an-'+a.id+'" placeholder="Artist name" value="'+esc(a.name)+'"><button class="x" aria-label="Remove artist">×</button>'
-      +'<select class="pick" id="ap-'+a.id+'" aria-label="Team member" style="grid-column:1/2"'+(profiles.length?'':' hidden')+'>'+opts+'</select><input id="ae-'+a.id+'" type="email" placeholder="Email for calendar invite" value="'+esc(a.email||"")+'" style="grid-column:2/3"><span style="display:flex;gap:4px;align-items:center;flex-wrap:wrap">'+chip+(a.name.trim()?'<button type="button" class="poc'+(isPoc(a)?' on':'')+'" title="Day-of contact on the sheet">'+(isPoc(a)?'★ Contact':'Make contact')+'</button>':'')+'</span>';
+      +'<select class="pick" id="ap-'+a.id+'" aria-label="Team member" style="grid-column:1/2"'+(profiles.length?'':' hidden')+'>'+opts+'</select><input id="ae-'+a.id+'" class="aemail" type="email" placeholder="Email for calendar invite" value="'+esc(a.email||"")+'"><span class="astat">'+chip+(a.name.trim()?'<button type="button" class="poc'+(isPoc(a)?' on':'')+'" title="Day-of contact on the sheet">'+(isPoc(a)?'★ Contact':'Make contact')+'</button>':'')+'</span>';
     d.querySelector("#ar-"+a.id).value=a.role;
     d.querySelector("#ar-"+a.id).onchange=e=>{a.role=e.target.value;changed()};
     d.querySelector("#an-"+a.id).oninput=e=>{a.name=e.target.value;changed()};
@@ -1040,6 +1055,56 @@ function setPoc(a,quiet){
 teamSuggest($("#contactName"),pr=>{S.contactName=pr.preferredName||pr.legalName||"";S.contactPhone=pr.phone||S.contactPhone||"";
   $("#contactName").value=S.contactName;$("#contactPhone").value=S.contactPhone;renderArtists();changed()});
 $("#contactName").setAttribute("autocomplete","off");
+/* Real addresses pop up as she types a location (Alexandra, Oct 22 2026), from OpenStreetMap through Photon (free, no key),
+   nearest Hammonton first. Tapping one fills the box with the venue and its full street address. If the lookup is down, the
+   box still works as a plain text box. */
+const US_ST={Alabama:"AL",Alaska:"AK",Arizona:"AZ",Arkansas:"AR",California:"CA",Colorado:"CO",Connecticut:"CT",Delaware:"DE","District of Columbia":"DC",Florida:"FL",Georgia:"GA",Hawaii:"HI",Idaho:"ID",Illinois:"IL",Indiana:"IN",Iowa:"IA",Kansas:"KS",Kentucky:"KY",Louisiana:"LA",Maine:"ME",Maryland:"MD",Massachusetts:"MA",Michigan:"MI",Minnesota:"MN",Mississippi:"MS",Missouri:"MO",Montana:"MT",Nebraska:"NE",Nevada:"NV","New Hampshire":"NH","New Jersey":"NJ","New Mexico":"NM","New York":"NY","North Carolina":"NC","North Dakota":"ND",Ohio:"OH",Oklahoma:"OK",Oregon:"OR",Pennsylvania:"PA","Rhode Island":"RI","South Carolina":"SC","South Dakota":"SD",Tennessee:"TN",Texas:"TX",Utah:"UT",Vermont:"VT",Virginia:"VA",Washington:"WA","West Virginia":"WV",Wisconsin:"WI",Wyoming:"WY"};
+function addrParts(f){
+  const p=f.properties||{},st=US_ST[p.state]||p.state||"";
+  const street=[p.housenumber,p.street].filter(Boolean).join(" ");
+  const town=p.city||p.town||p.village||p.district||p.county||"";
+  const place=p.name&&p.name!==street&&p.name!==town?p.name:"";
+  const line=[street,town,[st,p.postcode].filter(Boolean).join(" ")].filter(Boolean).join(", ");
+  return {place,street:street||(place&&!p.housenumber?"":p.name||""),city:town,state:st,zip:p.postcode||"",line,full:[place,line].filter(Boolean).join(", ")};
+}
+function addrSuggest(inp,onPick){
+  let box=null,hits=[],at=-1,timer=0,ask=0,quiet=false;
+  inp.setAttribute("autocomplete","off");
+  const close=()=>{if(box){box.remove();box=null}at=-1};
+  const pick=h=>{close();ask++;quiet=true;onPick(h);quiet=false};
+  const draw=()=>{
+    close();if(!hits.length||document.activeElement!==inp)return;
+    const r=inp.getBoundingClientRect();
+    box=document.createElement("div");box.className="tsug";box.setAttribute("role","listbox");
+    box.style.left=(r.left+scrollX)+"px";box.style.top=(r.bottom+scrollY)+"px";box.style.width=Math.max(r.width,260)+"px";
+    box.innerHTML=hits.map((h,i)=>'<button type="button" role="option" data-i="'+i+'"><span>'+esc(h.place||h.line)+'</span>'+(h.place?'<small class="addr">'+esc(h.line)+'</small>':'')+'</button>').join("");
+    box.addEventListener("pointerdown",e=>e.preventDefault());
+    box.onclick=e=>{const b=e.target.closest("button");if(b)pick(hits[+b.dataset.i])};
+    document.body.appendChild(box);
+  };
+  const look=async()=>{
+    const q=inp.value.trim(),n=++ask;if(q.length<3){hits=[];close();return}
+    try{
+      const r=await fetch("https://photon.komoot.io/api/?limit=6&lang=en&lat=39.636&lon=-74.802&q="+encodeURIComponent(q));
+      const j=await r.json();if(n!==ask)return;
+      const seen=new Set();
+      hits=(j.features||[]).filter(f=>(f.properties||{}).countrycode==="US").map(addrParts).filter(h=>h.line&&!seen.has(h.full)&&seen.add(h.full));
+      draw();
+    }catch(e){hits=[];close()}
+  };
+  inp.addEventListener("input",()=>{clearTimeout(timer);if(!quiet)timer=setTimeout(look,300)});
+  inp.addEventListener("blur",()=>setTimeout(close,150));
+  inp.addEventListener("keydown",e=>{
+    if(!box)return;const bs=[...box.querySelectorAll("button")];
+    if(e.key==="ArrowDown"||e.key==="ArrowUp"){e.preventDefault();at=(at+(e.key==="ArrowDown"?1:-1)+bs.length)%bs.length;bs.forEach((b,i)=>b.classList.toggle("on",i===at))}
+    else if(e.key==="Enter"&&at>=0){e.preventDefault();pick(hits[at])}
+    else if(e.key==="Escape")close();
+  });
+}
+const setField=(id,v)=>{const el=$("#"+id);if(!el)return;el.value=v;el.dispatchEvent(new Event("input",{bubbles:true}));el.dispatchEvent(new Event("change",{bubbles:true}))};
+addrSuggest($("#location"),h=>setField("location",h.full));
+addrSuggest($("#previewLoc"),h=>setField("previewLoc",h.full));
+addrSuggest($("#ext-sstreet"),h=>{setField("ext-sstreet",h.street||h.line);if(h.city)setField("ext-scity",h.city);if(h.state)setField("ext-sstate",h.state);if(h.zip)setField("ext-szip",h.zip)});
 /* ---------- calendar tab ---------- */
 function renderCalPicker(){
   const sel=$("#cal-wedding"),today=new Date().toISOString().slice(0,10);
@@ -1410,7 +1475,15 @@ function setStatus(t){
   $("#saveState").textContent=t==="Opened"?"Saved":draft?"Draft from Google Calendar, not saved yet. Check it, then tap Save.":idle?"Changes save as you type. Tap Save any time to be sure.":t;
   bar.classList.toggle("unsaved",!done&&!idle&&t!=="Saving…");
   $("#saveNow").textContent=done?"Saved ✓":"Save";
+  document.querySelectorAll(".csave").forEach(c=>{
+    c.hidden=!canWrite;
+    c.querySelector(".btn").textContent=t==="Saving…"?"Saving…":done?"Saved ✓":"Save";
+    c.querySelector(".status").textContent=/^Add the bride|^Couldn't/.test(t)?t:"";
+  });
 }
+/* keep the Save bar just under the Back / Menu bar instead of hiding behind it */
+function navH(){const n=document.querySelector(".tnav");document.documentElement.style.setProperty("--navh",(n&&!n.hidden?n.offsetHeight:0)+"px")}
+addEventListener("resize",navH);addEventListener("load",navH);setTimeout(navH,600);
 $("#saveNow").onclick=()=>{
   if(!canWrite)return;
   if(!S.bride.trim()){setStatus("Add the bride's name to save");return}
@@ -2298,6 +2371,12 @@ document.querySelectorAll(".card").forEach((card,i)=>{
   const body=document.createElement("div");body.className="cbody";
   while(h.nextSibling)body.appendChild(h.nextSibling);
   card.appendChild(body);
+  if(card.closest("#view-build .rail")){
+    const sv=document.createElement("div");sv.className="csave";sv.hidden=true;
+    sv.innerHTML='<span class="status"></span><button type="button" class="btn small">Save</button>';
+    sv.querySelector(".btn").onclick=()=>$("#saveNow").click();
+    body.appendChild(sv);
+  }
   h.classList.add("tog");h.setAttribute("role","button");h.tabIndex=0;
   const pl=document.createElement("span");pl.className="pl";pl.setAttribute("aria-hidden","true");h.appendChild(pl);
   const key="tt-card-"+i;let open=h.hasAttribute("data-open");
