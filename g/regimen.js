@@ -585,6 +585,8 @@ async function rgSave2(me,toast,btn){
   if(!rgDeskOn()){toast.textContent='The front desk list isn’t switched on yet. Your regimen stays saved on this screen, so tap again once it is.';return}
   const st=(S.mine&&S.mine.staff)||{}, kind=rgKind();
   if(!RG.guest.trim()){toast.textContent='Add her name first so the desk knows who it’s for.';return}
+  /* a card saved with aftercare notes but no products by mistake (Heike, Oct 22 2026): ask first */
+  if(!(RG.picks||[]).length&&!confirm('No products are picked on '+rgFirst(RG.guest)+'’s card, so it will only have aftercare notes. Save it anyway?')){toast.textContent='Pick her products in step 2, then save.';return}
   btn.disabled=true; toast.textContent='Saving…';
   try{
     const r=await fetch(window.TAFFETA_ENDPOINT,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
