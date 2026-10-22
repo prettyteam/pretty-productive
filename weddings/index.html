@@ -244,6 +244,10 @@ table.adm{border-collapse:collapse;font-size:13px;min-width:100%}table.adm th,ta
 .pv-ph small{position:absolute;left:0;right:0;bottom:0;background:rgba(255,255,255,.85);font-size:10px;padding:2px 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .filebtn{position:relative;overflow:hidden;display:inline-flex;align-items:center;justify-content:center}
 .filebtn input{position:absolute;inset:0;opacity:0;cursor:pointer}
+/* wedding photos card (Schedule + Timeline), Oct 22 2026 */
+.wp-card{margin-top:18px}
+.wp-card h3{font:500 11px var(--sans);letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:14px 0 8px}
+.wp-card .wp-btns{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
 #pv-detail .seg{align-self:flex-start}
 .pv-desc{white-space:pre-wrap;font-size:13px;color:var(--muted);margin:0}
 textarea.copyfallback{position:fixed;left:-9999px;top:0}
@@ -448,6 +452,7 @@ input,select,textarea{background:#fff;border-radius:0}
           <div class="row" style="align-items:flex-start"><button class="btn" id="cf-text-team">Text team</button><details class="more"><summary class="btn ghost">More</summary><div class="menu"><button class="btn ghost" id="cf-pdf">Send as PDF</button><button class="btn ghost" id="cf-copy">Copy text</button><button class="btn ghost" id="cf-reset">Refill from wedding</button></div></details></div>
           <p class="status" id="cf-status"></p>
         </div>
+        <div class="card wp-card" id="wp-build" hidden></div>
       </div>
     </div>
   </section>
@@ -481,6 +486,7 @@ input,select,textarea{background:#fff;border-radius:0}
             </div></details>
           </div>
         </div>
+        <div class="card wp-card" id="wp-team" hidden></div>
       </div>
     </div>
   </section>
@@ -1941,6 +1947,75 @@ async function pvUpload(p,kind,files){
   if(st)st.textContent=done?done+" photo"+(done>1?"s":"")+" added.":"";
   renderPreviews();
 }
+
+/* ---------- wedding photos (Alexandra, Oct 22 2026) ----------
+   A Photos card on each booked wedding (Schedule, and the office Timeline): the office adds new inspo the bride sends,
+   artists add trial pictures, and every photo from the wedding's bridal preview shows up here on its own. */
+let wpCache={}, wpThumbs={};
+const wpMe=()=>ROLE==="office"?"Office":(ME&&(ME.preferredName||ME.legalName))||"";
+const WP_GROUPS=[["inspo","Inspiration from the bride"],["look","Trial & look photos"],["preview","From the bridal preview"]];
+function wpShow(where,id){
+  const box=$("#wp-"+where);if(!box)return;
+  box.dataset.w=id||"";
+  if(!id||!ROLE){box.hidden=true;box.innerHTML="";return}
+  box.hidden=false;
+  if(wpCache[id])wpRender(where);else box.innerHTML='<h2>Photos</h2><p class="hint">Loading photos…</p>';
+  wpLoad(id);
+}
+async function wpLoad(id){
+  try{const j=await api("wedPhotos",{id});wpCache[id]=j.photos||[];["team","build"].forEach(k=>{if(($("#wp-"+k)||{}).dataset&&$("#wp-"+k).dataset.w===id)wpRender(k)})}
+  catch(e){["team","build"].forEach(k=>{const b=$("#wp-"+k);if(b&&b.dataset.w===id&&!wpCache[id])b.innerHTML='<h2>Photos</h2><p class="hint">Couldn\'t load photos. Refresh to try again.</p>'})}
+}
+function wpRender(where){
+  const box=$("#wp-"+where),id=box.dataset.w,photos=wpCache[id]||[],me=wpMe();
+  let h='<h2>Photos</h2><p class="hint">'+(ROLE==="office"?"Add new inspo the bride sends. The team on this wedding sees it here. Preview photos show up on their own.":"Inspo from the bride and photos from the trial. Add yours so the whole team sees the look.")+'</p>';
+  WP_GROUPS.forEach(([k,label])=>{const n=photos.filter(p=>p.kind===k).length;if(k==="preview"&&!n)return;h+='<h3>'+label+(n?' ('+n+')':'')+'</h3><div class="pv-photos" data-g="'+k+'"></div>'});
+  h+='<div class="wp-btns"><span class="btn ghost filebtn">Add inspo<input type="file" accept="image/*" multiple data-kind="inspo" aria-label="Add inspiration photos"></span>'
+   +'<span class="btn ghost filebtn">Add trial photos<input type="file" accept="image/*" multiple data-kind="look" aria-label="Add trial photos"></span></div><p class="status" data-st style="margin:6px 0 0"></p>';
+  box.innerHTML=h;
+  box.querySelectorAll("[data-g]").forEach(g=>{
+    const list=photos.filter(p=>p.kind===g.dataset.g);
+    if(!list.length){g.innerHTML='<p class="hint" style="grid-column:1/-1;margin:0">No photos yet.</p>';return}
+    list.forEach(ph=>{
+      const d=document.createElement("div");d.className="pv-ph";
+      const can=ph.kind!=="preview"&&(ROLE==="office"||ph.by===me);
+      const tag=ph.kind==="preview"?(ph.ext?"Extensions · ":"")+(ph.by||""):(ph.by||"");
+      d.innerHTML='<button type="button" class="open" aria-label="Open photo">'+(wpThumbs[ph.id]?'<img alt="" src="'+wpThumbs[ph.id]+'">':'')+'</button>'+(can?'<button type="button" class="x" aria-label="Remove photo">×</button>':'')+'<small>'+esc(tag)+'</small>';
+      d.querySelector(".open").onclick=()=>wpOpen(id,ph);
+      if(can)d.querySelector(".x").onclick=async()=>{if(!confirm("Remove this photo?"))return;
+        try{await api("delWedPhoto",{id,photoId:ph.id});wpCache[id]=(wpCache[id]||[]).filter(x=>x.id!==ph.id);wpRefresh(id)}catch(e){toast(e.message&&e.message!=="error"?e.message:"Couldn't remove it. Try again.")}};
+      g.appendChild(d);
+    });
+  });
+  box.querySelectorAll('input[type="file"]').forEach(inp=>inp.onchange=()=>wpUpload(id,inp.dataset.kind,[...inp.files],box.querySelector("[data-st]")).finally(()=>{inp.value=""}));
+  const need=photos.filter(p=>!wpThumbs[p.id]).map(p=>p.id);
+  if(need.length&&!box.dataset.fetching){box.dataset.fetching="1";api("wedPhotoData",{id,ids:need}).then(j=>{Object.assign(wpThumbs,j.photos||{});need.forEach(x=>{if(!wpThumbs[x])wpThumbs[x]=""})}).catch(()=>{}).finally(()=>{delete box.dataset.fetching;wpRefresh(id)})}
+}
+function wpRefresh(id){["team","build"].forEach(k=>{const b=$("#wp-"+k);if(b&&!b.hidden&&b.dataset.w===id)wpRender(k)})}
+async function wpOpen(id,ph){
+  const w=window.open("","_blank");
+  try{const j=await api("wedPhotoData",{id,ids:[ph.id],full:true});const src=(j.photos||{})[ph.id];
+    if(w&&src){w.document.title="Wedding photo";w.document.body.style.margin="0";w.document.body.innerHTML='<img alt="Wedding photo" style="max-width:100%;display:block;margin:auto" src="'+src+'">'}else if(w)w.close()}
+  catch(e){if(w)w.close();toast("Couldn't open that photo.")}
+}
+async function wpUpload(id,kind,files,st){
+  let done=0;
+  for(const f of files){
+    if(!/^image\//.test(f.type)&&!/\.(jpe?g|png|heic|heif|webp)$/i.test(f.name))continue;
+    if(st)st.textContent="Uploading "+(done+1)+" of "+files.length+"…";
+    try{
+      const data=await pvShrink(f,1600,.82),thumb=await pvShrink(f,320,.7);
+      const j=await api("addWedPhoto",{id,photo:{kind,data,thumb}});
+      wpThumbs[j.photo.id]="data:image/jpeg;base64,"+thumb;(wpCache[id]=wpCache[id]||[]).push(j.photo);done++;
+      wpRefresh(id);st=null;
+    }catch(e){toast(e.code==="too_many"?e.message:"A photo didn't upload. Try again.")}
+  }
+  wpRefresh(id);
+  if(done)toast(done+" photo"+(done>1?"s":"")+" added.");
+}
+/* show the card wherever a wedding is open: Schedule (everyone) and the office Timeline */
+{const rts=renderTeamSheet;renderTeamSheet=function(){rts();wpShow("team",allWeddings.some(x=>x.id===teamSel)?teamSel:null)}}
+{const so=$("#saved").onchange;$("#saved").onchange=e=>{so(e);wpShow("build",docId)}}
 
 /* ---------- booked weddings (office) ---------- */
 function bkRows(){

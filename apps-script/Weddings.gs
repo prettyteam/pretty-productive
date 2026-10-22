@@ -120,6 +120,10 @@ function doPost(e) {
       case 'addPhoto': return json_(addPhoto_(who, d.key, d.photo));
       case 'deletePhoto': return json_(deletePhoto_(who, d.key, d.id));
       case 'photos': return json_(photos_(who, d.key, d.ids, !!d.full));
+      case 'wedPhotos': return json_(wedPhotos_(who, d.id));
+      case 'addWedPhoto': return json_(addWedPhoto_(who, d.id, d.photo));
+      case 'delWedPhoto': return json_(delWedPhoto_(who, d.id, d.photoId));
+      case 'wedPhotoData': return json_(wedPhotoData_(who, d.id, d.ids, !!d.full));
       case 'myJobs': return json_(office ? { ok: true, jobs: [] } : myJobs_(who.member));
       case 'answerJob': return json_(office ? { ok: false, error: 'office_only' } : answerJob_(who.member, d.id, !!d.yes));
       case 'savePushToken': return json_(office ? saveOfficePushToken_(d.name, d.token, d.device, !!d.off) : savePushToken_(who.member, d.token, d.device, !!d.off));
@@ -519,6 +523,107 @@ function photos_(who, key, ids, full) {
       const b = DriveApp.getFileById(full ? p.id : p.thumbId).getBlob();
       out[p.id] = 'data:image/jpeg;base64,' + Utilities.base64Encode(b.getBytes());
     } catch (_) {}
+  });
+  return { ok: true, photos: out };
+}
+
+/* ---------- wedding photos (Alexandra, Oct 22 2026) ----------
+   On each booked wedding: photos the office or that wedding's artists add (new inspo from the bride, trial pictures),
+   plus every photo from the wedding's bridal preview, pulled in on their own. */
+const WED_PHOTOS = { name: 'Wedding photos', headers: ['Wedding id', 'Bride', 'Wedding date', 'Kind', 'Added by', 'Added', 'Photo id', 'Small id', 'Folder'] };
+
+function wedPhotoSheet_() {
+  const ss = ss_();
+  let sh = ss.getSheetByName(WED_PHOTOS.name);
+  if (!sh) {
+    sh = ss.insertSheet(WED_PHOTOS.name);
+    sh.getRange(1, 1, 1, WED_PHOTOS.headers.length).setValues([WED_PHOTOS.headers]).setFontWeight('bold').setBackground('#000000').setFontColor('#ffffff');
+    sh.setFrozenRows(1);
+    sh.getRange('A:I').setNumberFormat('@');
+  }
+  return sh;
+}
+
+/** The wedding, only if this person may see it: the office, or an artist on its team (same rule as load_). */
+function wedFor_(who, id) {
+  const w = weddings_().find(x => x.d.id === id);
+  if (!w) return null;
+  if (who.role === 'office') return w;
+  const m = who.member, email = String(m.email || '').toLowerCase();
+  return (w.d.artists || []).some(a => a.uid === m.id || (email && String(a.email || '').toLowerCase() === email)) ? w : null;
+}
+
+/** Preview events that belong to this wedding: the preview invites the app sent for it, or a calendar preview with the bride's full name in the title. */
+function wedPreviews_(w) {
+  const ids = {};
+  Object.keys(w.d.cal || {}).forEach(k => { if (k.indexOf('p:') === 0 && w.d.cal[k].eventId) ids[w.d.cal[k].eventId] = true; });
+  const norm = s => String(s || '').toLowerCase().replace(/[^a-z]+/g, ' ').trim();
+  const bride = norm(w.d.bride), last = w.d.date || '9999';
+  return previewEvents_().filter(ev => ids[ev.key] ||
+    (bride.indexOf(' ') > 0 && (' ' + norm(ev.title) + ' ').indexOf(' ' + bride + ' ') >= 0 && ev.start.slice(0, 10) <= last));
+}
+
+function wedPhotoRows_(id) {
+  const vals = wedPhotoSheet_().getDataRange().getValues();
+  const out = [];
+  for (let i = 1; i < vals.length; i++) if (vals[i][0] === id) out.push({ row: i + 1, id: String(vals[i][6]), thumbId: String(vals[i][7]), kind: String(vals[i][3]), by: String(vals[i][4]), at: iso_(vals[i][5]), folder: String(vals[i][8]) });
+  return out;
+}
+
+function wedPhotos_(who, id) {
+  const w = wedFor_(who, id);
+  if (!w) return { ok: false, error: 'not_found' };
+  const photos = wedPhotoRows_(id).map(p => ({ id: p.id, kind: p.kind, by: p.by, at: p.at }));
+  const saved = previewRows_();
+  wedPreviews_(w).forEach(ev => ((saved[ev.key] || {}).d || {}).photos && saved[ev.key].d.photos.forEach(p =>
+    photos.push({ id: p.id, kind: 'preview', ext: p.kind === 'ext', by: p.by, at: p.at })));
+  return { ok: true, photos: photos };
+}
+
+/** photo: {kind:'inspo'|'look', data:'<base64 jpeg>', thumb:'<base64 jpeg>'} */
+function addWedPhoto_(who, id, photo) {
+  const w = wedFor_(who, id);
+  if (!w || !photo || !photo.data) return { ok: false, error: 'not_found' };
+  const rows = wedPhotoRows_(id);
+  if (rows.length >= 60) return { ok: false, error: 'too_many', message: 'This wedding already has 60 photos.' };
+  let folder = null;
+  const fid = (rows.find(r => r.folder) || {}).folder;
+  if (fid) { try { folder = DriveApp.getFolderById(fid); } catch (_) {} }
+  if (!folder) folder = photoFolder_().createFolder('Wedding ' + (w.d.date || '') + ' ' + String(w.d.bride || 'Bride').replace(/[\/\\]/g, '-'));
+  const kind = photo.kind === 'inspo' ? 'inspo' : 'look';
+  const by = who.role === 'office' ? 'Office' : (who.member.preferredName || who.member.legalName || 'Artist');
+  const stamp = Utilities.formatDate(new Date(), TZ, 'yyyy-MM-dd HHmmss');
+  const name = (kind === 'inspo' ? 'Inspo' : 'Look') + ' - ' + by + ' - ' + stamp;
+  const file = folder.createFile(Utilities.newBlob(Utilities.base64Decode(photo.data), 'image/jpeg', name + '.jpg'));
+  const thumb = photo.thumb ? folder.createFile(Utilities.newBlob(Utilities.base64Decode(photo.thumb), 'image/jpeg', name + ' (small).jpg')) : file;
+  const at = new Date();
+  wedPhotoSheet_().appendRow([id, clean_(w.d.bride, 120), w.d.date || '', kind, clean_(by, 80), at, file.getId(), thumb.getId(), folder.getId()]);
+  return { ok: true, photo: { id: file.getId(), kind: kind, by: by, at: at.toISOString() } };
+}
+
+function delWedPhoto_(who, id, photoId) {
+  const w = wedFor_(who, id);
+  if (!w) return { ok: false, error: 'not_found' };
+  const rec = wedPhotoRows_(id).find(p => p.id === photoId);
+  if (!rec) return { ok: true };
+  const me = who.role === 'office' ? 'Office' : (who.member.preferredName || who.member.legalName || 'Artist');
+  if (who.role !== 'office' && rec.by !== me) return { ok: false, error: 'not_yours', message: 'Only the person who added a photo can remove it.' };
+  [rec.id, rec.thumbId].forEach(f => { try { DriveApp.getFileById(f).setTrashed(true); } catch (_) {} });
+  wedPhotoSheet_().deleteRow(rec.row);
+  return { ok: true };
+}
+
+/** Sends photos back as data URLs, only this wedding's own photos and its previews' photos. */
+function wedPhotoData_(who, id, ids, full) {
+  const w = wedFor_(who, id);
+  if (!w) return { ok: false, error: 'not_found' };
+  const allowed = {};
+  wedPhotoRows_(id).forEach(p => { allowed[p.id] = p.thumbId; });
+  const saved = previewRows_();
+  wedPreviews_(w).forEach(ev => (((saved[ev.key] || {}).d || {}).photos || []).forEach(p => { allowed[p.id] = p.thumbId; }));
+  const out = {};
+  (ids || []).filter(x => allowed[x]).slice(0, 60).forEach(x => {
+    try { out[x] = 'data:image/jpeg;base64,' + Utilities.base64Encode(DriveApp.getFileById(full ? x : allowed[x]).getBlob().getBytes()); } catch (_) {}
   });
   return { ok: true, photos: out };
 }
