@@ -1631,6 +1631,9 @@ function cardsView(){
    in place). Dominique and Isabella get a Marketing Proofs square that opens it, and so does The Pretty Report. */
 const MKT_URL='https://prettyteam.taffetadesign.com/mkt/', MKT_SLUGS=['dominique','isabella'];
 function openMkt(){const w=window.open(MKT_URL,'_blank','noopener');if(!w)location.href=MKT_URL}
+/* Weddings square (Alexandra, Oct 22 2026): Dominique books our brides, so her Home gets a Weddings square that opens the Weddings app. */
+const WED_URL='https://prettyteam.taffetadesign.com/weddings/', WED_SLUGS=['dominique'];
+function openWed(){const w=window.open(WED_URL,'_blank','noopener');if(!w)location.href=WED_URL}
 function staffTabs(){
   const p=S.mine||{}, st=p.staff||{}, t=[];
   if(st.slug) t.push(['home','Home']);
@@ -1648,6 +1651,7 @@ function staffTabs(){
   if(st.slug&&p.pk&&p.pk.groups&&p.pk.groups.length) t.push(['pk','PK Knowledge']);
   t.push(['guide','Culture']);
   const dc=p.docs||{}; if(dc.hb) t.push(['hb','Handbook']); if(dc.fg) t.push(['fg','Desk Guide']);
+  if(st.slug&&WED_SLUGS.includes(st.slug)) t.push(['wed','Weddings']);
   if(st.slug&&MKT_SLUGS.includes(st.slug)) t.push(['mkt','Marketing Proofs']);
   if(st.slug) t.push(['tip','Gratuity']);
   if(st.slug) t.push(['promo','Self Promotion']);
@@ -1656,7 +1660,7 @@ function staffTabs(){
 }
 /* One menu instead of a row of tabs (Alexandra, Oct 2026). Sections are grouped; Customer cards holds RX card and Home care. */
 const NAV_GROUPS=[['Appointments',['home','today','tomorrow','tip']],['Customer Cards',['rx','reg']],['Goals',['growth','cr']],
-  ['Salon & Spa',['prices','pk','inv','skin','cards','off']],['Taffeta',['guide','hb','fg']],['Self Promotion',['promo']],['Marketing Proofs',['mkt']],['My Profile',['me']]];
+  ['Salon & Spa',['prices','pk','inv','skin','cards','off']],['Taffeta',['guide','hb','fg']],['Self Promotion',['promo']],['Weddings',['wed']],['Marketing Proofs',['mkt']],['My Profile',['me']]];
 let NAV_OPEN=false;
 /* Disco ball = Home, Back arrow = the page before (Alexandra, Oct 15 2026). Each page change is a browser history step,
    so the Back arrow and the phone's own back swipe both work. */
@@ -1664,6 +1668,7 @@ const DISCO="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBo
 function homeKey(){const t=staffTabs().map(x=>x[0]);return t.includes('home')?'home':t[0]}
 function navGo(k,fromHistory){
   if(k==='mkt'){NAV_OPEN=false;HOME_OPEN='';openMkt();render();return}
+  if(k==='wed'){NAV_OPEN=false;HOME_OPEN='';openWed();render();return}
   if(!fromHistory&&k!==S.tab){const d=((history.state&&history.state.d)||0)+1;try{history.pushState({pp:k,d},'',location.href)}catch(e){}}
   NAV_OPEN=false;S.tab=k;S.dayBack=false;store.set('pp-tab:'+ID,k);render();window.scrollTo(0,0);
   if(k==='home'||k==='off'||k==='inv'||k==='skin'||k==='growth'||k==='cards'||k==='me'||k==='prices'||k==='rx'||k==='tip'||k==='promo')hubGet();
