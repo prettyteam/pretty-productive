@@ -31,3 +31,9 @@ document.getElementById('onlyok').addEventListener('change',sched);
 const _apply=apply;apply=function(){_apply();sched()};sched();
 document.querySelectorAll('.okb').forEach(c=>c.addEventListener('change',sched));
 $('#bar').classList.add('on');document.querySelectorAll('.okb').forEach(c=>c.disabled=false);
+/* Each "Week of …" (and the Stories block) folds behind a + so the page isn't one long scroll (her ask, Oct 22 2026). A link to a post opens its week. */
+(function(){const css=document.createElement('style');css.textContent='details.wk{border-top:1px solid rgba(0,0,0,.12)}details.wk>summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;padding:14px 4px;font-weight:600;font-size:1.05em}details.wk>summary::-webkit-details-marker{display:none}details.wk>summary::after{content:"+";font-size:1.5em;line-height:1;font-weight:400}details.wk[open]>summary::after{content:"\\2212"}';document.head.append(css);
+ document.querySelectorAll('section.acct h3').forEach(h=>{const d=document.createElement('details');d.className='wk';const s=document.createElement('summary');s.textContent=h.textContent;d.append(s);
+  let n=h.nextElementSibling;while(n&&n.tagName!=='H3'&&n.tagName!=='H2'){const x=n.nextElementSibling;d.append(n);n=x}h.replaceWith(d)});
+ function openTo(){const id=decodeURIComponent(location.hash.slice(1));const el=id&&document.getElementById(id);const d=el&&el.closest('details.wk');if(d){d.open=true;el.scrollIntoView()}}
+ addEventListener('hashchange',openTo);openTo()})();
