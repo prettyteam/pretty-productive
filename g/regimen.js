@@ -242,6 +242,8 @@ function rgGuess(kind,n){
     if(/mc 110/.test(t)) return ['Tone (Lotion P50)',H.mc110];
     if(/p50/.test(t)) return ['Tone (Lotion P50)',H.p50];
     if(/skin box/.test(t)) return ['Kits & more',H.skinbox];
+    /* the $25 Taffeta BR Bottle (a 2-week sample of a BR serum), Oct 22 2026 */
+    if(/taffeta br bottle/.test(t)) return ['Serums','After your P50, apply 1–2 drops directly onto skin. Gently pat to spread the product evenly over face and neck. Lasts about 2 weeks.'];
     if(/box/.test(t)) return ['Kits & more',''];
     if(/u\.v\.|spf|teint|kiss|hand|body|oil|tint/.test(t)) return ['Protect & glow',''];
     if(/crème|creme|émulsion|emulsion/.test(t)) return ['Moisturize',H.cream];
