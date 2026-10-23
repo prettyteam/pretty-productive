@@ -274,7 +274,8 @@ table.adm{border-collapse:collapse;font-size:13px;min-width:100%}table.adm th,ta
 .wp-card{margin-top:18px}
 .wp-card h3{font:500 11px var(--sans);letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:14px 0 8px}
 .wp-card .wp-btns{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
-#sheet.moving td[data-pos]{cursor:pointer}
+#sheet.moving{touch-action:manipulation;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}   /* quick taps on a phone move people instead of zooming or selecting text */
+#sheet.moving td[data-pos]{cursor:pointer;-webkit-tap-highlight-color:transparent}
 #sheet.moving td.pick{outline:3px solid #b08d57;outline-offset:-3px;background:#faf3e6}
 .paper .look{display:grid;gap:10px;margin:26px auto 0;max-width:640px}
 .paper.has-look .bow{display:none}
