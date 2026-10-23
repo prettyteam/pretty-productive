@@ -959,8 +959,16 @@ const esc=t=>String(t??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&g
    (Alexandra, Oct 23 2026). goBy is saved on the artist so artists, who don't load profiles, see it too. */
 function goBy(a){
   let list=[];try{list=profiles}catch(_){}   // profiles is declared further down and may not exist yet on the first render
-  const pr=a.uid&&list.find(p=>p._id===a.uid),pref=pr?String(pr.preferredName||"").trim():"";
-  return pref||String(a.goBy||"").trim()||String(a.name||"").trim().split(/\s+/)[0]||"";
+  // find her profile by id, or by her name when the wedding saved her without one
+  const nm=String(a.name||"").trim().toLowerCase();
+  const pr=(a.uid&&list.find(p=>(p._id||p.id)===a.uid))||(nm&&list.find(p=>[p.legalName,p.preferredName].some(x=>String(x||"").trim().toLowerCase()===nm)));
+  const pref=pr?String(pr.preferredName||"").trim():"";
+  let g=pref||String(a.goBy||"").trim()||String(a.name||"").trim().split(/\s+/)[0]||"";
+  // some profiles have the last name typed into "Name you go by" too: leave it off (Alexandra, Oct 23 2026)
+  const lasts=[pr&&pr.legalName,a.name].map(n=>String(n||"").trim().split(/\s+/)).filter(w=>w.length>1).map(w=>w.pop().toLowerCase());
+  const w=g.split(/\s+/);
+  while(w.length>1&&lasts.includes(w[w.length-1].toLowerCase()))w.pop();
+  return w.join(" ");
 }
 let moveOn=false,movePick=null;   // "Move people" on the office Timeline
 function sheetHTML(s,ver,editable){
