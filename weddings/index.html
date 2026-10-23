@@ -902,6 +902,13 @@ function servicesLine(s){
 const esc=t=>String(t??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 
 /* ---------- render the sheet ---------- */
+/* Timelines show each artist by the "Name you go by" on her profile, never first and last name spelled out
+   (Alexandra, Oct 23 2026). goBy is saved on the artist so artists, who don't load profiles, see it too. */
+function goBy(a){
+  let list=[];try{list=profiles}catch(_){}   // profiles is declared further down and may not exist yet on the first render
+  const pr=a.uid&&list.find(p=>p._id===a.uid),pref=pr?String(pr.preferredName||"").trim():"";
+  return pref||String(a.goBy||"").trim()||String(a.name||"").trim().split(/\s+/)[0]||"";
+}
 function sheetHTML(s,ver,editable){
   const plan=build(s), labels=labelMap(s,plan,ver);
   const sameSlot=plan.cols.every(c=>c.slot===(plan.cols[0]||{}).slot);
@@ -924,8 +931,7 @@ function sheetHTML(s,ver,editable){
   if(!plan.cols.length){h+='<p style="text-align:center;color:#5d554e;font-family:var(--serif)">Add an artist and the people getting ready to build the schedule.</p></div>';return {html:h,plan}}
   h+='<table class="tl"><thead><tr>'+(sameSlot?'<th>Time</th>':'');
   // bride's copy shows artists by first name only (Alexandra, Oct 21 2026)
-  const who=n=>ver==="bride"?String(n).trim().split(/\s+/)[0]:n;
-  plan.cols.forEach(c=>{h+='<th>'+(c.service==="hair"?"Hair":"Makeup")+(c.artist.name?'<small>'+esc(who(c.artist.name))+'</small>':'')+'</th>'});
+  plan.cols.forEach(c=>{const n=goBy(c.artist);h+='<th>'+(c.service==="hair"?"Hair":"Makeup")+(n?'<small>'+esc(n)+'</small>':'')+'</th>'});
   h+='</tr></thead><tbody>';
   for(let r=0;r<rows;r++){
     h+='<tr>';
@@ -1141,7 +1147,7 @@ $("#cal-wedding").onchange=e=>{const id=e.target.value;$("#calStatus").textConte
 function renderCalHead(){
   const el=$("#calHead");if(!el)return;
   const w=docId&&allWeddings.find(x=>x.id===docId);
-  const d=w?Object.assign({},w.d,{people:S.people}):null;
+  const d=w?Object.assign({},w.d,{people:S.people,headOk:S.headOk}):null;
   el.innerHTML=d&&ROLE==="office"?headWarnHTML(d,"build"):"";
   const b=$("#useCalHead");if(b)b.onclick=()=>{
     const c=calHead(d);if(!c)return;
@@ -1150,6 +1156,7 @@ function renderCalHead(){
     S.people=c.people.map((p,i)=>{const o=old[i];return o&&o.name?Object.assign({},p,{name:o.name}):p});
     renderPeople();changed();
   };
+  const k=$("#keepAppHead");if(k)k.onclick=()=>{const x=headDiff(d);if(!x)return;S.headOk=x.key;renderCalHead();changed()};
 }
 function renderPeople(){
   setTimeout(renderCalHead,0);
@@ -1527,6 +1534,7 @@ let saving=Promise.resolve();
 function save(){
   saving=saving.then(async()=>{
     try{
+      if(profiles.length)S.artists.forEach(a=>{const g=goBy(a);if(g)a.goBy=g});
       const body=JSON.parse(JSON.stringify(S));
       delete body.cal;
       const plan=build(S);
@@ -1697,16 +1705,21 @@ function calDraft(d){
 function headOf(ppl){ppl=ppl||[];return {hair:ppl.filter(p=>p.hair).length,mu:ppl.filter(p=>p.mu).length}}
 function headTxt(h){return [h.hair?h.hair+" hair":"",h.mu?h.mu+" makeup":""].filter(Boolean).join(" & ")||"no one"}
 function calHead(d){const dr=d&&d.calInfo?calDraft(d):null;return dr&&dr.counted?{head:headOf(dr.people),people:dr.people}:null}
+/* "Keep app headcount" (Alexandra, Oct 23 2026): the calendar can be the one that's wrong. The OK is tied to both counts,
+   so the warning comes back if either one changes later. */
+const headKey=(cal,app)=>[cal.hair,cal.mu,app.hair,app.mu].join("/");
 function headDiff(d){
   if(!d||!Array.isArray(d.people)||!d.people.length)return null;
   const c=calHead(d);if(!c)return null;const a=headOf(d.people);
-  return (a.hair!==c.head.hair||a.mu!==c.head.mu)?{cal:c.head,app:a,people:c.people}:null;
+  if(a.hair===c.head.hair&&a.mu===c.head.mu)return null;
+  const key=headKey(c.head,a);if(d.headOk===key)return null;   // the office said the app is right for these counts
+  return {cal:c.head,app:a,people:c.people,key};
 }
 function headWarnHTML(d,mode){   /* mode: "build" (office editing: button), "office" (office viewing), else an artist */
   const x=headDiff(d);if(!x)return "";
   return '<div class="warn headwarn" role="alert" style="border:1px solid #b3261e;padding:10px 12px;margin:0 0 12px;color:#b3261e;background:#fff5f4">'
     +'<b>Headcount doesn’t match Google Calendar.</b> The calendar says '+esc(headTxt(x.cal))+'; this timeline has '+esc(headTxt(x.app))+'.'
-    +(mode==="build"?' <button type="button" class="btn ghost small" id="useCalHead" style="margin-left:6px">Use calendar headcount</button>':mode==="office"?' Fix it on the Timeline tab.':' Check with the office before the wedding.')+'</div>';
+    +(mode==="build"?' <button type="button" class="btn ghost small" id="useCalHead" style="margin-left:6px">Use calendar headcount</button> <button type="button" class="btn ghost small" id="keepAppHead" style="margin-left:6px">Keep app headcount</button>':mode==="office"?' Fix it on the Timeline tab.':' Check with the office before the wedding.')+'</div>';
 }
 function renderTeamSheet(){
   const w=allWeddings.find(x=>x.id===teamSel);
