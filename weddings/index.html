@@ -998,7 +998,9 @@ function sheetHTML(s,ver,editable){
   if(plan.cols.length)l1.push(s.mode==="tbd"?"Times TBD":"Arrive "+fmt(arrive).replace(" ","\u00a0")+" · Start "+fmt(plan.start)+" · End "+fmt(plan.end));
   const oneLine=(l,cls)=>{const fs=Math.max(7,Math.min(11.5,600/(l.join(" · ").length*.56))).toFixed(1);return '<div class="dline one'+cls+'" data-fs="'+fs+'" style="font-size:'+fs+'px">'+l.map(esc).join(' <span class="sep">·</span> ')+'</div>'};   // shrinks long lines to fit the page; fitLines finishes the job on screen
   h+=oneLine(l1,"");
-  const l2=["Contact "+([s.contactName,s.contactPhone].filter(Boolean).join(" ")||blank),servicesLine(s)];
+  // the bride's copy never shows a team member's cell (Alexandra, Oct 23 2026)
+  const poc=ver==="bride"?(s.contactName||"").trim().split(/\s+/)[0]:[s.contactName,s.contactPhone].filter(Boolean).join(" ");
+  const l2=(ver==="bride"&&!poc?[]:["Contact "+(poc||blank)]).concat([servicesLine(s)]);
   if(s.touchups)l2.push("Touch-ups: "+s.touchups);
   h+=oneLine(l2," muted");
   if(s.notes&&ver!=="bride")h+='<div class="dline note">'+esc(s.notes)+'</div>';   // office notes stay off the bride's copy
@@ -2035,8 +2037,8 @@ function renderAdmin(){
 /* Send the App Guide (Alexandra, Oct 23 2026): pick who gets it, Messages opens to her with Alexandra's note
    and the guide link (the PDF lives next to the app in weddings/guides/). */
 const GUIDES={
-  artists:{file:"guides/Taffeta-Weddings-App-Guide-Artists.pdf",text:"Hi [Name]! I've been working on a project to keep our bridal team as organized as possible & it's finally ready - the Taffeta Weddings app. Everything you need for a wedding is in one place now (your timelines, job offers, bride inspo & photos, previews, gratuity & getting paid).\n\nI made a short guide so you can learn your way around. Please take a few minutes to read through it:\n\nMy goal is to make wedding days easier for ALL of us, with less back & forth and more time doing what we love. I can better explain this verbally if needed! Thank you for everything you do xo Alexandra"},
-  office:{file:"guides/Taffeta-Weddings-App-Guide-Office.pdf",text:"Hi [Name]! I've been working on a project to keep our wedding business as organized as possible & it's finally ready - the office side of the Taffeta Weddings app. It runs every wedding from inquiry to payout (timelines, sales, the bridal team, previews & add-ons).\n\nI made a short guide so you can learn how it all works. Please take a few minutes to read through it:\n\nMy goal is for all of us to work from the same place so nothing falls through the cracks. I can better explain this verbally if needed! Thank you xo Alexandra"}};
+  artists:{file:"guides/Taffeta-Weddings-App-Guide-Artists.pdf",text:"Hi [Name]! I have been working on something for a while now & I am so excited to finally share it with you 🤍\n\nIt's our new Taffeta Weddings app. My goal is to keep everyone as organized as possible - your weddings, timelines, job offers, tips & pay all in ONE place, so nothing gets lost in a million texts.\n\nI made a short guide that walks you through everything (opening the app, adding it to your home screen, confirming weddings, getting paid, etc). Please read through it:\n\nIf anything looks off or confusing, screenshot it & text me. I can better explain this verbally if needed!\n\nThank you for all you do xo"},
+  office:{file:"guides/Taffeta-Weddings-App-Guide-Office.pdf",text:"Hi [Name]! The office side of the Weddings app is ready & I am so excited to share it with you 🤍\n\nI built this so we can run every wedding in one place, from inquiry to payout - timelines, team texts, job offers, previews, add-ons & payouts. Less digging through texts & emails, fewer things slipping through the cracks.\n\nHere is the guide for it, please read through it:\n\nThen start using the app for everything wedding related. If something doesn't make sense or looks wrong, screenshot it & send it to me. I can better explain this verbally if needed!\n\nThank you! xo"}};
 const gdWhich=()=>$("#gd-which").value;
 const gdUrl=()=>new URL(GUIDES[gdWhich()].file,location.href).href;
 function gdText(){return lsGet("tw-gd-"+gdWhich())||GUIDES[gdWhich()].text}
