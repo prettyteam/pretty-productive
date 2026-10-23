@@ -781,7 +781,7 @@ input,select,textarea{background:#fff;border-radius:0}
       <div class="row"><label class="f" style="flex:0 1 220px">Guide<select id="gd-which"><option value="artists">Artist Guide</option><option value="office">Office Guide</option></select></label>
         <a class="btn ghost small" id="gd-view" target="_blank" rel="noopener" style="flex:0 0 auto;align-self:flex-end;text-decoration:none">View Guide</a></div>
       <label class="f">Message<textarea id="gd-text" rows="10"></textarea></label>
-      <div class="row" style="align-items:center"><button class="btn ghost small" id="gd-reset" type="button" style="flex:0 0 auto">Refill Message</button><span class="hint">[Name] turns into each person's go-by name. The guide link goes right after "read through it:"</span></div>
+      <div class="row" style="align-items:center"><button class="btn ghost small" id="gd-reset" type="button" style="flex:0 0 auto">Refill Message</button><span class="hint">[Name] turns into each person's go-by name. The guide link goes right after the line about reading the guide.</span></div>
       <p class="hint" style="margin-top:10px">Tap <b>Text</b> next to anyone. Messages opens to her with your note and the guide link. Tap <b>Send</b>.</p>
       <div id="gd-list" class="gd-list"></div>
     </div>
@@ -2037,7 +2037,7 @@ function renderAdmin(){
 /* Send the App Guide (Alexandra, Oct 23 2026): pick who gets it, Messages opens to her with Alexandra's note
    and the guide link (the PDF lives next to the app in weddings/guides/). */
 const GUIDES={
-  artists:{file:"guides/Taffeta-Weddings-App-Guide-Artists.pdf",text:"Hi [Name]! I have been working on something for a while now & I am so excited to finally share it with you 🤍\n\nIt's our new Taffeta Weddings app. My goal is to keep everyone as organized as possible - your weddings, timelines, job offers, tips & pay all in ONE place, so nothing gets lost in a million texts.\n\nI made a short guide that walks you through everything (opening the app, adding it to your home screen, confirming weddings, getting paid, etc). Please read through it:\n\nIf anything looks off or confusing, screenshot it & text me. I can better explain this verbally if needed!\n\nThank you for all you do xo"},
+  artists:{file:"guides/Taffeta-Weddings-App-Guide-Artists.pdf",text:"Hi ladies! I have been working on something for a while now & I am so excited to finally share it with you 🤍\n\nIt's our new Taffeta Weddings app. My goal is to keep everyone as organized as possible - your weddings, timelines, job offers, tips & pay all in ONE place, so nothing gets lost in a million texts.\n\nI attached a short guide that walks you through everything (opening the app, adding it to your home screen, confirming weddings, getting paid, etc). Please read it when you get a sec!\n\nThe office will text you your own private link. Please don't share it, it's your key to your own info.\n\nIf anything looks off or confusing, screenshot it & text me. I can better explain this verbally if needed!\n\nThank you for all you do xo"},
   office:{file:"guides/Taffeta-Weddings-App-Guide-Office.pdf",text:"Hi [Name]! The office side of the Weddings app is ready & I am so excited to share it with you 🤍\n\nI built this so we can run every wedding in one place, from inquiry to payout - timelines, team texts, job offers, previews, add-ons & payouts. Less digging through texts & emails, fewer things slipping through the cracks.\n\nHere is the guide for it, please read through it:\n\nThen start using the app for everything wedding related. If something doesn't make sense or looks wrong, screenshot it & send it to me. I can better explain this verbally if needed!\n\nThank you! xo"}};
 const gdWhich=()=>$("#gd-which").value;
 const gdUrl=()=>new URL(GUIDES[gdWhich()].file,location.href).href;
@@ -2045,7 +2045,9 @@ function gdText(){return lsGet("tw-gd-"+gdWhich())||GUIDES[gdWhich()].text}
 function gdBody(name){
   // the link goes right after "read through it:" so it sits in the middle of the note; at the end if that line was edited away
   let t=$("#gd-text").value.replace(/\[Name\]/g,name||"there");
-  return /read through it:\n/.test(t)?t.replace(/read through it:\n/,"read through it: "+gdUrl()+"\n"):t+"\n\n"+gdUrl();
+  if(/read through it:\n/.test(t))return t.replace(/read through it:\n/,"read through it: "+gdUrl()+"\n");
+  if(/when you get a sec!/.test(t))return t.replace(/when you get a sec!/,"when you get a sec!\n"+gdUrl());
+  return t+"\n\n"+gdUrl();
 }
 function renderGuides(){
   if(document.activeElement!==$("#gd-text"))$("#gd-text").value=gdText();
