@@ -359,6 +359,7 @@ input,select,textarea{background:#fff;border-radius:0}
             <div class="seg" role="group" aria-label="Plan from">
               <button id="mode-start" aria-pressed="true">Start</button>
               <button id="mode-finish" aria-pressed="false">End</button>
+              <button id="mode-tbd" aria-pressed="false">TBD</button>
             </div>
             <label class="f" id="startWrap">Services start<input id="start" type="time" value="08:00"></label>
             <label class="f" id="finishWrap" hidden>Everyone done by<input id="finishBy" type="time" value="12:30"></label>
@@ -807,6 +808,8 @@ function fmt(min){min=((min%1440)+1440)%1440;let h=Math.floor(min/60),m=min%60;c
 function fmtDate(d){if(!d)return"";const[y,m,dd]=d.split("-").map(Number);return new Date(y,m-1,dd).toLocaleDateString("en-US",{weekday:"long",month:"long",day:"numeric",year:"numeric"})}
 function shortDate(d){if(!d)return"";if(!/^\d{4}-\d\d-\d\d/.test(d)){const t=new Date(d);return isNaN(t)?d:(t.getMonth()+1)+"/"+t.getDate()+"/"+String(t.getFullYear()).slice(2)}const[y,m,dd]=d.split("-");return Number(m)+"/"+Number(dd)+"/"+y.slice(2)}
 
+/* "TBD" timing (Alexandra, Oct 23 2026): the bride hasn't given the end time yet, so the order shows but every time reads TBD */
+const tm=(s,min)=>s.mode==="tbd"?"TBD":fmt(min);
 /* ---------- scheduling ---------- */
 /* moves only count for the party they were made on; adding or removing people or artists goes back to the auto order */
 const moveSig=s=>s.people.map(p=>p.id+(p.hair?"h":"")+(p.mu?"m":"")+p.role).join(",")+"|"+s.artists.map(a=>a.id+a.role).join(",")+"|"+s.hairSlot+"/"+s.muSlot;
@@ -933,7 +936,7 @@ function sheetHTML(s,ver,editable){
   h+='<img class="bow" alt="" src="data:image/png;base64,'+BOW+'">';
   h+='<div class="bname">'+esc(s.bride||"________________")+'</div>';
   const l1=[s.date?fmtDate(s.date).replace(/^\w+, /,""):"Date "+blank, loc.join(", ")||"Location "+blank];
-  if(plan.cols.length)l1.push("Arrive "+fmt(arrive).replace(" ","\u00a0")+" · Start "+fmt(plan.start)+" · End "+fmt(plan.end));
+  if(plan.cols.length)l1.push(s.mode==="tbd"?"Times TBD":"Arrive "+fmt(arrive).replace(" ","\u00a0")+" · Start "+fmt(plan.start)+" · End "+fmt(plan.end));
   const oneLine=(l,cls)=>{const fs=Math.max(7,Math.min(11.5,600/(l.join(" · ").length*.56))).toFixed(1);return '<div class="dline one'+cls+'" data-fs="'+fs+'" style="font-size:'+fs+'px">'+l.map(esc).join(' <span class="sep">·</span> ')+'</div>'};   // shrinks long lines to fit the page; fitLines finishes the job on screen
   h+=oneLine(l1,"");
   const l2=["Contact "+([s.contactName,s.contactPhone].filter(Boolean).join(" ")||blank),servicesLine(s)];
@@ -948,12 +951,12 @@ function sheetHTML(s,ver,editable){
   h+='</tr></thead><tbody>';
   for(let r=0;r<rows;r++){
     h+='<tr>';
-    if(sameSlot)h+='<td class="t">'+fmt(plan.start+r*plan.cols[0].slot)+'</td>';
+    if(sameSlot)h+='<td class="t">'+tm(s,plan.start+r*plan.cols[0].slot)+'</td>';
     plan.cols.forEach(c=>{
       const pos=editable?' data-pos="'+c.service+':'+plan.cols.filter(x=>x.service===c.service).indexOf(c)+':'+r+'"':'';
       if(r>=c.cells.length){h+='<td class="c blank"'+pos+'></td>';return}
       const pid=c.cells[r];
-      const ct=sameSlot?'':'<span class="ct">'+fmt(plan.start+r*c.slot)+'</span>';
+      const ct=sameSlot?'':'<span class="ct">'+tm(s,plan.start+r*c.slot)+'</span>';
       if(!pid){h+='<td class="c empty"'+pos+'>'+ct+'</td>';return}
       const key=pid+":"+c.service, L=labels[key]||{txt:""};
       const p=s.people.find(q=>q.id===pid);
@@ -973,14 +976,14 @@ function textOf(s){
   L.push("TAFFETA WEDDINGS");
   L.push("Bride: "+(s.bride||"")); L.push("Wedding date: "+fmtDate(s.date));
   L.push("Location: "+[s.location,s.room].filter(Boolean).join(", "));
-  if(plan.cols.length){L.push("Team arrival / start: "+fmt(plan.start-(Number(s.arrival)||0))+" // "+fmt(plan.start));L.push("Team end time: "+fmt(plan.end))}
+  if(plan.cols.length){L.push("Team arrival / start: "+tm(s,plan.start-(Number(s.arrival)||0))+" // "+tm(s,plan.start));L.push("Team end time: "+tm(s,plan.end))}
   if(s.touchups)L.push("Touch-ups before leaving: "+s.touchups);
   L.push("Day-of contact: "+[s.contactName,s.contactPhone].filter(Boolean).join(" "));
   L.push("Services: "+servicesLine(s));
   if(s.notes)L.push("Notes: "+s.notes);
   plan.cols.forEach(c=>{
     L.push("");L.push((c.service==="hair"?"HAIR":"MAKEUP")+(c.artist.name?" - "+c.artist.name.toUpperCase():""));
-    c.cells.forEach((pid,r)=>{if(pid)L.push(fmt(plan.start+r*c.slot)+"  "+((labels[pid+":"+c.service]||{}).txt||""))});
+    c.cells.forEach((pid,r)=>{if(pid)L.push(tm(s,plan.start+r*c.slot)+"  "+((labels[pid+":"+c.service]||{}).txt||""))});
   });
   return L.join("\n");
 }
@@ -988,7 +991,7 @@ function tsvOf(s){
   const plan=build(s), labels=labelMap(s,plan,"team");
   const rows=Math.max(0,...plan.cols.map(c=>c.cells.length));
   const out=[["Time",...plan.cols.map(c=>(c.service==="hair"?"Hair":"Makeup")+(c.artist.name?" ("+c.artist.name+")":""))].join("\t")];
-  for(let r=0;r<rows;r++){out.push([fmt(plan.start+r*(plan.cols[0]?plan.cols[0].slot:60)),...plan.cols.map(c=>{const pid=c.cells[r];return pid?((labels[pid+":"+c.service]||{}).txt||""):""})].join("\t"))}
+  for(let r=0;r<rows;r++){out.push([tm(s,plan.start+r*(plan.cols[0]?plan.cols[0].slot:60)),...plan.cols.map(c=>{const pid=c.cells[r];return pid?((labels[pid+":"+c.service]||{}).txt||""):""})].join("\t"))}
   return out.join("\n");
 }
 
@@ -1215,8 +1218,8 @@ function changed(skipSheet){if(!skipSheet)renderSheet();queueSave()}
 $("#moveMode").onclick=()=>{moveOn=!moveOn;movePick=null;renderSheet();if(moveOn)toast("Tap a box, then tap where it should go")};
 $("#moveReset").onclick=()=>{S.moves=[];delete S.movesSig;movePick=null;changed()};
 FIELDS.forEach(f=>{const el=$("#"+f);el.addEventListener("input",()=>{S[f]=el.type==="number"?Number(el.value):el.value;changed()})});
-function setMode(m,fire=true){S.mode=m;$("#mode-start").setAttribute("aria-pressed",m==="start");$("#mode-finish").setAttribute("aria-pressed",m==="finish");$("#startWrap").hidden=m!=="start";$("#finishWrap").hidden=m!=="finish";if(fire)changed()}
-$("#mode-start").onclick=()=>setMode("start");$("#mode-finish").onclick=()=>setMode("finish");
+function setMode(m,fire=true){S.mode=m;$("#mode-start").setAttribute("aria-pressed",m==="start");$("#mode-finish").setAttribute("aria-pressed",m==="finish");$("#mode-tbd").setAttribute("aria-pressed",m==="tbd");$("#startWrap").hidden=m!=="start";$("#finishWrap").hidden=m!=="finish";if(fire)changed()}
+$("#mode-start").onclick=()=>setMode("start");$("#mode-tbd").onclick=()=>setMode("tbd");$("#mode-finish").onclick=()=>setMode("finish");
 $("#addHair").onclick=()=>{S.artists.push({id:uid(),role:"hair",name:""});renderArtists();changed()};
 $("#addMu").onclick=()=>{S.artists.push({id:uid(),role:"mu",name:""});renderArtists();changed()};
 $("#addPerson").onclick=()=>{S.people.push({id:uid(),name:"",role:"Bridesmaid",hair:true,mu:true});renderPeople();changed()};
@@ -1322,7 +1325,8 @@ function confirmOf(s){
   const L=["Hi team! 🤍 Confirming your upcoming wedding for "+first+" on "+md+"!","","📍 Location"];
   if(addr)L.push("Address: "+addr);
   if(s.parking)L.push("Parking/Valet: "+s.parking);
-  L.push("","⏰ TIMELINE","Arrival: "+(arr>=15?ampm(arrive)+" - "+ampm(arrive+15):ampm(arrive)),"Start time: "+ampm(plan.start),"Must be finished by: "+ampm(plan.end));
+  if(s.mode==="tbd")L.push("","⏰ TIMELINE","Times are TBD. We'll send the final times as soon as the bride confirms.");
+  else L.push("","⏰ TIMELINE","Arrival: "+(arr>=15?ampm(arrive)+" - "+ampm(arrive+15):ampm(arrive)),"Start time: "+ampm(plan.start),"Must be finished by: "+ampm(plan.end));
   if(s.touchups)L.push("Touch-ups before leaving: "+s.touchups);
   L.push("","📱 DAY-OF CONTACT");
   if(poc)L.push("POC: "+poc);
@@ -1631,7 +1635,7 @@ function renderTeam(){
     if(d.date){const[y,m,dd]=d.date.split("-").map(Number);const dt=new Date(y,m-1,dd);mo=dt.toLocaleDateString("en-US",{month:"short"});day=dd}
     const b=document.createElement("button");b.className="wed";b.setAttribute("aria-current",teamSel===w.id);
     const mine=af.value?(d.artists||[]).filter(a=>a.name.trim()===af.value).map(a=>a.role==="hair"?"Hair":"Makeup").join(" + "):"";
-    b.innerHTML='<div class="d"><small>'+esc(mo)+'</small><b>'+esc(day||"–")+'</b></div><div><div class="who">'+esc(d.bride||"Untitled")+'</div><div class="sub">'+esc([d.location,d.room].filter(Boolean).join(" · "))+'</div><div class="sub">'+(d.startMin==null&&d.calTime?'Calendar: '+esc(d.calTime):'Arrive '+(d.startMin!=null?fmt(d.startMin-(Number(d.arrival)||0)):"–")+' · Start '+(d.startMin!=null?fmt(d.startMin):"–"))+(mine?' · You: '+esc(mine):'')+'</div><div>'+(d.artistNames||[]).map(n=>'<span class="pill">'+esc(n)+'</span>').join("")+'</div></div>';
+    b.innerHTML='<div class="d"><small>'+esc(mo)+'</small><b>'+esc(day||"–")+'</b></div><div><div class="who">'+esc(d.bride||"Untitled")+'</div><div class="sub">'+esc([d.location,d.room].filter(Boolean).join(" · "))+'</div><div class="sub">'+(d.mode==="tbd"?'Times TBD':d.startMin==null&&d.calTime?'Calendar: '+esc(d.calTime):'Arrive '+(d.startMin!=null?fmt(d.startMin-(Number(d.arrival)||0)):"–")+' · Start '+(d.startMin!=null?fmt(d.startMin):"–"))+(mine?' · You: '+esc(mine):'')+'</div><div>'+(d.artistNames||[]).map(n=>'<span class="pill">'+esc(n)+'</span>').join("")+'</div></div>';
     if(ROLE!=="office"&&d.calInfo&&(d.calInfo.mine==="waiting"||d.calInfo.mine==="maybe")){const n=document.createElement("div");n.className="sub";n.style.cssText="font-weight:600;color:var(--ink)";n.textContent="Please answer the Google Calendar invite";(b.lastElementChild||b).appendChild(n)}
     b.onclick=()=>{teamSel=w.id;renderTeam();renderTeamSheet();/* on a phone the details sit under the list: bring them into view so the tap shows something */if(window.innerWidth<900){const t=$("#teamCal").firstChild?$("#teamCal"):$("#teamSheet");t.scrollIntoView({behavior:"smooth",block:"start"})}};
     box.appendChild(b);
@@ -1923,6 +1927,7 @@ const calErr=e=>e&&e.code==="signin"?"Please sign in again.":"Google Calendar di
 $("#calSync").onclick=async()=>{
   const out=$("#calStatus");
   if(!S.bride||!S.date){out.textContent="Add the bride's name and wedding date first.";return}
+  if(S.mode==="tbd"){out.textContent="Times are TBD. Set Start or End in Timing before sending invites.";return}
   const missing=S.artists.filter(a=>!a.email);
   if(missing.length){out.textContent="Add an email for "+missing.map(a=>a.name||"each artist").join(", ")+" first.";return}
   $("#calSync").disabled=true;out.textContent="Sending invites…";
