@@ -1428,24 +1428,31 @@ function phoneOfArtist(a){
   return pr?digits(pr.phone):"";
 }
 function sheetBlob(html){return shotOf(html).then(c=>new Promise(r=>c.toBlob(r,"image/png")))}
-async function textWith(who,nums,body,html,missing,what){
+/* html can be a function that returns the page (the team copy waits for its photos).
+   textAfter: the picture goes first on its own, then a second button opens the same chat with the words (Text team). */
+async function textWith(who,nums,body,html,missing,what,textAfter){
   what=what||"timeline picture";
   const box=$("#txStep");box.hidden=false;
   box.innerHTML='<p class="hint" style="margin:0">Getting the '+what+' ready…</p>';
   box.scrollIntoView({behavior:"smooth",block:"nearest"});
   let copied=false;
-  const blob=sheetBlob(html);
+  const blob=Promise.resolve(typeof html==="function"?html():html).then(sheetBlob);
   try{
     if(!window.ClipboardItem||!navigator.clipboard||!navigator.clipboard.write)throw 0;
     await navigator.clipboard.write([new ClipboardItem({"image/png":blob})]);copied=true;   // started inside the tap, so phones allow it
   }catch(_){}
   if(!copied){try{const b=await blob;const f=new File([b],what==="timeline picture"?pdfName(S,"timeline").replace(".pdf",".png"):what==="extensions picture"?"extension-rental.png":"hair-makeup-prep.png",{type:"image/png"});downloadFile(f)}catch(_){}}
-  const href=smsHref(nums,body);
+  const href=smsHref(nums,textAfter?"":body),paste=copied?'tap the text box, tap <b>Paste</b>, then <b>Send</b>.':'tap + and add the picture, then <b>Send</b>.';
   box.innerHTML='<h2 style="margin:0">Text '+esc(who)+'</h2>'
     +'<p class="hint" style="margin:0">'+(copied?'The '+what+' is copied ✓':'The '+what+' was saved to your phone.')+'</p>'
     +(missing&&missing.length?'<p class="warn" style="margin:0">No cell on file for '+esc(missing.join(", "))+'. Add it in Team records, or add her in Messages.</p>':'')
-    +'<a class="btn" href="'+esc(href)+'" style="text-align:center;text-decoration:none">Open Messages</a>'
-    +'<p class="hint" style="margin:0">'+(copied?'In Messages, tap the text box, tap <b>Paste</b>, then <b>Send</b>.':'In Messages, tap + and add the picture, then <b>Send</b>.')+'</p>'
+    +(textAfter
+      ?'<p class="hint" style="margin:0"><b>1.</b> Send the picture: in Messages, '+paste+'</p>'
+        +'<a class="btn" href="'+esc(href)+'" style="text-align:center;text-decoration:none">Open Messages With the Picture</a>'
+        +'<p class="hint" style="margin:0"><b>2.</b> Come back here and send the message. It opens the same chat with the words filled in. Tap <b>Send</b>.</p>'
+        +'<a class="btn" href="'+esc(smsHref(nums,body))+'" style="text-align:center;text-decoration:none">Open Messages With the Message</a>'
+      :'<a class="btn" href="'+esc(href)+'" style="text-align:center;text-decoration:none">Open Messages</a>'
+        +'<p class="hint" style="margin:0">In Messages, '+paste+'</p>')
     +'<button class="btn ghost small" type="button" id="txClose" style="align-self:flex-start">Done</button>';
   $("#txClose").onclick=()=>{box.hidden=true;box.innerHTML=""};
 }
@@ -1498,11 +1505,15 @@ $("#txBride").onclick=()=>{
   const body="Hi "+(firstName(S)||"there")+"! 🤍 Here is your wedding day timeline"+(S.date?" for "+mdOf(S.date):"")+". Please look it over and let us know if anything needs to change. We can’t wait!";
   textWith(firstName(S)||"the bride",[n],body,sheetHTML(S,"bride",false).html,[]);
 };
-/* Text team (Alexandra, Oct 23 2026): Dom's confirmation words plus a picture of the team timeline with the wedding's photos
-   go out together from the share sheet. Pick Messages, then the girls. A web page can't fill in who it goes to with a file. */
-function textTeam(e){
-  if(!S.artists.some(a=>(a.name||"").trim())){toast("Add the team in Team on site first");return}
-  sendPdf(e.currentTarget,()=>wpTeamPages(S,docId),pdfName(S,"team-timeline").replace(/\.pdf$/,".jpg"),$("#cf-text").value||confirmOf(S),true);
+/* Text team (Alexandra, Oct 23 2026): Messages opens to the wedding's girls (their cells from Team on site or Team records),
+   the picture of the team timeline goes first, then Dom's confirmation words as a second text. */
+function textTeam(){
+  const team=S.artists.filter(a=>(a.name||"").trim());
+  if(!team.length){toast("Add the team in Team on site first");return}
+  const nums=[],missing=[];
+  team.forEach(a=>{const n=phoneOfArtist(a);if(!n)missing.push(goBy(a)||a.name.trim());else if(!nums.includes(n))nums.push(n)});
+  const who=team.map(goBy).join(" and ");
+  textWith(who,nums,$("#cf-text").value||confirmOf(S),()=>wpTeamPages(S,docId).then(p=>p[0]),missing,"timeline picture",true);
 }
 $("#txTeam").onclick=textTeam;
 $("#cf-text-team").onclick=textTeam;
