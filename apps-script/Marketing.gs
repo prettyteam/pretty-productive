@@ -36,7 +36,7 @@ function mkt_(d) {
     lock.waitLock(20000);
     const s = mktRead_();
     switch (d.op) {
-      case 'state': return mktPublic_(s);
+      case 'state': mktModelsSync_(s); return mktPublic_(s);   // new associate model photos first (AssociateModels.gs)
       case 'save': {   // only what changed: {text:{id:'…'}, ok:{id:true|false}}, so two people saving don't undo each other
         Object.keys(d.text || {}).forEach(k => { s.edits.text[String(k).slice(0, 80)] = String(d.text[k] == null ? '' : d.text[k]).slice(0, 5000); });
         Object.keys(d.ok || {}).forEach(k => { if (d.ok[k]) s.edits.ok[String(k).slice(0, 80)] = true; else delete s.edits.ok[k]; });

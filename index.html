@@ -419,6 +419,9 @@ body .rbar.new button{background:none;color:#2b2a28;font-weight:700;text-decorat
 .mpgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .mpslot{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;aspect-ratio:3/4;border:1px dashed #121212;border-radius:6px;background:#f8f6f0;cursor:pointer;overflow:hidden;font-size:14px;text-align:center}
 .mpslot img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.mpslot .mpvid{position:absolute;right:6px;bottom:6px;z-index:1;background:#121212;color:#f8f6f0;border-radius:999px;padding:2px 10px;font-size:11px}
+.mwsq{display:inline-flex;flex-direction:column;align-items:center;gap:6px}.mwsq img{width:52px;height:auto}
+.hub h1 .mwsq{flex-direction:row;gap:12px}.hub h1 .mwsq img{width:64px}
 .mpslot .mptag{position:absolute;left:6px;top:6px;z-index:1;background:#121212;color:#f8f6f0;border-radius:999px;padding:2px 10px;font-size:11px;letter-spacing:.08em;text-transform:uppercase}
 .mpslot input{position:absolute;opacity:0;width:1px;height:1px}
 .mpf{display:flex;flex-direction:column;gap:6px;font-size:13px;color:var(--muted)}
@@ -485,7 +488,7 @@ details.days summary::-webkit-details-marker{display:none}
 <script src="g/regimen.js?v=49"></script>
 <script src="g/qr.js?v=1"></script>
 <script src="g/jokes.js?v=2"></script>
-<script src="g/rx.js?v=118"></script>
+<script src="g/rx.js?v=119"></script>
 <script src="g/prices.js?v=7"></script>
 <link rel="stylesheet" href="g/rx.css?v=9">
 <link rel="icon" href="icon.png">
@@ -1098,7 +1101,8 @@ function advView(adv0){
   const sub=!started?'Your first step: '+(next?next[1].toLowerCase():'basic blowdry')+'. Ask Alexandra to set up your first model.':
     left===0?'Every phase complete!':c.got+' of '+c.need+' models done — '+left+' to go'+(cur<ph.length-1?' to unlock '+ph[cur+1].name.replace(/^Phase \d · /,'').replace(/ \+.*/,''):'');
   const stars=(n,of)=>'★'.repeat(Math.min(n,of))+'☆'.repeat(Math.max(0,of-n));
-  return [h('div',{class:'gcard',style:'align-items:center;text-align:center'},
+  return [canTap?h('button',{type:'button',class:'mpadd',onclick:()=>navGo('mph')},'Add photos or videos of your models'):null,
+    h('div',{class:'gcard',style:'align-items:center;text-align:center'},
       h('span',{class:'lbl'},'Associate advancement'),
       (()=>{const s=starSvg(pct(c.got,c.need));s.style.width='96px';s.style.height='96px';return s})(),
       h('div',{style:'font-family:var(--display);font-size:22px'},c.name),
@@ -1113,57 +1117,105 @@ function advView(adv0){
     logged.length?h('div',{class:'sec2'},h('span',{class:'lbl'},'Your models'),logged.slice(-6).reverse().map(m=>{const sk=ADV.flatMap(x=>x[1]).find(x=>x[0]===m.id);
       return h('div',{class:'lrow'},h('span',{},sk?sk[1]:m.id),h('span',{class:'soft'},niceDay(m.date)))})):null,
     canTap?h('p',{class:'soft',style:'font-size:13px;text-align:center;margin:0'},'Tap + after each model you finish. It saves with today’s date.'):null,
-    canTap?mpCard(next,logged):null];
+  ];
 }
-/* Model photos (Alexandra, Oct 22 2026): a before and an after of each model. They go to Alexandra's album in
-   The Pretty Report (Team → Model Photos), grouped by name, and to Drive. Pictures are shrunk on the phone first. */
+/* My Work (Oct 23 2026): its own square on everyone's Home (Alexandra: "it would be nice if everybody had that option").
+   Photos and videos go to Marketing Proofs, in an album for each person, for Alexandra and Dom.
+   Associates also see their program skills in the list. MW_ICONS picks the square's look: camera icons + "My Work", or the words. */
+const MW_ICONS=true, MW_NAME=MW_ICONS?'My Work':'Photos/Videos of My Work';
+const MW_CAMS="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 56 24' fill='none' stroke='%23121212' stroke-width='1.4' stroke-linejoin='round'%3E%3Cpath d='M2 8h5l2-3h6l2 3h5v12H2z'/%3E%3Ccircle cx='12' cy='13.5' r='3.6'/%3E%3Crect x='30' y='7' width='16' height='12' rx='1.5'/%3E%3Cpath d='M46 11l7-3.5v11L46 15z'/%3E%3C/svg%3E";
+const WORK=[['Hair',[['w-color','Color'],['w-blonde','Blonding & balayage'],['w-cut','Haircut'],['w-style','Blowout & styling'],['w-bridal','Bridal & updo'],['w-ext','Extensions'],['w-smooth','Smoothing treatment']]],
+  ['Makeup & spa',[['w-makeup','Makeup'],['w-facial','Facial & skin'],['w-brow','Brows & lashes']]],['Other',[['w-other','Other']]]];
+function mwList(){const p=S.mine||{};return p.adv?ADV.map(([ph,sk])=>[ph,sk.map(x=>[x[0],x[1]])]).concat(WORK):WORK}
+function mwLabel(g){return g===MW_NAME&&MW_ICONS?h('span',{class:'mwsq'},h('img',{src:MW_CAMS,alt:'Photos and videos'}),h('span',{},'My Work')):g}
+function mphView(){
+  const logged=myModels().filter(m=>!m.undo), adv={...(S.mine.adv||{})};
+  logged.forEach(m=>{adv[m.id]=(adv[m.id]||0)+1});
+  const next=S.mine.adv?ADV.flatMap(x=>x[1]).find(x=>(adv[x[0]]||0)<x[2]):null;
+  return [h('div',{class:'hub'},h('h1',{style:'font-size:28px'},MW_ICONS?mwLabel(MW_NAME):MW_NAME),
+    API()?mpCard(next,logged):h('p',{class:'soft'},'Uploads switch on soon.'))];
+}
+/* A before and an after, each a photo or a video. Pictures are shrunk on the phone first; videos go up in 8 MB pieces. */
 let MP={open:false,skill:'',date:'',note:'',before:null,after:null,busy:false,msg:''};
+const MP_PIECE=8*1048576;
 function mpShrink(file,max,q){return new Promise((res,rej)=>{const u=URL.createObjectURL(file),im=new Image();
   im.onload=()=>{const k=Math.min(1,max/Math.max(im.naturalWidth,im.naturalHeight)),c=document.createElement('canvas');
     c.width=Math.round(im.naturalWidth*k);c.height=Math.round(im.naturalHeight*k);c.getContext('2d').drawImage(im,0,0,c.width,c.height);URL.revokeObjectURL(u);res(c.toDataURL('image/jpeg',q))};
   im.onerror=()=>{URL.revokeObjectURL(u);rej(new Error('img'))};im.src=u})}
+function mpCover(file){return new Promise(res=>{const v=document.createElement('video'),u=URL.createObjectURL(file);let done=false;
+  const fin=r=>{if(done)return;done=true;URL.revokeObjectURL(u);res(r)};
+  v.muted=true;v.playsInline=true;v.preload='auto';
+  v.onloadeddata=()=>{try{v.currentTime=Math.min(.5,(v.duration||1)/2)}catch(e){fin(null)}};
+  v.onseeked=()=>{try{const k=Math.min(1,480/Math.max(v.videoWidth,v.videoHeight)),c=document.createElement('canvas');c.width=Math.round(v.videoWidth*k);c.height=Math.round(v.videoHeight*k);
+    c.getContext('2d').drawImage(v,0,0,c.width,c.height);fin(c.toDataURL('image/jpeg',.8))}catch(e){fin(null)}};
+  v.onerror=()=>fin(null);setTimeout(()=>fin(null),8000);v.src=u})}
+function mpB64(blob){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(String(r.result).split(',')[1]);r.onerror=rej;r.readAsDataURL(blob)})}
 async function mpPick(which,file){
   if(!file) return;
-  try{MP[which]={full:await mpShrink(file,1600,.82),small:await mpShrink(file,480,.75)};MP.msg=''}
+  const isVid=/^video\//.test(file.type)||/\.(mov|mp4|m4v|3gp|webm)$/i.test(file.name);
+  if(isVid&&!(HUB.data&&HUB.data.mvideo)){MP.msg='Videos switch on soon. Pick a photo for now.';render();return}
+  if(isVid&&file.size>1024*1048576){MP.msg='That video is over 1 GB. Trim it on your phone first.';render();return}
+  try{MP[which]=isVid?{video:file,small:await mpCover(file)}:{full:await mpShrink(file,1600,.82),small:await mpShrink(file,480,.75)};MP.msg=''}
   catch(e){MP.msg='That picture didn’t open. Try another one.'}
   render();
 }
+async function mpPost(body){const st=S.mine.staff;
+  const r=await fetch(API(),{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({...body,slug:st.slug,t:st.t})});
+  const j=await r.json(); if(!j.ok){const e=new Error(j.message||j.error||'x');e.code=j.error;throw e} return j}
+async function mpVideo(which,sk){
+  const f=MP[which].video, s=await mpPost({type:'mvideoStart',which,skill:sk[1],date:MP.date,
+    video:{name:f.name,type:f.type||'video/mp4',size:f.size,thumb:MP[which].small?MP[which].small.split(',')[1]:''}});
+  let off=0;
+  while(off<f.size){
+    MP.msg='Sending your '+which+' video… '+Math.round(100*off/f.size)+'%. Keep this page open.';render();
+    const piece=f.slice(off,Math.min(f.size,off+MP_PIECE)), data=await mpB64(piece);
+    let j,tries=0;
+    for(;;){try{j=await mpPost({type:'mvideoChunk',token:s.token,offset:off,data});break}catch(e){if(++tries>=3||e.code==='expired')throw e;await new Promise(r=>setTimeout(r,2000*tries))}}
+    if(j.done) break;
+    off=j.next||off+piece.size;
+  }
+  return s.token;
+}
 async function mpSave(){
-  const sk=ADV.flatMap(x=>x[1]).find(x=>x[0]===MP.skill), st=S.mine.staff;
+  const sk=mwList().flatMap(x=>x[1]).find(x=>x[0]===MP.skill);
   if(!sk||!(MP.before||MP.after)) return;
   MP.busy=true;MP.msg='';render();
-  try{const r=await fetch(API(),{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({type:'mphoto',id:sk[0],skill:sk[1],date:MP.date,note:MP.note,
-      before:MP.before&&MP.before.full,beforeT:MP.before&&MP.before.small,after:MP.after&&MP.after.full,afterT:MP.after&&MP.after.small,slug:st.slug,t:st.t})});
-    const j=await r.json(); if(!j.ok) throw new Error(j.error||'x');
-    MP={open:false,skill:'',date:'',note:'',before:null,after:null,busy:false,msg:'Saved! Your '+sk[1].toLowerCase()+' photos are in Alexandra’s album.'};
+  try{const tok={};
+    for(const w of ['before','after']) if(MP[w]&&MP[w].video) tok[w]=await mpVideo(w,sk);
+    const img=w=>MP[w]&&!MP[w].video?MP[w]:null;
+    await mpPost({type:'mphoto',id:sk[0],skill:sk[1],date:MP.date,note:MP.note,
+      before:img('before')&&img('before').full,beforeT:img('before')&&img('before').small,after:img('after')&&img('after').full,afterT:img('after')&&img('after').small,
+      beforeTok:tok.before||null,afterTok:tok.after||null});
+    MP={open:false,skill:'',date:'',note:'',before:null,after:null,busy:false,msg:'Saved! Your '+sk[1].toLowerCase()+' is on its way to Marketing Proofs.'};
     hubGet(); setTimeout(()=>{if(!MP.open&&MP.msg){MP.msg='';render()}},6000);}
-  catch(e){MP.busy=false;MP.msg='That didn’t send. Check your signal and tap Save again.'}
+  catch(e){MP.busy=false;MP.msg=e.code==='too_big'||e.code==='expired'?e.message:'That didn’t send. Check your signal and tap Save again.'}
   render();
 }
 function mpCard(next,logged){
-  const on=HUB.data&&HUB.data.mphoto, mine=(HUB.data&&HUB.data.mphotos)||[];
-  const head=[h('span',{class:'lbl'},'Model photos'),h('p',{class:'soft',style:'font-size:13.5px;margin:0'},'Add a before and an after of each model. They go to Alexandra’s album.')];
-  if(HUB.data&&!on) return h('div',{class:'gcard'},...head,h('p',{class:'soft',style:'font-size:13px;margin:0'},'Photo uploads switch on soon.'));
+  const on=HUB.data&&HUB.data.mphoto, mine=(HUB.data&&HUB.data.mphotos)||[], vid=!!(HUB.data&&HUB.data.mvideo);
+  const head=[h('span',{class:'lbl'},'Before & after'),h('p',{class:'soft',style:'font-size:13.5px;margin:0'},'Add a before and an after, as photos'+(vid?' or videos':'')+'. They go to Marketing Proofs, in your own album.')];
+  if(HUB.data&&!on) return h('div',{class:'gcard'},...head,h('p',{class:'soft',style:'font-size:13px;margin:0'},'Uploads switch on soon.'));
   if(!MP.open) return h('div',{class:'gcard'},...head,
     MP.msg?h('p',{style:'font-size:14px;margin:0'},MP.msg):null,
-    h('button',{type:'button',class:'mpadd',onclick:()=>{const last=logged.length?logged[logged.length-1].id:null;
-      MP={open:true,skill:last||(next?next[0]:'bd-basic'),date:ymd(new Date()),note:'',before:null,after:null,busy:false,msg:''};render()}},'+ Add model photos'),
+    h('button',{type:'button',class:'mpadd',onclick:()=>{const last=S.mine.adv&&logged.length?logged[logged.length-1].id:null;
+      MP={open:true,skill:last||(next?next[0]:(S.mine.skin?'w-facial':'w-color')),date:ymd(new Date()),note:'',before:null,after:null,busy:false,msg:''};render()}},vid?'+ Add photos or videos':'+ Add photos'),
     mine.length?h('div',{class:'sec2'},h('span',{class:'lbl',style:'font-size:10px'},'You’ve added '+mine.length+(mine.length===1?' set':' sets')),
       mine.slice(-4).reverse().map(m=>h('div',{class:'lrow'},h('span',{},m.skill),h('span',{class:'soft'},(m.before&&m.after?'Before & after · ':m.after?'After · ':'Before · ')+niceDay(m.date))))):null);
   const slot=which=>{const ph=MP[which];
-    return h('label',{class:'mpslot'},h('span',{class:'mptag'},which==='before'?'Before':'After'),ph?h('img',{src:ph.small,alt:which+' photo'}):null,
+    return h('label',{class:'mpslot'},h('span',{class:'mptag'},which==='before'?'Before':'After'),
+      ph&&ph.small?h('img',{src:ph.small,alt:which+(ph.video?' video':' photo')}):null,ph&&ph.video?h('span',{class:'mpvid'},ph.small?'▶ Video':'▶ Video added'):null,
       ph?null:h('span',{style:'font-size:28px;line-height:1'},'+'),ph?null:h('span',{},'Add the '+which),
-      h('input',{type:'file',accept:'image/*',onchange:e=>mpPick(which,e.target.files[0])}))};
-  const sel=h('select',{onchange:e=>{MP.skill=e.target.value}},ADV.map(([ph,sk])=>h('optgroup',{label:ph},sk.map(([id,l])=>h('option',{value:id,selected:id===MP.skill?'':null},l)))));
+      h('input',{type:'file',accept:vid?'image/*,video/*':'image/*',onchange:e=>mpPick(which,e.target.files[0])}))};
+  const sel=h('select',{onchange:e=>{MP.skill=e.target.value}},mwList().map(([ph,sk])=>h('optgroup',{label:ph},sk.map(([id,l])=>h('option',{value:id,selected:id===MP.skill?'':null},l)))));
   return h('div',{class:'gcard'},...head,
-    h('label',{class:'mpf'},'Which skill',sel),
+    h('label',{class:'mpf'},'What you did',sel),
     h('div',{class:'mpgrid'},slot('before'),slot('after')),
-    h('label',{class:'mpf'},'Model date',h('input',{type:'date',value:MP.date,max:ymd(new Date()),onchange:e=>{MP.date=e.target.value||ymd(new Date())}})),
+    h('label',{class:'mpf'},'Date',h('input',{type:'date',value:MP.date,max:ymd(new Date()),onchange:e=>{MP.date=e.target.value||ymd(new Date())}})),
     h('label',{class:'mpf'},'Note (optional)',h('textarea',{rows:'2',maxlength:'300',placeholder:'Formula, products, what you’d do next time',oninput:e=>{MP.note=e.target.value}},MP.note)),
     MP.msg?h('p',{role:'alert',style:'font-size:14px;margin:0'},MP.msg):null,
     h('div',{style:'display:flex;gap:10px;justify-content:space-between;align-items:center'},
-      h('button',{type:'button',class:'tab',onclick:()=>{MP={open:false,skill:'',date:'',note:'',before:null,after:null,busy:false,msg:''};render()}},'Cancel'),
-      h('button',{type:'button',class:'mpgo',disabled:(MP.busy||!(MP.before||MP.after))?'':null,onclick:mpSave},MP.busy?'Saving…':'Save photos')));
+      h('button',{type:'button',class:'tab',disabled:MP.busy?'':null,onclick:()=>{MP={open:false,skill:'',date:'',note:'',before:null,after:null,busy:false,msg:''};render()}},'Cancel'),
+      h('button',{type:'button',class:'mpgo',disabled:(MP.busy||!(MP.before||MP.after))?'':null,onclick:mpSave},MP.busy?'Saving…':'Save')));
 }
 
 /* My Binder (Alexandra, Oct 22 2026): her printed associate binder from Canva, on the phone, in sections.
@@ -1755,6 +1807,7 @@ function staffTabs(){
   if(isGoalsPerson(p)||CC_SLUGS.includes(st.slug)) t.push(['rx','RX Card']);
   if(isGoalsPerson(p)||CC_SLUGS.includes(st.slug)) t.push(['reg','Home Care']);
   if(isGoalsPerson(p)||p.adv) t.push(['growth',p.adv?'Associate Program':'Growth']);
+  if(st.slug) t.push(['mph',MW_NAME]);
   if(p.binder&&p.binder.length) t.push(['binder','My Binder']);
   if(p.cr&&p.cr.weeks&&p.cr.weeks.length) t.push(['cr','Weekly CR']);
   if(st.slug) t.push(['off','Time Off']);
@@ -1769,7 +1822,7 @@ function staffTabs(){
   return t;
 }
 /* One menu instead of a row of tabs (Alexandra, Oct 2026). Sections are grouped; Customer cards holds RX card and Home care. */
-const NAV_GROUPS=[['Appointments',['home','today','tomorrow','tip']],['Customer Cards',['rx','reg']],['Goals',['growth','binder','cr']],
+const NAV_GROUPS=[['Appointments',['home','today','tomorrow','tip']],['Customer Cards',['rx','reg']],[MW_NAME,['mph']],['Goals',['growth','binder','cr']],
   ['Salon & Spa',['prices','pk','inv','skin','cards','off']],['Taffeta',['guide','hb','fg']],['Self Promotion',['promo']],['Marketing Proofs',['mkt']],['My Profile',['me']]];
 let NAV_OPEN=false;
 /* Disco ball = Home, Back arrow = the page before (Alexandra, Oct 15 2026). Each page change is a browser history step,
@@ -1780,7 +1833,7 @@ function navGo(k,fromHistory){
   if(k==='mkt'){NAV_OPEN=false;HOME_OPEN='';openMkt();render();return}
   if(!fromHistory&&k!==S.tab){const d=((history.state&&history.state.d)||0)+1;try{history.pushState({pp:k,d},'',location.href)}catch(e){}}
   NAV_OPEN=false;S.tab=k;S.dayBack=false;store.set('pp-tab:'+ID,k);render();window.scrollTo(0,0);
-  if(k==='home'||k==='off'||k==='inv'||k==='skin'||k==='growth'||k==='cards'||k==='me'||k==='prices'||k==='rx'||k==='tip'||k==='promo')hubGet();
+  if(k==='home'||k==='off'||k==='inv'||k==='skin'||k==='growth'||k==='mph'||k==='cards'||k==='me'||k==='prices'||k==='rx'||k==='tip'||k==='promo')hubGet();
 }
 function navGroups(tabs){
   const label=Object.fromEntries(tabs);
@@ -1801,7 +1854,7 @@ function homeMenu(){
   gs.forEach(([g,keys],i)=>{
     cells.push(h('button',{type:'button','aria-expanded':keys.length>1?String(HOME_OPEN===g):null,
       onclick:()=>{if(keys.length===1){HOME_OPEN='';navGo(keys[0])}else{HOME_OPEN=HOME_OPEN===g?'':g;render();
-        if(HOME_OPEN)setTimeout(()=>{const p=document.querySelector('.hpages');if(p)p.scrollIntoView({behavior:'smooth',block:'center'})},30)}}},g));
+        if(HOME_OPEN)setTimeout(()=>{const p=document.querySelector('.hpages');if(p)p.scrollIntoView({behavior:'smooth',block:'center'})},30)}}},mwLabel(g)));
     const rowEnd=i%2===1||i===gs.length-1, row=gs.slice(i-(i%2),i+1).map(([x])=>x);
     if(rowEnd&&row.includes(HOME_OPEN)) cells.push(pages(HOME_OPEN));
   });
@@ -1899,6 +1952,7 @@ function staffRender(){
   if(S.tab==='prices') return pricesView();
   if(S.tab==='pk') return pkView();
   if(S.tab==='growth') return growthView();
+  if(S.tab==='mph') return mphView();
   if(S.tab==='binder') return binderView();
   if(S.tab==='cr') return crView();
   if(S.tab==='inv') return invView();
@@ -1970,11 +2024,11 @@ async function albLoad(){
 async function albBig(x,which){
   ALB.big={src:x[which+'T'],cap:x.name+' · '+x.skill+' · '+(which==='before'?'Before':'After')};render();
   try{const r=await fetch(API()+'?admin='+encodeURIComponent(S.hubKey)+'&mpfull='+encodeURIComponent(x[which])+'&_='+Date.now());const j=await r.json();
-    if(j.ok&&j.src&&ALB.big){ALB.big.src=j.src;render()}}catch(e){}
+    if(j.ok&&ALB.big&&(j.src||j.video)){if(j.src)ALB.big.src=j.src;ALB.big.video=j.video||'';render()}}catch(e){}
 }
 function albumView(){
   if(!ALB.data&&!ALB.loading&&!ALB.err) albLoad();
-  const head=[h('h1',{style:'font-size:28px'},'Model Photos'),h('p',{class:'soft',style:'font-size:13.5px;margin:-14px 0 0'},'Every before and after the associates add, by name. Newest first.')];
+  const head=[h('h1',{style:'font-size:28px'},'Team Work'),h('p',{class:'soft',style:'font-size:13.5px;margin:-14px 0 0'},'Every before and after the team adds in My Work, photos and videos, by name. Newest first. They’re on Marketing Proofs too.')];
   if(!ALB.data) return [h('div',{class:'hub'},...head,h('p',{class:'dmsg'},ALB.err==='setup'?'The album switches on with the next app update.':ALB.err?'Couldn’t open the album right now. Check your signal and try again.':'Opening…'))];
   const by={}; (ALB.data.photos||[]).forEach(x=>{(by[x.name]||(by[x.name]=[])).push(x)});
   const names=Object.keys(by), slug=n=>'alb-'+String(n).toLowerCase().replace(/[^a-z0-9]+/g,'-');
@@ -1988,7 +2042,7 @@ function albumView(){
         h('div',{class:'alb-pair'},pic(x,'before'),pic(x,'after')))))),
     ALB.data.folder?h('p',{class:'soft',style:'font-size:13px;text-align:center;margin:0'},'Full-size copies are in Google Drive: ',h('a',{href:ALB.data.folder,target:'_blank',rel:'noopener'},'Associate Model Photos')):null),
     ALB.big?h('div',{class:'alb-big',role:'dialog','aria-label':ALB.big.cap,onclick:e=>{if(e.target===e.currentTarget){ALB.big=null;render()}}},
-      h('img',{src:ALB.big.src,alt:ALB.big.cap}),h('p',{},ALB.big.cap),h('button',{type:'button',onclick:()=>{ALB.big=null;render()}},'Close ✕')):null];
+      h('img',{src:ALB.big.src,alt:ALB.big.cap}),h('p',{},ALB.big.cap),ALB.big.video?h('p',{},h('a',{href:ALB.big.video,target:'_blank',rel:'noopener'},'▶ Play the video')):null,h('button',{type:'button',onclick:()=>{ALB.big=null;render()}},'Close ✕')):null];
 }
 
 /* leadership: Payroll + Month */
@@ -2200,7 +2254,7 @@ function reportGroups(){
   return [['Today',['today']]].concat(S.inv?[['Payroll',['payroll']],['Month & Trends',['month']],['Color Room',['color']]]:[['Payroll & Trends',['payroll','month']]])
     .concat([['Team',['off','photos','guide','sendguide','access']],['Marketing Proofs',['mkt']]]);
 }
-const PR_LABEL={mkt:'Marketing Proofs',photos:'Model Photos',home:'Home',today:'Today',payroll:'Payroll',month:'Month & Trends',color:'Color Room',off:'Time Off',guide:'Culture',sendguide:'Send App Guide',access:'Access'};
+const PR_LABEL={mkt:'Marketing Proofs',photos:'Team Work',home:'Home',today:'Today',payroll:'Payroll',month:'Month & Trends',color:'Color Room',off:'Time Off',guide:'Culture',sendguide:'Send App Guide',access:'Access'};
 let PR_OPEN='',PR_NAV=false;
 function prGo(k,fromHistory){
   if(k==='mkt'){PR_NAV=false;PR_OPEN='';openMkt();render();return}
