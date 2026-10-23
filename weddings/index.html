@@ -263,6 +263,13 @@ table.adm{border-collapse:collapse;font-size:13px;min-width:100%}table.adm th,ta
 .wp-card{margin-top:18px}
 .wp-card h3{font:500 11px var(--sans);letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:14px 0 8px}
 .wp-card .wp-btns{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.paper .look{margin:0 auto 26px;max-width:620px}
+.paper .look .lk-h{font:500 10px var(--sans);letter-spacing:.3em;margin:0 0 4px}
+.paper .look .lk-s{font:400 10px var(--sans);letter-spacing:.14em;text-transform:uppercase;color:var(--paper-muted);margin:14px 0 8px}
+.paper .look .lk-g{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.paper .look.big .lk-g{grid-template-columns:repeat(2,1fr);gap:10px}
+.paper .look img{width:100%;aspect-ratio:4/5;object-fit:cover;display:block;border:1px solid var(--line)}
+.paper .look small{display:block;font:400 9px var(--sans);color:var(--paper-muted);margin-top:3px}
 #pv-detail .seg{align-self:flex-start}
 .pv-desc{white-space:pre-wrap;font-size:13px;color:var(--muted);margin:0}
 textarea.copyfallback{position:fixed;left:-9999px;top:0}
@@ -1193,7 +1200,10 @@ async function saveImage(container,name){
   const el=container.querySelector("[data-sheet]");if(!el)return;
   try{
     const canvas=await html2canvas(el,{scale:2,backgroundColor:"#ffffff"});
-    const a=document.createElement("a");a.href=canvas.toDataURL("image/png");a.download=name;document.body.appendChild(a);a.click();a.remove();
+    /* phones ignore a plain download link (Alexandra, Oct 23 2026): hand the picture to the share sheet, where Save Image works */
+    const f=new File([await new Promise(r=>canvas.toBlob(r,"image/png"))],name,{type:"image/png"});
+    if(navigator.canShare&&navigator.canShare({files:[f]})){try{await navigator.share({files:[f]})}catch(e){if(e&&e.name!=="AbortError")downloadFile(f)}}
+    else downloadFile(f);
   }catch(e){toast("The image didn't save. Try again.")}
 }
 const fileName=s=>((s.bride||"wedding").replace(/[^a-z0-9]+/gi,"-")+"-timeline"+(version==="bride"?"-bride-copy":"")+".png").toLowerCase();
@@ -1230,25 +1240,27 @@ function pdfFrom(canvases){
 function downloadFile(f){const a=document.createElement("a");a.href=URL.createObjectURL(f);a.download=f.name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),4000)}
 /* Builds the PDF, then opens the share sheet (Messages, Mail, Files). If the phone says the tap "expired"
    while the PDF was being made, the button turns into "Tap again to send" and the next tap shares it at once. */
-async function sendPdf(btn,pagesHTML,name){
-  if(btn._ready){const f=btn._ready;btn._ready=null;btn.textContent=btn._lab;try{await navigator.share({files:[f]})}catch(e){if(!e||e.name!=="AbortError")downloadFile(f)}return}
+async function sendPdf(btn,pagesHTML,name,text){
+  const shareOf=f=>text?{files:[f],text}:{files:[f]};
+  if(btn._ready){const f=btn._ready;btn._ready=null;btn.textContent=btn._lab;try{await navigator.share(shareOf(f))}catch(e){if(!e||e.name!=="AbortError")downloadFile(f)}return}
   if(!window.html2canvas){toast("PDFs aren't available here");return}
   btn._lab=btn._lab||btn.textContent;btn.disabled=true;btn.textContent="Making PDF…";
   try{
+    if(typeof pagesHTML==="function")pagesHTML=await pagesHTML();   // the team copy waits for its full-size photos
     const canv=[];for(const h of pagesHTML)canv.push(await shotOf(h));
     const f=new File([pdfFrom(canv)],name,{type:"application/pdf"});
     btn.disabled=false;btn.textContent=btn._lab;
     if(navigator.canShare&&navigator.canShare({files:[f]})){
-      try{await navigator.share({files:[f]})}
+      try{await navigator.share(shareOf(f))}
       catch(e){if(e&&e.name==="NotAllowedError"){btn._ready=f;btn.textContent="Tap again to send"}else if(!e||e.name!=="AbortError")downloadFile(f)}
-    }else downloadFile(f);
+    }else{downloadFile(f);if(text)copy(text)}
   }catch(e){btn.disabled=false;btn.textContent=btn._lab;toast("The PDF didn't save. Try again.")}
 }
 const pdfName=(s,kind)=>((s.bride||"wedding").trim().replace(/[^a-z0-9]+/gi,"-")+"-"+kind+".pdf").toLowerCase();
-$("#pdfTeam").onclick=e=>sendPdf(e.currentTarget,[sheetHTML(S,"team",false).html],pdfName(S,"team-timeline"));
+$("#pdfTeam").onclick=e=>sendPdf(e.currentTarget,()=>wpTeamPages(S,docId),pdfName(S,"team-timeline"));
 $("#pdfBride").onclick=e=>sendPdf(e.currentTarget,[sheetHTML(S,"bride",false).html],pdfName(S,"timeline"));
 function teamSel_s(){const w=allWeddings.find(x=>x.id===teamSel);return w?Object.assign(starter(),w.d,Array.isArray(w.d.people)?{}:(calDraft(w.d)||{})):null}
-$("#teamPdf").onclick=e=>{const s=teamSel_s();if(s)sendPdf(e.currentTarget,[sheetHTML(s,"team",false).html],pdfName(s,"team-timeline"))};
+$("#teamPdf").onclick=e=>{const s=teamSel_s();if(s)sendPdf(e.currentTarget,()=>wpTeamPages(s,teamSel),pdfName(s,"team-timeline"))};
 $("#teamPdfBride").onclick=e=>{const s=teamSel_s();if(s)sendPdf(e.currentTarget,[sheetHTML(s,"bride",false).html],pdfName(s,"timeline"))};
 
 document.addEventListener("click",e=>{document.querySelectorAll("details.more[open]").forEach(d=>{if(!d.contains(e.target)||e.target.closest(".menu"))d.open=false})});
@@ -1333,11 +1345,11 @@ $("#txBride").onclick=()=>{
   const body="Hi "+(firstName(S)||"there")+"! 🤍 Here is your wedding day timeline"+(S.date?" for "+mdOf(S.date):"")+". Please look it over and let us know if anything needs to change. We can’t wait!";
   textWith(firstName(S)||"the bride",[n],body,sheetHTML(S,"bride",false).html,[]);
 };
-function textTeam(){
-  const list=S.artists.filter(a=>(a.name||"").trim()), nums=[], missing=[];
-  list.forEach(a=>{const p=phoneOfArtist(a);if(p){if(!nums.includes(p))nums.push(p)}else missing.push(a.name.trim())});
-  if(!list.length){toast("Add the team in Team on site first");return}
-  textWith("the team",nums,$("#cf-text").value||confirmOf(S),sheetHTML(S,"team",false).html,missing);
+/* Text team (Alexandra, Oct 23 2026): Dom's confirmation words plus the team PDF (timeline with the wedding's photos)
+   go out together from the share sheet. Pick Messages, then the girls. A web page can't fill in who it goes to with a file. */
+function textTeam(e){
+  if(!S.artists.some(a=>(a.name||"").trim())){toast("Add the team in Team on site first");return}
+  sendPdf(e.currentTarget,()=>wpTeamPages(S,docId),pdfName(S,"team-timeline"),$("#cf-text").value||confirmOf(S));
 }
 $("#txTeam").onclick=textTeam;
 $("#cf-text-team").onclick=textTeam;
@@ -2086,6 +2098,38 @@ async function wpUpload(id,kind,files,st){
   wpRefresh(id);
   if(done)toast(done+" photo"+(done>1?"s":"")+" added.");
 }
+/* The photos also sit on the team copy of the timeline (Alexandra, Oct 23 2026),
+   so they ride along in the Team PDF and Text team. They sit on top of the times. Small pictures on screen, full size in the PDF. */
+function wpLookHTML(id,src,big){
+  const ph=(wpCache[id]||[]).filter(p=>src[p.id]);if(!ph.length)return"";
+  let h='<div class="look'+(big?' big':'')+'"><div class="lk-h">THE LOOK</div>';
+  WP_GROUPS.forEach(([k,label])=>{const l=ph.filter(p=>p.kind===k);if(!l.length)return;
+    h+='<div class="lk-s">'+esc(label)+'</div><div class="lk-g">'+l.map(p=>'<div><img alt="" src="'+src[p.id]+'"><small>'+esc((p.ext?"Extensions · ":"")+(p.by||""))+'</small></div>').join("")+'</div>'});
+  return h+'</div>';
+}
+const wpWithLook=(html,look)=>look?html.replace('<table class="tl">',look+'<table class="tl">'):html;   // on top of the times
+function wpPutLook(boxSel,id){
+  const sh=$(boxSel)&&$(boxSel).querySelector("[data-sheet]");if(!sh)return;
+  const old=sh.querySelector(".look");if(old)old.remove();
+  const look=id&&wpLookHTML(id,wpThumbs);if(!look)return;
+  const tl=sh.querySelector("table.tl");if(tl)tl.insertAdjacentHTML("beforebegin",look);
+}
+function wpSheets(){
+  if(version==="team")wpPutLook("#sheet",docId);
+  if(allWeddings.some(x=>x.id===teamSel&&Array.isArray(x.d.people)))wpPutLook("#teamSheet",teamSel);
+}
+async function wpTeamPages(s,id){
+  let look="";
+  if(id){try{
+    if(!wpCache[id])wpCache[id]=(await api("wedPhotos",{id})).photos||[];
+    const ids=wpCache[id].map(p=>p.id);
+    if(ids.length){const j=await api("wedPhotoData",{id,ids,full:true});look=wpLookHTML(id,j.photos||{},true)}
+  }catch(_){look=wpLookHTML(id,wpThumbs,true)}}
+  return [wpWithLook(sheetHTML(s,"team",false).html,look)];
+}
+{const rs=renderSheet;renderSheet=function(){rs();wpSheets()}}
+{const wr=wpRender;wpRender=function(w){wr(w);wpSheets()}}
+
 /* show the card wherever a wedding is open: Schedule (everyone) and the office Timeline */
 {const rts=renderTeamSheet;renderTeamSheet=function(){rts();wpShow("team",allWeddings.some(x=>x.id===teamSel)?teamSel:null)}}
 {const so=$("#saved").onchange;$("#saved").onchange=e=>{so(e);wpShow("build",docId)}}
