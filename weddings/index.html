@@ -134,6 +134,10 @@ header.top{display:flex;flex-wrap:wrap;align-items:center;gap:12px 20px;justify-
 .card h2.tog:focus-visible{outline:2px solid var(--ink);outline-offset:4px}
 .cbody{display:flex;flex-direction:column;gap:10px}
 .card.closed .cbody{display:none}
+.gd-list{display:flex;flex-direction:column;margin-top:8px}
+.gd-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--line)}
+.gd-row .gd-n{flex:1;min-width:0}
+.gd-row .gd-sent{font-size:12px;color:var(--muted)}
 div.f{display:flex;flex-direction:column;gap:6px;font-size:12px;color:var(--muted)}
 @media (prefers-reduced-motion:reduce){.card h2.tog .pl{transition:none}}
 .row{display:flex;gap:8px;flex-wrap:wrap}
@@ -772,6 +776,15 @@ input,select,textarea{background:#fff;border-radius:0}
   </section>
 
   <section id="view-admin" hidden>
+    <div class="card" style="margin-bottom:16px">
+      <h2 data-open>Send the App Guide</h2>
+      <div class="row"><label class="f" style="flex:0 1 220px">Guide<select id="gd-which"><option value="artists">Artist Guide</option><option value="office">Office Guide</option></select></label>
+        <a class="btn ghost small" id="gd-view" target="_blank" rel="noopener" style="flex:0 0 auto;align-self:flex-end;text-decoration:none">View Guide</a></div>
+      <label class="f">Message<textarea id="gd-text" rows="10"></textarea></label>
+      <div class="row" style="align-items:center"><button class="btn ghost small" id="gd-reset" type="button" style="flex:0 0 auto">Refill Message</button><span class="hint">[Name] turns into each person's go-by name. The guide link goes right after "read through it:"</span></div>
+      <p class="hint" style="margin-top:10px">Tap <b>Text</b> next to anyone. Messages opens to her with your note and the guide link. Tap <b>Send</b>.</p>
+      <div id="gd-list" class="gd-list"></div>
+    </div>
     <div class="card" style="margin-bottom:16px">
       <h2 data-open>Add a team member</h2>
       <div class="row">
@@ -2019,6 +2032,35 @@ function renderAdmin(){
     try{await api("setActive",{memberId:m.id,active:on});m.active=on?"Yes":"No";renderAdmin();toast(on?"Her link works again":"Her link is turned off")}catch(e){toast("That didn't work. Try again.")}
   });
 }
+/* Send the App Guide (Alexandra, Oct 23 2026): pick who gets it, Messages opens to her with Alexandra's note
+   and the guide link (the PDF lives next to the app in weddings/guides/). */
+const GUIDES={
+  artists:{file:"guides/Taffeta-Weddings-App-Guide-Artists.pdf",text:"Hi [Name]! I've been working on a project to keep our bridal team as organized as possible & it's finally ready - the Taffeta Weddings app. Everything you need for a wedding is in one place now (your timelines, job offers, bride inspo & photos, previews, gratuity & getting paid).\n\nI made a short guide so you can learn your way around. Please take a few minutes to read through it:\n\nMy goal is to make wedding days easier for ALL of us, with less back & forth and more time doing what we love. I can better explain this verbally if needed! Thank you for everything you do xo Alexandra"},
+  office:{file:"guides/Taffeta-Weddings-App-Guide-Office.pdf",text:"Hi [Name]! I've been working on a project to keep our wedding business as organized as possible & it's finally ready - the office side of the Taffeta Weddings app. It runs every wedding from inquiry to payout (timelines, sales, the bridal team, previews & add-ons).\n\nI made a short guide so you can learn how it all works. Please take a few minutes to read through it:\n\nMy goal is for all of us to work from the same place so nothing falls through the cracks. I can better explain this verbally if needed! Thank you xo Alexandra"}};
+const gdWhich=()=>$("#gd-which").value;
+const gdUrl=()=>new URL(GUIDES[gdWhich()].file,location.href).href;
+function gdText(){return lsGet("tw-gd-"+gdWhich())||GUIDES[gdWhich()].text}
+function gdBody(name){
+  // the link goes right after "read through it:" so it sits in the middle of the note; at the end if that line was edited away
+  let t=$("#gd-text").value.replace(/\[Name\]/g,name||"there");
+  return /read through it:\n/.test(t)?t.replace(/read through it:\n/,"read through it: "+gdUrl()+"\n"):t+"\n\n"+gdUrl();
+}
+function renderGuides(){
+  if(document.activeElement!==$("#gd-text"))$("#gd-text").value=gdText();
+  $("#gd-view").href=gdUrl();
+  const sent=JSON.parse(lsGet("tw-gd-sent-"+gdWhich())||"{}");
+  const gb=p=>goBy({uid:p._id,name:p.preferredName||p.legalName||""});
+  const ppl=profiles.filter(p=>p.active!=="No").sort((a,b)=>gb(a).localeCompare(gb(b),"en",{sensitivity:"base"}));
+  $("#gd-list").innerHTML=ppl.length?ppl.map(p=>{const n=digits(p.phone),g=gb(p);
+    return '<div class="gd-row"><span class="gd-n">'+esc(g)+(sent[p._id]?' <span class="gd-sent">· Sent '+esc(sent[p._id])+'</span>':'')+'</span>'
+      +(n?'<a class="btn small" style="text-decoration:none" data-gd="'+esc(p._id)+'" href="'+esc(smsHref([n],gdBody(g)))+'">Text</a>':'<span class="hint">No cell on file</span>')+'</div>'}).join("")
+    :'<p class="hint">Add team members below first.</p>';
+  $("#gd-list").querySelectorAll("[data-gd]").forEach(a=>a.onclick=()=>{const s=JSON.parse(lsGet("tw-gd-sent-"+gdWhich())||"{}");s[a.dataset.gd]=new Date().toLocaleDateString("en-US",{month:"numeric",day:"numeric"});lsSet("tw-gd-sent-"+gdWhich(),JSON.stringify(s));setTimeout(renderGuides,400)});
+}
+$("#gd-which").onchange=()=>{$("#gd-text").value=gdText();renderGuides()};
+$("#gd-text").addEventListener("input",e=>{lsSet("tw-gd-"+gdWhich(),e.target.value===GUIDES[gdWhich()].text?"":e.target.value);renderGuides()});
+$("#gd-reset").onclick=()=>{lsSet("tw-gd-"+gdWhich(),"");$("#gd-text").value=GUIDES[gdWhich()].text;renderGuides()};
+{const ra=renderAdmin;renderAdmin=function(){ra();renderGuides()}}
 $("#am-add").onclick=async()=>{
   const st=$("#am-status");
   const p={preferredName:$("#am-name").value.trim(),email:$("#am-email").value.trim(),phone:$("#am-phone").value.trim(),role:$("#am-role").value};
