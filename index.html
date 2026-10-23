@@ -830,6 +830,7 @@ function render(){
   else if(S.rtab==='photos') parts=albumView();
   else if(S.rtab==='guide') parts=leaderGuideView();
   else if(S.rtab==='access') parts=accessView();
+  else if(S.rtab==='sendguide') parts=guideSendView();
   else if(!S.open) parts=teamBoard();
   else { const p=S.pages.find(x=>x.slug===S.open); parts=p?stylistPage(p):teamBoard(); }
   const d=S.daily;
@@ -2047,6 +2048,66 @@ function payrollView(){
       null)));
   return out;
 }
+/* Send the App Guide (Alexandra, Oct 23 2026): pick a team member, Messages opens with her note and guide links filled in.
+   No cell numbers live in this app, so she picks the person in Messages. Or Share sends the PDF itself. PDFs are in guides/. */
+const GUIDES=['adriana','amanda','angelina','ashley','carolyn','dominique','isabella','kat','kelly','rose'];
+const GUIDE_BASE=new URL('guides/',location.href).href;
+const GUIDE_MSG=`Hi {name}! I have been working on our Employee Experience App for a while now in hopes of keeping everyone as organized as possible & making your days at Taffeta easier. Your goals, the time clock, RX cards, home care, prices, time off & more are all in ONE place, so you dont have to chase anyone down for answers.
+
+I made a short guide so you can learn how it works. Please read through it when you have a few minutes (not while you're with a guest!) & then open your app & try each page.
+
+{links}
+
+If something looks wrong or doesnt make sense - tell me. I can better explain this verbally if needed!
+
+Thank you 🤍`;
+const guideTeam=()=>((S.access&&S.access.stylists)||S.pages||[]).map(p=>p.name).filter(Boolean).sort((a,b)=>a.localeCompare(b));
+const guideKey=n=>{const k=firstName(n).toLowerCase();return GUIDES.includes(k)?k:''};
+function guideLinks(n){
+  const k=guideKey(n);
+  return 'Team App Guide: '+GUIDE_BASE+'team-app.pdf'+(k?'\nYour Own Pages: '+GUIDE_BASE+k+'.pdf':'');
+}
+const guideText=n=>(store.get('pp-guide-msg')||GUIDE_MSG).replace(/\{name\}/g,firstName(n)).replace(/\{links\}/g,guideLinks(n));
+function guideSms(body){return /Android/i.test(navigator.userAgent)?'sms:?body='+encodeURIComponent(body):'sms:&body='+encodeURIComponent(body)}
+async function guideShare(n,b){
+  const lab=b.textContent;b.textContent='One moment…';
+  try{
+    const k=guideKey(n),names=['team-app'].concat(k?[k]:[]);
+    const files=await Promise.all(names.map(async x=>new File([await (await fetch(GUIDE_BASE+x+'.pdf')).blob()],(x==='team-app'?'Taffeta Team App Guide':'Guide for '+firstName(n))+'.pdf',{type:'application/pdf'})));
+    const text=guideText(n).replace(/\n*Team App Guide: .*(\nYour Own Pages: .*)?/,'\nThe guides are attached.');
+    if(navigator.canShare&&navigator.canShare({files})){await navigator.share({files,text})}
+    else{await navigator.clipboard.writeText(guideText(n));alert('This browser can’t share the PDFs, so the message with the links is copied instead.')}
+    store.set('pp-guide-sent:'+n,new Date().toLocaleDateString('en-US',{month:'short',day:'numeric'}));
+  }catch(e){}
+  b.textContent=lab;render();
+}
+function guideSendView(){
+  const team=guideTeam(), cur=store.get('pp-guide-msg')||GUIDE_MSG;
+  const ta=h('textarea',{class:'input',style:'height:300px;font-family:var(--body);font-size:15px;line-height:1.45;border:1px solid var(--line);border-radius:6px',oninput:e=>{store.set('pp-guide-msg',e.target.value)}},cur);
+  const row=n=>{
+    const sent=store.get('pp-guide-sent:'+n), k=guideKey(n);
+    const copy=h('button',{type:'button',class:'obtn sm'},'Copy');
+    copy.addEventListener('click',()=>{try{navigator.clipboard.writeText(guideText(n)).then(()=>{copy.textContent='Copied';setTimeout(()=>{copy.textContent='Copy'},1400)})}catch(e){}});
+    const share=h('button',{type:'button',class:'obtn sm'},'Share PDF');
+    share.addEventListener('click',()=>guideShare(n,share));
+    return h('div',{style:'padding:12px 0;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:8px'},
+      h('div',{style:'display:flex;justify-content:space-between;gap:10px;align-items:baseline'},
+        h('div',{style:'font-family:var(--display);font-size:17px'},n),
+        h('span',{class:'soft',style:'font-size:12px'},(k?'Team guide + her own pages':'Team guide')+(sent?' · sent '+sent:''))),
+      h('div',{style:'display:flex;gap:8px;flex-wrap:wrap'},
+        h('a',{class:'obtn sm',style:'display:inline-flex;align-items:center;text-decoration:none;align-self:auto',href:guideSms(guideText(n)),
+          onclick:e=>{e.currentTarget.href=guideSms(guideText(n));store.set('pp-guide-sent:'+n,new Date().toLocaleDateString('en-US',{month:'short',day:'numeric'}));setTimeout(render,500)}},'Text '+firstName(n)),
+        share,copy));
+  };
+  return [h('section',{class:'section'},h('div',{class:'hub'},h('h2',{},'Send the App Guide'),
+    h('p',{class:'soft',style:'font-size:13px'},'Tap Text next to a name. Messages opens with your note & her guide links filled in. Pick her in the To line, then Send. Share PDF sends the PDF file itself instead of a link.'),
+    h('div',{class:'gcard'},h('span',{class:'lbl'},'Your message'),ta,
+      h('p',{class:'soft',style:'font-size:12px;margin:0'},'{name} becomes her first name & {links} becomes her guide links. Changes save on this phone.'),
+      h('div',{style:'display:flex;gap:8px;flex-wrap:wrap'},
+        h('a',{class:'obtn sm',style:'display:inline-flex;align-items:center;text-decoration:none;align-self:auto',href:GUIDE_BASE+'team-app.pdf',target:'_blank',rel:'noopener'},'Open the Team Guide'),
+        h('button',{type:'button',class:'obtn sm',onclick:()=>{store.set('pp-guide-msg','');render()}},'Reset Message'))),
+    h('div',{class:'gcard'},h('span',{class:'lbl'},'Team'),team.length?team.map(row):h('p',{class:'soft'},'The team list shows after the next publish.'))))];
+}
 function adminOffView(){
   if(!ADM.week){ADM.week=weekStartOf(new Date());admLoad()}
   const ws=ADM.week, we=new Date(ws.getTime()+6*864e5), lab=d=>d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
@@ -2137,9 +2198,9 @@ function prPhotoKey(){return 'pp-photo:'+ID+':'+prWho()}
 function reportGroups(){
   // always 6 squares (Alexandra, Oct 17 2026): Access sits under Team; without the Color Room, Payroll and Month & Trends share one
   return [['Today',['today']]].concat(S.inv?[['Payroll',['payroll']],['Month & Trends',['month']],['Color Room',['color']]]:[['Payroll & Trends',['payroll','month']]])
-    .concat([['Team',['off','photos','guide','access']],['Marketing Proofs',['mkt']]]);
+    .concat([['Team',['off','photos','guide','sendguide','access']],['Marketing Proofs',['mkt']]]);
 }
-const PR_LABEL={mkt:'Marketing Proofs',photos:'Model Photos',home:'Home',today:'Today',payroll:'Payroll',month:'Month & Trends',color:'Color Room',off:'Time Off',guide:'Culture',access:'Access'};
+const PR_LABEL={mkt:'Marketing Proofs',photos:'Model Photos',home:'Home',today:'Today',payroll:'Payroll',month:'Month & Trends',color:'Color Room',off:'Time Off',guide:'Culture',sendguide:'Send App Guide',access:'Access'};
 let PR_OPEN='',PR_NAV=false;
 function prGo(k,fromHistory){
   if(k==='mkt'){PR_NAV=false;PR_OPEN='';openMkt();render();return}
