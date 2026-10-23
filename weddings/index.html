@@ -202,6 +202,10 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 details.more{position:relative;flex:0 0 auto!important}
 .row.pdfrow{flex-wrap:nowrap}
 .row.pdfrow>.btn{flex:1 1 0;min-width:0}
+/* phones: the share buttons sit in two rows of three so Move people and More are on screen (Alexandra, Oct 23 2026) */
+@media (max-width:760px){.toolbar .row.pdfrow{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;flex:1 1 100%;width:100%}
+  .row.pdfrow>.btn,.row.pdfrow details.more>summary{width:100%;box-sizing:border-box;text-align:center;white-space:normal;padding-left:6px;padding-right:6px}
+  .row.pdfrow details.more>summary{display:block}}
 details.more>summary{list-style:none;display:inline-block}
 details.more>summary::-webkit-details-marker{display:none}
 details.more>summary::after{content:" \25BE"}
@@ -464,13 +468,13 @@ input,select,textarea{background:#fff;border-radius:0}
             <button id="ver-bride" aria-pressed="false">Bride copy (blank names)</button>
           </div>
           <div class="row pdfrow">
-            <button class="btn" id="txBride">Text bride</button>
-            <button class="btn ghost" id="txPrep">Prep tips</button>
-            <button class="btn ghost" id="txExt">Extensions info</button>
-            <button class="btn" id="txTeam">Text team</button>
-            <button class="btn ghost" id="moveMode" aria-pressed="false">Move people</button>
+            <button class="btn" id="txBride">Text Bride</button>
+            <button class="btn ghost" id="txPrep">Prep Tips</button>
+            <button class="btn ghost" id="txExt">Extensions Info</button>
+            <button class="btn" id="txTeam">Text Team</button>
+            <button class="btn ghost" id="moveMode" aria-pressed="false">Move People</button>
             <details class="more"><summary class="btn ghost">More</summary><div class="menu">
-              <button class="btn ghost" id="moveReset" hidden>Undo my moves</button>
+              <button class="btn ghost" id="moveReset" hidden>Undo My Moves</button>
               <button class="btn ghost" id="pdfBride">Bride PDF</button>
               <button class="btn ghost" id="pdfTeam">Team PDF</button>
               <button class="btn ghost" id="copyText">Copy as text</button>
@@ -487,7 +491,7 @@ input,select,textarea{background:#fff;border-radius:0}
           <p class="hint">Fills in from this wedding. Edit anything, then send it to the team.</p>
           <textarea id="cf-text" aria-label="Team confirmation message"></textarea>
           <label class="chk"><input type="checkbox" id="cf-tl" checked> Add the team timeline as page 2</label>
-          <div class="row" style="align-items:flex-start"><button class="btn" id="cf-text-team">Text team</button><details class="more"><summary class="btn ghost">More</summary><div class="menu"><button class="btn ghost" id="cf-pdf">Send as PDF</button><button class="btn ghost" id="cf-copy">Copy text</button><button class="btn ghost" id="cf-reset">Refill from wedding</button></div></details></div>
+          <div class="row" style="align-items:flex-start"><button class="btn" id="cf-text-team">Text Team</button><details class="more"><summary class="btn ghost">More</summary><div class="menu"><button class="btn ghost" id="cf-pdf">Send as PDF</button><button class="btn ghost" id="cf-copy">Copy text</button><button class="btn ghost" id="cf-reset">Refill from wedding</button></div></details></div>
           <p class="status" id="cf-status"></p>
         </div>
         <div class="card wp-card" id="wp-build" hidden></div>
@@ -1207,7 +1211,7 @@ function renderSheet(){
   const {html,plan}=sheetHTML(S,version,true);
   $("#sheet").innerHTML=html;renderConfirm();
   $("#sheet").classList.toggle("moving",moveOn);
-  $("#moveMode").textContent=moveOn?"Done moving":"Move people";$("#moveMode").setAttribute("aria-pressed",moveOn);
+  $("#moveMode").textContent=moveOn?"Done Moving":"Move People";$("#moveMode").setAttribute("aria-pressed",moveOn);
   $("#moveReset").hidden=!(S.moves&&S.moves.length&&S.movesSig===moveSig(S));
   if(moveOn)$("#sheet").querySelectorAll("[data-pos]").forEach(td=>{
     if(td.dataset.pos===movePick)td.classList.add("pick");
@@ -1267,7 +1271,12 @@ $("#saveImg").onclick=()=>saveImage($("#sheet"),fileName(S));
 /* one-line rows shrink until they fit the page they're on, phone or PDF (Alexandra, Oct 23 2026) */
 function fitIn(paper){paper.querySelectorAll(".dline.one").forEach(d=>{let f=parseFloat(d.dataset.fs)||11.5;d.style.fontSize=f+"px";while(d.clientWidth&&d.scrollWidth>d.clientWidth&&f>5){f-=.25;d.style.fontSize=f+"px"}})}
 const fitRO=window.ResizeObserver?new ResizeObserver(es=>es.forEach(e=>fitIn(e.target))):null;
-function fitLines(root){(root||document).querySelectorAll("[data-sheet]").forEach(p=>{fitIn(p);if(fitRO)fitRO.observe(p)})}
+/* on a phone the whole timeline page shrinks to the screen, so she never pinch-zooms or slides sideways to see it (Alexandra, Oct 23 2026) */
+function fitPapers(){document.querySelectorAll(".paperwrap>div>.paper").forEach(p=>{
+  const w=p.closest(".paperwrap"),cs=getComputedStyle(w),room=w.clientWidth-parseFloat(cs.paddingLeft)-parseFloat(cs.paddingRight);
+  p.style.zoom="";const need=Math.max(p.offsetWidth,p.scrollWidth);const z=room>0&&need>room+1?room/need:1;if(z<1)p.style.zoom=z.toFixed(3)})}
+addEventListener("resize",()=>fitPapers());
+function fitLines(root){(root||document).querySelectorAll("[data-sheet]").forEach(p=>{fitIn(p);if(fitRO)fitRO.observe(p)});fitPapers()}
 let fitQ=0;new MutationObserver(()=>{if(!fitQ)fitQ=requestAnimationFrame(()=>{fitQ=0;fitLines()})}).observe(document.body,{childList:true,subtree:true});
 async function shotOf(html){
   const box=document.createElement("div");box.className="pdfstage";box.innerHTML=html;document.body.appendChild(box);
