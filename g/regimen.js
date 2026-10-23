@@ -242,6 +242,8 @@ function rgGuess(kind,n){
     if(/mc 110/.test(t)) return ['Tone (Lotion P50)',H.mc110];
     if(/p50/.test(t)) return ['Tone (Lotion P50)',H.p50];
     if(/skin box/.test(t)) return ['Kits & more',H.skinbox];
+    /* the $25 Taffeta BR Bottle (a 2-week sample of a BR serum), Oct 22 2026 */
+    if(/taffeta br bottle/.test(t)) return ['Serums','After your P50, apply 1–2 drops directly onto skin. Gently pat to spread the product evenly over face and neck. Lasts about 2 weeks.'];
     if(/box/.test(t)) return ['Kits & more',''];
     if(/u\.v\.|spf|teint|kiss|hand|body|oil|tint/.test(t)) return ['Protect & glow',''];
     if(/crème|creme|émulsion|emulsion/.test(t)) return ['Moisturize',H.cream];
@@ -310,7 +312,7 @@ function rgSavedView(me){
   const toast=h('p',{class:'toast'});
   const day=t=>t?new Date(t).toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'}):'';
   const row=x=>{const d=x.data||{}, kind=/skin/i.test(x.kind)?'skin':'hair';
-    return h('div',{class:'rxl'},h('div',{class:'rxn'},h('b',{},x.guest),h('small',{class:'soft'},[x.kind,day(x.at),x.status==='Sent'?'Texted to her':'Waiting at the desk'].filter(Boolean).join(' · ')),x.summary?h('small',{class:'soft'},x.summary):null),
+    return h('div',{class:'rxl'},h('div',{class:'rxn'},h('b',{},x.guest),h('small',{class:'soft'},[x.kind,day(x.at),x.status==='Sent'?'Texted to her':x.status==='Draft'?'Waiting for your review':'Waiting at the desk'].filter(Boolean).join(' · ')),x.summary?h('small',{class:'soft'},x.summary):d.plan?h('small',{class:'soft'},d.plan):null),
       h('button',{type:'button',class:'tab',onclick:()=>{RG=Object.assign(rgBlank(),d,{guest:d.guest||x.guest,editRow:x.row,editSent:x.status==='Sent'});RG_TOAST='';rgSave();RG_TAB='build';render();window.scrollTo(0,0)}},'Edit'),
       h('button',{type:'button',class:'tab',onclick:()=>rgPreview(me,toast,Object.assign(rgBlank(),d,{guest:d.guest||x.guest}),kind)},'Preview'))};
   return [h('div',{class:'hub'},rgTabs(),h('section',{class:'card2'},h('span',{class:'lbl'},'Saved Cards'),h('label',{class:'fld'},s),toast,
@@ -363,7 +365,8 @@ function regimenView(){
     return d;
   };
   const mine=shown.filter(it=>rgStarred(it,favs)), rest=shown.filter(it=>!rgStarred(it,favs));
-  const bucket=f=>{const g=new Map();rest.forEach(it=>{const k=f(it);g.has(k)||g.set(k,[]);g.get(k).push(it)});return [...g]};
+  const az=n=>String(n).replace(/^Biologique Recherche /,'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+  const bucket=f=>{const g=new Map();rest.forEach(it=>{const k=f(it);g.has(k)||g.set(k,[]);g.get(k).push(it)});g.forEach(L=>L.sort((a,b)=>az(a.n).localeCompare(az(b.n),'en',{numeric:true})));return [...g]};   /* A to Z in each group (Oct 22 2026) */
   const lists=RG_VIEW==='brand'
     ?bucket(it=>it.brand).sort((a,b)=>kind==='skin'?((RG_SKIN_BRANDS.indexOf(a[0])+1||99)-(RG_SKIN_BRANDS.indexOf(b[0])+1||99)):RX_BRANDS_ORDER(a[0])-RX_BRANDS_ORDER(b[0]))
     :bucket(it=>it.step);
@@ -585,6 +588,8 @@ async function rgSave2(me,toast,btn){
   if(!rgDeskOn()){toast.textContent='The front desk list isn’t switched on yet. Your regimen stays saved on this screen, so tap again once it is.';return}
   const st=(S.mine&&S.mine.staff)||{}, kind=rgKind();
   if(!RG.guest.trim()){toast.textContent='Add her name first so the desk knows who it’s for.';return}
+  /* a card saved with aftercare notes but no products by mistake (Heike, Oct 22 2026): ask first */
+  if(!(RG.picks||[]).length&&!confirm('No products are picked on '+rgFirst(RG.guest)+'’s card, so it will only have aftercare notes. Save it anyway?')){toast.textContent='Pick her products in step 2, then save.';return}
   btn.disabled=true; toast.textContent='Saving…';
   try{
     const r=await fetch(window.TAFFETA_ENDPOINT,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
