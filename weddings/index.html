@@ -919,7 +919,9 @@ function labelMap(s,plan,ver){
       else if(ver==="team"&&p.name)txt=p.name;
       else{txt=service==="hair"?"H":"MU";   // no numbers on girls without a name (Alexandra, Oct 23 2026)
 if(p.role==="Junior BM")txt+=" (Jr BM)";if(p.role==="Flower girl")txt+=" (Flower girl)"}
-      if(ver==="team"&&s.overrides&&s.overrides[key])txt=s.overrides[key];
+      const ov=s.overrides&&s.overrides[key];
+      // an old automatic label ("Hair 5", "MU 6") that got saved as a wording edit is ignored, so it can't bring numbers back
+      if(ver==="team"&&ov&&!/^(Hair|MU) \d+( \((Jr BM|Flower girl)\))?$/i.test(ov.trim()))txt=ov;
       labels[key]={txt,blank:ver==="bride"&&!(p.role==="Bride"||HELPERS.includes(p.role))};
     });
   });
