@@ -319,6 +319,13 @@ function rgSavedView(me){
     RG_MBUSY&&RG_MINE===null?h('p',{class:'soft'},'Loading…'):RG_MERR?h('p',{class:'soft'},RG_MERR):!L.length?h('p',{class:'soft'},q?'No saved card for “'+RG_MQ+'”.':'Home care cards you save show up here.'):null,
     ...L.slice(0,60).map(row)))];
 }
+/* Home care choices show their price, from the same list as Prices → Home Care (Alexandra, Oct 23 2026); sizes show as a range */
+function rgPrice(it,kind){
+  const L=(typeof RX_PRICES!=='undefined'&&RX_PRICES[kind])||[], P=it.sizes.map(z=>(L.find(r=>r[0]===z)||[])[1]).filter(p=>p!=null);
+  if(!P.length) return '';
+  const m=p=>typeof rxMoney==='function'?rxMoney(p):'$'+p, lo=Math.min(...P), hi=Math.max(...P);
+  return lo===hi?m(lo):m(lo)+'–'+m(hi);
+}
 function regimenView(){
   const kind=rgKind(), R=rgLoad(), whens=RG_WHEN[kind];
   const me=(S.mine&&(S.mine.name||(S.mine.staff&&S.mine.staff.name)))||'';
@@ -351,7 +358,8 @@ function regimenView(){
     const p=picked(it.n);
     const pick=h('button',{type:'button',class:'rgp','aria-pressed':String(!!p),style:'flex:1',onclick:()=>{
       if(p) R.picks=R.picks.filter(x=>x!==p); else R.picks.push({n:it.n,how:it.how,when:it.w0&&whens.includes(it.w0)?it.w0:whens[0],step:it.step});
-      rgSave(); render();}},h('span',{class:'rgbox','aria-hidden':'true'}),h('span',{},it.n.replace(/^Biologique Recherche /,'')));
+      rgSave(); render();}},h('span',{class:'rgbox','aria-hidden':'true'}),h('span',{style:'flex:1'},it.n.replace(/^Biologique Recherche /,'')),
+      rgPrice(it,kind)?h('span',{class:'soft num',style:'white-space:nowrap;font-size:13.5px'},rgPrice(it,kind)):null);
     if(!hasStar) return pick;
     const on=rgStarred(it,favs);
     return h('div',{style:'display:flex;align-items:center;gap:2px'},
@@ -370,7 +378,7 @@ function regimenView(){
   const lists=RG_VIEW==='brand'
     ?bucket(it=>it.brand).sort((a,b)=>kind==='skin'?((RG_SKIN_BRANDS.indexOf(a[0])+1||99)-(RG_SKIN_BRANDS.indexOf(b[0])+1||99)):RX_BRANDS_ORDER(a[0])-RX_BRANDS_ORDER(b[0]))
     :bucket(it=>it.step);
-  const groups=[mine.length?box('★ Your stars',mine,'star',true):null,...lists.map(([t,L])=>box(t,L,RG_VIEW+':'+t,false))];
+  const groups=[mine.length?box('★ Your Stars',mine,'star',true):null,...lists.map(([t,L])=>box(t,L,RG_VIEW+':'+t,false))];
   const viewSeg=h('div',{class:'seg'},[['brand','By brand'],['step','By step']].map(([k,l])=>h('button',{type:'button','aria-pressed':String(RG_VIEW===k),
     onclick:()=>{RG_VIEW=k;RG_OPEN=null;try{store.set('pp-rgview',k)}catch(e){}render()}},l)));
   const products=h('section',{class:'card2'},h('span',{class:'lbl'},'2 · Products'),

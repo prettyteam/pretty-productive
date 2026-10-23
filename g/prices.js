@@ -33,7 +33,7 @@ function pricesView(){
   const s=h('input',{type:'search',id:'prq',value:PR_Q,placeholder:PR_SIDE==='svc'?'Search a service':'Search a product',autocomplete:'off'});
   s.addEventListener('input',()=>{PR_Q=s.value;const pos=s.selectionStart;render();const n=document.getElementById('prq');if(n){n.focus();try{n.setSelectionRange(pos,pos)}catch(e){}}});
   const seg=h('div',{class:'seg',style:'justify-content:center'},
-    [['svc','Services'],['ret','Retail']].map(([k,l])=>h('button',{type:'button','aria-pressed':String(PR_SIDE===k),onclick:()=>{PR_SIDE=k;PR_Q='';render()}},l)));
+    [['svc','Services'],['ret','Home Care']].map(([k,l])=>h('button',{type:'button','aria-pressed':String(PR_SIDE===k),onclick:()=>{PR_SIDE=k;PR_Q='';render()}},l)));
   // each word of a service starts with a capital (Alexandra, Oct 2026)
   const prTitle=n=>String(n).replace(/(^|[\s(\/-])([a-z])/g,(m,a,b)=>a+b.toUpperCase());
   const row=(n,p)=>h('div',{class:'rxl'},h('div',{class:'rxn'},h('span',{},n)),h('b',{class:'num',style:'font-weight:500;white-space:nowrap'},p));
@@ -44,20 +44,26 @@ function pricesView(){
     body=groups.some(Boolean)?groups:[h('p',{class:'soft',style:'text-align:center'},'Nothing matches “'+PR_Q+'”.')];
     body.push(h('small',{class:'soft',style:'text-align:center'},'Starting prices from our website menu. “+” means starting at; final price depends on time, length and product.'));
   } else {
+    /* Home Care (Alexandra, Oct 23 2026): the Maintenance list moved here from the RX card builder. Stars flip in place so
+       she can star several in a row; her go-tos lead the take-home picks on RX cards and the Home Care tab. */
     const fmt=p=>'$'+(Number.isInteger(p)?p:p.toFixed(2)), favs=rxFavs(), all=[...RX_PRICES.hair,...RX_PRICES.skin];
+    const skin=new Set(RX_PRICES.skin.map(([n])=>n));
     const star=n=>h('button',{type:'button',class:'rxstar','aria-pressed':String(favs.includes(n)),'aria-label':(favs.includes(n)?'Unstar ':'Star ')+n,
-      onclick:()=>{rxFavToggle(n);render()}},favs.includes(n)?'★':'☆');
-    const srow=(n,p)=>h('div',{class:'rxl'},star(n),h('div',{class:'rxn'},h('span',{},n)),h('b',{class:'num',style:'font-weight:500;white-space:nowrap'},fmt(p)));
+      onclick:e=>{rxFavToggle(n);const on=rxFavs().includes(n),b=e.currentTarget;b.textContent=on?'★':'☆';b.setAttribute('aria-pressed',String(on));b.setAttribute('aria-label',(on?'Unstar ':'Star ')+n)}},favs.includes(n)?'★':'☆');
+    const srow=(n,p)=>{const l=skin.has(n)&&typeof rxLasts==='function'?rxLasts(n):'';
+      return h('div',{class:'rxl'},star(n),h('div',{class:'rxn'},h('span',{},n.replace(/^Biologique Recherche /,'BR ')),l?h('small',{class:'soft'},'Lasts '+l):null),h('b',{class:'num',style:'font-weight:500;white-space:nowrap'},fmt(p)))};
     const mine=all.filter(([n])=>favs.includes(n)&&hit(n));
     /* a drop-down per brand so there's less scrolling (Alexandra, Oct 15 2026); searching opens the matches */
     const lines=[['Hair',RX_PRICES.hair],['Skin',RX_PRICES.skin]].map(([g,items])=>{const shown=items.filter(([n])=>(hit(n)||hit(rxBrand(n)))&&!favs.includes(n));if(!shown.length)return null;
       return h('section',{class:'card2'},h('span',{class:'lbl'},g),...rxByBrand(shown).map(([b,L])=>{const d=h('details',{class:'invg'},
         h('summary',{},h('h2',{style:'font-size:17px'},b),h('span',{class:'soft invc'},String(L.length)),h('span',{class:'tplus','aria-hidden':'true'},'+')),
         h('div',{class:'sec2'},...L.map(([n,p])=>srow(n,p))));if(q)d.open=true;return d}))});
-    body=[mine.length?h('section',{class:'card2'},h('span',{class:'lbl'},'★ Your go-tos'),...mine.map(([n,p])=>srow(n,p))):
-        (q?null:h('small',{class:'soft',style:'text-align:center'},'Tap ☆ on the products you reach for most. They move to the top here and in the RX card menu, on your phone and the salon iPad.')),
-      h('section',{class:'card2'},h('span',{class:'lbl'},'Try Me bottle'),row('1 oz of any backbar product','$6')),...lines];
-    body.push(h('small',{class:'soft',style:'text-align:center'},'Brand list prices. Always ring up from the POS.'));
+    body=[h('small',{class:'soft',style:'text-align:center'},'Her RX card builds home care into her budget for you. Know what your favorites cost, and star your go-tos: they come first when you pick what she takes home.'),
+      mine.length?h('section',{class:'card2'},h('span',{class:'lbl'},'★ Your Go-Tos'),...mine.map(([n,p])=>srow(n,p))):
+        (q?null:h('small',{class:'soft',style:'text-align:center'},'Tap ☆ on the products you reach for most. They move to the top here, on her take-home card and on Home Care, on your phone and the salon iPad.')),
+      h('section',{class:'card2'},h('span',{class:'lbl'},'Sample Bottles'),row('Try Me Bottle · 1 oz of any hair backbar product','$6'),
+        row('Taffeta BR Bottle · a BR product, about 2 weeks','$25'),h('small',{class:'soft'},'Skin has no Try Me bottles: the Taffeta BR Bottle is the skin version.')),...lines];
+    body.push(h('small',{class:'soft',style:'text-align:center'},'Retail prices from Paired Plus. Always ring up from the POS.'));
   }
   return [h('div',{class:'hub'},h('div',{},h('span',{class:'lbl'},'Salon & spa'),h('h1',{style:'font-size:28px'},'Prices'),
     h('p',{class:'soft',style:'margin-top:6px'},'Know what things cost before you sit down with a guest, so her plan fits her budget.')),
