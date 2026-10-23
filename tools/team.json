@@ -792,15 +792,6 @@
         "canva": "DAE-7gz48Hc"
       },
       {
-        "id": "model-tracker",
-        "title": "Associate Model Tracker",
-        "sec": "edu",
-        "set": "hair",
-        "pages": 16,
-        "desc": "Log your model practice",
-        "canva": "DAG3q7k0s5w"
-      },
-      {
         "id": "build-book",
         "title": "How to Build a Book",
         "sec": "book",
