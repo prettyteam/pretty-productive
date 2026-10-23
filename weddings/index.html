@@ -906,8 +906,6 @@ function build(s){
 /* ---------- labels ---------- */
 function labelMap(s,plan,ver){
   const labels={};
-  // girls without a name keep one number for hair and makeup, and it moves with her (Alexandra, Oct 23 2026)
-  const num={};let k=0;s.people.forEach(p=>{if(p.role!=="Bride"&&!HELPERS.includes(p.role)&&!(ver==="team"&&p.name))num[p.id]=++k});
   ["hair","mu"].forEach(service=>{
     const seq=[];
     plan.cols.filter(c=>c.service===service).forEach(c=>c.cells.forEach((pid,r)=>{if(pid)seq.push({pid,t:r*c.slot,c})}));
@@ -919,7 +917,8 @@ function labelMap(s,plan,ver){
       if(p.role==="Bride")txt="Bride";
       else if(HELPERS.includes(p.role))txt=(ver==="team"&&p.name)?p.name+" ("+p.role+")":p.role;
       else if(ver==="team"&&p.name)txt=p.name;
-      else{txt=(service==="hair"?"Hair ":"MU ")+num[p.id];if(p.role==="Junior BM")txt+=" (Jr BM)";if(p.role==="Flower girl")txt+=" (Flower girl)"}
+      else{txt=service==="hair"?"H":"MU";   // no numbers on girls without a name (Alexandra, Oct 23 2026)
+if(p.role==="Junior BM")txt+=" (Jr BM)";if(p.role==="Flower girl")txt+=" (Flower girl)"}
       if(ver==="team"&&s.overrides&&s.overrides[key])txt=s.overrides[key];
       labels[key]={txt,blank:ver==="bride"&&!(p.role==="Bride"||HELPERS.includes(p.role))};
     });
