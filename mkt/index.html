@@ -66,13 +66,23 @@ MK.onState=function(fn){MK._subs.push(fn);if(MK._state)try{fn(MK._state)}catch(e
 MK.applyState=function(s){if(!s||!s.edits)return;MK._state=s;MK._subs.forEach(fn=>{try{fn(s)}catch(e){console.warn(e)}})};
 MK.refresh=function(){return MK.api('state').then(MK.applyState).catch(e=>console.warn(e))};
 MK.driveFull=function(id){return MK.api('thumbs',{ids:[id],full:true}).then(r=>r.photos[id])};
-function flushThumbs(){MK._t=0;const ids=[...MK._q].slice(0,30);ids.forEach(i=>MK._q.delete(i));if(!ids.length)return;
-  MK.api('thumbs',{ids}).then(r=>{Object.entries(r.photos||{}).forEach(([id,u])=>{MK._thumbs.set(id,u);document.querySelectorAll('img[data-d="'+id+'"]').forEach(im=>{im.src=u;im.classList.remove('mk-wait')})})})
-    .catch(()=>{}).then(()=>{if(MK._q.size&&!MK._t)MK._t=setTimeout(flushThumbs,50)})}
+// Team photo thumbnails come from Apps Script, which handles one request at a time. Ask for a few at a time,
+// wait while photos are uploading so the upload goes first, and try again when a batch doesn't come back (Oct 23 2026).
+MK._tries=new Map();
+function thumbCss(){if(MK._tc)return;MK._tc=1;const st=document.createElement('style');
+  st.textContent='img[data-d]:not([src]){visibility:hidden}.ptile button:has(img[data-d]:not([src])){background:#ece9e3}';document.head.append(st)}
+function flushThumbs(){MK._t=0;
+  if(MK.busy){MK._t=setTimeout(flushThumbs,1500);return}
+  const ids=[...MK._q].slice(0,8);ids.forEach(i=>MK._q.delete(i));if(!ids.length)return;
+  let wait=50;
+  MK.api('thumbs',{ids}).then(r=>{Object.entries(r.photos||{}).forEach(([id,u])=>{MK._thumbs.set(id,u);MK._tries.delete(id);document.querySelectorAll('img[data-d="'+id+'"]').forEach(im=>{im.src=u;im.classList.remove('mk-wait')})})})
+    .catch(()=>{wait=3000})
+    .then(()=>{ids.forEach(id=>{if(MK._thumbs.has(id))return;const n=(MK._tries.get(id)||0)+1;MK._tries.set(id,n);if(n<6){MK._q.add(id);wait=Math.max(wait,1500*n)}});
+      if(MK._q.size&&!MK._t)MK._t=setTimeout(flushThumbs,wait)})}
 function load(el){
   if(el.dataset.e){el.classList.add('mk-wait');MK.url(el.dataset.e).then(u=>{el.src=u;el.classList.remove('mk-wait')}).catch(()=>{})}
   if(el.dataset.ep){MK.url(el.dataset.ep).then(u=>el.poster=u).catch(()=>{})}
-  if(el.dataset.d){const u=MK._thumbs.get(el.dataset.d);if(u)el.src=u;else{el.classList.add('mk-wait');MK._q.add(el.dataset.d);if(!MK._t)MK._t=setTimeout(flushThumbs,120)}}
+  if(el.dataset.d){thumbCss();const u=MK._thumbs.get(el.dataset.d);if(u)el.src=u;else{el.classList.add('mk-wait');MK._q.add(el.dataset.d);if(!MK._t)MK._t=setTimeout(flushThumbs,120)}}
 }
 const io='IntersectionObserver' in window?new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){io.unobserve(e.target);load(e.target)}}),{rootMargin:'600px 0px'}):null;
 MK.scan=function(root){(root||document).querySelectorAll('[data-e],[data-ep],[data-d]').forEach(el=>{if(el._mk)return;el._mk=1;if(io)io.observe(el);else load(el)})};
