@@ -1270,14 +1270,19 @@ function confirmOf(s){
   const x=s.ext||{},other=[];
   if(x.on)other.push("Bride is renting extensions"+([x.type,x.color,x.length].filter(Boolean).length?" ("+[x.type,x.color,x.length].filter(Boolean).join(", ")+")":"")+".");
   if(s.notes)other.push(s.notes.trim());
-  return ["Hi team! 🤍 Confirming your upcoming wedding for "+first+" on "+md+"!","",
-    "📍 Location","Address: "+([s.location,s.room].filter(Boolean).join(", ")||B),"Parking/Valet: "+(s.parking||B),"",
-    "⏰ TIMELINE","Arrival: "+(arr>=15?ampm(arrive)+" - "+ampm(arrive+15):ampm(arrive)),"Start time: "+ampm(plan.start),"Must be finished by: "+ampm(plan.end)]
-   .concat(s.touchups?["Touch-ups before leaving: "+s.touchups]:[])
-   .concat(["Please review the Google Calendar prior to the wedding for the full service details, timeline, and any additional notes.","",
-    "📱 DAY-OF CONTACT","POC: "+([s.contactName,s.contactPhone].filter(Boolean).join(" ")||B),"They will also have the bride’s/designated bridesmaid’s contact information should anything come up day-of.","",
-    "🚗 ADDITIONAL NOTES —","Other: "+(other.join(" ")||"None"),"",
-    "Please let us know before the wedding day if you have any questions, concerns, or conflicts with the timeline.","Thank you, team! Have an amazing wedding day! ✨"]).join("\n");
+  /* lines with nothing to say are left out, so there are no blanks to erase (Alexandra, Oct 23 2026) */
+  const addr=[s.location,s.room].filter(Boolean).join(", "),poc=[s.contactName,s.contactPhone].filter(Boolean).join(" ");
+  const L=["Hi team! 🤍 Confirming your upcoming wedding for "+first+" on "+md+"!","","📍 Location"];
+  if(addr)L.push("Address: "+addr);
+  if(s.parking)L.push("Parking/Valet: "+s.parking);
+  L.push("","⏰ TIMELINE","Arrival: "+(arr>=15?ampm(arrive)+" - "+ampm(arrive+15):ampm(arrive)),"Start time: "+ampm(plan.start),"Must be finished by: "+ampm(plan.end));
+  if(s.touchups)L.push("Touch-ups before leaving: "+s.touchups);
+  L.push("Please review the Google Calendar prior to the wedding for the full service details, timeline, and any additional notes.","","📱 DAY-OF CONTACT");
+  if(poc)L.push("POC: "+poc);
+  L.push("They will also have the bride’s/designated bridesmaid’s contact information should anything come up day-of.","");
+  if(other.length)L.push("🚗 ADDITIONAL NOTES —","Other: "+other.join(" "),"");
+  L.push("Please let us know before the wedding day if you have any questions, concerns, or conflicts with the timeline.","Thank you, team! Have an amazing wedding day! ✨");
+  return L.join("\n");
 }
 function renderConfirm(){
   const t=$("#cf-text");if(!t||document.activeElement===t)return;
