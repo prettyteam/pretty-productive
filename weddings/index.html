@@ -458,6 +458,7 @@ input,select,textarea{background:#fff;border-radius:0}
           <div class="row pdfrow">
             <button class="btn" id="txBride">Text bride</button>
             <button class="btn ghost" id="txPrep">Prep tips</button>
+            <button class="btn ghost" id="txExt">Extensions info</button>
             <button class="btn" id="txTeam">Text team</button>
             <button class="btn ghost" id="moveMode" aria-pressed="false">Move people</button>
             <details class="more"><summary class="btn ghost">More</summary><div class="menu">
@@ -1385,7 +1386,7 @@ async function textWith(who,nums,body,html,missing,what){
     if(!window.ClipboardItem||!navigator.clipboard||!navigator.clipboard.write)throw 0;
     await navigator.clipboard.write([new ClipboardItem({"image/png":blob})]);copied=true;   // started inside the tap, so phones allow it
   }catch(_){}
-  if(!copied){try{const b=await blob;const f=new File([b],what==="timeline picture"?pdfName(S,"timeline").replace(".pdf",".png"):"hair-makeup-prep.png",{type:"image/png"});downloadFile(f)}catch(_){}}
+  if(!copied){try{const b=await blob;const f=new File([b],what==="timeline picture"?pdfName(S,"timeline").replace(".pdf",".png"):what==="extensions picture"?"extension-rental.png":"hair-makeup-prep.png",{type:"image/png"});downloadFile(f)}catch(_){}}
   const href=smsHref(nums,body);
   box.innerHTML='<h2 style="margin:0">Text '+esc(who)+'</h2>'
     +'<p class="hint" style="margin:0">'+(copied?'The '+what+' is copied ✓':'The '+what+' was saved to your phone.')+'</p>'
@@ -1405,6 +1406,26 @@ const PREP=[
   ["Extensions","Clip-ins should be washed and fully dry before the day, not fresh out of the pack."],
   ["Inspiration","Bring realistic photos of the looks you love."],
   ["Allergies","Tell us about any product allergies before we start."]];
+/* Extension rental for a bride who didn't pre-rent (Alexandra, Oct 23 2026): we bring hair just in case.
+   Short version of her Canva "hair extension rental" terms: Venmo on the day, she mails it back with her own label. */
+const EXT_INFO=[
+  ["Just in case","We bring clip-in extensions to every wedding. If you'd like to wear them today, just ask your artist."],
+  ["Rental","$150. Please Venmo @TaffetaWeddings on the wedding day, before we clip them in."],
+  ["Care","Please don't wash them, put products in them, cut or color them, or wear them around smoke."],
+  ["Mail them back","Within 5 days, in the mailer we give you. Buy your own return label (USPS, UPS or FedEx) and send to:\nTaffeta, 219 Bellevue Avenue, Hammonton, NJ 08037"],
+  ["Not returned?","Hair that isn't back within 5 days is charged at the full cost of the hair."]];
+function infoHTML(title,sub,rows){
+  return '<div class="paper prep" data-sheet><img class="bow" alt="" src="data:image/png;base64,'+BOW+'"><div class="bname">'+esc(title)+'</div>'
+    +'<div class="dline muted">'+esc(sub)+'</div><div class="sp"></div>'
+    +rows.map(([h,t])=>'<div class="pp"><div class="pp-h">'+esc(h)+'</div><div class="pp-t">'+esc(t).replace(/\n/g,"<br>")+'</div></div>').join("")
+    +'<div class="brandline bottom">TAFFETA WEDDINGS</div></div>';
+}
+$("#txExt").onclick=()=>{
+  const n=digits(S.bridePhone);
+  if(!n){toast("Add the bride's cell in the Wedding section first");const c=$("#bridePhone");c.closest(".card").classList.remove("closed");c.focus();return}
+  const body="Hi "+(firstName(S)||"there")+"! 🤍 We'll have clip-in extensions with us on your wedding day, just in case. Here's how renting them works if you decide you'd like them!";
+  textWith(firstName(S)||"the bride",[n],body,infoHTML("Hair Extensions","Wedding day rental",EXT_INFO),[],"extensions picture");
+};
 function prepHTML(){
   return '<div class="paper prep" data-sheet><img class="bow" alt="" src="data:image/png;base64,'+BOW+'"><div class="bname">Hair &amp; Makeup Prep</div>'
     +'<div class="dline muted">Preview &amp; wedding day</div><div class="sp"></div>'
