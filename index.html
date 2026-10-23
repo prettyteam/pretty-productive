@@ -493,7 +493,7 @@ details.days summary::-webkit-details-marker{display:none}
 <link rel="stylesheet" href="g/rx.css?v=9">
 <link rel="icon" href="icon.png">
 <link rel="apple-touch-icon" href="icon.png">
-<script src="/refresh.js?v=4" defer></script>
+<script src="/refresh.js?v=5" defer></script>
 <script src="/g/bats.js?v=2" defer></script>
 </head>
 <body>
@@ -2263,6 +2263,10 @@ function prGo(k,fromHistory){
   if(k==='photos'&&!ALB.loading){ALB.err=null;albLoad()}
 }
 addEventListener('popstate',e=>{const st=e.state;if(EDITION==='team'&&S.isAdmin){prGo(st&&st.pr?st.pr:'home',true)}});
+/* Refresh reopens the page you were on (refresh.js, Oct 23 2026): s:<tab> on a staff page, r:<tab>[:<person>] on The Pretty Report */
+window.__ppView={get:()=>EDITION==='team'?(S.isAdmin?'r:'+(S.rtab||'home')+(S.open?':'+S.open:''):null):(S.mine?'s:'+S.tab:null),
+  set:k=>{const [e,a,b]=String(k).split(':');if(!a)return;
+    if(e==='r'&&EDITION==='team'){prGo(a);if(b){S.open=b;render()}}else if(e==='s'&&EDITION==='stylist'){HOME_OPEN='';navGo(a)}}};
 function reportHome(){
   const who=prWho(), logo=document.querySelector('.wreath'), ph=who?store.get(prPhotoKey()):'';
   const file=h('input',{type:'file',accept:'image/*',hidden:'',onchange:e=>{const f=e.target.files&&e.target.files[0];if(!f)return;

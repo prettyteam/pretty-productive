@@ -64,5 +64,5 @@ function build(){
   addEventListener('load',()=>document.body.prepend(bar));   // stay above the Refresh line
 }
 addEventListener('popstate',e=>{const s=e.state;if(cfg&&s&&s.tn!=null){cfg.set(s.tn);last=cfg.get();window.scrollTo(0,0);draw()}});
-window.TopNav={init(c){cfg=c;build();check();document.addEventListener('click',()=>setTimeout(check,0),true)},check};
+window.TopNav={init(c){cfg=c;window.__ppView=window.__ppView||{get:()=>cfg.get(),set:k=>{cfg.set(k);check()}};build();check();document.addEventListener('click',()=>setTimeout(check,0),true)},check};
 })();
