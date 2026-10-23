@@ -104,6 +104,7 @@ function doPost(e) {
   ensureSetup_();
   if (d.action === 'mkt') return json_(mkt_(d));   // Marketing Proofs (Marketing.gs), passcode-checked there
   if (/^coach(Save|Seen|Desk)$/.test(d.action || '')) return json_(coachPost_(d));   // Call Coach (Coach.gs), key-checked there
+  if (d.action === 'favVideoChunk') { const w0 = who_(d); return json_(w0 ? favVideoChunk_(w0, d) : { ok: false, error: 'signin' }); }   // video pieces skip the lock (Favorites.gs)
   const who = who_(d);
   if (!who) return json_({ ok: false, error: 'signin' });
   const lock = LockService.getScriptLock();
@@ -124,6 +125,8 @@ function doPost(e) {
       case 'addWedPhoto': return json_(addWedPhoto_(who, d.id, d.photo));
       case 'delWedPhoto': return json_(delWedPhoto_(who, d.id, d.photoId));
       case 'wedPhotoData': return json_(wedPhotoData_(who, d.id, d.ids, !!d.full));
+      case 'addFav': return json_(addFav_(who, d.id, d.photo));
+      case 'favVideoStart': return json_(favVideoStart_(who, d.id, d.video));
       case 'myJobs': return json_(office ? { ok: true, jobs: [] } : myJobs_(who.member));
       case 'answerJob': return json_(office ? { ok: false, error: 'office_only' } : answerJob_(who.member, d.id, !!d.yes));
       case 'savePushToken': return json_(office ? saveOfficePushToken_(d.name, d.token, d.device, !!d.off) : savePushToken_(who.member, d.token, d.device, !!d.off));
@@ -577,7 +580,7 @@ function wedPhotos_(who, id) {
   const saved = previewRows_();
   wedPreviews_(w).forEach(ev => ((saved[ev.key] || {}).d || {}).photos && saved[ev.key].d.photos.forEach(p =>
     photos.push({ id: p.id, kind: 'preview', ext: p.kind === 'ext', by: p.by, at: p.at })));
-  return { ok: true, photos: photos };
+  return { ok: true, photos: photos.concat(favList_(id)) };
 }
 
 /** photo: {kind:'inspo'|'look', data:'<base64 jpeg>', thumb:'<base64 jpeg>'} */
@@ -605,7 +608,7 @@ function delWedPhoto_(who, id, photoId) {
   const w = wedFor_(who, id);
   if (!w) return { ok: false, error: 'not_found' };
   const rec = wedPhotoRows_(id).find(p => p.id === photoId);
-  if (!rec) return { ok: true };
+  if (!rec) return delFav_(who, id, photoId) || { ok: true };
   const me = who.role === 'office' ? 'Office' : (who.member.preferredName || who.member.legalName || 'Artist');
   if (who.role !== 'office' && rec.by !== me) return { ok: false, error: 'not_yours', message: 'Only the person who added a photo can remove it.' };
   [rec.id, rec.thumbId].forEach(f => { try { DriveApp.getFileById(f).setTrashed(true); } catch (_) {} });
@@ -625,6 +628,8 @@ function wedPhotoData_(who, id, ids, full) {
   (ids || []).filter(x => allowed[x]).slice(0, 60).forEach(x => {
     try { out[x] = 'data:image/jpeg;base64,' + Utilities.base64Encode(DriveApp.getFileById(full ? x : allowed[x]).getBlob().getBytes()); } catch (_) {}
   });
+  const rest = (ids || []).filter(x => !allowed[x]);
+  if (rest.length) Object.assign(out, favData_(id, rest.slice(0, 40), full));
   return { ok: true, photos: out };
 }
 

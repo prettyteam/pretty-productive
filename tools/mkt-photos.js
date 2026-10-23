@@ -2,29 +2,42 @@
    the photos added on the Claude version came along and stay in their albums. */
 (function(){
   var BUILT=[{id:'branding',name:'Hi Pretty Branding Shoot'},{id:'bridal',name:'Taffeta Bridal'},{id:'salon',name:'Taffeta Salon & Spa'}];
-  var albums=BUILT.slice(),photos=[],cur='branding',ready=false,busy=false;
+  var albums=BUILT.slice(),weds=[],photos=[],cur='branding',ready=false,busy=false;
+  /* Wedding Day Favorites (Oct 23 2026): each wedding the team adds favorites to gets its own album (album.parent 'bridal').
+     They show as folders inside Taffeta Bridal, photos grouped by who added them; videos play from Drive. */
+  var css=document.createElement('style');css.textContent='#p-photos .pfolders{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:14px;margin:0 0 22px}'
+    +'#p-photos .pfolder{all:unset;cursor:pointer;background:var(--paper);padding:8px 8px 10px;box-shadow:0 1px 2px rgba(0,0,0,.06),0 6px 18px -10px rgba(0,0,0,.18);display:block}'
+    +'#p-photos .pfolder .pcov{aspect-ratio:1;background:var(--line);overflow:hidden}#p-photos .pfolder img{width:100%;height:100%;object-fit:cover;display:block}'
+    +'#p-photos .pfolder b{display:block;font-weight:500;font-size:14px;margin:8px 2px 2px}#p-photos .pfolder small{display:block;font-size:12px;opacity:.7;margin:0 2px}'
+    +'#p-photos .pfh{font-size:13px;letter-spacing:.14em;text-transform:uppercase;font-weight:500;margin:6px 0 12px}#p-photos .pback{all:unset;cursor:pointer;font-size:14px;text-decoration:underline;text-underline-offset:3px;margin:0 0 10px;display:inline-block}'
+    +'#p-photos .ptile button{position:relative}#p-photos .pplay{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:46px;height:46px;border-radius:50%;background:rgba(255,255,255,.9);display:grid;place-items:center;font-size:16px;padding-left:3px;box-sizing:border-box;pointer-events:none}'
+    +'#lb-vid{display:block;border:0;width:min(92vw,960px);height:min(72vh,720px);background:#000}';
+  document.head.appendChild(css);
+  function box(id,cls,tag,before){var e=$(id);if(!e){e=document.createElement(tag||'div');e.id=id;if(cls)e.className=cls;before.parentNode.insertBefore(e,before)}return e}
   var $=function(id){return document.getElementById(id)};
   try{var s=localStorage.getItem('album');if(s)cur=s}catch(e){}
   var h=(location.hash.match(/album=([\w-]+)/)||[])[1];if(h)cur=h;
 
   function fmt(ms){try{return new Date(ms).toLocaleDateString(undefined,{month:'short',day:'numeric'})}catch(e){return''}}
-  function albumOf(id){for(var i=0;i<albums.length;i++)if(albums[i].id===id)return albums[i];return null}
+  function albumOf(id){var all=albums.concat(weds);for(var i=0;i<all.length;i++)if(all[i].id===id)return all[i];return null}
+  function isWed(id){var a=albumOf(id);return !!(a&&a.parent==='bridal')}
 
   function renderTabs(){
     var nav=$('albums');nav.textContent='';
     albums.forEach(function(a){var b=document.createElement('button');b.type='button';b.textContent=a.name;
-      b.setAttribute('aria-current',a.id===cur?'true':'false');b.onclick=function(){go(a.id)};nav.appendChild(b);});
+      b.setAttribute('aria-current',a.id===cur||(a.id==='bridal'&&isWed(cur))?'true':'false');b.onclick=function(){go(a.id)};nav.appendChild(b);});
     if(ready){var n=document.createElement('button');n.type='button';n.className='add';n.textContent='+ New album';n.onclick=newAlbum;nav.appendChild(n);}
   }
   function tile(p){
     var f=document.createElement('figure');f.className='ptile';
     var b=document.createElement('button');b.type='button';b.dataset.doc=p.id;b.dataset.kind=p.kind;b.dataset.n=fmt(p.addedAt);
-    b.setAttribute('aria-label','Open photo added '+fmt(p.addedAt));
+    if(p.vf)b.dataset.vf=p.vf;if(p.by)b.dataset.by=p.by;
+    b.setAttribute('aria-label','Open '+(p.video?'video':'photo')+' added '+fmt(p.addedAt));
     var im=document.createElement('img');im.loading='lazy';im.alt='Photo added '+fmt(p.addedAt);
     if(p.kind==='m'){im.dataset.e='alb/t/'+p.id+'.jpg';b.dataset.full='alb/'+p.id+'.jpg';}else{im.dataset.d=p.id;}
     if(p.w&&p.h){im.width=p.w>p.h?560:374;im.height=Math.round(im.width*p.h/p.w);}
-    b.appendChild(im);f.appendChild(b);
-    var c=document.createElement('figcaption');c.textContent='Added '+fmt(p.addedAt);f.appendChild(c);return f;
+    b.appendChild(im);if(p.video){var pl=document.createElement('span');pl.className='pplay';pl.textContent='▶';b.appendChild(pl)}f.appendChild(b);
+    var c=document.createElement('figcaption');c.textContent='Added '+fmt(p.addedAt)+(p.by?' by '+p.by:'');f.appendChild(c);return f;
   }
   function renderPhotos(){
     var a=albumOf(cur)||albums[0];cur=a.id;
@@ -34,8 +47,23 @@
     var grid=isB?$('phone-grid'):$('o-grid');grid.textContent='';
     mine.forEach(function(p){grid.appendChild(tile(p))});
     if(isB){$('phone-n').textContent=mine.length;$('phone-count').textContent=mine.length+' photos';$('phone-empty').hidden=mine.length>0;}
-    else{$('o-brand').textContent=a.brand||'';$('o-brand').hidden=!a.brand;$('o-title').textContent=a.name;
-      $('o-sub').textContent=mine.length?mine.length+' photos. Tap any photo to see it bigger.':'';$('o-empty').hidden=mine.length>0;}
+    else{
+      var wed=a.parent==='bridal',nv=mine.filter(function(p){return p.video}).length,np=mine.length-nv;
+      $('o-brand').textContent=wed?'Taffeta Bridal':(a.brand||'');$('o-brand').hidden=!(wed||a.brand);$('o-title').textContent=a.name;
+      $('o-sub').textContent=mine.length?(wed?[np?np+(np>1?' photos':' photo'):'',nv?nv+(nv>1?' videos':' video'):''].filter(Boolean).join(' and ')+' from the team. Tap any one to see it bigger.':mine.length+' photos. Tap any photo to see it bigger.'):'';
+      var back=box('o-back','pback','button',$('o-title').parentNode);back.type='button';back.textContent='← All weddings';back.hidden=!wed;back.onclick=function(){go('bridal')};
+      var fold=box('o-folders','pfolders','div',$('o-empty'));fold.textContent='';fold.hidden=!(cur==='bridal'&&weds.length);
+      if(!fold.hidden){var fh=box('o-fh','pfh','h3',fold);fh.hidden=false;fh.textContent='Weddings';
+        weds.forEach(function(w){var list=photos.filter(function(p){return p.album===w.id});var k=document.createElement('button');k.type='button';k.className='pfolder';
+          k.innerHTML='<div class="pcov"></div><b></b><small></small>';k.querySelector('b').textContent=w.name;k.querySelector('small').textContent=list.length+(list.length===1?' item':' items');
+          if(list[0]){var im=document.createElement('img');im.alt='';im.dataset.d=list[0].id;k.querySelector('.pcov').appendChild(im)}
+          k.onclick=function(){go(w.id)};fold.appendChild(k)});
+        MK.scan(fold);}else if($('o-fh'))$('o-fh').hidden=true;
+      var groups=$('o-groups');if(!groups){groups=document.createElement('div');groups.id='o-groups';grid.parentNode.after(groups)}groups.textContent='';
+      if(wed){grid.textContent='';var by=[];mine.forEach(function(p){var n=p.by||'Team';if(by.indexOf(n)<0)by.push(n)});
+        by.forEach(function(n){var h3=document.createElement('h3');h3.className='pfh';h3.textContent=n;var g=document.createElement('div');g.className='pgrid';
+          mine.filter(function(p){return(p.by||'Team')===n}).forEach(function(p){g.appendChild(tile(p))});groups.appendChild(h3);groups.appendChild(g)});MK.scan(groups);}
+      $('o-empty').hidden=mine.length>0||(cur==='bridal'&&weds.length>0);}
     MK.scan(grid);
   }
   function go(id){cur=id;try{localStorage.setItem('album',id)}catch(e){}
@@ -79,11 +107,16 @@
 
   // Lightbox works on whichever album is showing, always at full size.
   var lb=$('lb'),img=$('lb-img'),cap=$('lb-cap'),i=0,list=[];
+  var vid=document.createElement('iframe');vid.id='lb-vid';vid.hidden=true;vid.setAttribute('allow','autoplay; fullscreen');vid.setAttribute('allowfullscreen','');vid.title='Wedding video';img.after(vid);
+  lb.addEventListener('close',function(){vid.src='about:blank'});
   function show(k){i=(k+list.length)%list.length;var b=list[i],im=b.querySelector('img');img.removeAttribute('src');img.alt=im.alt;
+    if(b.dataset.vf){img.hidden=true;vid.hidden=false;vid.src='https://drive.google.com/file/d/'+b.dataset.vf+'/preview';$('lb-open').href='https://drive.google.com/file/d/'+b.dataset.vf+'/view';
+      cap.textContent='Added '+b.dataset.n+(b.dataset.by?' by '+b.dataset.by:'');$('lb-del').hidden=!ready;return;}
+    img.hidden=false;vid.hidden=true;vid.src='about:blank';
     var path=b.dataset.full||((im.dataset.e||'').indexOf('shoot/')===0?im.dataset.e.replace('shoot/','full/'):'');
     var want=b;var got=function(u){if(list[i]===want){img.src=u;$('lb-open').href=u;}};
     if(path)MK.url(path).then(got);else if(b.dataset.kind==='d')MK.driveFull(b.dataset.doc).then(got);else if(im.src)got(im.src);
-    cap.textContent=b.dataset.doc?'Added '+b.dataset.n:'Photo #'+b.dataset.n;$('lb-del').hidden=!(b.dataset.doc&&ready);}
+    cap.textContent=b.dataset.doc?'Added '+b.dataset.n+(b.dataset.by?' by '+b.dataset.by:''):'Photo #'+b.dataset.n;$('lb-del').hidden=!(b.dataset.doc&&ready);}
   document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('.ptile button');if(!b)return;
     var view=b.closest('.pview');list=[].slice.call(view.querySelectorAll('.ptile button'));show(list.indexOf(b));if(lb.showModal)lb.showModal();});
   $('lb-prev').onclick=function(){show(i-1)};$('lb-next').onclick=function(){show(i+1)};$('lb-close').onclick=function(){lb.close()};
@@ -97,8 +130,10 @@
 
   MK.onState(function(s){
     var hide={};(s.hidden||[]).forEach(function(x){hide[x]=1});
-    albums=BUILT.concat((s.albums||[]).map(function(a){return{id:a.id,name:String(a.name||'Album'),brand:''}}));
-    photos=(s.photos||[]).map(function(p){return{id:p.id,album:p.album,w:p.w,h:p.h,addedAt:p.addedAt,kind:'d'}})
+    var all=(s.albums||[]).map(function(a){return{id:a.id,name:String(a.name||'Album'),brand:'',parent:a.parent||'',date:a.date||''}});
+    albums=BUILT.concat(all.filter(function(a){return !a.parent}));
+    weds=all.filter(function(a){return a.parent==='bridal'}).sort(function(x,y){return(y.date||'').localeCompare(x.date||'')});
+    photos=(s.photos||[]).map(function(p){return{id:p.id,album:p.album,w:p.w,h:p.h,addedAt:p.addedAt,kind:'d',by:p.by||'',video:!!p.video,vf:p.vf||''}})
       .concat(MK.migrated.map(function(p){return{id:p.id,album:p.album,w:p.w,h:p.h,addedAt:p.addedAt,kind:'m'}}))
       .filter(function(p){return !hide[p.id]}).sort(function(a,b){return(b.addedAt||0)-(a.addedAt||0)});
     ready=true;$('upbar').hidden=false;renderTabs();renderPhotos();

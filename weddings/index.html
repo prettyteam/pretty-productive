@@ -202,6 +202,10 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 details.more{position:relative;flex:0 0 auto!important}
 .row.pdfrow{flex-wrap:nowrap}
 .row.pdfrow>.btn{flex:1 1 0;min-width:0}
+/* phones: the share buttons sit in two rows of three so Move people and More are on screen (Alexandra, Oct 23 2026) */
+@media (max-width:760px){.toolbar .row.pdfrow{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;flex:1 1 100%;width:100%}
+  .row.pdfrow>.btn,.row.pdfrow details.more>summary{width:100%;box-sizing:border-box;text-align:center;white-space:normal;padding-left:6px;padding-right:6px}
+  .row.pdfrow details.more>summary{display:block}}
 details.more>summary{list-style:none;display:inline-block}
 details.more>summary::-webkit-details-marker{display:none}
 details.more>summary::after{content:" \25BE"}
@@ -266,6 +270,7 @@ table.adm{border-collapse:collapse;font-size:13px;min-width:100%}table.adm th,ta
 .pv-ph button.open{all:unset;cursor:pointer;display:block;width:100%;height:100%}
 .pv-ph img{width:100%;height:100%;object-fit:cover;display:block}
 .pv-ph .x{position:absolute;top:2px;right:2px;background:#fff;border:1px solid var(--line);font-size:14px;padding:0 6px}
+.pv-ph .play{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.9);display:grid;place-items:center;font-size:12px;padding-left:2px;box-sizing:border-box;pointer-events:none}
 .pv-ph small{position:absolute;left:0;right:0;bottom:0;background:rgba(255,255,255,.85);font-size:10px;padding:2px 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .filebtn{position:relative;overflow:hidden;display:inline-flex;align-items:center;justify-content:center}
 .filebtn input{position:absolute;inset:0;opacity:0;cursor:pointer}
@@ -273,7 +278,8 @@ table.adm{border-collapse:collapse;font-size:13px;min-width:100%}table.adm th,ta
 .wp-card{margin-top:18px}
 .wp-card h3{font:500 11px var(--sans);letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:14px 0 8px}
 .wp-card .wp-btns{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
-#sheet.moving td[data-pos]{cursor:pointer}
+#sheet.moving{touch-action:manipulation;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}   /* quick taps on a phone move people instead of zooming or selecting text */
+#sheet.moving td[data-pos]{cursor:pointer;-webkit-tap-highlight-color:transparent}
 #sheet.moving td.pick{outline:3px solid #b08d57;outline-offset:-3px;background:#faf3e6}
 .paper .look{display:grid;gap:10px;margin:26px auto 0;max-width:640px}
 .paper.has-look .bow{display:none}
@@ -462,13 +468,13 @@ input,select,textarea{background:#fff;border-radius:0}
             <button id="ver-bride" aria-pressed="false">Bride copy (blank names)</button>
           </div>
           <div class="row pdfrow">
-            <button class="btn" id="txBride">Text bride</button>
-            <button class="btn ghost" id="txPrep">Prep tips</button>
-            <button class="btn ghost" id="txExt">Extensions info</button>
-            <button class="btn" id="txTeam">Text team</button>
-            <button class="btn ghost" id="moveMode" aria-pressed="false">Move people</button>
+            <button class="btn" id="txBride">Text Bride</button>
+            <button class="btn ghost" id="txPrep">Prep Tips</button>
+            <button class="btn ghost" id="txExt">Extensions Info</button>
+            <button class="btn" id="txTeam">Text Team</button>
+            <button class="btn ghost" id="moveMode" aria-pressed="false">Move People</button>
             <details class="more"><summary class="btn ghost">More</summary><div class="menu">
-              <button class="btn ghost" id="moveReset" hidden>Undo my moves</button>
+              <button class="btn ghost" id="moveReset" hidden>Undo My Moves</button>
               <button class="btn ghost" id="pdfBride">Bride PDF</button>
               <button class="btn ghost" id="pdfTeam">Team PDF</button>
               <button class="btn ghost" id="copyText">Copy as text</button>
@@ -485,7 +491,7 @@ input,select,textarea{background:#fff;border-radius:0}
           <p class="hint">Fills in from this wedding. Edit anything, then send it to the team.</p>
           <textarea id="cf-text" aria-label="Team confirmation message"></textarea>
           <label class="chk"><input type="checkbox" id="cf-tl" checked> Add the team timeline as page 2</label>
-          <div class="row" style="align-items:flex-start"><button class="btn" id="cf-text-team">Text team</button><details class="more"><summary class="btn ghost">More</summary><div class="menu"><button class="btn ghost" id="cf-pdf">Send as PDF</button><button class="btn ghost" id="cf-copy">Copy text</button><button class="btn ghost" id="cf-reset">Refill from wedding</button></div></details></div>
+          <div class="row" style="align-items:flex-start"><button class="btn" id="cf-text-team">Text Team</button><details class="more"><summary class="btn ghost">More</summary><div class="menu"><button class="btn ghost" id="cf-pdf">Send as PDF</button><button class="btn ghost" id="cf-copy">Copy text</button><button class="btn ghost" id="cf-reset">Refill from wedding</button></div></details></div>
           <p class="status" id="cf-status"></p>
         </div>
         <div class="card wp-card" id="wp-build" hidden></div>
@@ -1205,7 +1211,7 @@ function renderSheet(){
   const {html,plan}=sheetHTML(S,version,true);
   $("#sheet").innerHTML=html;renderConfirm();
   $("#sheet").classList.toggle("moving",moveOn);
-  $("#moveMode").textContent=moveOn?"Done moving":"Move people";$("#moveMode").setAttribute("aria-pressed",moveOn);
+  $("#moveMode").textContent=moveOn?"Done Moving":"Move People";$("#moveMode").setAttribute("aria-pressed",moveOn);
   $("#moveReset").hidden=!(S.moves&&S.moves.length&&S.movesSig===moveSig(S));
   if(moveOn)$("#sheet").querySelectorAll("[data-pos]").forEach(td=>{
     if(td.dataset.pos===movePick)td.classList.add("pick");
@@ -1265,7 +1271,12 @@ $("#saveImg").onclick=()=>saveImage($("#sheet"),fileName(S));
 /* one-line rows shrink until they fit the page they're on, phone or PDF (Alexandra, Oct 23 2026) */
 function fitIn(paper){paper.querySelectorAll(".dline.one").forEach(d=>{let f=parseFloat(d.dataset.fs)||11.5;d.style.fontSize=f+"px";while(d.clientWidth&&d.scrollWidth>d.clientWidth&&f>5){f-=.25;d.style.fontSize=f+"px"}})}
 const fitRO=window.ResizeObserver?new ResizeObserver(es=>es.forEach(e=>fitIn(e.target))):null;
-function fitLines(root){(root||document).querySelectorAll("[data-sheet]").forEach(p=>{fitIn(p);if(fitRO)fitRO.observe(p)})}
+/* on a phone the whole timeline page shrinks to the screen, so she never pinch-zooms or slides sideways to see it (Alexandra, Oct 23 2026) */
+function fitPapers(){document.querySelectorAll(".paperwrap>div>.paper").forEach(p=>{
+  const w=p.closest(".paperwrap"),cs=getComputedStyle(w),room=w.clientWidth-parseFloat(cs.paddingLeft)-parseFloat(cs.paddingRight);
+  p.style.zoom="";const need=Math.max(p.offsetWidth,p.scrollWidth);const z=room>0&&need>room+1?room/need:1;if(z<1)p.style.zoom=z.toFixed(3)})}
+addEventListener("resize",()=>fitPapers());
+function fitLines(root){(root||document).querySelectorAll("[data-sheet]").forEach(p=>{fitIn(p);if(fitRO)fitRO.observe(p)});fitPapers()}
 let fitQ=0;new MutationObserver(()=>{if(!fitQ)fitQ=requestAnimationFrame(()=>{fitQ=0;fitLines()})}).observe(document.body,{childList:true,subtree:true});
 async function shotOf(html){
   const box=document.createElement("div");box.className="pdfstage";box.innerHTML=html;document.body.appendChild(box);
@@ -2169,7 +2180,7 @@ async function pvUpload(p,kind,files){
    artists add trial pictures, and every photo from the wedding's bridal preview shows up here on its own. */
 let wpCache={}, wpThumbs={};
 const wpMe=()=>ROLE==="office"?"Office":(ME&&(ME.preferredName||ME.legalName))||"";
-const WP_GROUPS=[["inspo","Inspiration from the bride"],["look","Trial & look photos"],["preview","From the bridal preview"]];
+const WP_GROUPS=[["inspo","Inspiration from the bride"],["look","Trial & look photos"],["preview","From the bridal preview"],["fav","Wedding Day Favorites"]];
 function wpShow(where,id){
   const box=$("#wp-"+where);if(!box)return;
   box.dataset.w=id||"";
@@ -2185,9 +2196,11 @@ async function wpLoad(id){
 function wpRender(where){
   const box=$("#wp-"+where),id=box.dataset.w,photos=wpCache[id]||[],me=wpMe();
   let h='<h2>Photos</h2><p class="hint">'+(ROLE==="office"?"Add new inspo the bride sends. The team on this wedding sees it here. Preview photos show up on their own.":"Inspo from the bride and photos from the trial. Add yours so the whole team sees the look.")+'</p>';
-  WP_GROUPS.forEach(([k,label])=>{const n=photos.filter(p=>p.kind===k).length;if(k==="preview"&&!n)return;h+='<h3>'+label+(n?' ('+n+')':'')+'</h3><div class="pv-photos" data-g="'+k+'"></div>'});
+  WP_GROUPS.forEach(([k,label])=>{const n=photos.filter(p=>p.kind===k).length;if((k==="preview"||k==="fav")&&!n)return;h+='<h3>'+label+(n?' ('+n+')':'')+'</h3><div class="pv-photos" data-g="'+k+'"></div>'});
   h+='<div class="wp-btns"><span class="btn ghost filebtn">Add inspo<input type="file" accept="image/*" multiple data-kind="inspo" aria-label="Add inspiration photos"></span>'
-   +'<span class="btn ghost filebtn">Add trial photos<input type="file" accept="image/*" multiple data-kind="look" aria-label="Add trial photos"></span></div><p class="status" data-st style="margin:6px 0 0"></p>';
+   +'<span class="btn ghost filebtn">Add trial photos<input type="file" accept="image/*" multiple data-kind="look" aria-label="Add trial photos"></span>'
+   +'<span class="btn ghost filebtn">Add favorites<input type="file" accept="image/*,video/*" multiple data-kind="fav" aria-label="Add favorite photos and videos from the wedding"></span></div>'
+   +'<p class="hint" style="margin:6px 0 0">After the wedding, add your favorite photos and videos. They go to Alexandra and Dom in the wedding\'s album.</p><p class="status" data-st style="margin:6px 0 0"></p>';
   box.innerHTML=h;
   box.querySelectorAll("[data-g]").forEach(g=>{
     const list=photos.filter(p=>p.kind===g.dataset.g);
@@ -2196,14 +2209,14 @@ function wpRender(where){
       const d=document.createElement("div");d.className="pv-ph";
       const can=ph.kind!=="preview"&&(ROLE==="office"||ph.by===me);
       const tag=ph.kind==="preview"?(ph.ext?"Extensions · ":"")+(ph.by||""):(ph.by||"");
-      d.innerHTML='<button type="button" class="open" aria-label="Open photo">'+(wpThumbs[ph.id]?'<img alt="" src="'+wpThumbs[ph.id]+'">':'')+'</button>'+(can?'<button type="button" class="x" aria-label="Remove photo">×</button>':'')+'<small>'+esc(tag)+'</small>';
+      d.innerHTML='<button type="button" class="open" aria-label="Open '+(ph.video?'video':'photo')+'">'+(wpThumbs[ph.id]?'<img alt="" src="'+wpThumbs[ph.id]+'">':'')+(ph.video?'<span class="play" aria-hidden="true">▶</span>':'')+'</button>'+(can?'<button type="button" class="x" aria-label="Remove photo">×</button>':'')+'<small>'+esc(tag)+'</small>';
       d.querySelector(".open").onclick=()=>wpOpen(id,ph);
       if(can)d.querySelector(".x").onclick=async()=>{if(!confirm("Remove this photo?"))return;
         try{await api("delWedPhoto",{id,photoId:ph.id});wpCache[id]=(wpCache[id]||[]).filter(x=>x.id!==ph.id);wpRefresh(id)}catch(e){toast(e.message&&e.message!=="error"?e.message:"Couldn't remove it. Try again.")}};
       g.appendChild(d);
     });
   });
-  box.querySelectorAll('input[type="file"]').forEach(inp=>inp.onchange=()=>wpUpload(id,inp.dataset.kind,[...inp.files],box.querySelector("[data-st]")).finally(()=>{inp.value=""}));
+  box.querySelectorAll('input[type="file"]').forEach(inp=>inp.onchange=()=>(inp.dataset.kind==="fav"?favUpload(id,[...inp.files]):wpUpload(id,inp.dataset.kind,[...inp.files],box.querySelector("[data-st]"))).finally(()=>{inp.value=""}));
   const need=photos.filter(p=>!wpThumbs[p.id]).map(p=>p.id);
   if(need.length&&!box.dataset.fetching){box.dataset.fetching="1";api("wedPhotoData",{id,ids:need}).then(j=>{Object.assign(wpThumbs,j.photos||{});need.forEach(x=>{if(!wpThumbs[x])wpThumbs[x]=""})}).catch(()=>{}).finally(()=>{delete box.dataset.fetching;wpRefresh(id)})}
 }
@@ -2229,11 +2242,63 @@ async function wpUpload(id,kind,files,st){
   wpRefresh(id);
   if(done)toast(done+" photo"+(done>1?"s":"")+" added.");
 }
+/* Wedding day favorites (Alexandra, Oct 23 2026): the artists add their favorite photos and videos after the wedding.
+   Each wedding gets its own album on Marketing Proofs (and a Drive folder) for Alexandra and Dom. Videos go up in 8 MB pieces. */
+const FAV_PIECE=8*1048576;
+function favCover(file){
+  return new Promise(res=>{
+    const v=document.createElement("video"),u=URL.createObjectURL(file);let done=false;
+    const fin=r=>{if(done)return;done=true;URL.revokeObjectURL(u);res(r)};
+    v.muted=true;v.playsInline=true;v.preload="auto";
+    v.onloadeddata=()=>{try{v.currentTime=Math.min(.5,(v.duration||1)/2)}catch(e){fin(null)}};
+    v.onseeked=()=>{try{const k=Math.min(1,480/Math.max(v.videoWidth,v.videoHeight)),c=document.createElement("canvas");c.width=Math.round(v.videoWidth*k);c.height=Math.round(v.videoHeight*k);
+      c.getContext("2d").drawImage(v,0,0,c.width,c.height);fin({thumb:c.toDataURL("image/jpeg",.8).split(",")[1],w:v.videoWidth,h:v.videoHeight})}catch(e){fin(null)}};
+    v.onerror=()=>fin(null);setTimeout(()=>fin(null),8000);v.src=u;
+  });
+}
+function favB64(blob){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(String(r.result).split(",")[1]);r.onerror=rej;r.readAsDataURL(blob)})}
+function imgSize(file){return new Promise(res=>{const u=URL.createObjectURL(file),i=new Image();i.onload=()=>{URL.revokeObjectURL(u);res({w:i.naturalWidth,h:i.naturalHeight})};i.onerror=()=>{URL.revokeObjectURL(u);res({w:0,h:0})};i.src=u})}
+async function favUpload(id,files){
+  const say=t=>{["team","build"].forEach(k=>{const b=$("#wp-"+k);if(b&&!b.hidden&&b.dataset.w===id){const st=b.querySelector("[data-st]");if(st)st.textContent=t}})};
+  let done=0,n=0;
+  for(const f of files){
+    n++;
+    const isVid=/^video\//.test(f.type)||/\.(mov|mp4|m4v|3gp|webm)$/i.test(f.name);
+    if(!isVid&&!/^image\//.test(f.type)&&!/\.(jpe?g|png|heic|heif|webp)$/i.test(f.name))continue;
+    const lead=(isVid?"Uploading video ":"Uploading ")+n+" of "+files.length;
+    say(lead+"…");
+    try{
+      let photo;
+      if(!isVid){
+        const sz=await imgSize(f),k=Math.min(1,2560/Math.max(sz.w||1,sz.h||1));
+        const data=await pvShrink(f,2560,.88),thumb=await pvShrink(f,320,.7);
+        photo=(await api("addFav",{id,photo:{data,thumb,w:Math.round(sz.w*k),h:Math.round(sz.h*k)}})).photo;
+        wpThumbs[photo.id]="data:image/jpeg;base64,"+thumb;
+      }else{
+        const c=await favCover(f)||{};
+        const st=await api("favVideoStart",{id,video:{name:f.name,type:f.type||"video/mp4",size:f.size,thumb:c.thumb||"",w:c.w||0,h:c.h||0}});
+        let off=0;
+        while(off<f.size){
+          say(lead+"… "+Math.round(100*off/f.size)+"%. Keep this page open.");
+          const piece=f.slice(off,Math.min(f.size,off+FAV_PIECE)),data=await favB64(piece);
+          let j,tries=0;
+          for(;;){try{j=await api("favVideoChunk",{token:st.token,offset:off,data});break}catch(e){if(++tries>=3||e.code==="expired")throw e;await new Promise(r=>setTimeout(r,2000*tries))}}
+          if(j.done){photo=j.photo;break}
+          off=j.next||off+piece.size;
+        }
+        if(c.thumb&&photo)wpThumbs[photo.id]="data:image/jpeg;base64,"+c.thumb;
+      }
+      if(photo){(wpCache[id]=wpCache[id]||[]).push(photo);done++;wpRefresh(id)}
+    }catch(e){toast(e.message&&e.message!=="error"&&e.message!=="server"?e.message:(isVid?"A video didn't upload. Try again.":"A photo didn't upload. Try again."))}
+  }
+  wpRefresh(id);
+  if(done)toast(done+(done>1?" favorites":" favorite")+" added. Thank you!");
+}
 /* The photos also sit on the team copy of the timeline (Alexandra, Oct 23 2026),
    so they ride along in the Team PDF and Text team. They sit on top of the times. Small pictures on screen, full size in the PDF. */
 /* the photos sit in a row across the bottom, under the times (Alexandra, Oct 23 2026) */
 function wpLookHTML(id,src){
-  const ph=(wpCache[id]||[]).filter(p=>src[p.id]);if(!ph.length)return"";
+  const ph=(wpCache[id]||[]).filter(p=>src[p.id]&&p.kind!=="fav");if(!ph.length)return"";
   const order=WP_GROUPS.map(g=>g[0]),list=ph.slice().sort((x,y)=>order.indexOf(x.kind)-order.indexOf(y.kind));
   return '<div class="look" style="grid-template-columns:repeat('+Math.min(list.length,5)+',1fr)">'+list.map(p=>'<div><img alt="" src="'+src[p.id]+'"><small>'+esc((p.ext?"Extensions · ":"")+(p.by||""))+'</small></div>').join("")+'</div>';
 }
