@@ -264,6 +264,8 @@ table.adm{border-collapse:collapse;font-size:13px;min-width:100%}table.adm th,ta
 .wp-card{margin-top:18px}
 .wp-card h3{font:500 11px var(--sans);letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:14px 0 8px}
 .wp-card .wp-btns{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+#sheet.moving td[data-pos]{cursor:pointer}
+#sheet.moving td.pick{outline:3px solid #b08d57;outline-offset:-3px;background:#faf3e6}
 .paper .look{display:grid;gap:10px;margin:26px auto 0;max-width:640px}
 .paper.has-look .bow{display:none}
 .paper .look img{width:100%;aspect-ratio:4/5;object-fit:cover;display:block;border:1px solid var(--line)}
@@ -452,7 +454,9 @@ input,select,textarea{background:#fff;border-radius:0}
           <div class="row pdfrow">
             <button class="btn" id="txBride">Text bride</button>
             <button class="btn" id="txTeam">Text team</button>
+            <button class="btn ghost" id="moveMode" aria-pressed="false">Move people</button>
             <details class="more"><summary class="btn ghost">More</summary><div class="menu">
+              <button class="btn ghost" id="moveReset" hidden>Undo my moves</button>
               <button class="btn ghost" id="pdfBride">Bride PDF</button>
               <button class="btn ghost" id="pdfTeam">Team PDF</button>
               <button class="btn ghost" id="copyText">Copy as text</button>
@@ -774,8 +778,8 @@ input,select,textarea{background:#fff;border-radius:0}
 const $=s=>document.querySelector(s);
 const uid=()=>Math.random().toString(36).slice(2,10);
 const BOW="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";
-const ROLES=["Bride","MOH","MOB","MOG","Bridesmaid","Junior BM","Flower girl","Family","Other"];
-const HELPERS=["MOH","MOB","MOG"];
+const ROLES=["Bride","MOH","MOH 1","MOH 2","MOB","MOG","Bridesmaid","Junior BM","Flower girl","Family","Other"];
+const HELPERS=["MOH","MOH 1","MOH 2","MOB","MOG"];   // MOH 1 / MOH 2 for a bride with two maids of honor (Alexandra, Oct 23 2026)
 let canWrite=false, ROLE=null, AUTH=null, ME=null;
 const API=window.TW_ENDPOINT||"";
 async function api(action,data){
@@ -804,6 +808,8 @@ function fmtDate(d){if(!d)return"";const[y,m,dd]=d.split("-").map(Number);return
 function shortDate(d){if(!d)return"";if(!/^\d{4}-\d\d-\d\d/.test(d)){const t=new Date(d);return isNaN(t)?d:(t.getMonth()+1)+"/"+t.getDate()+"/"+String(t.getFullYear()).slice(2)}const[y,m,dd]=d.split("-");return Number(m)+"/"+Number(dd)+"/"+y.slice(2)}
 
 /* ---------- scheduling ---------- */
+/* moves only count for the party they were made on; adding or removing people or artists goes back to the auto order */
+const moveSig=s=>s.people.map(p=>p.id+(p.hair?"h":"")+(p.mu?"m":"")+p.role).join(",")+"|"+s.artists.map(a=>a.id+a.role).join(",")+"|"+s.hairSlot+"/"+s.muSlot;
 function build(s){
   const warnings=[];
   const hairSlot=Math.max(15,Number(s.hairSlot)||60), muSlot=Math.max(15,Number(s.muSlot)||60);
@@ -859,6 +865,12 @@ function build(s){
     }));
     if(!changed)break;
   }
+  // the office's own moves ("Move people", Alexandra Oct 23 2026): swap two boxes of the same service
+  if(s.moves&&s.moves.length&&s.movesSig===moveSig(s))s.moves.forEach(m=>{
+    const list=m.svc==="hair"?hair.cols:mu.cols,A=list[m.a[0]],B=list[m.b[0]];if(!A||!B)return;
+    [[A,m.a[1]],[B,m.b[1]]].forEach(([c,r])=>{while(c.cells.length<=r)c.cells.push(null)});
+    const t=A.cells[m.a[1]];A.cells[m.a[1]]=B.cells[m.b[1]];B.cells[m.b[1]]=t;
+  });
   // trim trailing empty rows
   cols.forEach(c=>{while(c.cells.length&&c.cells[c.cells.length-1]==null)c.cells.pop()});
   let span=0;cols.forEach(c=>span=Math.max(span,c.cells.length*c.slot));
@@ -881,11 +893,11 @@ function labelMap(s,plan,ver){
       const key=p.id+":"+service;
       let txt;
       if(p.role==="Bride")txt="Bride";
-      else if(["MOB","MOG","MOH"].includes(p.role))txt=(ver==="team"&&p.name)?p.name+" ("+p.role+")":p.role;
+      else if(HELPERS.includes(p.role))txt=(ver==="team"&&p.name)?p.name+" ("+p.role+")":p.role;
       else if(ver==="team"&&p.name)txt=p.name;
       else{n++;txt=(service==="hair"?"Hair ":"MU ")+n;if(p.role==="Junior BM")txt+=" (Jr BM)";if(p.role==="Flower girl")txt+=" (Flower girl)"}
       if(ver==="team"&&s.overrides&&s.overrides[key])txt=s.overrides[key];
-      labels[key]={txt,blank:ver==="bride"&&!["Bride","MOB","MOG","MOH"].includes(p.role)};
+      labels[key]={txt,blank:ver==="bride"&&!(p.role==="Bride"||HELPERS.includes(p.role))};
     });
   });
   return labels;
@@ -902,6 +914,14 @@ function servicesLine(s){
 const esc=t=>String(t??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 
 /* ---------- render the sheet ---------- */
+/* Timelines show each artist by the "Name you go by" on her profile, never first and last name spelled out
+   (Alexandra, Oct 23 2026). goBy is saved on the artist so artists, who don't load profiles, see it too. */
+function goBy(a){
+  let list=[];try{list=profiles}catch(_){}   // profiles is declared further down and may not exist yet on the first render
+  const pr=a.uid&&list.find(p=>p._id===a.uid),pref=pr?String(pr.preferredName||"").trim():"";
+  return pref||String(a.goBy||"").trim()||String(a.name||"").trim().split(/\s+/)[0]||"";
+}
+let moveOn=false,movePick=null;   // "Move people" on the office Timeline
 function sheetHTML(s,ver,editable){
   const plan=build(s), labels=labelMap(s,plan,ver);
   const sameSlot=plan.cols.every(c=>c.slot===(plan.cols[0]||{}).slot);
@@ -914,7 +934,7 @@ function sheetHTML(s,ver,editable){
   h+='<div class="bname">'+esc(s.bride||"________________")+'</div>';
   const l1=[s.date?fmtDate(s.date).replace(/^\w+, /,""):"Date "+blank, loc.join(", ")||"Location "+blank];
   if(plan.cols.length)l1.push("Arrive "+fmt(arrive).replace(" ","\u00a0")+" · Start "+fmt(plan.start)+" · End "+fmt(plan.end));
-  const oneLine=(l,cls)=>'<div class="dline one'+cls+'" style="font-size:'+Math.max(7,Math.min(11.5,600/(l.join(" · ").length*.56))).toFixed(1)+'px">'+l.map(esc).join(' <span class="sep">·</span> ')+'</div>';   // shrinks long lines to fit the page
+  const oneLine=(l,cls)=>{const fs=Math.max(7,Math.min(11.5,600/(l.join(" · ").length*.56))).toFixed(1);return '<div class="dline one'+cls+'" data-fs="'+fs+'" style="font-size:'+fs+'px">'+l.map(esc).join(' <span class="sep">·</span> ')+'</div>'};   // shrinks long lines to fit the page; fitLines finishes the job on screen
   h+=oneLine(l1,"");
   const l2=["Contact "+([s.contactName,s.contactPhone].filter(Boolean).join(" ")||blank),servicesLine(s)];
   if(s.touchups)l2.push("Touch-ups: "+s.touchups);
@@ -924,22 +944,22 @@ function sheetHTML(s,ver,editable){
   if(!plan.cols.length){h+='<p style="text-align:center;color:#5d554e;font-family:var(--serif)">Add an artist and the people getting ready to build the schedule.</p></div>';return {html:h,plan}}
   h+='<table class="tl"><thead><tr>'+(sameSlot?'<th>Time</th>':'');
   // bride's copy shows artists by first name only (Alexandra, Oct 21 2026)
-  const who=n=>ver==="bride"?String(n).trim().split(/\s+/)[0]:n;
-  plan.cols.forEach(c=>{h+='<th>'+(c.service==="hair"?"Hair":"Makeup")+(c.artist.name?'<small>'+esc(who(c.artist.name))+'</small>':'')+'</th>'});
+  plan.cols.forEach(c=>{const n=goBy(c.artist);h+='<th>'+(c.service==="hair"?"Hair":"Makeup")+(n?'<small>'+esc(n)+'</small>':'')+'</th>'});
   h+='</tr></thead><tbody>';
   for(let r=0;r<rows;r++){
     h+='<tr>';
     if(sameSlot)h+='<td class="t">'+fmt(plan.start+r*plan.cols[0].slot)+'</td>';
     plan.cols.forEach(c=>{
-      if(r>=c.cells.length){h+='<td class="c blank"></td>';return}
+      const pos=editable?' data-pos="'+c.service+':'+plan.cols.filter(x=>x.service===c.service).indexOf(c)+':'+r+'"':'';
+      if(r>=c.cells.length){h+='<td class="c blank"'+pos+'></td>';return}
       const pid=c.cells[r];
       const ct=sameSlot?'':'<span class="ct">'+fmt(plan.start+r*c.slot)+'</span>';
-      if(!pid){h+='<td class="c empty">'+ct+'</td>';return}
+      if(!pid){h+='<td class="c empty"'+pos+'>'+ct+'</td>';return}
       const key=pid+":"+c.service, L=labels[key]||{txt:""};
       const p=s.people.find(q=>q.id===pid);
       const cls='c'+(p&&p.role==="Bride"?' bride':'');
-      const ed=editable&&ver==="team"?' contenteditable="true" data-key="'+key+'"':'';
-      h+='<td class="'+cls+'"'+ed+'>'+ct+esc(L.txt)+(L.blank?'<span class="fill"></span>':'')+'</td>';
+      const ed=editable&&ver==="team"&&!moveOn?' contenteditable="true" data-key="'+key+'"':'';
+      h+='<td class="'+cls+'"'+ed+pos+'>'+ct+esc(L.txt)+(L.blank?'<span class="fill"></span>':'')+'</td>';
     });
     h+='</tr>';
   }
@@ -1141,7 +1161,7 @@ $("#cal-wedding").onchange=e=>{const id=e.target.value;$("#calStatus").textConte
 function renderCalHead(){
   const el=$("#calHead");if(!el)return;
   const w=docId&&allWeddings.find(x=>x.id===docId);
-  const d=w?Object.assign({},w.d,{people:S.people}):null;
+  const d=w?Object.assign({},w.d,{people:S.people,headOk:S.headOk}):null;
   el.innerHTML=d&&ROLE==="office"?headWarnHTML(d,"build"):"";
   const b=$("#useCalHead");if(b)b.onclick=()=>{
     const c=calHead(d);if(!c)return;
@@ -1150,6 +1170,7 @@ function renderCalHead(){
     S.people=c.people.map((p,i)=>{const o=old[i];return o&&o.name?Object.assign({},p,{name:o.name}):p});
     renderPeople();changed();
   };
+  const k=$("#keepAppHead");if(k)k.onclick=()=>{const x=headDiff(d);if(!x)return;S.headOk=x.key;renderCalHead();changed()};
 }
 function renderPeople(){
   setTimeout(renderCalHead,0);
@@ -1169,6 +1190,21 @@ function renderPeople(){
 function renderSheet(){
   const {html,plan}=sheetHTML(S,version,true);
   $("#sheet").innerHTML=html;renderConfirm();
+  $("#sheet").classList.toggle("moving",moveOn);
+  $("#moveMode").textContent=moveOn?"Done moving":"Move people";$("#moveMode").setAttribute("aria-pressed",moveOn);
+  $("#moveReset").hidden=!(S.moves&&S.moves.length&&S.movesSig===moveSig(S));
+  if(moveOn)$("#sheet").querySelectorAll("[data-pos]").forEach(td=>{
+    if(td.dataset.pos===movePick)td.classList.add("pick");
+    td.onclick=()=>{
+      const p=td.dataset.pos;
+      if(!movePick){movePick=p;td.classList.add("pick");return}
+      if(p===movePick){movePick=null;td.classList.remove("pick");return}
+      const a=movePick.split(":"),b=p.split(":");movePick=null;
+      if(a[0]!==b[0]){toast("Hair boxes trade with hair boxes, makeup with makeup");renderSheet();return}
+      const sig=moveSig(S);if(S.movesSig!==sig){S.moves=[];S.movesSig=sig}
+      S.moves.push({svc:a[0],a:[+a[1],+a[2]],b:[+b[1],+b[2]]});changed();
+    };
+  });
   $("#warnings").textContent=plan.warnings?plan.warnings.join(" "):"";
   $("#sheet").querySelectorAll("[data-key]").forEach(td=>{
     td.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();td.blur()}});
@@ -1176,6 +1212,8 @@ function renderSheet(){
   });
 }
 function changed(skipSheet){if(!skipSheet)renderSheet();queueSave()}
+$("#moveMode").onclick=()=>{moveOn=!moveOn;movePick=null;renderSheet();if(moveOn)toast("Tap a box, then tap where it should go")};
+$("#moveReset").onclick=()=>{S.moves=[];delete S.movesSig;movePick=null;changed()};
 FIELDS.forEach(f=>{const el=$("#"+f);el.addEventListener("input",()=>{S[f]=el.type==="number"?Number(el.value):el.value;changed()})});
 function setMode(m,fire=true){S.mode=m;$("#mode-start").setAttribute("aria-pressed",m==="start");$("#mode-finish").setAttribute("aria-pressed",m==="finish");$("#startWrap").hidden=m!=="start";$("#finishWrap").hidden=m!=="finish";if(fire)changed()}
 $("#mode-start").onclick=()=>setMode("start");$("#mode-finish").onclick=()=>setMode("finish");
@@ -1210,9 +1248,15 @@ $("#saveImg").onclick=()=>saveImage($("#sheet"),fileName(S));
 
 
 /* ---------- PDFs to text (Alexandra, Oct 20 2026): same share-sheet idea as the marketing proofs ---------- */
+/* one-line rows shrink until they fit the page they're on, phone or PDF (Alexandra, Oct 23 2026) */
+function fitIn(paper){paper.querySelectorAll(".dline.one").forEach(d=>{let f=parseFloat(d.dataset.fs)||11.5;d.style.fontSize=f+"px";while(d.clientWidth&&d.scrollWidth>d.clientWidth&&f>5){f-=.25;d.style.fontSize=f+"px"}})}
+const fitRO=window.ResizeObserver?new ResizeObserver(es=>es.forEach(e=>fitIn(e.target))):null;
+function fitLines(root){(root||document).querySelectorAll("[data-sheet]").forEach(p=>{fitIn(p);if(fitRO)fitRO.observe(p)})}
+let fitQ=0;new MutationObserver(()=>{if(!fitQ)fitQ=requestAnimationFrame(()=>{fitQ=0;fitLines()})}).observe(document.body,{childList:true,subtree:true});
 async function shotOf(html){
   const box=document.createElement("div");box.className="pdfstage";box.innerHTML=html;document.body.appendChild(box);
   try{try{await document.fonts.ready}catch(_){}
+    fitIn(box);
     const imgs=[...box.querySelectorAll("img")];await Promise.all(imgs.map(i=>i.complete?0:new Promise(r=>{i.onload=i.onerror=r})));
     return await html2canvas(box.firstElementChild,{scale:2,backgroundColor:"#ffffff"});
   }finally{box.remove()}
@@ -1239,15 +1283,16 @@ function pdfFrom(canvases){
 function downloadFile(f){const a=document.createElement("a");a.href=URL.createObjectURL(f);a.download=f.name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),4000)}
 /* Builds the PDF, then opens the share sheet (Messages, Mail, Files). If the phone says the tap "expired"
    while the PDF was being made, the button turns into "Tap again to send" and the next tap shares it at once. */
-async function sendPdf(btn,pagesHTML,name,text){
+async function sendPdf(btn,pagesHTML,name,text,asImage){
   const shareOf=f=>text?{files:[f],text}:{files:[f]};
   if(btn._ready){const f=btn._ready;btn._ready=null;btn.textContent=btn._lab;try{await navigator.share(shareOf(f))}catch(e){if(!e||e.name!=="AbortError")downloadFile(f)}return}
   if(!window.html2canvas){toast("PDFs aren't available here");return}
-  btn._lab=btn._lab||btn.textContent;btn.disabled=true;btn.textContent="Making PDF…";
+  btn._lab=btn._lab||btn.textContent;btn.disabled=true;btn.textContent=asImage?"Making picture…":"Making PDF…";
   try{
     if(typeof pagesHTML==="function")pagesHTML=await pagesHTML();   // the team copy waits for its full-size photos
     const canv=[];for(const h of pagesHTML)canv.push(await shotOf(h));
-    const f=new File([pdfFrom(canv)],name,{type:"application/pdf"});
+    /* Text team sends a picture, so it shows right in the text with Dom's words under it (Alexandra, Oct 23 2026) */
+    const f=asImage?new File([await new Promise(r=>canv[0].toBlob(r,"image/jpeg",.92))],name,{type:"image/jpeg"}):new File([pdfFrom(canv)],name,{type:"application/pdf"});
     btn.disabled=false;btn.textContent=btn._lab;
     if(navigator.canShare&&navigator.canShare({files:[f]})){
       try{await navigator.share(shareOf(f))}
@@ -1349,11 +1394,11 @@ $("#txBride").onclick=()=>{
   const body="Hi "+(firstName(S)||"there")+"! 🤍 Here is your wedding day timeline"+(S.date?" for "+mdOf(S.date):"")+". Please look it over and let us know if anything needs to change. We can’t wait!";
   textWith(firstName(S)||"the bride",[n],body,sheetHTML(S,"bride",false).html,[]);
 };
-/* Text team (Alexandra, Oct 23 2026): Dom's confirmation words plus the team PDF (timeline with the wedding's photos)
+/* Text team (Alexandra, Oct 23 2026): Dom's confirmation words plus a picture of the team timeline with the wedding's photos
    go out together from the share sheet. Pick Messages, then the girls. A web page can't fill in who it goes to with a file. */
 function textTeam(e){
   if(!S.artists.some(a=>(a.name||"").trim())){toast("Add the team in Team on site first");return}
-  sendPdf(e.currentTarget,()=>wpTeamPages(S,docId),pdfName(S,"team-timeline"),$("#cf-text").value||confirmOf(S));
+  sendPdf(e.currentTarget,()=>wpTeamPages(S,docId),pdfName(S,"team-timeline").replace(/\.pdf$/,".jpg"),$("#cf-text").value||confirmOf(S),true);
 }
 $("#txTeam").onclick=textTeam;
 $("#cf-text-team").onclick=textTeam;
@@ -1520,6 +1565,7 @@ let saving=Promise.resolve();
 function save(){
   saving=saving.then(async()=>{
     try{
+      if(profiles.length)S.artists.forEach(a=>{const g=goBy(a);if(g)a.goBy=g});
       const body=JSON.parse(JSON.stringify(S));
       delete body.cal;
       const plan=build(S);
@@ -1690,16 +1736,21 @@ function calDraft(d){
 function headOf(ppl){ppl=ppl||[];return {hair:ppl.filter(p=>p.hair).length,mu:ppl.filter(p=>p.mu).length}}
 function headTxt(h){return [h.hair?h.hair+" hair":"",h.mu?h.mu+" makeup":""].filter(Boolean).join(" & ")||"no one"}
 function calHead(d){const dr=d&&d.calInfo?calDraft(d):null;return dr&&dr.counted?{head:headOf(dr.people),people:dr.people}:null}
+/* "Keep app headcount" (Alexandra, Oct 23 2026): the calendar can be the one that's wrong. The OK is tied to both counts,
+   so the warning comes back if either one changes later. */
+const headKey=(cal,app)=>[cal.hair,cal.mu,app.hair,app.mu].join("/");
 function headDiff(d){
   if(!d||!Array.isArray(d.people)||!d.people.length)return null;
   const c=calHead(d);if(!c)return null;const a=headOf(d.people);
-  return (a.hair!==c.head.hair||a.mu!==c.head.mu)?{cal:c.head,app:a,people:c.people}:null;
+  if(a.hair===c.head.hair&&a.mu===c.head.mu)return null;
+  const key=headKey(c.head,a);if(d.headOk===key)return null;   // the office said the app is right for these counts
+  return {cal:c.head,app:a,people:c.people,key};
 }
 function headWarnHTML(d,mode){   /* mode: "build" (office editing: button), "office" (office viewing), else an artist */
   const x=headDiff(d);if(!x)return "";
   return '<div class="warn headwarn" role="alert" style="border:1px solid #b3261e;padding:10px 12px;margin:0 0 12px;color:#b3261e;background:#fff5f4">'
     +'<b>Headcount doesn’t match Google Calendar.</b> The calendar says '+esc(headTxt(x.cal))+'; this timeline has '+esc(headTxt(x.app))+'.'
-    +(mode==="build"?' <button type="button" class="btn ghost small" id="useCalHead" style="margin-left:6px">Use calendar headcount</button>':mode==="office"?' Fix it on the Timeline tab.':' Check with the office before the wedding.')+'</div>';
+    +(mode==="build"?' <button type="button" class="btn ghost small" id="useCalHead" style="margin-left:6px">Use calendar headcount</button> <button type="button" class="btn ghost small" id="keepAppHead" style="margin-left:6px">Keep app headcount</button>':mode==="office"?' Fix it on the Timeline tab.':' Check with the office before the wedding.')+'</div>';
 }
 function renderTeamSheet(){
   const w=allWeddings.find(x=>x.id===teamSel);
