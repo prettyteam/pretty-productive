@@ -263,11 +263,8 @@ table.adm{border-collapse:collapse;font-size:13px;min-width:100%}table.adm th,ta
 .wp-card{margin-top:18px}
 .wp-card h3{font:500 11px var(--sans);letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:14px 0 8px}
 .wp-card .wp-btns{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
-.paper .look{margin:0 auto 26px;max-width:620px}
-.paper .look .lk-h{font:500 10px var(--sans);letter-spacing:.3em;margin:0 0 4px}
-.paper .look .lk-s{font:400 10px var(--sans);letter-spacing:.14em;text-transform:uppercase;color:var(--paper-muted);margin:14px 0 8px}
-.paper .look .lk-g{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-.paper .look.big .lk-g{grid-template-columns:repeat(2,1fr);gap:10px}
+.paper .look{display:grid;gap:10px;margin:26px auto 0;max-width:640px}
+.paper.has-look .bow{display:none}
 .paper .look img{width:100%;aspect-ratio:4/5;object-fit:cover;display:block;border:1px solid var(--line)}
 .paper .look small{display:block;font:400 9px var(--sans);color:var(--paper-muted);margin-top:3px}
 #pv-detail .seg{align-self:flex-start}
@@ -2100,19 +2097,18 @@ async function wpUpload(id,kind,files,st){
 }
 /* The photos also sit on the team copy of the timeline (Alexandra, Oct 23 2026),
    so they ride along in the Team PDF and Text team. They sit on top of the times. Small pictures on screen, full size in the PDF. */
-function wpLookHTML(id,src,big){
+/* the photos sit in a row across the bottom, under the times (Alexandra, Oct 23 2026) */
+function wpLookHTML(id,src){
   const ph=(wpCache[id]||[]).filter(p=>src[p.id]);if(!ph.length)return"";
-  let h='<div class="look'+(big?' big':'')+'"><div class="lk-h">THE LOOK</div>';
-  WP_GROUPS.forEach(([k,label])=>{const l=ph.filter(p=>p.kind===k);if(!l.length)return;
-    h+='<div class="lk-s">'+esc(label)+'</div><div class="lk-g">'+l.map(p=>'<div><img alt="" src="'+src[p.id]+'"><small>'+esc((p.ext?"Extensions · ":"")+(p.by||""))+'</small></div>').join("")+'</div>'});
-  return h+'</div>';
+  const order=WP_GROUPS.map(g=>g[0]),list=ph.slice().sort((x,y)=>order.indexOf(x.kind)-order.indexOf(y.kind));
+  return '<div class="look" style="grid-template-columns:repeat('+Math.min(list.length,5)+',1fr)">'+list.map(p=>'<div><img alt="" src="'+src[p.id]+'"><small>'+esc((p.ext?"Extensions · ":"")+(p.by||""))+'</small></div>').join("")+'</div>';
 }
-const wpWithLook=(html,look)=>look?html.replace('<table class="tl">',look+'<table class="tl">'):html;   // on top of the times
+const wpWithLook=(html,look)=>look?html.replace('<div class="paper" data-sheet>','<div class="paper has-look" data-sheet>').replace('</tbody></table>','</tbody></table>'+look):html;
 function wpPutLook(boxSel,id){
   const sh=$(boxSel)&&$(boxSel).querySelector("[data-sheet]");if(!sh)return;
   const old=sh.querySelector(".look");if(old)old.remove();
-  const look=id&&wpLookHTML(id,wpThumbs);if(!look)return;
-  const tl=sh.querySelector("table.tl");if(tl)tl.insertAdjacentHTML("beforebegin",look);
+  const look=id&&wpLookHTML(id,wpThumbs);sh.classList.toggle("has-look",!!look);if(!look)return;
+  const tl=sh.querySelector("table.tl");if(tl)tl.insertAdjacentHTML("afterend",look);
 }
 function wpSheets(){
   if(version==="team")wpPutLook("#sheet",docId);
@@ -2123,8 +2119,8 @@ async function wpTeamPages(s,id){
   if(id){try{
     if(!wpCache[id])wpCache[id]=(await api("wedPhotos",{id})).photos||[];
     const ids=wpCache[id].map(p=>p.id);
-    if(ids.length){const j=await api("wedPhotoData",{id,ids,full:true});look=wpLookHTML(id,j.photos||{},true)}
-  }catch(_){look=wpLookHTML(id,wpThumbs,true)}}
+    if(ids.length){const j=await api("wedPhotoData",{id,ids,full:true});look=wpLookHTML(id,j.photos||{})}
+  }catch(_){look=wpLookHTML(id,wpThumbs)}}
   return [wpWithLook(sheetHTML(s,"team",false).html,look)];
 }
 {const rs=renderSheet;renderSheet=function(){rs();wpSheets()}}
