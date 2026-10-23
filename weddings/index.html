@@ -1424,11 +1424,11 @@ $("#txExt").onclick=()=>{
   const n=digits(S.bridePhone);
   if(!n){toast("Add the bride's cell in the Wedding section first");const c=$("#bridePhone");c.closest(".card").classList.remove("closed");c.focus();return}
   const body="Hi "+(firstName(S)||"there")+"! 🤍 We'll have clip-in extensions with us on your wedding day, just in case. Here's how renting them works if you decide you'd like them!";
-  textWith(firstName(S)||"the bride",[n],body,infoHTML("Hair Extensions","Wedding day rental",EXT_INFO),[],"extensions picture");
+  textWith(firstName(S)||"the bride",[n],body,infoHTML("Hair Extensions","Wedding Day Rental",EXT_INFO),[],"extensions picture");
 };
 function prepHTML(){
   return '<div class="paper prep" data-sheet><img class="bow" alt="" src="data:image/png;base64,'+BOW+'"><div class="bname">Hair &amp; Makeup Prep</div>'
-    +'<div class="dline muted">Preview &amp; wedding day</div><div class="sp"></div>'
+    +'<div class="dline muted">Preview &amp; Wedding Day</div><div class="sp"></div>'
     +PREP.map(([h,t])=>'<div class="pp"><div class="pp-h">'+esc(h)+'</div><div class="pp-t">'+esc(t)+'</div></div>').join("")
     +'<div class="brandline bottom">TAFFETA WEDDINGS</div></div>';
 }
