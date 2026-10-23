@@ -1531,8 +1531,8 @@ const AO_PRICES=[
   ["Makeup","$"+DAYOF,"Lashes Included"],
   ["Blow-Dry Only or Eyes Only","$"+DAYOF],
   ["Lashes Only","$30"],
-  ["Extensions Brought From Home","+$20 and up","Artist's Discretion"],
-  ["Wet Hair","+$50","Please Arrive With Hair Fully Dry"]];
+  ["Extensions Brought From Home","$20 & Up","Artist's Discretion"],
+  ["Wet Hair","$50","Please Arrive With Hair Fully Dry"]];
 function aoPriceHTML(){
   return '<div class="paper prep" data-sheet><div class="bname">Wedding Day Add-Ons</div><div class="dline muted">Same-Day Pricing</div><div class="sp"></div>'
     +'<table class="aop">'+AO_PRICES.map(([n,v,sub])=>'<tr><td>'+esc(n)+(sub?'<small>'+esc(sub)+'</small>':'')+'</td><td>'+esc(v)+'</td></tr>').join("")+'</table>'
