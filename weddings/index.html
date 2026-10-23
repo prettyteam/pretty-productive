@@ -906,11 +906,12 @@ function build(s){
 /* ---------- labels ---------- */
 function labelMap(s,plan,ver){
   const labels={};
+  // girls without a name keep one number for hair and makeup, and it moves with her (Alexandra, Oct 23 2026)
+  const num={};let k=0;s.people.forEach(p=>{if(p.role!=="Bride"&&!HELPERS.includes(p.role)&&!(ver==="team"&&p.name))num[p.id]=++k});
   ["hair","mu"].forEach(service=>{
     const seq=[];
     plan.cols.filter(c=>c.service===service).forEach(c=>c.cells.forEach((pid,r)=>{if(pid)seq.push({pid,t:r*c.slot,c})}));
     seq.sort((a,b)=>a.t-b.t);
-    let n=0;
     seq.forEach(x=>{
       const p=s.people.find(q=>q.id===x.pid);if(!p)return;
       const key=p.id+":"+service;
@@ -918,7 +919,7 @@ function labelMap(s,plan,ver){
       if(p.role==="Bride")txt="Bride";
       else if(HELPERS.includes(p.role))txt=(ver==="team"&&p.name)?p.name+" ("+p.role+")":p.role;
       else if(ver==="team"&&p.name)txt=p.name;
-      else{n++;txt=(service==="hair"?"Hair ":"MU ")+n;if(p.role==="Junior BM")txt+=" (Jr BM)";if(p.role==="Flower girl")txt+=" (Flower girl)"}
+      else{txt=(service==="hair"?"Hair ":"MU ")+num[p.id];if(p.role==="Junior BM")txt+=" (Jr BM)";if(p.role==="Flower girl")txt+=" (Flower girl)"}
       if(ver==="team"&&s.overrides&&s.overrides[key])txt=s.overrides[key];
       labels[key]={txt,blank:ver==="bride"&&!(p.role==="Bride"||HELPERS.includes(p.role))};
     });
@@ -1245,8 +1246,7 @@ function moveTap(p){
       S.moves.push({svc:a[0],a:[+a[1],+a[2]],b:[+b[1],+b[2]]});changed();
       // show which two boxes traded; girls without a name keep their numbers in time order, so that swap looks the same
       const flash=[movedFrom(a),movedFrom(b)].filter(Boolean);flash.forEach(td=>td.classList.add("swapped"));setTimeout(()=>flash.forEach(td=>td.classList.remove("swapped")),1200);
-      const unnamed=flash.length===2&&flash.every(td=>/^(Hair|MU) \d+/.test(td.textContent.trim()));
-      toast(unnamed?"Swapped. Girls without names keep their numbers in time order, so add names to see them move":"Swapped");
+      toast("Swapped");
   }
 }
 function movedFrom(x){return $("#sheet").querySelector('[data-pos="'+x.join(":")+'"]')}
