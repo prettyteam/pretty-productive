@@ -31,6 +31,7 @@ function mktPublic_(s) { return { ok: true, edits: s.edits, albums: s.albums, ph
 
 function mkt_(d) {
   if (mktHex_(String(d.code || '').replace(/\s+/g, '')) !== MKT_CODE_SHA) return { ok: false, error: 'signin' };
+  if (d.op === 'thumbs') return mktThumbs_(mktRead_(), d);   // read-only, so it doesn't queue behind uploads (Oct 23 2026)
   const lock = LockService.getScriptLock();
   try {
     lock.waitLock(20000);
@@ -66,12 +67,6 @@ function mkt_(d) {
         s.photos.unshift(p); mktWrite_(s);
         return { ok: true, photo: { id: p.id, album: p.album, w: p.w, h: p.h, addedAt: p.addedAt } };
       }
-      case 'thumbs': {   // {ids:[…]} -> {id: 'data:image/jpeg;base64,…'}
-        const out = {};
-        (d.ids || []).slice(0, 40).forEach(id => { const p = s.photos.find(x => x.id === id); if (!p) return;
-          try { const b = DriveApp.getFileById(d.full && p.kind !== 'video' ? p.f : p.t).getBlob(); out[id] = 'data:' + b.getContentType() + ';base64,' + Utilities.base64Encode(b.getBytes()); } catch (e) {} });
-        return { ok: true, photos: out };
-      }
       case 'delPhoto': {   // Drive photos go to Drive's trash (kept 30 days); carried-over photos are just hidden
         const p = s.photos.find(x => x.id === d.id);
         if (p) { [p.f, p.t].forEach(fid => { try { DriveApp.getFileById(fid).setTrashed(true); } catch (e) {} }); s.photos = s.photos.filter(x => x.id !== d.id); }
@@ -81,4 +76,13 @@ function mkt_(d) {
     }
     return { ok: false, error: 'bad_request' };
   } finally { lock.releaseLock(); }
+}
+
+// {ids:[…]} -> {id: 'data:image/jpeg;base64,…'}; skips anything over 4 MB (a video with no small cover) so one big file can't stall the rest.
+function mktThumbs_(s, d) {
+  const out = {};
+  (d.ids || []).slice(0, 40).forEach(id => { const p = s.photos.find(x => x.id === id); if (!p) return;
+    try { const f = DriveApp.getFileById(d.full && p.kind !== 'video' ? p.f : p.t); if (f.getSize() > 4 * 1048576) return;
+      const b = f.getBlob(); out[id] = 'data:' + b.getContentType() + ';base64,' + Utilities.base64Encode(b.getBytes()); } catch (e) {} });
+  return { ok: true, photos: out };
 }

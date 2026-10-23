@@ -98,17 +98,18 @@
   }
   function b64(blob){return new Promise(function(res,rej){var r=new FileReader();r.onload=function(){res(String(r.result).split(',')[1])};r.onerror=rej;r.readAsDataURL(blob)})}
   function uploadAll(files){
-    if(busy||!files.length)return;busy=true;
+    if(busy||!files.length)return;busy=true;MK.busy=true;
     var album=cur,full=$('fullsize').checked,done=0,fail=0,total=files.length,q=files.slice();
     var bar=$('prog');bar.hidden=false;
     function step(){bar.firstChild.style.width=Math.round(100*(done+fail)/total)+'%';msg('Adding photos: '+(done+fail)+' of '+total+(fail?' ('+fail+' did not work)':'')+'. Keep this page open.');}
     step();
     function worker(){var f=q.shift();if(!f)return Promise.resolve();
       return prep(f,full).then(function(p){return Promise.all([b64(p.blob),b64(p.thumb)]).then(function(d){
-        return MK.api('addPhoto',{album:album,data:d[0],thumb:d[1],w:p.w,h:p.h,type:p.blob.type||'image/jpeg'});});})
+        var body={album:album,data:d[0],thumb:d[1],w:p.w,h:p.h,type:p.blob.type||'image/jpeg'};
+        return MK.api('addPhoto',body).catch(function(){return new Promise(function(r){setTimeout(r,4000)}).then(function(){return MK.api('addPhoto',body)})});});})
       .then(function(){done++},function(e){fail++;console.warn(e)})
       .then(function(){step();return worker()});}
-    Promise.all([worker(),worker()]).then(function(){busy=false;bar.hidden=true;
+    worker().then(function(){busy=false;MK.busy=false;bar.hidden=true;
       msg(done+' photo'+(done===1?'':'s')+' added'+(fail?'. '+fail+' did not work. Try those again, or turn off Full size.':'.'));$('pick').value='';MK.refresh();});
   }
 
