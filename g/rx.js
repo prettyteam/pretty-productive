@@ -153,29 +153,8 @@ async function rxPull(){
   if(both.length!==rxFavs().length) await rxSync({favs:both});
   render();
 }
-let RX_PQ='';
-/* Price list with stars: her go-tos float to the top of every "+ Add" menu */
-function rxPriceList(kind){
-  const favs=rxFavs(), q=RX_PQ.trim().toLowerCase();
-  const items=RX_PRICES[kind].filter(([n])=>!q||n.toLowerCase().includes(q)).sort((a,b)=>(favs.includes(b[0])-favs.includes(a[0])));
-  const s=h('input',{type:'search',id:'rxpq',value:RX_PQ,placeholder:'Search a product',autocomplete:'off'});
-  s.addEventListener('input',()=>{RX_PQ=s.value;const pos=s.selectionStart;render();const n=document.getElementById('rxpq');if(n){n.focus();try{n.setSelectionRange(pos,pos)}catch(e){}}});
-  const d=h('details',{class:'invg',id:'rxpl'},h('summary',{},h('h2',{},'Maintenance'),h('span',{class:'soft invc'},favs.length?favs.length+' starred':''),h('span',{class:'tplus','aria-hidden':'true'},'+')),
-    h('div',{class:'sec2'},h('p',{class:'soft'},'Know what your favorites cost so you can build them into her budget. Star your go-tos and they show first when you add home care.'),
-      h('label',{class:'fld'},s),
-      ...(()=>{const row=([n,p])=>h('div',{class:'rxl'},
-        h('button',{type:'button',class:'rxstar','aria-pressed':String(favs.includes(n)),'aria-label':(favs.includes(n)?'Unstar ':'Star ')+n,onclick:e=>{  /* star several in a row: the star flips in place and the list stays open; go-tos move to the top next time it opens (Alexandra, Oct 20 2026) */
-          rxFavToggle(n);const on=rxFavs().includes(n),b=e.currentTarget;b.textContent=on?'★':'☆';b.setAttribute('aria-pressed',String(on));b.setAttribute('aria-label',(on?'Unstar ':'Star ')+n);
-          const c=document.querySelector('#rxpl .invc');if(c){const k=rxFavs().length;c.textContent=k?k+' starred':''}}},favs.includes(n)?'★':'☆'),
-        h('div',{class:'rxn'},h('b',{},n.replace(/^Biologique Recherche /,'BR ')),kind==='skin'&&rxLasts(n)?h('small',{class:'soft'},'Lasts '+rxLasts(n)):null),h('span',{class:'num'},rxMoney(p)));
-        const mine=items.filter(([n])=>favs.includes(n));
-        return [mine.length?h('div',{},h('span',{class:'lbl'},'★ My Go-Tos'),...mine.map(row)):null,
-          ...rxByBrand(items.filter(([n])=>!favs.includes(n))).map(([b,L])=>{const d=h('details',{class:'invg'},h('summary',{},h('h2',{style:'font-size:17px'},b),h('span',{class:'soft invc'},String(L.length)),h('span',{class:'tplus','aria-hidden':'true'},'+')),
-            h('div',{class:'sec2'},...L.map(row)));if(q)d.open=true;return d})]})(),
-      h('p',{class:'soft'},(kind==='skin'?'Skin has no Try Me bottles: the skin version is the Taffeta BR Bottle, a $25 sample bottle of a BR product with enough for about 2 weeks.':'Try Me bottle: 1 oz of any backbar product, $6.')+' Retail prices from Paired Plus; ring up from the POS.')));
-  if(q) d.open=true;
-  return d;
-}
+/* The Maintenance price list with stars moved to Prices → Home Care (Alexandra, Oct 23 2026): the RX card budgets
+   maintenance for her, so the artist doesn't pick products while building it. */
 
 /* Balayage (Alexandra, Oct 15 2026): the glaze is already in the balayage price, so it is never added on top (Additional
    Mix $25 is the add-on instead), and anyone getting a balayage comes back for a balayage: Minimum Balayage. */
@@ -736,8 +715,7 @@ function rxBuild(R,me){
     h('small',{class:'soft'},done+' of '+order.length+' questions answered'),
     !ready&&RX_HINT?h('small',{style:'color:#8b3a2b;font-weight:600'},RX_HINT):null,
     h('small',{class:'soft'},ready?'Suggestions follow the Taffeta consultation: only what she needs, inside her budget.':(Number(R.budget)>0?'Pick her goals and what’s going on right now.':'Type her budget first. Options only show once there’s a budget.')));
-  /* Maintenance prices come after her routine and what's going on now, when the artist decides what she goes home with (Alexandra, Oct 15 2026) */
-  const out=[s1,...(sk?[s3,s2]:[s2,s3]),h('section',{class:'card2'},rxPriceList(R.kind)),s4];
+  const out=[s1,...(sk?[s3,s2]:[s2,s3]),s4];
   if(R.opts) out.push(...rxEditor(R,me));
   return out;
 }

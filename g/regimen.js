@@ -233,6 +233,60 @@ const rgFirst=n=>String(n||'').trim().split(/\s+/)[0]||'';
    a product already in RG_LIST keeps its step and wording; the rest get a step and a starter how-to from their name. */
 const rgNorm=n=>String(n).normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/hair ?spray/g,'hairspray').replace(/[^a-z0-9]/g,'');
 const rgBase=n=>String(n).replace(/\s*\([^)]*\)\s*$/,'').replace(/,\s*(new bottle|refill|mini|travel|[\d.]+"?\s*(oz|ml)?)$/i,'').trim();
+/* Products whose type the name guess gets wrong, or that had no how-to at all (checked Oct 23 2026): her card
+   gets the right directions. Leave-in serums and sprays are never rinsed; styling dusts and dry texturizers go on dry hair. */
+const RG_HOW_FIX={
+  hair:{
+    'Taffeta Refill Shampoo & Conditioner, new bottles':'Shampoo: massage into wet scalp and rinse. Conditioner: comb through mid-lengths and ends, leave on 2–3 minutes and rinse with cool water.',
+    'Taffeta Refill Shampoo & Conditioner, refill her bottles':'Shampoo: massage into wet scalp and rinse. Conditioner: comb through mid-lengths and ends, leave on 2–3 minutes and rinse with cool water. Bring your bottles back to refill.',
+    'K18 Future Society Leave-In Mask':'After shampoo, towel-dry and work a small amount through damp mid-lengths and ends. Leave in 4 minutes, then style. Do not rinse and skip conditioner.',
+    'Brazilian Blowout Daily Smoothing Serum':'Smooth 1–2 pumps through damp or dry mid-lengths and ends to tame frizz. Do not rinse.',
+    'IGK Crybaby Smoothing & Finishing Serum':'Smooth 1–2 pumps through damp or dry mid-lengths and ends to tame frizz and add shine. Do not rinse.',
+    'Oribe Hair Alchemy Fortifying Treatment Serum':'Mist through clean, damp hair, mid-lengths to ends, before styling. Do not rinse.',
+    'Oribe Power Drops Damage Boost':'Apply a few drops to clean, damp hair, mid-lengths to ends, before styling. Do not rinse.',
+    'Rossano Ferretti Prodigio Hair Power Drops':'Apply a few drops to clean, damp hair, mid-lengths to ends, before styling. Do not rinse.',
+    'Oribe Serene Scalp Densifying Treatment Spray':'Part clean, damp or dry hair in sections and spray directly on the scalp. Massage in. Do not rinse.',
+    'Oribe Serene Scalp Mist':'Part hair in sections and mist directly on the scalp, damp or dry. Massage in. Do not rinse.',
+    'Oribe Serene Scalp Exfoliating Scrub':'On wet hair, before shampoo, massage a small amount into the scalp for 1–2 minutes. Rinse, then shampoo. Use once a week.',
+    'Rossano Ferretti Prodigio Regenerating Pre-Shampoo Mask':'Before washing, work through dry mid-lengths and ends. Leave on 10–20 minutes, then shampoo and condition as usual.',
+    'IGK Expensive Hi-Shine Gloss Tint':'After shampoo, towel-dry and apply evenly from roots to ends. Leave on 10–20 minutes, then rinse well. Use every 2–3 weeks.',
+    'IGK Good Behavior Spirulina Protein Smoothing Spray':'Mist evenly over clean, damp hair, then blow-dry for smooth, frizz-free hair.',
+    'Oribe Root Touch Up Spray':'Shake well. On dry hair, hold 4–6 inches away and lightly spray along the part and hairline. Let dry before touching. Washes out with shampoo.',
+    'Oribe Swept Up Volume Powder Spray':'Shake well. On dry hair, spray at the roots in sections, then massage with your fingertips for lift.',
+    'Oribe Travel Dry Texturizing Spray':'On dry hair, spray in sections from mid-lengths to ends, then tousle with your fingers.',
+    'Oribe Travel Mystify Restyling Spray':'Mist over dry hair, then restyle with your hands or a hot tool.',
+    'Davines Texturizing Dust':'On dry hair, sprinkle a little at the roots, then massage and tousle for lift.',
+    'Davines This Is A Dry Texturizer':'Shake well. On dry hair, spray in sections from mid-lengths to ends, then tousle with your fingers.',
+    'Rossano Ferretti Favoloso Style Shine Pomade':'Warm a small amount between your fingers and smooth over dry hair to shape and add shine.',
+    'IGK Frizz & Flyaway Taming Wand':'On dry hair, brush lightly over the part, hairline and flyaways.',
+    'Taffeta Satin Pillowcase':'Sleep on it every night to cut down on frizz, breakage and creases. Wash on gentle in cold water.',
+    'Taffeta Style Shine Brush, pink':'Brush from ends up to roots to detangle and smooth, on damp or dry hair.',
+    'EHP Rush Brush':'Brush from ends up to roots to detangle, on damp or dry hair.',
+    'EHP Premium Boar Bristle Brush':'Brush dry hair from roots to ends to spread your natural oils and add shine.',
+    'Jolie Showerhead Replacement Filter':'Swap in a new filter about every 3 months.',
+    'Oribe Travel Après Beach Wave':'Mist over damp or dry hair, scrunch with your hands and let air-dry or diffuse for beachy waves.',
+    'T3 AireIQ Hair Dryer':'Mist a heat protectant first. Rough-dry to about 80%, then use a brush and the nozzle to smooth section by section.',
+    'T3 Cura Hair Dryer':'Mist a heat protectant first. Rough-dry to about 80%, then use a brush and the nozzle to smooth section by section.',
+    'T3 Featherweight StyleMax Hair Dryer':'Mist a heat protectant first. Rough-dry to about 80%, then use a brush and the nozzle to smooth section by section.',
+    'T3 SinglePass Smooth X':'Use on dry hair only, after a heat protectant. Glide slowly through 1-inch sections, one pass each.',
+    'T3 SinglePass Curl X 1.25"':'Use on dry hair only, after a heat protectant. Wrap 1-inch sections around the barrel for 5–8 seconds, then let cool.',
+    'T3 Curl ID':'Use on dry hair only, after a heat protectant. Wrap 1-inch sections around the barrel for 5–8 seconds, then let cool.',
+    'Oribe Côte d’Azur Eau de Parfum':'Mist on your neck and wrists, or once over your hair.',
+    'Rossano Ferretti Gentile Hand & Nail Crème':'Massage into hands and cuticles as often as you like.'
+  },
+  skin:{
+    'Oribe Côte d’Azur Nourishing Hand Crème':'Massage into hands and cuticles as often as you like.',
+    'Aluram Golden Body Lotion':'Smooth over clean skin after showering, anywhere on the body.',
+    'Biologique Recherche Biokiss':'Apply to lips morning and night, or any time they feel dry.',
+    'Biologique Recherche Liftkiss':'Apply to lips and the lip contour morning and night.',
+    'Biologique Recherche Préparation U.V.':'Use morning and night for a few weeks before sun exposure, after your P50, in place of your serum. Still wear sunscreen.',
+    'Biologique Recherche Réparation U.V.':'After sun, apply to clean face and neck morning and night to calm and hydrate.',
+    'Biologique Recherche Sérum Teinté Foundation':'Your last step in the morning: shake, put a few drops on your fingertips and blend over face and neck.',
+    'Biologique Recherche Patchs Défatigants':'Place one patch under each eye on clean, dry skin. Leave on 15 minutes, remove, and pat in what’s left.',
+    'Taffeta Brow Oil':'Brush a little through your brows at night with the wand.',
+    'Taffeta Cuticle Oil':'Brush onto cuticles and massage in, once or twice a day.'
+  }
+};
 function rgGuess(kind,n){
   const t=n.toLowerCase(), H=RG_HOW;
   if(kind==='skin'){
@@ -275,7 +329,7 @@ function rgCatalog(kind){
   rx.forEach(([full])=>{
     const b=rgBase(full).replace(/^Hydralixir/,'Cool Cucumber Hydralixir'), k=rgNorm(b);
     let it=by.get(k)||[...by.entries()].find(([x])=>x.length>8&&(k.startsWith(x)||x.startsWith(k)))?.[1];
-    if(!it){const [step,how]=rgGuess(kind,b);it={n:b,how,w0:'',step,sizes:[]};out.push(it);by.set(k,it)}
+    if(!it){const [step,how]=rgGuess(kind,b);it={n:b,how:RG_HOW_FIX[kind][b]||how,w0:'',step,sizes:[]};out.push(it);by.set(k,it)}
     it.sizes.push(full);
   });
   const steps=[...RG_LIST[kind].map(x=>x[0]),'Sets & travel','Kits & more','More'];
@@ -319,6 +373,13 @@ function rgSavedView(me){
     RG_MBUSY&&RG_MINE===null?h('p',{class:'soft'},'Loading…'):RG_MERR?h('p',{class:'soft'},RG_MERR):!L.length?h('p',{class:'soft'},q?'No saved card for “'+RG_MQ+'”.':'Home care cards you save show up here.'):null,
     ...L.slice(0,60).map(row)))];
 }
+/* Home care choices show their price, from the same list as Prices → Home Care (Alexandra, Oct 23 2026); sizes show as a range */
+function rgPrice(it,kind){
+  const L=(typeof RX_PRICES!=='undefined'&&RX_PRICES[kind])||[], P=it.sizes.map(z=>(L.find(r=>r[0]===z)||[])[1]).filter(p=>p!=null);
+  if(!P.length) return '';
+  const m=p=>typeof rxMoney==='function'?rxMoney(p):'$'+p, lo=Math.min(...P), hi=Math.max(...P);
+  return lo===hi?m(lo):m(lo)+'–'+m(hi);
+}
 function regimenView(){
   const kind=rgKind(), R=rgLoad(), whens=RG_WHEN[kind];
   const me=(S.mine&&(S.mine.name||(S.mine.staff&&S.mine.staff.name)))||'';
@@ -351,7 +412,8 @@ function regimenView(){
     const p=picked(it.n);
     const pick=h('button',{type:'button',class:'rgp','aria-pressed':String(!!p),style:'flex:1',onclick:()=>{
       if(p) R.picks=R.picks.filter(x=>x!==p); else R.picks.push({n:it.n,how:it.how,when:it.w0&&whens.includes(it.w0)?it.w0:whens[0],step:it.step});
-      rgSave(); render();}},h('span',{class:'rgbox','aria-hidden':'true'}),h('span',{},it.n.replace(/^Biologique Recherche /,'')));
+      rgSave(); render();}},h('span',{class:'rgbox','aria-hidden':'true'}),h('span',{style:'flex:1'},it.n.replace(/^Biologique Recherche /,'')),
+      rgPrice(it,kind)?h('span',{class:'soft num',style:'white-space:nowrap;font-size:13.5px'},rgPrice(it,kind)):null);
     if(!hasStar) return pick;
     const on=rgStarred(it,favs);
     return h('div',{style:'display:flex;align-items:center;gap:2px'},
@@ -370,7 +432,7 @@ function regimenView(){
   const lists=RG_VIEW==='brand'
     ?bucket(it=>it.brand).sort((a,b)=>kind==='skin'?((RG_SKIN_BRANDS.indexOf(a[0])+1||99)-(RG_SKIN_BRANDS.indexOf(b[0])+1||99)):RX_BRANDS_ORDER(a[0])-RX_BRANDS_ORDER(b[0]))
     :bucket(it=>it.step);
-  const groups=[mine.length?box('★ Your stars',mine,'star',true):null,...lists.map(([t,L])=>box(t,L,RG_VIEW+':'+t,false))];
+  const groups=[mine.length?box('★ Your Stars',mine,'star',true):null,...lists.map(([t,L])=>box(t,L,RG_VIEW+':'+t,false))];
   const viewSeg=h('div',{class:'seg'},[['brand','By brand'],['step','By step']].map(([k,l])=>h('button',{type:'button','aria-pressed':String(RG_VIEW===k),
     onclick:()=>{RG_VIEW=k;RG_OPEN=null;try{store.set('pp-rgview',k)}catch(e){}render()}},l)));
   const products=h('section',{class:'card2'},h('span',{class:'lbl'},'2 · Products'),
