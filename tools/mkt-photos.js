@@ -126,6 +126,24 @@
     MK.api('delPhoto',{id:b.dataset.doc}).then(function(s){lb.close();MK.applyState(s)}).catch(function(){alert('Could not delete it. Try again.')});};
 
   $('pick').addEventListener('change',function(){uploadAll([].slice.call(this.files||[]))});
+
+  // Drag and drop (Alexandra, Oct 23 2026): the Mac file window hides her Photos albums, so on a computer she can drag
+  // pictures straight out of an album in the Photos app onto the page and they go into the album that's open.
+  var drop=document.createElement('div');drop.className='pdrop';drop.hidden=true;document.body.appendChild(drop);
+  var dst=document.createElement('style');dst.textContent='.pdrop{position:fixed;inset:12px;z-index:50;display:flex;align-items:center;justify-content:center;text-align:center;padding:24px;border:2px dashed #111;background:rgba(250,249,247,.92);font:inherit;font-size:22px;color:#111;pointer-events:none}.pdrop[hidden]{display:none}.pdrophint{margin:6px 0 0;color:#555250;font-size:14px}';document.head.appendChild(dst);
+  if(window.matchMedia&&matchMedia('(hover:hover) and (pointer:fine)').matches){var hint=document.createElement('p');hint.className='pdrophint';
+    hint.textContent='On a computer, you can also open an album in your Photos app and drag the pictures onto this page.';$('upmsg').before(hint);}
+  function hasFiles(e){return e.dataTransfer&&[].indexOf.call(e.dataTransfer.types||[],'Files')>=0}
+  function albumName(){var a=albums.concat(weds).filter(function(x){return x.id===cur})[0];return a?a.name:'this album'}
+  var depth=0;
+  document.addEventListener('dragenter',function(e){if(!ready||!hasFiles(e))return;e.preventDefault();depth++;drop.textContent='Drop to add to '+albumName();drop.hidden=false;});
+  document.addEventListener('dragover',function(e){if(!ready||!hasFiles(e))return;e.preventDefault();e.dataTransfer.dropEffect='copy';});
+  document.addEventListener('dragleave',function(e){if(!hasFiles(e))return;depth=Math.max(0,depth-1);if(!depth)drop.hidden=true;});
+  document.addEventListener('drop',function(e){if(!hasFiles(e))return;e.preventDefault();depth=0;drop.hidden=true;if(!ready)return;
+    var fs=[].filter.call(e.dataTransfer.files||[],function(f){return /^image\//.test(f.type)||/\.(jpe?g|png|webp|heic|heif)$/i.test(f.name)});
+    if(!fs.length){msg('Those were not photos. Drag pictures from the Photos app or a folder.');return;}
+    var pp=document.getElementById('p-photos');if(pp&&pp.hidden){msg('Open Photos first, then drag them in.');return;}
+    uploadAll(fs);});
   renderTabs();renderPhotos();
 
   MK.onState(function(s){
