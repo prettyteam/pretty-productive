@@ -914,7 +914,7 @@ function sheetHTML(s,ver,editable){
   h+='<div class="bname">'+esc(s.bride||"________________")+'</div>';
   const l1=[s.date?fmtDate(s.date).replace(/^\w+, /,""):"Date "+blank, loc.join(", ")||"Location "+blank];
   if(plan.cols.length)l1.push("Arrive "+fmt(arrive).replace(" ","\u00a0")+" · Start "+fmt(plan.start)+" · End "+fmt(plan.end));
-  const oneLine=(l,cls)=>'<div class="dline one'+cls+'" style="font-size:'+Math.max(7,Math.min(11.5,600/(l.join(" · ").length*.56))).toFixed(1)+'px">'+l.map(esc).join(' <span class="sep">·</span> ')+'</div>';   // shrinks long lines to fit the page
+  const oneLine=(l,cls)=>{const fs=Math.max(7,Math.min(11.5,600/(l.join(" · ").length*.56))).toFixed(1);return '<div class="dline one'+cls+'" data-fs="'+fs+'" style="font-size:'+fs+'px">'+l.map(esc).join(' <span class="sep">·</span> ')+'</div>'};   // shrinks long lines to fit the page; fitLines finishes the job on screen
   h+=oneLine(l1,"");
   const l2=["Contact "+([s.contactName,s.contactPhone].filter(Boolean).join(" ")||blank),servicesLine(s)];
   if(s.touchups)l2.push("Touch-ups: "+s.touchups);
@@ -1210,9 +1210,15 @@ $("#saveImg").onclick=()=>saveImage($("#sheet"),fileName(S));
 
 
 /* ---------- PDFs to text (Alexandra, Oct 20 2026): same share-sheet idea as the marketing proofs ---------- */
+/* one-line rows shrink until they fit the page they're on, phone or PDF (Alexandra, Oct 23 2026) */
+function fitIn(paper){paper.querySelectorAll(".dline.one").forEach(d=>{let f=parseFloat(d.dataset.fs)||11.5;d.style.fontSize=f+"px";while(d.clientWidth&&d.scrollWidth>d.clientWidth&&f>5){f-=.25;d.style.fontSize=f+"px"}})}
+const fitRO=window.ResizeObserver?new ResizeObserver(es=>es.forEach(e=>fitIn(e.target))):null;
+function fitLines(root){(root||document).querySelectorAll("[data-sheet]").forEach(p=>{fitIn(p);if(fitRO)fitRO.observe(p)})}
+let fitQ=0;new MutationObserver(()=>{if(!fitQ)fitQ=requestAnimationFrame(()=>{fitQ=0;fitLines()})}).observe(document.body,{childList:true,subtree:true});
 async function shotOf(html){
   const box=document.createElement("div");box.className="pdfstage";box.innerHTML=html;document.body.appendChild(box);
   try{try{await document.fonts.ready}catch(_){}
+    fitIn(box);
     const imgs=[...box.querySelectorAll("img")];await Promise.all(imgs.map(i=>i.complete?0:new Promise(r=>{i.onload=i.onerror=r})));
     return await html2canvas(box.firstElementChild,{scale:2,backgroundColor:"#ffffff"});
   }finally{box.remove()}
@@ -1239,15 +1245,16 @@ function pdfFrom(canvases){
 function downloadFile(f){const a=document.createElement("a");a.href=URL.createObjectURL(f);a.download=f.name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),4000)}
 /* Builds the PDF, then opens the share sheet (Messages, Mail, Files). If the phone says the tap "expired"
    while the PDF was being made, the button turns into "Tap again to send" and the next tap shares it at once. */
-async function sendPdf(btn,pagesHTML,name,text){
+async function sendPdf(btn,pagesHTML,name,text,asImage){
   const shareOf=f=>text?{files:[f],text}:{files:[f]};
   if(btn._ready){const f=btn._ready;btn._ready=null;btn.textContent=btn._lab;try{await navigator.share(shareOf(f))}catch(e){if(!e||e.name!=="AbortError")downloadFile(f)}return}
   if(!window.html2canvas){toast("PDFs aren't available here");return}
-  btn._lab=btn._lab||btn.textContent;btn.disabled=true;btn.textContent="Making PDF…";
+  btn._lab=btn._lab||btn.textContent;btn.disabled=true;btn.textContent=asImage?"Making picture…":"Making PDF…";
   try{
     if(typeof pagesHTML==="function")pagesHTML=await pagesHTML();   // the team copy waits for its full-size photos
     const canv=[];for(const h of pagesHTML)canv.push(await shotOf(h));
-    const f=new File([pdfFrom(canv)],name,{type:"application/pdf"});
+    /* Text team sends a picture, so it shows right in the text with Dom's words under it (Alexandra, Oct 23 2026) */
+    const f=asImage?new File([await new Promise(r=>canv[0].toBlob(r,"image/jpeg",.92))],name,{type:"image/jpeg"}):new File([pdfFrom(canv)],name,{type:"application/pdf"});
     btn.disabled=false;btn.textContent=btn._lab;
     if(navigator.canShare&&navigator.canShare({files:[f]})){
       try{await navigator.share(shareOf(f))}
@@ -1349,11 +1356,11 @@ $("#txBride").onclick=()=>{
   const body="Hi "+(firstName(S)||"there")+"! 🤍 Here is your wedding day timeline"+(S.date?" for "+mdOf(S.date):"")+". Please look it over and let us know if anything needs to change. We can’t wait!";
   textWith(firstName(S)||"the bride",[n],body,sheetHTML(S,"bride",false).html,[]);
 };
-/* Text team (Alexandra, Oct 23 2026): Dom's confirmation words plus the team PDF (timeline with the wedding's photos)
+/* Text team (Alexandra, Oct 23 2026): Dom's confirmation words plus a picture of the team timeline with the wedding's photos
    go out together from the share sheet. Pick Messages, then the girls. A web page can't fill in who it goes to with a file. */
 function textTeam(e){
   if(!S.artists.some(a=>(a.name||"").trim())){toast("Add the team in Team on site first");return}
-  sendPdf(e.currentTarget,()=>wpTeamPages(S,docId),pdfName(S,"team-timeline"),$("#cf-text").value||confirmOf(S));
+  sendPdf(e.currentTarget,()=>wpTeamPages(S,docId),pdfName(S,"team-timeline").replace(/\.pdf$/,".jpg"),$("#cf-text").value||confirmOf(S),true);
 }
 $("#txTeam").onclick=textTeam;
 $("#cf-text-team").onclick=textTeam;
