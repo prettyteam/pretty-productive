@@ -495,6 +495,19 @@ function rxGenerateSkin(R,g){
       o1=left>=RX_SK_LO?[...rxSvcLines('skin',['Taffeta Facial']),hc(RX_SK_LO)]:[...rxSvcLines('skin',['Taffeta Facial']),hc(RX_SK_MIN)];
       if(rxTotal(o2)<=rxTotal(o1)) o2=[...rxSvcLines('skin',['Taffeta Facial']),hc(RX_SK_HI)]}
   }
+  /* All In stays about $50–60 over the budget she gave, never more than $60 (Alexandra, Oct 23 2026): the next facial up if it
+     fits with some home care, otherwise Worth The Wait's service with more home care */
+  if(b!=null&&rxTotal(o2)>b+60){
+    const lim=b+60, j=up(i1); let alt=null;
+    if(j>=0){const s2=rxTotal(pkg(j,0)); if(s2+RX_SK_MIN<=lim) alt=pkg(j,Math.min(RX_SK_HI,Math.floor((lim-s2)/5)*5))}
+    if(!alt){const sv=o1.filter(l=>l.t==='s'), s1=rxTotal(sv), amt=Math.floor((lim-s1)/5)*5; if(amt>=RX_SK_MIN) alt=[...sv,hc(amt)]}
+    if(alt&&rxTotal(alt)>rxTotal(o1)) o2=alt;
+  }
+  /* and not much under it: All In reaches about $50 over her budget with more home care (up to $200 of it) */
+  if(b!=null&&rxTotal(o2)<b+50){
+    const sv=o2.filter(l=>l.t==='s'), s2=rxTotal(sv), amt=Math.min(200,Math.ceil((b+50-s2)/5)*5);
+    if(amt>=RX_SK_MIN&&s2+amt>rxTotal(o2)) o2=[...sv,hc(amt)];
+  }
   /* Carolyn's specialty: Nano Needling is suggested for her to swap into All In when it's right for the guest */
   const spec=rxArtist()==='carolyn'&&(gl.includes('Anti-Aging (Fine Lines & Firmness)')||nw.includes('Fine lines'))
     ?{n:'Nano Needling Facial',p:rxPrice('skin','Nano Needling Facial'),why:'Your specialty for fine lines and firmness. If it’s right for her, swap it into All In.'}:null;
