@@ -261,7 +261,7 @@ details.more .menu .btn:last-child{border-bottom:0}
 .wed .sub{font-size:12px;color:var(--muted)}
 .pill{display:inline-block;font-size:11px;padding:1px 8px;border:1px solid var(--line);color:var(--ink);margin:2px 4px 0 0}
 .empty-state{padding:28px;text-align:center;color:var(--muted);border:1px dashed var(--line)}
-.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--accent);color:var(--accent-ink);padding:8px 16px;font-size:13px;opacity:0;transition:opacity .2s;pointer-events:none}
+.toast{position:fixed;z-index:70;left:50%;bottom:calc(72px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--accent);color:var(--accent-ink);padding:8px 16px;font-size:13px;opacity:0;transition:opacity .2s;pointer-events:none}
 .toast.on{opacity:1}
 @media (prefers-reduced-motion:reduce){.toast{transition:none}}
 table.adm{border-collapse:collapse;font-size:13px;min-width:100%}table.adm th,table.adm td{border-bottom:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top;white-space:nowrap}table.adm th{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:500}.stale{color:var(--warn)}
@@ -280,6 +280,7 @@ table.adm{border-collapse:collapse;font-size:13px;min-width:100%}table.adm th,ta
 .wp-card .wp-btns{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
 #sheet.moving{touch-action:manipulation;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}   /* quick taps on a phone move people instead of zooming or selecting text */
 #sheet.moving td[data-pos]{cursor:pointer;-webkit-tap-highlight-color:transparent}
+.movehelp{position:sticky;top:52px;z-index:21;margin:0 0 10px;padding:10px 14px;background:var(--accent);color:var(--accent-ink);font:500 14px/1.35 var(--sans);text-align:center}
 #sheet.moving td.pick{outline:3px solid #b08d57;outline-offset:-3px;background:#faf3e6}
 .paper .look{display:grid;gap:10px;margin:26px auto 0;max-width:640px}
 .paper.has-look .bow{display:none}
@@ -464,8 +465,8 @@ input,select,textarea{background:#fff;border-radius:0}
       <div style="min-width:0">
         <div class="toolbar">
           <div class="seg" role="group" aria-label="Version">
-            <button id="ver-team" aria-pressed="true">Team copy</button>
-            <button id="ver-bride" aria-pressed="false">Bride copy (blank names)</button>
+            <button id="ver-team" aria-pressed="true">Team Copy</button>
+            <button id="ver-bride" aria-pressed="false">Bride Copy (Blank Names)</button>
           </div>
           <div class="row pdfrow">
             <button class="btn" id="txBride">Text Bride</button>
@@ -484,6 +485,7 @@ input,select,textarea{background:#fff;border-radius:0}
           </div>
         </div>
         <div id="txStep" class="card" hidden style="margin-bottom:12px"></div>
+        <div id="moveHelp" class="movehelp" role="status" hidden></div>
         <div class="paperwrap"><div id="sheet"></div></div>
         <p class="legend">Click any box on the sheet to change its wording. Your edits stay when you change the times or add people.</p>
         <div class="card" id="cfCard" style="margin-top:18px">
@@ -1213,14 +1215,15 @@ function renderSheet(){
   $("#sheet").classList.toggle("moving",moveOn);
   $("#moveMode").textContent=moveOn?"Done Moving":"Move People";$("#moveMode").setAttribute("aria-pressed",moveOn);
   $("#moveReset").hidden=!(S.moves&&S.moves.length&&S.movesSig===moveSig(S));
+  const mh=$("#moveHelp");mh.hidden=!moveOn;   // the steps stay on screen while moving (a toast hides behind the Refresh bar on a phone)
+  if(moveOn)mh.textContent=movePick?(movePick.startsWith("hair")?"Now Tap the Hair Box Where She Should Go":"Now Tap the Makeup Box Where She Should Go"):"Tap the Box You Want to Move";
   if(moveOn)$("#sheet").querySelectorAll("[data-pos]").forEach(td=>{
     if(td.dataset.pos===movePick)td.classList.add("pick");
     td.onclick=()=>{
       const p=td.dataset.pos;
-      if(!movePick){movePick=p;td.classList.add("pick");return}
-      if(p===movePick){movePick=null;td.classList.remove("pick");return}
+      if(!movePick||p===movePick){movePick=movePick?null:p;renderSheet();return}
       const a=movePick.split(":"),b=p.split(":");movePick=null;
-      if(a[0]!==b[0]){toast("Hair boxes trade with hair boxes, makeup with makeup");renderSheet();return}
+      if(a[0]!==b[0]){movePick=p;toast("Hair boxes trade with hair boxes, makeup with makeup");renderSheet();return}   // start over from this box so the next tap still works
       const sig=moveSig(S);if(S.movesSig!==sig){S.moves=[];S.movesSig=sig}
       S.moves.push({svc:a[0],a:[+a[1],+a[2]],b:[+b[1],+b[2]]});changed();
     };
