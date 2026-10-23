@@ -214,6 +214,7 @@ details.more .menu .btn:last-child{border-bottom:0}
 .paper .brandline{font:500 9.5px var(--sans);letter-spacing:.32em;color:var(--paper-ink);margin-bottom:22px}
 .paper .bname{font-family:var(--serif);font-weight:400;font-size:21px;letter-spacing:.12em;text-transform:uppercase;margin-bottom:12px;color:var(--paper-ink)}
 .paper .dline{font:400 11.5px/1.65 var(--sans);color:var(--paper-ink);max-width:520px;margin:0 auto}
+.paper .dline.one{white-space:nowrap;max-width:none}   /* date, place and times stay on one line (Alexandra, Oct 23 2026) */
 .paper .dline.muted{color:var(--paper-muted)}
 .paper .dline.note{font-style:italic;color:var(--paper-muted);margin-top:4px}
 .paper .dline .sep{padding:0 3px}
@@ -913,10 +914,11 @@ function sheetHTML(s,ver,editable){
   h+='<div class="bname">'+esc(s.bride||"________________")+'</div>';
   const l1=[s.date?fmtDate(s.date).replace(/^\w+, /,""):"Date "+blank, loc.join(", ")||"Location "+blank];
   if(plan.cols.length)l1.push("Arrive "+fmt(arrive).replace(" ","\u00a0")+" · Start "+fmt(plan.start)+" · End "+fmt(plan.end));
-  h+='<div class="dline">'+l1.map(esc).join(' <span class="sep">·</span> ')+'</div>';
+  const oneLine=(l,cls)=>'<div class="dline one'+cls+'" style="font-size:'+Math.max(7,Math.min(11.5,600/(l.join(" · ").length*.56))).toFixed(1)+'px">'+l.map(esc).join(' <span class="sep">·</span> ')+'</div>';   // shrinks long lines to fit the page
+  h+=oneLine(l1,"");
   const l2=["Contact "+([s.contactName,s.contactPhone].filter(Boolean).join(" ")||blank),servicesLine(s)];
   if(s.touchups)l2.push("Touch-ups: "+s.touchups);
-  h+='<div class="dline muted">'+l2.map(esc).join(' <span class="sep">·</span> ')+'</div>';
+  h+=oneLine(l2," muted");
   if(s.notes&&ver!=="bride")h+='<div class="dline note">'+esc(s.notes)+'</div>';   // office notes stay off the bride's copy
   h+='<div class="sp"></div>';
   if(!plan.cols.length){h+='<p style="text-align:center;color:#5d554e;font-family:var(--serif)">Add an artist and the people getting ready to build the schedule.</p></div>';return {html:h,plan}}
