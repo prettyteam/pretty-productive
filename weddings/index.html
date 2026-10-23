@@ -221,6 +221,12 @@ details.more .menu .btn:last-child{border-bottom:0}
 .paper .sp{height:24px}
 .paper .bow{display:block;width:64px;height:auto;margin:0 auto 20px}
 .paper .brandline.bottom{margin:30px 0 0}
+.ao .ao-list{width:100%;max-width:520px;overflow-x:auto}
+.ao .ao-list .paper{min-width:0;padding:28px 20px 30px}
+.paper .aop{width:100%;max-width:440px;margin:0 auto;border-collapse:collapse}
+.paper .aop td{padding:11px 4px;border-bottom:1px solid var(--line);font-family:var(--serif);font-size:15px;color:var(--paper-ink);text-align:left;vertical-align:top}
+.paper .aop td:last-child{text-align:right;white-space:nowrap;padding-left:14px}
+.paper .aop small{display:block;font:400 11px var(--sans);color:var(--paper-muted);margin-top:2px}
 .paper.prep .pp{max-width:480px;margin:0 auto 16px;text-wrap:pretty}
 .paper.prep .pp-h{font:500 10px var(--sans);letter-spacing:.3em;text-transform:uppercase;color:var(--paper-ink);margin-bottom:4px}
 .paper.prep .pp-t{font-family:var(--serif);font-size:15px;line-height:1.55;color:var(--paper-ink)}
@@ -1517,11 +1523,28 @@ function payLinks(){const p=window.TW_PAY||{};const v=String(p.venmo||"").replac
 function qrSvg(text){if(!window.qrcode||!text)return"";const q=qrcode(0,"M");q.addData(text);q.make();const n=q.getModuleCount();let r="";
   for(let y=0;y<n;y++)for(let x=0;x<n;x++)if(q.isDark(y,x))r+='M'+x+' '+y+'h1v1h-1z';
   return '<svg viewBox="-1 -1 '+(n+2)+' '+(n+2)+'" shape-rendering="crispEdges" role="img" aria-label="QR code"><path d="'+r+'" fill="#121212"/></svg>'}
+/* Wedding day add-on prices (Alexandra, Oct 23 2026): services added on the day without notice cost a little more
+   than booked ones ($150), since the team squeezes them in. The artist shows this list, then the guest scans to pay. */
+const DAYOF=175;
+const AO_PRICES=[
+  ["Hair","$"+DAYOF],
+  ["Makeup","$"+DAYOF,"Lashes included"],
+  ["Blow-dry only or eyes only","$"+DAYOF],
+  ["Lashes only","$30"],
+  ["Extensions brought from home","+$20 and up","Artist's discretion"],
+  ["Wet hair","+$50","Please arrive with hair fully dry"]];
+function aoPriceHTML(){
+  return '<div class="paper prep" data-sheet><div class="bname">Wedding Day Add-Ons</div><div class="dline muted">Same-Day Pricing</div><div class="sp"></div>'
+    +'<table class="aop">'+AO_PRICES.map(([n,v,sub])=>'<tr><td>'+esc(n)+(sub?'<small>'+esc(sub)+'</small>':'')+'</td><td>'+esc(v)+'</td></tr>').join("")+'</table>'
+    +'<div class="dline muted" style="margin-top:14px">Venmo @TaffetaWeddings</div>'
+    +'<div class="brandline bottom">TAFFETA WEDDINGS</div></div>';
+}
 function renderAddon(){
   const box=$("#view-addon");if(!box)return;const L=payLinks();
   if(AO_SHOW==="card"&&!L.card)AO_SHOW="venmo";if(AO_SHOW==="venmo"&&!L.venmo&&L.card)AO_SHOW="card";
   const link=AO_SHOW==="card"?L.card:L.venmo;
-  let h='<div class="ao"><div class="mhead">Wedding Day Add-Ons</div>';
+  let h='<div class="ao"><div class="mhead">Wedding Day Add-Ons</div><div class="ao-list">'+aoPriceHTML()+'</div>'
+    +'<button type="button" class="pay" id="aoShare">Save or send price list</button>';
   if(!L.venmo&&!L.card){h+='<p>The payment links are being set up. Check back soon.</p></div>';box.innerHTML=h;return}
   h+='<p>Adding a service today? Scan to pay Taffeta Weddings.</p><div class="qr">'+qrSvg(link)+'</div>'
    +'<span class="lbl" style="font-size:11px;letter-spacing:.16em;text-transform:uppercase">'+(AO_SHOW==="card"?"Card or Apple Pay":"Venmo"+(L.venmoName?" · @"+esc(L.venmoName):""))+'</span>';
@@ -1529,7 +1552,8 @@ function renderAddon(){
   if(L.card)h+='<button type="button" class="pay" data-s="card" aria-pressed="'+(AO_SHOW==="card")+'">Card or Apple Pay</button>';
   if(L.venmo&&L.card)h+='<p style="font-size:14px">Tap a button to show that code.</p>';
   h+='</div>';
-  box.innerHTML=h;box.querySelectorAll(".pay").forEach(b=>b.onclick=()=>{AO_SHOW=b.dataset.s;renderAddon()});
+  box.innerHTML=h;box.querySelectorAll(".pay[data-s]").forEach(b=>b.onclick=()=>{AO_SHOW=b.dataset.s;renderAddon()});
+  const sh=$("#aoShare");if(sh)sh.onclick=e=>sendPdf(e.currentTarget,[aoPriceHTML()],"wedding-day-add-ons.jpg","",true);
 }
 
 /* Gratuity (Alexandra, Oct 21 2026): each bridesmaid scans the artist's own code and tips her straight to the Venmo on
