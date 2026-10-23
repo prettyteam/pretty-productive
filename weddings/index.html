@@ -894,12 +894,28 @@ function build(s){
     [[A,m.a[1]],[B,m.b[1]]].forEach(([c,r])=>{while(c.cells.length<=r)c.cells.push(null)});
     const t=A.cells[m.a[1]];A.cells[m.a[1]]=B.cells[m.b[1]];B.cells[m.b[1]]=t;
   });
+  // girls without a name all show as H or MU, so after her moves the app can quietly trade which unnamed girl sits in a
+  // box to undo hair-and-makeup-at-once clashes without changing anything she sees (Alexandra, Oct 23 2026)
+  const anon=pid=>{const p=s.people.find(q=>q.id===pid);return !!p&&p.role!=="Bride"&&!HELPERS.includes(p.role)&&!(p.name||"").trim()};
+  ["mu","hair"].forEach(svc=>{const list=svc==="mu"?mu.cols:hair.cols;
+    for(let pass=0;pass<4;pass++){let fixed=false;
+      list.forEach(c=>c.cells.forEach((pid,r)=>{
+        if(!anon(pid)||!clash(pid,iv(c,r),svc))return;
+        outer: for(const c2 of list)for(let r2=0;r2<c2.cells.length;r2++){
+          const q=c2.cells[r2];if(!anon(q)||q===pid)continue;
+          if(clash(pid,iv(c2,r2),svc)||clash(q,iv(c,r),svc))continue;
+          c2.cells[r2]=pid;c.cells[r]=q;fixed=true;break outer;
+        }
+      }));
+      if(!fixed)break;
+    }});
   // trim trailing empty rows
   cols.forEach(c=>{while(c.cells.length&&c.cells[c.cells.length-1]==null)c.cells.pop()});
   let span=0;cols.forEach(c=>span=Math.max(span,c.cells.length*c.slot));
   let start=s.mode==="finish"?toMin(s.finishBy)-span:toMin(s.start);
   // leftover same-person clashes
-  s.people.forEach(p=>{if(p.hair&&p.mu){const h=slotsOf(p.id,"hair"),m=slotsOf(p.id,"mu");if(h.some(a=>m.some(b=>overl(a,b))))warnings.push((p.name||p.role)+" has hair and makeup at the same time. Add an artist or move her by hand.")}});
+  const both={};s.people.forEach(p=>{if(p.hair&&p.mu){const h=slotsOf(p.id,"hair"),m=slotsOf(p.id,"mu");if(h.some(a=>m.some(b=>overl(a,b)))){const n=p.name||p.role;both[n]=(both[n]||0)+1}}});
+  Object.keys(both).forEach(n=>warnings.push((both[n]>1?both[n]+" "+n+"s have":n+" has")+" hair and makeup at the same time. Add an artist or move "+(both[n]>1?"them":"her")+" by hand."));
   return {cols,start,end:start+span,warnings};
 }
 
