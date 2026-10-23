@@ -264,6 +264,8 @@ table.adm{border-collapse:collapse;font-size:13px;min-width:100%}table.adm th,ta
 .wp-card{margin-top:18px}
 .wp-card h3{font:500 11px var(--sans);letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:14px 0 8px}
 .wp-card .wp-btns{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+#sheet.moving td[data-pos]{cursor:pointer}
+#sheet.moving td.pick{outline:3px solid #b08d57;outline-offset:-3px;background:#faf3e6}
 .paper .look{display:grid;gap:10px;margin:26px auto 0;max-width:640px}
 .paper.has-look .bow{display:none}
 .paper .look img{width:100%;aspect-ratio:4/5;object-fit:cover;display:block;border:1px solid var(--line)}
@@ -452,7 +454,9 @@ input,select,textarea{background:#fff;border-radius:0}
           <div class="row pdfrow">
             <button class="btn" id="txBride">Text bride</button>
             <button class="btn" id="txTeam">Text team</button>
+            <button class="btn ghost" id="moveMode" aria-pressed="false">Move people</button>
             <details class="more"><summary class="btn ghost">More</summary><div class="menu">
+              <button class="btn ghost" id="moveReset" hidden>Undo my moves</button>
               <button class="btn ghost" id="pdfBride">Bride PDF</button>
               <button class="btn ghost" id="pdfTeam">Team PDF</button>
               <button class="btn ghost" id="copyText">Copy as text</button>
@@ -804,6 +808,8 @@ function fmtDate(d){if(!d)return"";const[y,m,dd]=d.split("-").map(Number);return
 function shortDate(d){if(!d)return"";if(!/^\d{4}-\d\d-\d\d/.test(d)){const t=new Date(d);return isNaN(t)?d:(t.getMonth()+1)+"/"+t.getDate()+"/"+String(t.getFullYear()).slice(2)}const[y,m,dd]=d.split("-");return Number(m)+"/"+Number(dd)+"/"+y.slice(2)}
 
 /* ---------- scheduling ---------- */
+/* moves only count for the party they were made on; adding or removing people or artists goes back to the auto order */
+const moveSig=s=>s.people.map(p=>p.id+(p.hair?"h":"")+(p.mu?"m":"")+p.role).join(",")+"|"+s.artists.map(a=>a.id+a.role).join(",")+"|"+s.hairSlot+"/"+s.muSlot;
 function build(s){
   const warnings=[];
   const hairSlot=Math.max(15,Number(s.hairSlot)||60), muSlot=Math.max(15,Number(s.muSlot)||60);
@@ -859,6 +865,12 @@ function build(s){
     }));
     if(!changed)break;
   }
+  // the office's own moves ("Move people", Alexandra Oct 23 2026): swap two boxes of the same service
+  if(s.moves&&s.moves.length&&s.movesSig===moveSig(s))s.moves.forEach(m=>{
+    const list=m.svc==="hair"?hair.cols:mu.cols,A=list[m.a[0]],B=list[m.b[0]];if(!A||!B)return;
+    [[A,m.a[1]],[B,m.b[1]]].forEach(([c,r])=>{while(c.cells.length<=r)c.cells.push(null)});
+    const t=A.cells[m.a[1]];A.cells[m.a[1]]=B.cells[m.b[1]];B.cells[m.b[1]]=t;
+  });
   // trim trailing empty rows
   cols.forEach(c=>{while(c.cells.length&&c.cells[c.cells.length-1]==null)c.cells.pop()});
   let span=0;cols.forEach(c=>span=Math.max(span,c.cells.length*c.slot));
@@ -909,6 +921,7 @@ function goBy(a){
   const pr=a.uid&&list.find(p=>p._id===a.uid),pref=pr?String(pr.preferredName||"").trim():"";
   return pref||String(a.goBy||"").trim()||String(a.name||"").trim().split(/\s+/)[0]||"";
 }
+let moveOn=false,movePick=null;   // "Move people" on the office Timeline
 function sheetHTML(s,ver,editable){
   const plan=build(s), labels=labelMap(s,plan,ver);
   const sameSlot=plan.cols.every(c=>c.slot===(plan.cols[0]||{}).slot);
@@ -937,15 +950,16 @@ function sheetHTML(s,ver,editable){
     h+='<tr>';
     if(sameSlot)h+='<td class="t">'+fmt(plan.start+r*plan.cols[0].slot)+'</td>';
     plan.cols.forEach(c=>{
-      if(r>=c.cells.length){h+='<td class="c blank"></td>';return}
+      const pos=editable?' data-pos="'+c.service+':'+plan.cols.filter(x=>x.service===c.service).indexOf(c)+':'+r+'"':'';
+      if(r>=c.cells.length){h+='<td class="c blank"'+pos+'></td>';return}
       const pid=c.cells[r];
       const ct=sameSlot?'':'<span class="ct">'+fmt(plan.start+r*c.slot)+'</span>';
-      if(!pid){h+='<td class="c empty">'+ct+'</td>';return}
+      if(!pid){h+='<td class="c empty"'+pos+'>'+ct+'</td>';return}
       const key=pid+":"+c.service, L=labels[key]||{txt:""};
       const p=s.people.find(q=>q.id===pid);
       const cls='c'+(p&&p.role==="Bride"?' bride':'');
-      const ed=editable&&ver==="team"?' contenteditable="true" data-key="'+key+'"':'';
-      h+='<td class="'+cls+'"'+ed+'>'+ct+esc(L.txt)+(L.blank?'<span class="fill"></span>':'')+'</td>';
+      const ed=editable&&ver==="team"&&!moveOn?' contenteditable="true" data-key="'+key+'"':'';
+      h+='<td class="'+cls+'"'+ed+pos+'>'+ct+esc(L.txt)+(L.blank?'<span class="fill"></span>':'')+'</td>';
     });
     h+='</tr>';
   }
@@ -1176,6 +1190,21 @@ function renderPeople(){
 function renderSheet(){
   const {html,plan}=sheetHTML(S,version,true);
   $("#sheet").innerHTML=html;renderConfirm();
+  $("#sheet").classList.toggle("moving",moveOn);
+  $("#moveMode").textContent=moveOn?"Done moving":"Move people";$("#moveMode").setAttribute("aria-pressed",moveOn);
+  $("#moveReset").hidden=!(S.moves&&S.moves.length&&S.movesSig===moveSig(S));
+  if(moveOn)$("#sheet").querySelectorAll("[data-pos]").forEach(td=>{
+    if(td.dataset.pos===movePick)td.classList.add("pick");
+    td.onclick=()=>{
+      const p=td.dataset.pos;
+      if(!movePick){movePick=p;td.classList.add("pick");return}
+      if(p===movePick){movePick=null;td.classList.remove("pick");return}
+      const a=movePick.split(":"),b=p.split(":");movePick=null;
+      if(a[0]!==b[0]){toast("Hair boxes trade with hair boxes, makeup with makeup");renderSheet();return}
+      const sig=moveSig(S);if(S.movesSig!==sig){S.moves=[];S.movesSig=sig}
+      S.moves.push({svc:a[0],a:[+a[1],+a[2]],b:[+b[1],+b[2]]});changed();
+    };
+  });
   $("#warnings").textContent=plan.warnings?plan.warnings.join(" "):"";
   $("#sheet").querySelectorAll("[data-key]").forEach(td=>{
     td.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();td.blur()}});
@@ -1183,6 +1212,8 @@ function renderSheet(){
   });
 }
 function changed(skipSheet){if(!skipSheet)renderSheet();queueSave()}
+$("#moveMode").onclick=()=>{moveOn=!moveOn;movePick=null;renderSheet();if(moveOn)toast("Tap a box, then tap where it should go")};
+$("#moveReset").onclick=()=>{S.moves=[];delete S.movesSig;movePick=null;changed()};
 FIELDS.forEach(f=>{const el=$("#"+f);el.addEventListener("input",()=>{S[f]=el.type==="number"?Number(el.value):el.value;changed()})});
 function setMode(m,fire=true){S.mode=m;$("#mode-start").setAttribute("aria-pressed",m==="start");$("#mode-finish").setAttribute("aria-pressed",m==="finish");$("#startWrap").hidden=m!=="start";$("#finishWrap").hidden=m!=="finish";if(fire)changed()}
 $("#mode-start").onclick=()=>setMode("start");$("#mode-finish").onclick=()=>setMode("finish");
