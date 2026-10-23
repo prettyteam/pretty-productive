@@ -237,13 +237,13 @@ details.more .menu .btn:last-child{border-bottom:0}
 .tl{border-collapse:separate;border-spacing:0;margin:0 auto;font-family:var(--serif);color:var(--paper-ink)}
 .tl th{font:500 9.5px var(--sans);letter-spacing:.28em;text-transform:uppercase;padding:0 6px 9px;text-align:center;vertical-align:bottom}
 .tl th small{display:block;text-transform:none;letter-spacing:.04em;font:400 11px var(--sans);color:var(--paper-muted);margin-top:3px}
-.tl td.t{font-size:11.5px;text-align:center;padding:2px 10px;white-space:nowrap;color:var(--paper-ink);font-variant-numeric:tabular-nums;border:.75px solid var(--paper-ink);border-right:0;letter-spacing:.04em;background:#f2f1ec}
+.tl td.t{font-size:11.5px;text-align:center;padding:2px 10px;white-space:nowrap;color:var(--paper-ink);font-variant-numeric:tabular-nums;border:1px solid var(--paper-ink);border-right:0;letter-spacing:.04em;background:#f2f1ec}
 .tl tr + tr td.t{border-top:0}
-.tl td.c{border:.75px solid var(--paper-ink);min-width:118px;height:34px;padding:2px 8px;text-align:center;font-size:12.5px;letter-spacing:.06em;text-transform:uppercase;position:relative}
+.tl td.c{border:1px solid var(--paper-ink);min-width:118px;height:34px;padding:2px 8px;text-align:center;font-size:12.5px;letter-spacing:.06em;text-transform:uppercase;position:relative}
 .tl td.c + td.c{border-left:0}
 .tl tr + tr td.c{border-top:0}
 .tl td.c.empty{border-color:var(--paper-ink)}
-.tl td.c.blank{border:0}
+.tl td.c.blank{background:transparent}   /* empty boxes keep their lines so the grid is a full rectangle (Alexandra, Oct 23 2026) */
 .tl td.c .ct{position:absolute;left:5px;top:2px;font-size:9px;letter-spacing:0;text-transform:none;color:var(--paper-muted)}
 .tl td.c .fill{display:inline-block;min-width:60px;border-bottom:1px solid var(--paper-muted);margin-left:4px}
 .tl td.c[contenteditable="true"]{cursor:text}
