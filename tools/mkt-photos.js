@@ -66,7 +66,7 @@
       $('o-empty').hidden=mine.length>0||(cur==='bridal'&&weds.length>0);}
     MK.scan(grid);
   }
-  function go(id){cur=id;try{localStorage.setItem('album',id)}catch(e){}
+  function go(id,back){if(!back&&id!==cur)remember();cur=id;try{localStorage.setItem('album',id)}catch(e){}
     history.replaceState(null,'','#album='+id);renderTabs();renderPhotos();var pp=document.getElementById('p-photos');if(pp)pp.scrollIntoView();}
 
   function newAlbum(){
@@ -131,6 +131,25 @@
   document.addEventListener('keydown',function(e){if(!lb.open)return;if(e.key==='ArrowRight')show(i+1);if(e.key==='ArrowLeft')show(i-1);});
   $('lb-del').onclick=function(){var b=list[i];if(!b||!confirm('Delete this photo from the album for everyone?'))return;
     MK.api('delPhoto',{id:b.dataset.doc}).then(function(s){lb.close();MK.applyState(s)}).catch(function(){alert('Could not delete it. Try again.')});};
+
+  // Back and Refresh (Alexandra, Oct 23 2026). Back steps to the last tab or album she looked at on this page;
+  // Refresh reloads the page and lands on the same tab and album (both are remembered in localStorage and the address).
+  var trail=[];
+  function view(){var t=document.querySelector('[role=tab][aria-selected=true]');return{tab:t?t.id.slice(2):'',album:cur}}
+  function remember(){var v=view(),l=trail[trail.length-1];if(!l||l.tab!==v.tab||l.album!==v.album)trail.push(v);if(trail.length>50)trail.shift();navState();}
+  document.addEventListener('click',function(e){var t=e.target.closest&&e.target.closest('[role=tab]');if(t&&t.getAttribute('aria-selected')!=='true')remember();},true);
+  var nav=document.createElement('div');nav.className='mknav';
+  nav.innerHTML='<button type="button" id="mk-back">\u2039 Back</button><button type="button" id="mk-refresh">Refresh</button>';
+  document.body.prepend(nav);
+  var nst=document.createElement('style');nst.textContent='.mknav{display:flex;justify-content:flex-end;gap:6px;max-width:1200px;margin:0 auto;padding:12px 16px 0;box-sizing:border-box}'
+    +'.mknav button{font:inherit;font-size:11px;letter-spacing:.14em;text-transform:uppercase;padding:8px 12px;border:1px solid #111;background:transparent;color:#111;cursor:pointer;border-radius:0}'
+    +'.mknav button:disabled{opacity:.35;cursor:default}@media print{.mknav{display:none}}';document.head.appendChild(nst);
+  function navState(){$('mk-back').disabled=!trail.length}
+  $('mk-back').onclick=function(){var v=trail.pop();navState();if(!v)return;
+    var cv=view();if(v.tab&&v.tab!==cv.tab){var b=$('t-'+v.tab);if(b)b.click();trail.pop();navState();}
+    if(v.album!==cur)go(v.album,true);else window.scrollTo(0,0);};
+  $('mk-refresh').onclick=function(){this.disabled=true;this.textContent='Refreshing\u2026';location.reload();};
+  navState();
 
   $('pick').addEventListener('change',function(){uploadAll([].slice.call(this.files||[]))});
 
