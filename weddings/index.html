@@ -1277,7 +1277,7 @@ function confirmOf(s){
   if(s.parking)L.push("Parking/Valet: "+s.parking);
   L.push("","⏰ TIMELINE","Arrival: "+(arr>=15?ampm(arrive)+" - "+ampm(arrive+15):ampm(arrive)),"Start time: "+ampm(plan.start),"Must be finished by: "+ampm(plan.end));
   if(s.touchups)L.push("Touch-ups before leaving: "+s.touchups);
-  L.push("Please review the Google Calendar prior to the wedding for the full service details, timeline, and any additional notes.","","📱 DAY-OF CONTACT");
+  L.push("","📱 DAY-OF CONTACT");
   if(poc)L.push("POC: "+poc);
   L.push("They will also have the bride’s/designated bridesmaid’s contact information should anything come up day-of.","");
   if(other.length)L.push("🚗 ADDITIONAL NOTES —","Other: "+other.join(" "),"");
