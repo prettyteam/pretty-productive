@@ -77,8 +77,15 @@
 
   // Photo prep: normal keeps up to 2560px (plenty for Instagram); full size keeps the original when it can.
   var OK={'image/jpeg':1,'image/png':1,'image/webp':1};
-  function load(file){return new Promise(function(res,rej){var u=URL.createObjectURL(file),im=new Image();
+  function load1(file){return new Promise(function(res,rej){var u=URL.createObjectURL(file),im=new Image();
     im.onload=function(){res({im:im,u:u})};im.onerror=function(){URL.revokeObjectURL(u);rej(new Error('decode'))};im.src=u;})}
+  // iPhone photos are often HEIC, which Chrome can't open, so those get turned into JPEGs first (Oct 23 2026).
+  var heicLib=null;
+  function heicJs(){return heicLib||(heicLib=new Promise(function(res,rej){var sc=document.createElement('script');
+    sc.src='https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js';sc.onload=function(){res(window.heic2any)};sc.onerror=function(){heicLib=null;rej(new Error('heic lib'))};document.head.appendChild(sc);}))}
+  function isHeic(f){return /hei[cf]/i.test(f.type||'')||/\.hei[cf]$/i.test(f.name||'')}
+  function load(file){return load1(file).catch(function(err){if(!isHeic(file))throw err;
+    return heicJs().then(function(h2a){return h2a({blob:file,toType:'image/jpeg',quality:.92})}).then(function(b){return load1(Array.isArray(b)?b[0]:b)});});}
   function shrink(im,max,q){var w=im.naturalWidth,h=im.naturalHeight,k=Math.min(1,max/Math.max(w,h)),cw=Math.round(w*k),ch=Math.round(h*k);
     var c=document.createElement('canvas');c.width=cw;c.height=ch;c.getContext('2d').drawImage(im,0,0,cw,ch);
     return new Promise(function(res,rej){c.toBlob(function(b){b?res({blob:b,w:cw,h:ch}):rej(new Error('encode'))},'image/jpeg',q)});}
@@ -136,12 +143,14 @@
   function hasFiles(e){return e.dataTransfer&&[].indexOf.call(e.dataTransfer.types||[],'Files')>=0}
   function albumName(){var a=albums.concat(weds).filter(function(x){return x.id===cur})[0];return a?a.name:'this album'}
   var depth=0;
-  document.addEventListener('dragenter',function(e){if(!ready||!hasFiles(e))return;e.preventDefault();depth++;drop.textContent='Drop to add to '+albumName();drop.hidden=false;});
-  document.addEventListener('dragover',function(e){if(!ready||!hasFiles(e))return;e.preventDefault();e.dataTransfer.dropEffect='copy';});
-  document.addEventListener('dragleave',function(e){if(!hasFiles(e))return;depth=Math.max(0,depth-1);if(!depth)drop.hidden=true;});
-  document.addEventListener('drop',function(e){if(!hasFiles(e))return;e.preventDefault();depth=0;drop.hidden=true;if(!ready)return;
+  function onPhotos(){var pp=document.getElementById('p-photos');return ready&&!(pp&&pp.hidden)}
+  document.addEventListener('dragenter',function(e){if(!onPhotos())return;e.preventDefault();depth++;drop.textContent='Drop to add to '+albumName();drop.hidden=false;});
+  document.addEventListener('dragover',function(e){if(!onPhotos())return;e.preventDefault();e.dataTransfer.dropEffect='copy';});
+  document.addEventListener('dragleave',function(e){if(!onPhotos())return;depth=Math.max(0,depth-1);if(!depth)drop.hidden=true;});
+  document.addEventListener('drop',function(e){if(!onPhotos())return;e.preventDefault();depth=0;drop.hidden=true;
+    if(!hasFiles(e)||!(e.dataTransfer.files||[]).length){msg('Chrome could not take those straight from Photos. Drag them to your Desktop first, then from the Desktop onto this page.');return;}
     var fs=[].filter.call(e.dataTransfer.files||[],function(f){return /^image\//.test(f.type)||/\.(jpe?g|png|webp|heic|heif)$/i.test(f.name)});
-    if(!fs.length){msg('Those were not photos. Drag pictures from the Photos app or a folder.');return;}
+    if(!fs.length){msg('Those were not photos. Drag pictures from the Photos app, your Desktop or a folder.');return;}
     var pp=document.getElementById('p-photos');if(pp&&pp.hidden){msg('Open Photos first, then drag them in.');return;}
     uploadAll(fs);});
   renderTabs();renderPhotos();
