@@ -77,7 +77,7 @@ function doPost(e) {
   lock.waitLock(20000);
   try {
     const d = JSON.parse(e.postData.contents || '{}');
-    if (['clock', 'timeoff', 'cover', 'take', 'profile', 'sign', 'stock', 'model', 'regimen', 'rgmine'].indexOf(d.type) >= 0) return teamPost_(d);
+    if (['clock', 'timeoff', 'cover', 'take', 'profile', 'sign', 'stock', 'model', 'mphoto', 'regimen', 'rgmine'].indexOf(d.type) >= 0) return teamPost_(d);
     if (['rxpin', 'rxlogin', 'rxsync'].indexOf(d.type) >= 0) return rxPost_(d);
     if (d.type === 'rxdesk') return rxDeskSet_(d);
     if (d.type === 'deskseen') return deskSeenSet_(d);
@@ -261,6 +261,7 @@ const TT = {
   sigs:  { name: 'Handbook Signatures', headers: ['Signed', 'Name', 'App ID', 'Typed signature', 'Document'] },
   stock: { name: 'Stock Counts', headers: ['Updated', 'Name', 'App ID', 'Item ID', 'Item', 'On hand'] },
   models: { name: 'Model Log', headers: ['Logged', 'Name', 'App ID', 'Skill ID', 'Skill', 'Model date'] },
+  mphoto: { name: 'Model Photos', headers: ['Logged', 'Name', 'App ID', 'Skill ID', 'Skill', 'Model date', 'Note', 'Before', 'After', 'Before (small)', 'After (small)'] },
   rxme:  { name: 'RX Artists', headers: ['Updated', 'Name', 'App ID', 'iPad PIN (scrambled)', 'Starred products', 'Wrong tries', 'Locked until'] },
   rxcard: { name: 'RX Saved Cards', headers: ['Saved', 'Name', 'App ID', 'Card ID', 'Guest', 'Card', 'Desk', 'Desk at', 'Opened at'] }
 };
@@ -370,8 +371,9 @@ function staffGet_(p) {
     .map(r => ({ from: r[3] instanceof Date ? day_(r[3]) : String(r[3]), to: r[4] instanceof Date ? day_(r[4]) : String(r[4]), status: String(r[6] || 'Waiting') }));
   return json_({ ok: true, now: now.getTime(), me: { name: me.name, group: me.group, clock: me.clock, start: me.start },
     clock: { in: !!open, since: open ? open.getTime() : null, sinceLabel: open ? hhmm_(open) : null, todayMin: Math.round(todayMin), weekMin: Math.round(weekMin) },
-    shifts, ann, openShifts, myCover, myOff, info: myInfo_(me.slug), signed: mySigs_(me.slug), stock: stock_(), stockEdit: STOCK_EDITORS.indexOf(me.slug) >= 0, models: myModels_(me.slug),
+    shifts, ann, openShifts, myCover, myOff, info: myInfo_(me.slug), signed: mySigs_(me.slug), stock: stock_(), stockEdit: STOCK_EDITORS.indexOf(me.slug) >= 0, models: myModels_(me.slug), mphotos: myMPhotos_(me.slug),
     cardAddr: CARD_WRITERS.indexOf(me.slug) >= 0 ? cardAddr_() : null,
+    mphoto: true,       // tells the team app this version takes model photos (type 'mphoto')
     regimen: true,      // tells the team app this version takes Home care PDFs (type 'regimen')
     rx: { pin: !!rxMe_(me.slug).pin } });   // tells the team app this version syncs stars and RX cards, and whether her iPad PIN is set
 }
@@ -391,6 +393,57 @@ function stock_() {
 function myModels_(slug) {
   return tvals_(TT.models).filter(r => String(r[2]) === slug && r[3] !== '')
     .map(r => ({ id: String(r[3]), date: r[5] instanceof Date ? day_(r[5]) : String(r[5]) }));
+}
+/**
+ * Associate model photos (Alexandra, Oct 22 2026): each associate adds a before and an after of her model
+ * from the Associate Program page. Photos go to Drive (Associate Model Photos / <name>), with a row on the
+ * Model Photos tab. The Pretty Report's Model Photos page shows them all in one album, grouped by name.
+ */
+const MPHOTO_FOLDER = 'Associate Model Photos';
+function mphotoFolder_(sub) {
+  const parent = DriveApp.getFileById(TEAM_SHEET_ID).getParents().next();
+  const it = parent.getFoldersByName(MPHOTO_FOLDER), root = it.hasNext() ? it.next() : parent.createFolder(MPHOTO_FOLDER);
+  if (!sub) return root;
+  const s = root.getFoldersByName(sub);
+  return s.hasNext() ? s.next() : root.createFolder(sub);
+}
+function mphotoFile_(dataUrl, folder, name) {
+  const m = String(dataUrl || '').match(/^data:(image\/(?:jpeg|png|webp));base64,(.+)$/);
+  if (!m) return '';
+  return folder.createFile(Utilities.newBlob(Utilities.base64Decode(m[2]), m[1], name + '.jpg')).getId();
+}
+function mphotoSave_(me, d) {
+  const id = clean_(d.id, 40), date = String(d.date || '');
+  if (!/^[a-z0-9-]{2,40}$/.test(id) || !/^\d{4}-\d{2}-\d{2}$/.test(date)) return json_({ ok: false, error: 'model' });
+  if (!d.before && !d.after) return json_({ ok: false, error: 'photo' });
+  const skill = clean_(d.skill, 80), base = date + ' ' + skill;
+  const mine = mphotoFolder_(me.name), small = mphotoFolder_('.small');
+  const b = mphotoFile_(d.before, mine, base + ' - before'), a = mphotoFile_(d.after, mine, base + ' - after');
+  const bt = b ? mphotoFile_(d.beforeT, small, me.slug + ' ' + base + ' - before') : '', at = a ? mphotoFile_(d.afterT, small, me.slug + ' ' + base + ' - after') : '';
+  if (!b && !a) return json_({ ok: false, error: 'photo' });
+  ttab_(TT.mphoto).appendRow([new Date(), me.name, me.slug, id, skill, date, clean_(d.note, 300), b, a, bt, at]);
+  return json_({ ok: true });
+}
+/** Her own list only (no pictures), for the Associate Program page. */
+function myMPhotos_(slug) {
+  return tvals_(TT.mphoto).filter(r => String(r[2]) === slug)
+    .map(r => ({ id: String(r[3]), skill: String(r[4]), date: r[5] instanceof Date ? day_(r[5]) : String(r[5]), before: !!r[7], after: !!r[8] }));
+}
+function mphotoData_(fid) {
+  if (!fid) return '';
+  try { const b = DriveApp.getFileById(String(fid)).getBlob(); return 'data:' + b.getContentType() + ';base64,' + Utilities.base64Encode(b.getBytes()); } catch (e) { return ''; }
+}
+/** The Pretty Report album: newest first, small pictures inline, the full size one opens with mpfull. */
+function mphotoAlbum_() {
+  const rows = tvals_(TT.mphoto).map((r, i) => ({ row: i + 2, name: String(r[1]), slug: String(r[2]), skill: String(r[4]),
+    date: r[5] instanceof Date ? day_(r[5]) : String(r[5]), note: String(r[6] || ''), before: String(r[7] || ''), after: String(r[8] || ''),
+    beforeT: String(r[9] || ''), afterT: String(r[10] || '') })).reverse().slice(0, 240);
+  rows.forEach(x => { x.beforeT = mphotoData_(x.beforeT || x.before); x.afterT = mphotoData_(x.afterT || x.after); });
+  return { ok: true, photos: rows, folder: mphotoFolder_().getUrl() };
+}
+function mphotoFull_(fid) {
+  const ok = tvals_(TT.mphoto).some(r => String(r[7]) === String(fid) || String(r[8]) === String(fid));
+  return ok ? { ok: true, src: mphotoData_(fid) } : { ok: false };
 }
 function mySigs_(slug) {
   const o = {};
@@ -651,6 +704,7 @@ function teamPost_(d) {
     sh.getRange('A2:A').setNumberFormat('ddd mmm d, h:mm am/pm');
     return json_({ ok: true });
   }
+  if (d.type === 'mphoto') return mphotoSave_(me, d);
   if (d.type === 'sign') {
     const doc = clean_(d.doc, 80), typed = clean_(d.name, 80);
     if (!doc || typed.length < 3) return json_({ ok: false, error: 'name' });
@@ -665,6 +719,8 @@ function teamPost_(d) {
 /** The Pretty Report's Payroll tab: hours per person per day for one Monday–Sunday week. */
 function adminGet_(p) {
   if (p.admin !== ADMIN_KEY) return json_({ ok: false, error: 'key' });
+  if (p.mphotos) return json_(mphotoAlbum_());
+  if (p.mpfull) return json_(mphotoFull_(p.mpfull));
   const now = new Date();
   const wk = /^\d{4}-\d{2}-\d{2}$/.test(p.week || '') ? p.week : weekStart_(now);
   const ymd = wk.split('-').map(Number), endDay = day_(new Date(new Date(ymd[0], ymd[1] - 1, ymd[2]).getTime() + 6 * 864e5));

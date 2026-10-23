@@ -24,6 +24,11 @@
       "slug": "kat",
       "name": "Kat",
       "role": "associate"
+    },
+    {
+      "slug": "isabella",
+      "name": "Isabella",
+      "role": "associate"
     }
   ],
   "fullGuide": [
@@ -35,6 +40,7 @@
   ],
   "adv": {
     "kat": {},
+    "isabella": {},
     "rose": {
       "bd-basic": 5,
       "bd-volume": 1,
