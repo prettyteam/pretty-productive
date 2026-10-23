@@ -221,6 +221,15 @@ details.more .menu .btn:last-child{border-bottom:0}
 .paper .sp{height:24px}
 .paper .bow{display:block;width:64px;height:auto;margin:0 auto 20px}
 .paper .brandline.bottom{margin:30px 0 0}
+.ao .ao-list{width:100%;max-width:520px;overflow-x:auto}
+.ao .ao-list .paper{min-width:0;padding:28px 20px 30px}
+.paper .aop{width:100%;max-width:440px;margin:0 auto;border-collapse:collapse}
+.paper .aop td{padding:11px 4px;border-bottom:1px solid var(--line);font-family:var(--serif);font-size:15px;color:var(--paper-ink);text-align:left;vertical-align:top}
+.paper .aop td:last-child{text-align:right;white-space:nowrap;padding-left:14px}
+.paper .aop small{display:block;font:400 11px var(--sans);color:var(--paper-muted);margin-top:2px}
+.paper.prep .pp{max-width:480px;margin:0 auto 16px;text-wrap:pretty}
+.paper.prep .pp-h{font:500 10px var(--sans);letter-spacing:.3em;text-transform:uppercase;color:var(--paper-ink);margin-bottom:4px}
+.paper.prep .pp-t{font-family:var(--serif);font-size:15px;line-height:1.55;color:var(--paper-ink)}
 .tl{border-collapse:separate;border-spacing:0;margin:0 auto;font-family:var(--serif);color:var(--paper-ink)}
 .tl th{font:500 9.5px var(--sans);letter-spacing:.28em;text-transform:uppercase;padding:0 6px 9px;text-align:center;vertical-align:bottom}
 .tl th small{display:block;text-transform:none;letter-spacing:.04em;font:400 11px var(--sans);color:var(--paper-muted);margin-top:3px}
@@ -454,6 +463,8 @@ input,select,textarea{background:#fff;border-radius:0}
           </div>
           <div class="row pdfrow">
             <button class="btn" id="txBride">Text bride</button>
+            <button class="btn ghost" id="txPrep">Prep tips</button>
+            <button class="btn ghost" id="txExt">Extensions info</button>
             <button class="btn" id="txTeam">Text team</button>
             <button class="btn ghost" id="moveMode" aria-pressed="false">Move people</button>
             <details class="more"><summary class="btn ghost">More</summary><div class="menu">
@@ -1370,9 +1381,10 @@ function phoneOfArtist(a){
   return pr?digits(pr.phone):"";
 }
 function sheetBlob(html){return shotOf(html).then(c=>new Promise(r=>c.toBlob(r,"image/png")))}
-async function textWith(who,nums,body,html,missing){
+async function textWith(who,nums,body,html,missing,what){
+  what=what||"timeline picture";
   const box=$("#txStep");box.hidden=false;
-  box.innerHTML='<p class="hint" style="margin:0">Getting the timeline picture ready…</p>';
+  box.innerHTML='<p class="hint" style="margin:0">Getting the '+what+' ready…</p>';
   box.scrollIntoView({behavior:"smooth",block:"nearest"});
   let copied=false;
   const blob=sheetBlob(html);
@@ -1380,10 +1392,10 @@ async function textWith(who,nums,body,html,missing){
     if(!window.ClipboardItem||!navigator.clipboard||!navigator.clipboard.write)throw 0;
     await navigator.clipboard.write([new ClipboardItem({"image/png":blob})]);copied=true;   // started inside the tap, so phones allow it
   }catch(_){}
-  if(!copied){try{const b=await blob;const f=new File([b],pdfName(S,"timeline").replace(".pdf",".png"),{type:"image/png"});downloadFile(f)}catch(_){}}
+  if(!copied){try{const b=await blob;const f=new File([b],what==="timeline picture"?pdfName(S,"timeline").replace(".pdf",".png"):what==="extensions picture"?"extension-rental.png":"hair-makeup-prep.png",{type:"image/png"});downloadFile(f)}catch(_){}}
   const href=smsHref(nums,body);
   box.innerHTML='<h2 style="margin:0">Text '+esc(who)+'</h2>'
-    +'<p class="hint" style="margin:0">'+(copied?'The timeline picture is copied ✓':'The timeline picture was saved to your phone.')+'</p>'
+    +'<p class="hint" style="margin:0">'+(copied?'The '+what+' is copied ✓':'The '+what+' was saved to your phone.')+'</p>'
     +(missing&&missing.length?'<p class="warn" style="margin:0">No cell on file for '+esc(missing.join(", "))+'. Add it in Team records, or add her in Messages.</p>':'')
     +'<a class="btn" href="'+esc(href)+'" style="text-align:center;text-decoration:none">Open Messages</a>'
     +'<p class="hint" style="margin:0">'+(copied?'In Messages, tap the text box, tap <b>Paste</b>, then <b>Send</b>.':'In Messages, tap + and add the picture, then <b>Send</b>.')+'</p>'
@@ -1391,6 +1403,47 @@ async function textWith(who,nums,body,html,missing){
   $("#txClose").onclick=()=>{box.hidden=true;box.innerHTML=""};
 }
 const firstName=s=>(s.bride||"").trim().split(/\s+/)[0];
+/* Prep tips for the bride (Alexandra, Oct 23 2026): her Canva "Hair & Makeup Prep" page, reworded short and simple,
+   in the same paper style as the timelines. Sent like Text bride: the picture is copied, Messages opens with a short note. */
+const PREP=[
+  ["Timing","Have everyone ready at the start time. The bride and whoever helps her into the dress go in the middle of the timeline, so everyone is done before the photographer arrives."],
+  ["Hair","Wash it 1 to 2 days before. Come with it clean and 100% dry. Wet hair is an extra charge."],
+  ["Skin","Come with a clean face and no makeup."],
+  ["Extensions","Wash and fully dry clip-ins before the day, not fresh out of the pack."],
+  ["Inspiration","Bring realistic photos of the looks you love."],
+  ["Allergies","Tell us about any product allergies before we start."]];
+/* Extension rental for a bride who didn't pre-rent (Alexandra, Oct 23 2026): we bring hair just in case.
+   Short version of her Canva "hair extension rental" terms: Venmo on the day, she mails it back with her own label. */
+const EXT_INFO=[
+  ["Just in Case","We bring clip-in extensions to every wedding. If you'd like to wear them today, just ask your artist."],
+  ["Rental","$150. Venmo @TaffetaWeddings on the wedding day, before we clip them in."],
+  ["Care","Please don't wash them, put products in them, cut or color them, or wear them around smoke."],
+  ["Mail Them Back","Within 5 to 7 business days, in the mailer we give you. Buy your own return label (USPS, UPS or FedEx) and send to:\nTaffeta Weddings\n219 Bellevue Avenue, Hammonton, NJ 08037"],
+  ["Not Returned?","If they don't reach us within 7 business days, you owe the full $250 cost of the set."]];
+function infoHTML(title,sub,rows){
+  return '<div class="paper prep" data-sheet><img class="bow" alt="" src="data:image/png;base64,'+BOW+'"><div class="bname">'+esc(title)+'</div>'
+    +'<div class="dline muted">'+esc(sub)+'</div><div class="sp"></div>'
+    +rows.map(([h,t])=>'<div class="pp"><div class="pp-h">'+esc(h)+'</div><div class="pp-t">'+esc(t).replace(/\n/g,"<br>")+'</div></div>').join("")
+    +'<div class="brandline bottom">TAFFETA WEDDINGS</div></div>';
+}
+$("#txExt").onclick=()=>{
+  const n=digits(S.bridePhone);
+  if(!n){toast("Add the bride's cell in the Wedding section first");const c=$("#bridePhone");c.closest(".card").classList.remove("closed");c.focus();return}
+  const body="Hi "+(firstName(S)||"there")+"! 🤍 We'll have clip-in extensions with us on your wedding day, just in case. Here's how renting them works if you decide you'd like them!";
+  textWith(firstName(S)||"the bride",[n],body,infoHTML("Hair Extensions","Wedding Day Rental",EXT_INFO),[],"extensions picture");
+};
+function prepHTML(){
+  return '<div class="paper prep" data-sheet><img class="bow" alt="" src="data:image/png;base64,'+BOW+'"><div class="bname">Hair &amp; Makeup Prep</div>'
+    +'<div class="dline muted">Preview &amp; Wedding Day</div><div class="sp"></div>'
+    +PREP.map(([h,t])=>'<div class="pp"><div class="pp-h">'+esc(h)+'</div><div class="pp-t">'+esc(t)+'</div></div>').join("")
+    +'<div class="brandline bottom">TAFFETA WEDDINGS</div></div>';
+}
+$("#txPrep").onclick=()=>{
+  const n=digits(S.bridePhone);
+  if(!n){toast("Add the bride's cell in the Wedding section first");const c=$("#bridePhone");c.closest(".card").classList.remove("closed");c.focus();return}
+  const body="Hi "+(firstName(S)||"there")+"! 🤍 Here are a few tips to get you and your girls ready for your preview and wedding day. Please share them with your bridal party!";
+  textWith(firstName(S)||"the bride",[n],body,prepHTML(),[],"prep tips picture");
+};
 const mdOf=d=>{if(!d)return"";const[,m,dd]=d.split("-");return Number(m)+"/"+Number(dd)};
 $("#txBride").onclick=()=>{
   const n=digits(S.bridePhone);
@@ -1470,11 +1523,28 @@ function payLinks(){const p=window.TW_PAY||{};const v=String(p.venmo||"").replac
 function qrSvg(text){if(!window.qrcode||!text)return"";const q=qrcode(0,"M");q.addData(text);q.make();const n=q.getModuleCount();let r="";
   for(let y=0;y<n;y++)for(let x=0;x<n;x++)if(q.isDark(y,x))r+='M'+x+' '+y+'h1v1h-1z';
   return '<svg viewBox="-1 -1 '+(n+2)+' '+(n+2)+'" shape-rendering="crispEdges" role="img" aria-label="QR code"><path d="'+r+'" fill="#121212"/></svg>'}
+/* Wedding day add-on prices (Alexandra, Oct 23 2026): services added on the day without notice cost a little more
+   than booked ones ($150), since the team squeezes them in. The artist shows this list, then the guest scans to pay. */
+const DAYOF=170;
+const AO_PRICES=[
+  ["Hair","$"+DAYOF],
+  ["Makeup","$"+DAYOF,"Lashes Included"],
+  ["Blow-Dry Only or Eyes Only","$"+DAYOF],
+  ["Lashes Only","$30"],
+  ["Extensions Brought From Home","$20 & Up","Artist's Discretion"],
+  ["Wet Hair","$50","Please Arrive With Hair Fully Dry"]];
+function aoPriceHTML(){
+  return '<div class="paper prep" data-sheet><img class="bow" alt="" src="data:image/png;base64,'+BOW+'"><div class="bname">Wedding Day Add-Ons</div><div class="dline muted">Same-Day Pricing</div><div class="sp"></div>'
+    +'<table class="aop">'+AO_PRICES.map(([n,v,sub])=>'<tr><td>'+esc(n)+(sub?'<small>'+esc(sub)+'</small>':'')+'</td><td>'+esc(v)+'</td></tr>').join("")+'</table>'
+    +'<div class="dline muted" style="margin-top:14px">Venmo @TaffetaWeddings</div>'
+    +'<div class="brandline bottom">TAFFETA WEDDINGS</div></div>';
+}
 function renderAddon(){
   const box=$("#view-addon");if(!box)return;const L=payLinks();
   if(AO_SHOW==="card"&&!L.card)AO_SHOW="venmo";if(AO_SHOW==="venmo"&&!L.venmo&&L.card)AO_SHOW="card";
   const link=AO_SHOW==="card"?L.card:L.venmo;
-  let h='<div class="ao"><div class="mhead">Wedding Day Add-Ons</div>';
+  let h='<div class="ao"><div class="mhead">Wedding Day Add-Ons</div><div class="ao-list">'+aoPriceHTML()+'</div>'
+    +'<button type="button" class="pay" id="aoShare">Save or send price list</button>';
   if(!L.venmo&&!L.card){h+='<p>The payment links are being set up. Check back soon.</p></div>';box.innerHTML=h;return}
   h+='<p>Adding a service today? Scan to pay Taffeta Weddings.</p><div class="qr">'+qrSvg(link)+'</div>'
    +'<span class="lbl" style="font-size:11px;letter-spacing:.16em;text-transform:uppercase">'+(AO_SHOW==="card"?"Card or Apple Pay":"Venmo"+(L.venmoName?" · @"+esc(L.venmoName):""))+'</span>';
@@ -1482,7 +1552,8 @@ function renderAddon(){
   if(L.card)h+='<button type="button" class="pay" data-s="card" aria-pressed="'+(AO_SHOW==="card")+'">Card or Apple Pay</button>';
   if(L.venmo&&L.card)h+='<p style="font-size:14px">Tap a button to show that code.</p>';
   h+='</div>';
-  box.innerHTML=h;box.querySelectorAll(".pay").forEach(b=>b.onclick=()=>{AO_SHOW=b.dataset.s;renderAddon()});
+  box.innerHTML=h;box.querySelectorAll(".pay[data-s]").forEach(b=>b.onclick=()=>{AO_SHOW=b.dataset.s;renderAddon()});
+  const sh=$("#aoShare");if(sh)sh.onclick=e=>sendPdf(e.currentTarget,[aoPriceHTML()],"wedding-day-add-ons.jpg","",true);
 }
 
 /* Gratuity (Alexandra, Oct 21 2026): each bridesmaid scans the artist's own code and tips her straight to the Venmo on
