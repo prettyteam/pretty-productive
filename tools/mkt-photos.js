@@ -130,7 +130,7 @@
     if(!(s.photos||[]).some(function(x){return x.id===ph.id}))MK.applyState(Object.assign({},s,{photos:[ph].concat(s.photos||[])}));}
   function uploadAll(files){
     if(busy||!files.length)return;busy=true;MK.busy=true;awake(true);
-    var album=cur,full=$('fullsize').checked,done=0,fail=0,dup=0,total=files.length,q=files.slice(),have=[];
+    var album=cur,full=$('fullsize').checked,done=0,fail=0,dup=0,total=files.length,q=files.slice(),have=[],added=[];
     var bar=$('prog');bar.hidden=false;
     function step(){bar.firstChild.style.width=Math.round(100*(done+fail+dup)/total)+'%';msg('Adding photos: '+(done+fail+dup)+' of '+total+(dup?' ('+dup+' already here, skipped)':'')+(fail?' ('+fail+' did not work)':'')+'. Keep this page open.');}
     msg('Getting ready\u2026');
@@ -141,12 +141,14 @@
         return Promise.all([b64(p.blob),b64(p.thumb)]).then(function(d){
         var body={album:album,data:d[0],thumb:d[1],w:p.w,h:p.h,type:p.blob.type||'image/jpeg'};
         return MK.api('addPhoto',body).catch(function(){return new Promise(function(r){setTimeout(r,4000)}).then(function(){return MK.api('addPhoto',body)})})
-          .then(function(r){landed(r.photo,d[1],p.fp);done++});});})
+          .then(function(r){landed(r.photo,d[1],p.fp);if(r.photo)added.push(r.photo.id);done++});});})
       .then(null,function(e){fail++;console.warn(e)})
       .then(function(){step();return worker()});}
     // Waits at most 20 seconds for the album's fingerprints, so a slow connection never holds up the upload.
     Promise.race([albumFps(album),new Promise(function(r){setTimeout(function(){r(null)},20000)})]).catch(function(){return null}).then(function(l){return l||photos.filter(function(p){return p.album===album&&fps[p.id]}).map(function(p){return{fp:fps[p.id]}})}).then(function(l){have=l.map(function(x){return x.fp});step();return Promise.all([worker(),worker()])}).then(function(){busy=false;MK.busy=false;awake(false);bar.hidden=true;
-      msg(done+' photo'+(done===1?'':'s')+' added'+(dup?'. '+dup+(dup===1?' was':' were')+' already in this album, so I skipped '+(dup===1?'it':'them'):'')+(fail?'. '+fail+' did not work. Try those again, or turn off Full size.':'.'));$('pick').value='';MK.refresh();});
+      var said=done+' photo'+(done===1?'':'s')+' added'+(dup?'. '+dup+(dup===1?' was':' were')+' already in this album, so I skipped '+(dup===1?'it':'them'):'')+(fail?'. '+fail+' did not work. Try those again, or turn off Full size.':'.');
+      msg(said);$('pick').value='';
+      if(MK._state&&MK._state.sort&&added.length&&!isWed(album))autoSort(added,said);else MK.refresh();});
   }
 
   // Lightbox works on whichever album is showing, always at full size.
@@ -190,10 +192,27 @@
 
   $('pick').addEventListener('change',function(){uploadAll([].slice.call(this.files||[]))});
 
+  // Auto-sort (Alexandra, Oct 24 2026): after an upload, Claude looks at each new photo and the script moves any that clearly
+  // belong in another album (never in or out of a wedding's Favorites). The message says what moved, with Undo.
+  function autoSort(ids,said){busy=true;msg(said+' Sorting them into the right albums\u2026');var moves=[],b=[];
+    for(var i=0;i<ids.length;i+=12)b.push(ids.slice(i,i+12));
+    b.reduce(function(pr,x){return pr.then(function(){return MK.api('sort',{ids:x}).then(function(r){moves=moves.concat(r.moves||[]);MK.applyState(r)}).catch(function(e){console.warn(e)})})},Promise.resolve())
+      .then(function(){busy=false;if(!moves.length){msg(said+' They all look like they belong here.');return}
+        var by={};moves.forEach(function(m){by[m.to]=(by[m.to]||0)+1});
+        msg(said+' Moved '+Object.keys(by).map(function(k){var a=albumOf(k);return by[k]+' to '+(a?a.name:'another album')}).join(', ')+'. ');
+        var u=document.createElement('button');u.type='button';u.className='mk-undo';u.textContent='Undo';$('upmsg').appendChild(u);
+        u.onclick=function(){u.disabled=true;busy=true;moves.reduce(function(pr,m){return pr.then(function(){return MK.api('move',{id:m.id,album:m.from}).then(MK.applyState).catch(function(){})})},Promise.resolve())
+          .then(function(){busy=false;msg('Put back where you added '+(moves.length===1?'it':'them')+'.')})};});}
+  var sortb=document.createElement('button');sortb.type='button';sortb.id='mk-sortkey';sortb.textContent='Turn On Auto-Sort';sortb.hidden=true;
+  sortb.onclick=function(){var k=(prompt('Paste your Claude key (it starts with sk-ant-). It stays in your Google script, not on this page.')||'').trim();if(!k)return;
+    sortb.disabled=true;MK.api('sortKey',{key:k}).then(function(){msg('Auto-sort is on. New photos will go to the album they fit best.');return MK.refresh()})
+      .catch(function(){msg('That key did not work. Copy it again from console.anthropic.com and try once more.')}).then(function(){sortb.disabled=false})};
+  MK.onState(function(s){sortb.hidden=!!s.sort});
+
   // Remove doubles: finds copies of the same photo in the open album, keeps the first one added, and removes the rest
   // (Drive keeps removed photos in its trash for 30 days).
-  var dupb=document.createElement('button');dupb.type='button';dupb.id='mk-dups';dupb.textContent='Remove Doubles';$('fullsize').parentNode.after(dupb);
-  var dst2=document.createElement('style');dst2.textContent='#mk-dups{font:inherit;font-size:13px;padding:10px 14px;min-height:40px;border:1px solid var(--ink,#111);background:transparent;color:var(--ink,#111);cursor:pointer;border-radius:2px}#mk-dups:disabled{opacity:.4;cursor:default}';document.head.appendChild(dst2);
+  var dupb=document.createElement('button');dupb.type='button';dupb.id='mk-dups';dupb.textContent='Remove Doubles';$('fullsize').parentNode.after(dupb);dupb.after(sortb);
+  var dst2=document.createElement('style');dst2.textContent='#mk-dups,#mk-sortkey,.mk-undo{font:inherit;font-size:13px;padding:10px 14px;min-height:40px;border:1px solid var(--ink,#111);background:transparent;color:var(--ink,#111);cursor:pointer;border-radius:2px}#mk-dups:disabled,#mk-sortkey:disabled,.mk-undo:disabled{opacity:.4;cursor:default}#mk-sortkey[hidden]{display:none}.mk-undo{padding:6px 12px;min-height:32px;margin-left:4px}';document.head.appendChild(dst2);
   dupb.onclick=function(){if(busy)return;var album=cur;busy=true;dupb.disabled=true;msg('Looking for doubles\u2026');
     albumFps(album).then(function(l){l.sort(function(a,b){return(a.p.addedAt||0)-(b.p.addedAt||0)});var keep=[],extra=[];
       l.forEach(function(x){if(keep.some(function(k){return same(k.fp,x.fp)}))extra.push(x);else keep.push(x)});
