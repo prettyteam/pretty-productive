@@ -75,7 +75,8 @@
   }
   function msg(t){$('upmsg').textContent=t}
 
-  // Photo prep: normal keeps up to 2560px (plenty for Instagram); full size keeps the original when it can.
+  // Photo prep: normal keeps up to 2048px (Instagram tops out at 1440, and smaller goes up faster over a phone's data, Oct 24 2026);
+  // full size keeps the original when it can.
   var OK={'image/jpeg':1,'image/png':1,'image/webp':1};
   function load1(file){return new Promise(function(res,rej){var u=URL.createObjectURL(file),im=new Image();
     im.onload=function(){res({im:im,u:u})};im.onerror=function(){URL.revokeObjectURL(u);rej(new Error('decode'))};im.src=u;})}
@@ -92,13 +93,21 @@
   function prep(file,full){
     return load(file).then(function(o){
       var w=o.im.naturalWidth,h=o.im.naturalHeight,keep=full&&OK[file.type]&&file.size<18*1048576;
-      var main=keep?Promise.resolve({blob:file,w:w,h:h}):shrink(o.im,full?4096:2560,full?.92:.88);
+      var main=keep?Promise.resolve({blob:file,w:w,h:h}):shrink(o.im,full?4096:2048,full?.92:.86);
       return Promise.all([main,shrink(o.im,480,.82)]).then(function(r){URL.revokeObjectURL(o.u);return{blob:r[0].blob,w:r[0].w,h:r[0].h,thumb:r[1].blob}});
     });
   }
   function b64(blob){return new Promise(function(res,rej){var r=new FileReader();r.onload=function(){res(String(r.result).split(',')[1])};r.onerror=rej;r.readAsDataURL(blob)})}
+  // Phone uploads (Alexandra, Oct 24 2026): each photo shows in the album as soon as it's saved instead of all at the end,
+  // two go up at a time (thumbnails no longer wait behind them), and the screen stays awake so the phone doesn't stop halfway.
+  var wake=null;
+  function awake(on){try{if(on&&!wake&&navigator.wakeLock)navigator.wakeLock.request('screen').then(function(w){wake=w;w.addEventListener('release',function(){wake=null})}).catch(function(){});
+    else if(!on&&wake){wake.release();wake=null}}catch(e){}}
+  document.addEventListener('visibilitychange',function(){if(busy&&document.visibilityState==='visible')awake(true)});
+  function landed(ph,thumb){var s=MK._state;if(!s||!ph)return;MK._thumbs.set(ph.id,'data:image/jpeg;base64,'+thumb);
+    if(!(s.photos||[]).some(function(x){return x.id===ph.id}))MK.applyState(Object.assign({},s,{photos:[ph].concat(s.photos||[])}));}
   function uploadAll(files){
-    if(busy||!files.length)return;busy=true;MK.busy=true;
+    if(busy||!files.length)return;busy=true;MK.busy=true;awake(true);
     var album=cur,full=$('fullsize').checked,done=0,fail=0,total=files.length,q=files.slice();
     var bar=$('prog');bar.hidden=false;
     function step(){bar.firstChild.style.width=Math.round(100*(done+fail)/total)+'%';msg('Adding photos: '+(done+fail)+' of '+total+(fail?' ('+fail+' did not work)':'')+'. Keep this page open.');}
@@ -106,10 +115,11 @@
     function worker(){var f=q.shift();if(!f)return Promise.resolve();
       return prep(f,full).then(function(p){return Promise.all([b64(p.blob),b64(p.thumb)]).then(function(d){
         var body={album:album,data:d[0],thumb:d[1],w:p.w,h:p.h,type:p.blob.type||'image/jpeg'};
-        return MK.api('addPhoto',body).catch(function(){return new Promise(function(r){setTimeout(r,4000)}).then(function(){return MK.api('addPhoto',body)})});});})
+        return MK.api('addPhoto',body).catch(function(){return new Promise(function(r){setTimeout(r,4000)}).then(function(){return MK.api('addPhoto',body)})})
+          .then(function(r){landed(r.photo,d[1])});});})
       .then(function(){done++},function(e){fail++;console.warn(e)})
       .then(function(){step();return worker()});}
-    worker().then(function(){busy=false;MK.busy=false;bar.hidden=true;
+    Promise.all([worker(),worker()]).then(function(){busy=false;MK.busy=false;awake(false);bar.hidden=true;
       msg(done+' photo'+(done===1?'':'s')+' added'+(fail?'. '+fail+' did not work. Try those again, or turn off Full size.':'.'));$('pick').value='';MK.refresh();});
   }
 
