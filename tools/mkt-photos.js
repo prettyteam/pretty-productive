@@ -215,10 +215,11 @@
 
   // Auto-sort (Alexandra, Oct 24 2026): after an upload, Claude looks at each new photo and the script moves any that clearly
   // belong in another album (never in or out of a wedding's Favorites). The message says what moved, with Undo.
-  function autoSort(ids,said){busy=true;msg(said+' Sorting them into the right albums\u2026');var moves=[],b=[];
+  function autoSort(ids,said){busy=true;awake(true);msg(said+' Sorting them into the right albums\u2026');var moves=[],b=[],n=0;
     for(var i=0;i<ids.length;i+=12)b.push(ids.slice(i,i+12));
-    b.reduce(function(pr,x){return pr.then(function(){return MK.api('sort',{ids:x}).then(function(r){moves=moves.concat(r.moves||[]);MK.applyState(r)}).catch(function(e){console.warn(e)})})},Promise.resolve())
-      .then(function(){busy=false;if(waiting.length){msg(said+(moves.length?' Moved '+moves.length+' to a better album.':''));next();return}
+    b.reduce(function(pr,x){return pr.then(function(){return MK.api('sort',{ids:x}).then(function(r){moves=moves.concat(r.moves||[]);MK.applyState(r)}).catch(function(e){console.warn(e)})
+      .then(function(){n+=x.length;if(b.length>1)msg(said+' Sorting: '+n+' of '+ids.length+' checked, '+moves.length+' moved so far. Keep this page open.')})})},Promise.resolve())
+      .then(function(){busy=false;awake(false);if(waiting.length){msg(said+(moves.length?' Moved '+moves.length+' to a better album.':''));next();return}
         if(!moves.length){msg(said+' They all look like they belong here.');return}
         var by={};moves.forEach(function(m){by[m.to]=(by[m.to]||0)+1});
         msg(said+' Moved '+Object.keys(by).map(function(k){var a=albumOf(k);return by[k]+' to '+(a?a.name:'another album')}).join(', ')+'. ');
@@ -229,12 +230,20 @@
   sortb.onclick=function(){var k=(prompt('Paste your Claude key (it starts with sk-ant-). It stays in your Google script, not on this page.')||'').trim();if(!k)return;
     sortb.disabled=true;MK.api('sortKey',{key:k}).then(function(){msg('Auto-sort is on. New photos will go to the album they fit best.');return MK.refresh()})
       .catch(function(){msg('That key did not work. Copy it again from console.anthropic.com and try once more.')}).then(function(){sortb.disabled=false})};
-  MK.onState(function(s){sortb.hidden=!!s.sort});
+
+  // Sort All Albums (Alexandra, Oct 24 2026): the photos that were already on Marketing Proofs before auto-sort get the same
+  // check, a dozen at a time, with one Undo at the end. The script skips any photo it has already checked, so running it again is cheap.
+  var alls=document.createElement('button');alls.type='button';alls.id='mk-sortall';alls.textContent='Sort All Albums';alls.hidden=true;
+  alls.onclick=function(){if(busy)return;var ids=photos.filter(function(p){return p.kind==='d'&&!p.video&&!isKid(p.album)}).map(function(p){return p.id});
+    if(!ids.length){msg('Nothing to sort yet.');return}
+    if(!confirm('Check all '+ids.length+' photos and move any that belong in a different album? It takes about '+Math.max(1,Math.round(ids.length/60))+' minutes with this page open, costs about $'+Math.max(1,Math.round(ids.length*.003))+' in Claude credits, and you can Undo at the end. If it stops partway, tap it again and it picks up where it left off.'))return;
+    autoSort(ids,'Sorting all albums.');};
+  MK.onState(function(s){sortb.hidden=!!s.sort;alls.hidden=!s.sort});
 
   // Remove doubles: finds copies of the same photo in the open album, keeps the first one added, and removes the rest
   // (Drive keeps removed photos in its trash for 30 days).
-  var dupb=document.createElement('button');dupb.type='button';dupb.id='mk-dups';dupb.textContent='Remove Doubles';$('fullsize').parentNode.after(dupb);dupb.after(sortb);
-  var dst2=document.createElement('style');dst2.textContent='#mk-dups,#mk-sortkey,.mk-undo{font:inherit;font-size:13px;padding:10px 14px;min-height:40px;border:1px solid var(--ink,#111);background:transparent;color:var(--ink,#111);cursor:pointer;border-radius:2px}#mk-dups:disabled,#mk-sortkey:disabled,.mk-undo:disabled{opacity:.4;cursor:default}#mk-sortkey[hidden]{display:none}.mk-undo{padding:6px 12px;min-height:32px;margin-left:4px}';document.head.appendChild(dst2);
+  var dupb=document.createElement('button');dupb.type='button';dupb.id='mk-dups';dupb.textContent='Remove Doubles';$('fullsize').parentNode.after(dupb);dupb.after(sortb);sortb.after(alls);
+  var dst2=document.createElement('style');dst2.textContent='#mk-dups,#mk-sortkey,#mk-sortall,.mk-undo{font:inherit;font-size:13px;padding:10px 14px;min-height:40px;border:1px solid var(--ink,#111);background:transparent;color:var(--ink,#111);cursor:pointer;border-radius:2px}#mk-dups:disabled,#mk-sortkey:disabled,.mk-undo:disabled{opacity:.4;cursor:default}#mk-sortkey[hidden],#mk-sortall[hidden]{display:none}.mk-undo{padding:6px 12px;min-height:32px;margin-left:4px}';document.head.appendChild(dst2);
   dupb.onclick=function(){if(busy)return;var album=cur;busy=true;dupb.disabled=true;msg('Looking for doubles\u2026');
     albumFps(album).then(function(l){l.sort(function(a,b){return(a.p.addedAt||0)-(b.p.addedAt||0)});var keep=[],extra=[];
       l.forEach(function(x){if(keep.some(function(k){return same(k.fp,x.fp)}))extra.push(x);else keep.push(x)});
