@@ -2347,16 +2347,17 @@ function pvShrink(file,max,q){
 async function pvUpload(p,kind,files){
   const st=$("#pv-up-"+kind),me=ROLE==="office"?"Office":(ME&&(ME.preferredName||ME.legalName))||"";
   let done=0;upAwake(true);
-  try{for(const f of files){
-    if(!/^image\//.test(f.type)&&!/\.(jpe?g|png|heic|heif|webp)$/i.test(f.name))continue;
-    if(st)st.textContent="Uploading "+(done+1)+" of "+files.length+"…";
+  const q=files.filter(f=>/^image\//.test(f.type)||/\.(jpe?g|png|heic|heif|webp)$/i.test(f.name)),total=q.length;
+  const worker=async()=>{for(let f;(f=q.shift());){   // three at a time (Oct 24 2026)
+    if(st)st.textContent="Uploading "+(done+1)+" of "+total+"…";
     try{
       const data=await pvShrink(f,1600,.82),thumb=await pvShrink(f,320,.7);
       const j=await apiRetry("addPhoto",{key:p.key,photo:{kind,data,thumb}});
       p.info=j.info;pvThumbs[j.photo.id]="data:image/jpeg;base64,"+thumb;done++;
       if(pvSel===p.key)pvRenderPhotos(p,me);
     }catch(e){toast(e.code==="too_many"?e.message:"A photo didn't upload. Try again.")}
-  }}finally{upAwake(false)}
+  }};
+  try{await Promise.all([worker(),worker(),worker()])}finally{upAwake(false)}
   if(st)st.textContent=done?done+" photo"+(done>1?"s":"")+" added.":"";
   renderPreviews();
 }
@@ -2435,18 +2436,19 @@ async function wpOpen(id,ph){
     if(w&&src){w.document.title="Wedding photo";w.document.body.style.margin="0";w.document.body.innerHTML='<img alt="Wedding photo" style="max-width:100%;display:block;margin:auto" src="'+src+'">'}else if(w)w.close()}
   catch(e){if(w)w.close();toast("Couldn't open that photo.")}
 }
-async function wpUpload(id,kind,files,st){
+async function wpUpload(id,kind,files,st){   // three at a time (Oct 24 2026)
   let done=0;upAwake(true);
-  try{for(const f of files){
-    if(!/^image\//.test(f.type)&&!/\.(jpe?g|png|heic|heif|webp)$/i.test(f.name))continue;
-    if(st)st.textContent="Uploading "+(done+1)+" of "+files.length+"…";
+  const q=files.filter(f=>/^image\//.test(f.type)||/\.(jpe?g|png|heic|heif|webp)$/i.test(f.name)),total=q.length;
+  const worker=async()=>{for(let f;(f=q.shift());){
+    if(st)st.textContent="Uploading "+(done+1)+" of "+total+"…";
     try{
       const data=await pvShrink(f,1600,.82),thumb=await pvShrink(f,320,.7);
       const j=await apiRetry("addWedPhoto",{id,photo:{kind,data,thumb}});
       wpThumbs[j.photo.id]="data:image/jpeg;base64,"+thumb;wtPut(j.photo.id,wpThumbs[j.photo.id]);(wpCache[id]=wpCache[id]||[]).push(j.photo);done++;
       wpRefresh(id);st=null;
     }catch(e){toast(e.code==="too_many"?e.message:"A photo didn't upload. Try again.")}
-  }}finally{upAwake(false)}
+  }};
+  try{await Promise.all([worker(),worker(),worker()])}finally{upAwake(false)}
   wpRefresh(id);
   if(done)toast(done+" photo"+(done>1?"s":"")+" added.");
 }
