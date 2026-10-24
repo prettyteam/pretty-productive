@@ -27,7 +27,7 @@ function mktStateFile_() {
 }
 function mktRead_() { const s = JSON.parse(mktStateFile_().getBlob().getDataAsString() || '{}'); s.edits = s.edits || { text: {}, ok: {} }; s.edits.text = s.edits.text || {}; s.edits.ok = s.edits.ok || {}; s.albums = s.albums || []; s.photos = s.photos || []; s.hidden = s.hidden || []; return s; }
 function mktWrite_(s) { s.rev = (s.rev || 0) + 1; s.updatedAt = new Date().toISOString(); mktStateFile_().setContent(JSON.stringify(s)); return s; }
-function mktPublic_(s) { return { ok: true, edits: s.edits, albums: s.albums, photos: s.photos.map(p => ({ id: p.id, album: p.album, w: p.w, h: p.h, addedAt: p.addedAt, by: p.by || '', video: p.kind === 'video' || undefined, wid: p.wid || undefined })), hidden: s.hidden, rev: s.rev || 0, sort: !!mktSortKey_() }; }
+function mktPublic_(s) { return { ok: true, edits: s.edits, albums: s.albums, photos: s.photos.map(p => ({ id: p.id, album: p.album, w: p.w, h: p.h, addedAt: p.addedAt, by: p.by || '', video: p.kind === 'video' || undefined, vf: p.kind === 'video' ? p.f : undefined, wid: p.wid || undefined })), hidden: s.hidden, rev: s.rev || 0, sort: !!mktSortKey_() }; }
 
 function mkt_(d) {
   if (mktHex_(String(d.code || '').replace(/\s+/g, '')) !== MKT_CODE_SHA) return { ok: false, error: 'signin' };
@@ -95,8 +95,10 @@ function mkt_(d) {
 function mktThumbs_(s, d) {
   const out = {};
   (d.ids || []).slice(0, 40).forEach(id => { const p = s.photos.find(x => x.id === id); if (!p) return;
-    try { const f = DriveApp.getFileById(d.full && p.kind !== 'video' ? p.f : p.t); if (f.getSize() > 4 * 1048576) return;
-      const b = f.getBlob(); out[id] = 'data:' + b.getContentType() + ';base64,' + Utilities.base64Encode(b.getBytes()); } catch (e) {} });
+    try { const f = DriveApp.getFileById(d.full && p.kind !== 'video' ? p.f : p.t);
+      // A video with no cover picture (iPhones don't always make one) gets Drive's own still instead (Oct 24 2026).
+      const b = /^image\//.test(f.getMimeType()) && f.getSize() <= 4 * 1048576 ? f.getBlob() : d.full ? null : f.getThumbnail();
+      if (b) out[id] = 'data:' + (b.getContentType() || 'image/jpeg') + ';base64,' + Utilities.base64Encode(b.getBytes()); } catch (e) {} });
   return { ok: true, photos: out };
 }
 
