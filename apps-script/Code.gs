@@ -84,6 +84,7 @@ function doPost(e) {
     if (d.type === 'rxdesk') return rxDeskSet_(d);
     if (d.type === 'deskseen') return deskSeenSet_(d);
     if (d.type === 'rxopen') return rxOpened_(d);
+    if (d.type === 'act') return actLog_(d);
     if (d.website) return json_({ ok: true });                       // spam trap
     const now = new Date();
     if (d.type === 'status') return setStatus_(d);
@@ -265,6 +266,7 @@ const TT = {
   models: { name: 'Model Log', headers: ['Logged', 'Name', 'App ID', 'Skill ID', 'Skill', 'Model date'] },
   mphoto: { name: 'Model Photos', headers: ['Logged', 'Name', 'App ID', 'Skill ID', 'Skill', 'Model date', 'Note', 'Before', 'After', 'Before (small)', 'After (small)', 'More'] },
   rxme:  { name: 'RX Artists', headers: ['Updated', 'Name', 'App ID', 'iPad PIN (scrambled)', 'Starred products', 'Wrong tries', 'Locked until'] },
+  act:   { name: 'Team Activity', headers: ['When', 'Name', 'App ID', 'App', 'What', 'Detail'] },
   rxcard: { name: 'RX Saved Cards', headers: ['Saved', 'Name', 'App ID', 'Card ID', 'Guest', 'Card', 'Desk', 'Desk at', 'Opened at'] }
 };
 const STOCK_EDITORS = ['alexandra', 'rose', 'carolyn'];   // who can change stock counts in the app (everyone else only sees them)
@@ -281,6 +283,23 @@ const ROSTER = [
 ];
 
 function tss_() { return SpreadsheetApp.openById(TEAM_SHEET_ID); }
+/** Team Activity (Alexandra, Oct 24 2026): a line each time a girl opens her Gratuity code, shows the wedding add-on code or
+   shares her thank-you card, and each time a guest opens a card, so Pretty Life can show it each morning.
+   The same name and action within 10 minutes counts once. */
+const ACT_WHAT = { tip: 'Opened Gratuity', addon: 'Showed Add-On Code', card: 'Shared My Card', cardopen: 'Guest Opened Her Card' };
+function actLog_(d) {
+  const what = ACT_WHAT[d.what], name = clean_(d.name, 60);
+  if (!what || !name) return json_({ ok: false });
+  const app = d.app === 'weddings' ? 'Weddings' : d.app === 'card' ? 'Thank-You Card' : 'Team';
+  const sh = ttab_(TT.act), n = sh.getLastRow(), now = new Date();
+  if (n > 1) {
+    const k = Math.min(n - 1, 200), rows = sh.getRange(n - k + 1, 1, k, 5).getValues();
+    if (rows.some(r => String(r[1]) === name && String(r[4]) === what && r[0] instanceof Date && now - r[0] < 6e5)) return json_({ ok: true });
+  }
+  sh.appendRow([now, name, clean_(d.slug, 40), app, what, clean_(d.detail, 120)]);
+  return json_({ ok: true });
+}
+
 function ttab_(t) {
   const ss = tss_();
   let sh = ss.getSheetByName(t.name);
