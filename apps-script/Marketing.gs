@@ -32,6 +32,7 @@ function mktPublic_(s) { return { ok: true, edits: s.edits, albums: s.albums, ph
 function mkt_(d) {
   if (mktHex_(String(d.code || '').replace(/\s+/g, '')) !== MKT_CODE_SHA) return { ok: false, error: 'signin' };
   if (d.op === 'thumbs') return mktThumbs_(mktRead_(), d);   // read-only, so it doesn't queue behind uploads (Oct 23 2026)
+  if (d.op === 'addPhoto') return mktAddPhoto_(d);            // saves to Drive first, takes the lock only to list it (Oct 24 2026)
   if (d.op === 'sort') return mktSort_(d);                    // asks Claude first, takes the lock only to save the moves
   if (d.op === 'sortKey') {                                    // one time: the Claude key for auto-sort, kept in Script Properties
     const k = String(d.key || '').trim();
@@ -62,18 +63,6 @@ function mkt_(d) {
         s.albums.push(a); mktWrite_(s);
         return Object.assign(mktPublic_(s), { id: a.id });
       }
-      case 'addPhoto': {   // {album, data:<base64 jpeg>, thumb:<base64 jpeg>, w, h, type}
-        if (!d.data || !d.album) return { ok: false, error: 'bad_request' };
-        if (s.photos.length >= 3000) return { ok: false, error: 'too_many' };
-        const folder = mktFolder_(), id = 'p' + Utilities.getUuid().replace(/-/g, '').slice(0, 14);
-        const type = /^image\/(jpeg|png|webp|gif)$/.test(d.type || '') ? d.type : 'image/jpeg';
-        const ext = type.split('/')[1].replace('jpeg', 'jpg');
-        const full = folder.createFile(Utilities.newBlob(Utilities.base64Decode(d.data), type, id + '.' + ext));
-        const thumb = d.thumb ? folder.createFile(Utilities.newBlob(Utilities.base64Decode(d.thumb), 'image/jpeg', id + ' (small).jpg')) : full;
-        const p = { id: id, album: String(d.album).slice(0, 40), w: Number(d.w) || 0, h: Number(d.h) || 0, addedAt: Date.now(), by: String(d.by || '').slice(0, 40), f: full.getId(), t: thumb.getId() };
-        s.photos.unshift(p); mktWrite_(s);
-        return { ok: true, photo: { id: p.id, album: p.album, w: p.w, h: p.h, addedAt: p.addedAt } };
-      }
       case 'move': {   // {id, album}: Undo after auto-sort, or moving one by hand
         const p = s.photos.find(x => x.id === d.id), to = String(d.album || '');
         if (!p || !mktSortAlbums_(s).some(a => a.id === to) && !s.albums.some(a => a.id === to)) return { ok: false, error: 'bad_request' };
@@ -89,6 +78,26 @@ function mkt_(d) {
     }
     return { ok: false, error: 'bad_request' };
   } finally { lock.releaseLock(); }
+}
+
+// Faster uploads (Alexandra, Oct 24 2026): the photo goes into Drive before the lock, so several can go up at once;
+// the lock is held only for the moment it takes to add the photo to the list.
+function mktAddPhoto_(d) {   // {album, data:<base64 jpeg>, thumb:<base64 jpeg>, w, h, type}
+  if (!d.data || !d.album) return { ok: false, error: 'bad_request' };
+  const folder = mktFolder_(), id = 'p' + Utilities.getUuid().replace(/-/g, '').slice(0, 14);
+  const type = /^image\/(jpeg|png|webp|gif)$/.test(d.type || '') ? d.type : 'image/jpeg';
+  const ext = type.split('/')[1].replace('jpeg', 'jpg');
+  const full = folder.createFile(Utilities.newBlob(Utilities.base64Decode(d.data), type, id + '.' + ext));
+  const thumb = d.thumb ? folder.createFile(Utilities.newBlob(Utilities.base64Decode(d.thumb), 'image/jpeg', id + ' (small).jpg')) : full;
+  const p = { id: id, album: String(d.album).slice(0, 40), w: Number(d.w) || 0, h: Number(d.h) || 0, addedAt: Date.now(), by: String(d.by || '').slice(0, 40), f: full.getId(), t: thumb.getId() };
+  const lock = LockService.getScriptLock();
+  try {
+    lock.waitLock(30000);
+    const s = mktRead_();
+    if (s.photos.length >= 3000) { [full, thumb].forEach(f => { try { f.setTrashed(true); } catch (e) {} }); return { ok: false, error: 'too_many' }; }
+    s.photos.unshift(p); mktWrite_(s);
+  } finally { lock.releaseLock(); }
+  return { ok: true, photo: { id: p.id, album: p.album, w: p.w, h: p.h, addedAt: p.addedAt } };
 }
 
 // {ids:[…]} -> {id: 'data:image/jpeg;base64,…'}; skips anything over 4 MB (a video with no small cover) so one big file can't stall the rest.

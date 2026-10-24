@@ -2347,16 +2347,17 @@ function pvShrink(file,max,q){
 async function pvUpload(p,kind,files){
   const st=$("#pv-up-"+kind),me=ROLE==="office"?"Office":(ME&&(ME.preferredName||ME.legalName))||"";
   let done=0;upAwake(true);
-  try{for(const f of files){
-    if(!/^image\//.test(f.type)&&!/\.(jpe?g|png|heic|heif|webp)$/i.test(f.name))continue;
-    if(st)st.textContent="Uploading "+(done+1)+" of "+files.length+"…";
+  const q=files.filter(f=>/^image\//.test(f.type)||/\.(jpe?g|png|heic|heif|webp)$/i.test(f.name)),total=q.length;
+  const worker=async()=>{for(let f;(f=q.shift());){   // three at a time (Oct 24 2026)
+    if(st)st.textContent="Uploading "+(done+1)+" of "+total+"…";
     try{
       const data=await pvShrink(f,1600,.82),thumb=await pvShrink(f,320,.7);
       const j=await apiRetry("addPhoto",{key:p.key,photo:{kind,data,thumb}});
       p.info=j.info;pvThumbs[j.photo.id]="data:image/jpeg;base64,"+thumb;done++;
       if(pvSel===p.key)pvRenderPhotos(p,me);
     }catch(e){toast(e.code==="too_many"?e.message:"A photo didn't upload. Try again.")}
-  }}finally{upAwake(false)}
+  }};
+  try{await Promise.all([worker(),worker(),worker()])}finally{upAwake(false)}
   if(st)st.textContent=done?done+" photo"+(done>1?"s":"")+" added.":"";
   renderPreviews();
 }
@@ -2435,24 +2436,25 @@ async function wpOpen(id,ph){
     if(w&&src){w.document.title="Wedding photo";w.document.body.style.margin="0";w.document.body.innerHTML='<img alt="Wedding photo" style="max-width:100%;display:block;margin:auto" src="'+src+'">'}else if(w)w.close()}
   catch(e){if(w)w.close();toast("Couldn't open that photo.")}
 }
-async function wpUpload(id,kind,files,st){
+async function wpUpload(id,kind,files,st){   // three at a time (Oct 24 2026)
   let done=0;upAwake(true);
-  try{for(const f of files){
-    if(!/^image\//.test(f.type)&&!/\.(jpe?g|png|heic|heif|webp)$/i.test(f.name))continue;
-    if(st)st.textContent="Uploading "+(done+1)+" of "+files.length+"…";
+  const q=files.filter(f=>/^image\//.test(f.type)||/\.(jpe?g|png|heic|heif|webp)$/i.test(f.name)),total=q.length;
+  const worker=async()=>{for(let f;(f=q.shift());){
+    if(st)st.textContent="Uploading "+(done+1)+" of "+total+"…";
     try{
       const data=await pvShrink(f,1600,.82),thumb=await pvShrink(f,320,.7);
       const j=await apiRetry("addWedPhoto",{id,photo:{kind,data,thumb}});
       wpThumbs[j.photo.id]="data:image/jpeg;base64,"+thumb;wtPut(j.photo.id,wpThumbs[j.photo.id]);(wpCache[id]=wpCache[id]||[]).push(j.photo);done++;
       wpRefresh(id);st=null;
     }catch(e){toast(e.code==="too_many"?e.message:"A photo didn't upload. Try again.")}
-  }}finally{upAwake(false)}
+  }};
+  try{await Promise.all([worker(),worker(),worker()])}finally{upAwake(false)}
   wpRefresh(id);
   if(done)toast(done+" photo"+(done>1?"s":"")+" added.");
 }
 /* Wedding day favorites (Alexandra, Oct 23 2026): the artists add their favorite photos and videos after the wedding.
-   Each wedding gets its own album on Marketing Proofs (and a Drive folder) for Alexandra and Dom. Videos go up in 8 MB pieces. */
-const FAV_PIECE=8*1048576;
+   Each wedding gets its own album on Marketing Proofs (and a Drive folder) for Alexandra and Dom. Videos go up in 16 MB pieces; photos go up three at a time (Oct 24 2026). */
+const FAV_PIECE=16*1048576;
 function favCover(file){
   return new Promise(res=>{
     const v=document.createElement("video"),u=URL.createObjectURL(file);let done=false;
@@ -2468,21 +2470,21 @@ function favB64(blob){return new Promise((res,rej)=>{const r=new FileReader();r.
 function imgSize(file){return new Promise(res=>{const u=URL.createObjectURL(file),i=new Image();i.onload=()=>{URL.revokeObjectURL(u);res({w:i.naturalWidth,h:i.naturalHeight})};i.onerror=()=>{URL.revokeObjectURL(u);res({w:0,h:0})};i.src=u})}
 async function favUpload(id,files){
   const say=t=>{["team","build"].forEach(k=>{const b=$("#wp-"+k);if(b&&!b.hidden&&b.dataset.w===id){const st=b.querySelector("[data-st]");if(st)st.textContent=t}})};
-  let done=0,n=0;upAwake(true);
-  try{for(const f of files){
-    n++;
-    const isVid=/^video\//.test(f.type)||/\.(mov|mp4|m4v|3gp|webm)$/i.test(f.name);
-    if(!isVid&&!/^image\//.test(f.type)&&!/\.(jpe?g|png|heic|heif|webp)$/i.test(f.name))continue;
-    const lead=(isVid?"Uploading video ":"Uploading ")+n+" of "+files.length;
-    say(lead+"…");
+  const isVid=f=>/^video\//.test(f.type)||/\.(mov|mp4|m4v|3gp|webm)$/i.test(f.name);
+  const list=files.filter(f=>isVid(f)||/^image\//.test(f.type)||/\.(jpe?g|png|heic|heif|webp)$/i.test(f.name)),total=list.length;
+  let done=0,tried=0;upAwake(true);
+  async function one(f){
+    const vid=isVid(f),lead=(vid?"Uploading video ":"Uploading ")+Math.min(total,tried+1)+" of "+total;
+    if(!vid)say(lead+"…");
     try{
       let photo;
-      if(!isVid){
+      if(!vid){
         const sz=await imgSize(f),k=Math.min(1,2560/Math.max(sz.w||1,sz.h||1));
         const data=await pvShrink(f,2560,.88),thumb=await pvShrink(f,320,.7);
         photo=(await apiRetry("addFav",{id,photo:{data,thumb,w:Math.round(sz.w*k),h:Math.round(sz.h*k)}})).photo;
         wpThumbs[photo.id]="data:image/jpeg;base64,"+thumb;wtPut(photo.id,wpThumbs[photo.id]);
       }else{
+        say(lead+"…");
         const c=await favCover(f)||{};
         const st=await apiRetry("favVideoStart",{id,video:{name:f.name,type:f.type||"video/mp4",size:f.size,thumb:c.thumb||"",w:c.w||0,h:c.h||0}});
         let off=0;
@@ -2497,8 +2499,15 @@ async function favUpload(id,files){
         if(c.thumb&&photo){wpThumbs[photo.id]="data:image/jpeg;base64,"+c.thumb;wtPut(photo.id,wpThumbs[photo.id])}
       }
       if(photo){(wpCache[id]=wpCache[id]||[]).push(photo);done++;wpRefresh(id)}
-    }catch(e){toast(e.message&&e.message!=="error"&&e.message!=="server"?e.message:(isVid?"A video didn't upload. Try again.":"A photo didn't upload. Try again."))}
-  }}finally{upAwake(false)}
+    }catch(e){toast(e.message&&e.message!=="error"&&e.message!=="server"?e.message:(vid?"A video didn't upload. Try again.":"A photo didn't upload. Try again."))}
+    tried++;
+  }
+  try{
+    const pics=list.filter(f=>!isVid(f)),vids=list.filter(isVid);
+    const worker=async()=>{for(let f;(f=pics.shift());)await one(f)};
+    await Promise.all([worker(),worker(),worker()]);
+    for(const f of vids)await one(f);   // videos one at a time, each in big pieces
+  }finally{upAwake(false)}
   wpRefresh(id);
   if(done)toast(done+(done>1?" favorites":" favorite")+" added. Thank you!");
 }

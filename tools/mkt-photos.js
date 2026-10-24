@@ -129,7 +129,7 @@
   }
   function b64(blob){return new Promise(function(res,rej){var r=new FileReader();r.onload=function(){res(String(r.result).split(',')[1])};r.onerror=rej;r.readAsDataURL(blob)})}
   // Phone uploads (Alexandra, Oct 24 2026): each photo shows in the album as soon as it's saved instead of all at the end,
-  // two go up at a time (thumbnails no longer wait behind them), and the screen stays awake so the phone doesn't stop halfway.
+  // three go up at a time (thumbnails no longer wait behind them), and the screen stays awake so the phone doesn't stop halfway.
   var wake=null;
   function awake(on){try{if(on&&!wake&&navigator.wakeLock)navigator.wakeLock.request('screen').then(function(w){wake=w;w.addEventListener('release',function(){wake=null})}).catch(function(){});
     else if(!on&&wake){wake.release();wake=null}}catch(e){}}
@@ -160,7 +160,7 @@
       .then(null,function(e){fail++;console.warn(e)})
       .then(function(){step();return worker()});}
     // Waits at most 20 seconds for the album's fingerprints, so a slow connection never holds up the upload.
-    Promise.race([albumFps(album),new Promise(function(r){setTimeout(function(){r(null)},20000)})]).catch(function(){return null}).then(function(l){return l||photos.filter(function(p){return p.album===album&&fps[p.id]}).map(function(p){return{fp:fps[p.id]}})}).then(function(l){have=l.map(function(x){return x.fp});step();return Promise.all([worker(),worker()])}).then(function(){busy=false;MK.busy=false;awake(false);bar.hidden=true;
+    Promise.race([albumFps(album),new Promise(function(r){setTimeout(function(){r(null)},20000)})]).catch(function(){return null}).then(function(l){return l||photos.filter(function(p){return p.album===album&&fps[p.id]}).map(function(p){return{fp:fps[p.id]}})}).then(function(l){have=l.map(function(x){return x.fp});step();return Promise.all([worker(),worker(),worker()])}).then(function(){busy=false;MK.busy=false;awake(false);bar.hidden=true;
       var said=done+' photo'+(done===1?'':'s')+' added'+(dup?'. '+dup+(dup===1?' was':' were')+' already in this album, so I skipped '+(dup===1?'it':'them'):'')+(fail?'. '+fail+' did not work. Try those again, or turn off Full size.':'.');
       flushLand();msg(said);$('pick').value='';
       if(MK._state&&MK._state.sort&&added.length&&!isKid(album))autoSort(added,said);else{MK.refresh();next()}});

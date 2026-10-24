@@ -1141,9 +1141,9 @@ function mphView(){
   return [h('div',{class:'hub'},h('h1',{style:'font-size:28px'},MW_ICONS?mwLabel(MW_NAME):MW_NAME),
     API()?mpCard(next,logged):h('p',{class:'soft'},'Uploads switch on soon.'))];
 }
-/* A before and an after, each a photo or a video. Pictures are shrunk on the phone first; videos go up in 8 MB pieces. */
+/* A before and an after, each a photo or a video. Pictures are shrunk on the phone first; videos go up in 16 MB pieces, the before and after at the same time. */
 let MP={open:false,skill:'',date:'',note:'',before:null,after:null,more:[],busy:false,msg:''};
-const MP_PIECE=8*1048576;
+const MP_PIECE=16*1048576;   // a multiple of 256 KB, as Drive needs; fewer pieces means fewer trips (Oct 24 2026)
 function mpShrink(file,max,q){return new Promise((res,rej)=>{const u=URL.createObjectURL(file),im=new Image();
   im.onload=()=>{const k=Math.min(1,max/Math.max(im.naturalWidth,im.naturalHeight)),c=document.createElement('canvas');
     c.width=Math.round(im.naturalWidth*k);c.height=Math.round(im.naturalHeight*k);c.getContext('2d').drawImage(im,0,0,c.width,c.height);URL.revokeObjectURL(u);res(c.toDataURL('image/jpeg',q))};
@@ -1195,7 +1195,7 @@ async function mpSave(){
   if(!sk||!(MP.before||MP.after||MP.more.length)) return;
   MP.busy=true;MP.msg='';render();
   try{const tok={};
-    for(const w of ['before','after']) if(MP[w]&&MP[w].video) tok[w]=await mpVideo(w,sk);
+    await Promise.all(['before','after'].filter(w=>MP[w]&&MP[w].video).map(async w=>{tok[w]=await mpVideo(w,sk)}));
     const img=w=>MP[w]&&!MP[w].video?MP[w]:null;
     await mpPost({type:'mphoto',id:sk[0],skill:sk[1],date:MP.date,note:MP.note,
       before:img('before')&&img('before').full,beforeT:img('before')&&img('before').small,after:img('after')&&img('after').full,afterT:img('after')&&img('after').small,
