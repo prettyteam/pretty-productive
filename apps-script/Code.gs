@@ -263,7 +263,7 @@ const TT = {
   sigs:  { name: 'Handbook Signatures', headers: ['Signed', 'Name', 'App ID', 'Typed signature', 'Document'] },
   stock: { name: 'Stock Counts', headers: ['Updated', 'Name', 'App ID', 'Item ID', 'Item', 'On hand'] },
   models: { name: 'Model Log', headers: ['Logged', 'Name', 'App ID', 'Skill ID', 'Skill', 'Model date'] },
-  mphoto: { name: 'Model Photos', headers: ['Logged', 'Name', 'App ID', 'Skill ID', 'Skill', 'Model date', 'Note', 'Before', 'After', 'Before (small)', 'After (small)'] },
+  mphoto: { name: 'Model Photos', headers: ['Logged', 'Name', 'App ID', 'Skill ID', 'Skill', 'Model date', 'Note', 'Before', 'After', 'Before (small)', 'After (small)', 'More'] },
   rxme:  { name: 'RX Artists', headers: ['Updated', 'Name', 'App ID', 'iPad PIN (scrambled)', 'Starred products', 'Wrong tries', 'Locked until'] },
   rxcard: { name: 'RX Saved Cards', headers: ['Saved', 'Name', 'App ID', 'Card ID', 'Guest', 'Card', 'Desk', 'Desk at', 'Opened at'] }
 };
@@ -420,19 +420,23 @@ function mphotoSave_(me, d) {
   if (!/^[a-z0-9-]{2,40}$/.test(id) || !/^\d{4}-\d{2}-\d{2}$/.test(date)) return json_({ ok: false, error: 'model' });
   const vid = tok => { if (!tok) return null; const v = CacheService.getScriptCache().get('mvdone:' + tok); const o = v ? JSON.parse(v) : null; return o && o.slug === me.slug ? o : null; };
   const bv = vid(d.beforeTok), av = vid(d.afterTok);
-  if (!d.before && !d.after && !bv && !av) return json_({ ok: false, error: 'photo' });
+  const more = (Array.isArray(d.more) ? d.more : []).slice(0, 10);   // extra photos picked all at once (Oct 24 2026)
+  if (!d.before && !d.after && !bv && !av && !more.length) return json_({ ok: false, error: 'photo' });
   const skill = clean_(d.skill, 80), base = date + ' ' + skill;
   const mine = mphotoFolder_(me.name), small = mphotoFolder_('.small');
   const b = bv ? bv.f : mphotoFile_(d.before, mine, base + ' - before'), a = av ? av.f : mphotoFile_(d.after, mine, base + ' - after');
   const bt = bv ? bv.t : b ? mphotoFile_(d.beforeT, small, me.slug + ' ' + base + ' - before') : '', at = av ? av.t : a ? mphotoFile_(d.afterT, small, me.slug + ' ' + base + ' - after') : '';
-  if (!b && !a) return json_({ ok: false, error: 'photo' });
-  ttab_(TT.mphoto).appendRow([new Date(), me.name, me.slug, id, skill, date, clean_(d.note, 300), b, a, bt, at]);
+  const stamp = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'HHmmss');
+  const extra = more.map((m, i) => { const n = base + ' - more ' + stamp + '-' + (i + 1), f = mphotoFile_(m && m.full, mine, n);
+    if (f) mphotoFile_(m.small, small, me.slug + ' ' + n); return f; }).filter(Boolean);
+  if (!b && !a && !extra.length) return json_({ ok: false, error: 'photo' });
+  ttab_(TT.mphoto).appendRow([new Date(), me.name, me.slug, id, skill, date, clean_(d.note, 300), b, a, bt, at, extra.join(',')]);
   return json_({ ok: true });
 }
 /** Her own list only (no pictures), for the Associate Program page. */
 function myMPhotos_(slug) {
   return tvals_(TT.mphoto).filter(r => String(r[2]) === slug)
-    .map(r => ({ id: String(r[3]), skill: String(r[4]), date: r[5] instanceof Date ? day_(r[5]) : String(r[5]), before: !!r[7], after: !!r[8] }));
+    .map(r => ({ id: String(r[3]), skill: String(r[4]), date: r[5] instanceof Date ? day_(r[5]) : String(r[5]), before: !!r[7], after: !!r[8], more: r[11] ? String(r[11]).split(',').length : 0 }));
 }
 function mphotoData_(fid) {
   if (!fid) return '';
@@ -447,7 +451,7 @@ function mphotoAlbum_() {
   return { ok: true, photos: rows, folder: mphotoFolder_().getUrl() };
 }
 function mphotoFull_(fid) {
-  const ok = tvals_(TT.mphoto).some(r => String(r[7]) === String(fid) || String(r[8]) === String(fid));
+  const ok = tvals_(TT.mphoto).some(r => String(r[7]) === String(fid) || String(r[8]) === String(fid) || String(r[11] || '').split(',').indexOf(String(fid)) >= 0);
   if (!ok) return { ok: false };
   try { const f = DriveApp.getFileById(String(fid)); if (/^video\//.test(f.getMimeType())) return { ok: true, video: f.getUrl() }; } catch (e) { return { ok: false }; }
   return { ok: true, src: mphotoData_(fid) };

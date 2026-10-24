@@ -32,8 +32,8 @@ function mktModelsSync_(s) {
       if (have[f.getId()] || f.isTrashed()) continue;
       let a = s.albums.find(x => x.model === name);
       if (!a) { a = { id: 'm' + Utilities.getUuid().replace(/-/g, '').slice(0, 10), name: (name + '’s Work').slice(0, 60), model: name, createdAt: Date.now() }; s.albums.push(a); }
-      const m = f.getName().replace(/\.\w+$/, '').match(/^\d{4}-\d{2}-\d{2} (.+) - (before|after)$/);   // "2026-10-22 Basic blowdry - before"
-      const by = name + (m ? ' · ' + m[1] + ', ' + m[2] : '');
+      const m = f.getName().replace(/\.\w+$/, '').match(/^\d{4}-\d{2}-\d{2} (.+) - (before|after|more [\d-]+)$/);   // "2026-10-22 Basic blowdry - before"
+      const by = name + (m ? ' · ' + m[1] + ', ' + m[2].replace(/^more .*/, 'more') : '');
       const vid = /^video\//.test(f.getMimeType());
       s.photos.unshift({ id: (vid ? 'v' : 'p') + Utilities.getUuid().replace(/-/g, '').slice(0, 14), album: a.id, kind: vid ? 'video' : 'photo', w: 0, h: 0, addedAt: f.getDateCreated().getTime(), by: by.slice(0, 60), f: f.getId(), t: smallFor(f.getName()) || f.getId() });
       have[f.getId()] = 1; changed = true;
