@@ -110,7 +110,7 @@ function favVideoChunk_(who, d) {
   } finally { lock.releaseLock(); }
 }
 
-function favOut_(p) { return { id: p.id, kind: 'fav', video: p.kind === 'video', by: p.by, at: new Date(p.addedAt).toISOString() }; }
+function favOut_(p) { return { id: p.id, kind: 'fav', video: p.kind === 'video', vf: p.kind === 'video' ? p.f : undefined, by: p.by, at: new Date(p.addedAt).toISOString() }; }   // vf lets a tapped video play
 
 /** This wedding's favorites, for the Photos card in the app. */
 function favList_(id) { try { return mktRead_().photos.filter(p => p.wid === id).map(favOut_); } catch (e) { return []; } }
