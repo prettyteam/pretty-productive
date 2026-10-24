@@ -94,8 +94,30 @@
     return load(file).then(function(o){
       var w=o.im.naturalWidth,h=o.im.naturalHeight,keep=full&&OK[file.type]&&file.size<18*1048576;
       var main=keep?Promise.resolve({blob:file,w:w,h:h}):shrink(o.im,full?4096:2048,full?.92:.86);
-      return Promise.all([main,shrink(o.im,480,.82)]).then(function(r){URL.revokeObjectURL(o.u);return{blob:r[0].blob,w:r[0].w,h:r[0].h,thumb:r[1].blob}});
+      var fp=fpOf(o.im);
+      return Promise.all([main,shrink(o.im,480,.82)]).then(function(r){URL.revokeObjectURL(o.u);return{blob:r[0].blob,w:r[0].w,h:r[0].h,thumb:r[1].blob,fp:fp}});
     });
+  }
+  // Doubles (Alexandra, Oct 24 2026): a picture-fingerprint (17x16 difference hash) of every photo in the album, so the same
+  // photo isn't added twice and doubles already there can be cleared. Re-saved or resized copies still match; different shots don't.
+  var HK='mkt-fp',fps={};try{fps=JSON.parse(localStorage.getItem(HK)||'{}')}catch(e){}
+  function keepFps(){try{localStorage.setItem(HK,JSON.stringify(fps))}catch(e){}}
+  function fpOf(im){var src=im,w=im.naturalWidth||im.width,h=im.naturalHeight||im.height;
+    while(w>68||h>64){w=Math.max(17,Math.ceil(w/2));h=Math.max(16,Math.ceil(h/2));var t=document.createElement('canvas');t.width=w;t.height=h;var tx=t.getContext('2d');tx.imageSmoothingQuality='high';tx.drawImage(src,0,0,w,h);src=t}
+    var c=document.createElement('canvas');c.width=17;c.height=16;var x=c.getContext('2d');x.imageSmoothingQuality='high';x.drawImage(src,0,0,17,16);
+    var d=x.getImageData(0,0,17,16).data,out='',n=0,k=0;
+    for(var y=0;y<16;y++)for(var i=0;i<16;i++){var a=(y*17+i)*4,b=a+4;n=n<<1|((d[a]*3+d[a+1]*6+d[a+2])>(d[b]*3+d[b+1]*6+d[b+2])?1:0);if(++k%4===0){out+=n.toString(16);n=0}}
+    return out}
+  var BITS=[0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4];
+  function same(a,b){if(!a||!b||a.length!==b.length)return false;var d=0;for(var i=0;i<a.length;i++){d+=BITS[parseInt(a[i],16)^parseInt(b[i],16)];if(d>28)return false}return true}
+  function imgFrom(u){return new Promise(function(res){var im=new Image();im.onload=function(){res(im)};im.onerror=function(){res(null)};im.src=u})}
+  function albumFps(album){
+    var list=photos.filter(function(p){return p.album===album&&!p.video&&!fps[p.id]}),need=list.filter(function(p){return p.kind==='d'&&!MK._thumbs.has(p.id)}).map(function(p){return p.id}),b=[];
+    for(var i=0;i<need.length;i+=30)b.push(need.slice(i,i+30));
+    return b.reduce(function(pr,ids){return pr.then(function(){return MK.api('thumbs',{ids:ids}).then(function(r){Object.keys(r.photos||{}).forEach(function(id){MK._thumbs.set(id,r.photos[id])})}).catch(function(){})})},Promise.resolve())
+      .then(function(){return Promise.all(list.map(function(p){var u=p.kind==='m'?MK.url('alb/t/'+p.id+'.jpg').catch(function(){return''}):Promise.resolve(MK._thumbs.get(p.id)||'');
+        return u.then(function(x){return x?imgFrom(x):null}).then(function(im){if(im)fps[p.id]=fpOf(im)})}))})
+      .then(function(){keepFps();return photos.filter(function(p){return p.album===album&&fps[p.id]}).map(function(p){return{id:p.id,fp:fps[p.id],p:p}})});
   }
   function b64(blob){return new Promise(function(res,rej){var r=new FileReader();r.onload=function(){res(String(r.result).split(',')[1])};r.onerror=rej;r.readAsDataURL(blob)})}
   // Phone uploads (Alexandra, Oct 24 2026): each photo shows in the album as soon as it's saved instead of all at the end,
@@ -104,23 +126,27 @@
   function awake(on){try{if(on&&!wake&&navigator.wakeLock)navigator.wakeLock.request('screen').then(function(w){wake=w;w.addEventListener('release',function(){wake=null})}).catch(function(){});
     else if(!on&&wake){wake.release();wake=null}}catch(e){}}
   document.addEventListener('visibilitychange',function(){if(busy&&document.visibilityState==='visible')awake(true)});
-  function landed(ph,thumb){var s=MK._state;if(!s||!ph)return;MK._thumbs.set(ph.id,'data:image/jpeg;base64,'+thumb);
+  function landed(ph,thumb,fp){var s=MK._state;if(!s||!ph)return;MK._thumbs.set(ph.id,'data:image/jpeg;base64,'+thumb);if(fp){fps[ph.id]=fp;keepFps()}
     if(!(s.photos||[]).some(function(x){return x.id===ph.id}))MK.applyState(Object.assign({},s,{photos:[ph].concat(s.photos||[])}));}
   function uploadAll(files){
     if(busy||!files.length)return;busy=true;MK.busy=true;awake(true);
-    var album=cur,full=$('fullsize').checked,done=0,fail=0,total=files.length,q=files.slice();
+    var album=cur,full=$('fullsize').checked,done=0,fail=0,dup=0,total=files.length,q=files.slice(),have=[];
     var bar=$('prog');bar.hidden=false;
-    function step(){bar.firstChild.style.width=Math.round(100*(done+fail)/total)+'%';msg('Adding photos: '+(done+fail)+' of '+total+(fail?' ('+fail+' did not work)':'')+'. Keep this page open.');}
-    step();
+    function step(){bar.firstChild.style.width=Math.round(100*(done+fail+dup)/total)+'%';msg('Adding photos: '+(done+fail+dup)+' of '+total+(dup?' ('+dup+' already here, skipped)':'')+(fail?' ('+fail+' did not work)':'')+'. Keep this page open.');}
+    msg('Getting ready\u2026');
     function worker(){var f=q.shift();if(!f)return Promise.resolve();
-      return prep(f,full).then(function(p){return Promise.all([b64(p.blob),b64(p.thumb)]).then(function(d){
+      return prep(f,full).then(function(p){
+        if(have.some(function(x){return same(x,p.fp)})){dup++;return}
+        have.push(p.fp);
+        return Promise.all([b64(p.blob),b64(p.thumb)]).then(function(d){
         var body={album:album,data:d[0],thumb:d[1],w:p.w,h:p.h,type:p.blob.type||'image/jpeg'};
         return MK.api('addPhoto',body).catch(function(){return new Promise(function(r){setTimeout(r,4000)}).then(function(){return MK.api('addPhoto',body)})})
-          .then(function(r){landed(r.photo,d[1])});});})
-      .then(function(){done++},function(e){fail++;console.warn(e)})
+          .then(function(r){landed(r.photo,d[1],p.fp);done++});});})
+      .then(null,function(e){fail++;console.warn(e)})
       .then(function(){step();return worker()});}
-    Promise.all([worker(),worker()]).then(function(){busy=false;MK.busy=false;awake(false);bar.hidden=true;
-      msg(done+' photo'+(done===1?'':'s')+' added'+(fail?'. '+fail+' did not work. Try those again, or turn off Full size.':'.'));$('pick').value='';MK.refresh();});
+    // Waits at most 20 seconds for the album's fingerprints, so a slow connection never holds up the upload.
+    Promise.race([albumFps(album),new Promise(function(r){setTimeout(function(){r(null)},20000)})]).catch(function(){return null}).then(function(l){return l||photos.filter(function(p){return p.album===album&&fps[p.id]}).map(function(p){return{fp:fps[p.id]}})}).then(function(l){have=l.map(function(x){return x.fp});step();return Promise.all([worker(),worker()])}).then(function(){busy=false;MK.busy=false;awake(false);bar.hidden=true;
+      msg(done+' photo'+(done===1?'':'s')+' added'+(dup?'. '+dup+(dup===1?' was':' were')+' already in this album, so I skipped '+(dup===1?'it':'them'):'')+(fail?'. '+fail+' did not work. Try those again, or turn off Full size.':'.'));$('pick').value='';MK.refresh();});
   }
 
   // Lightbox works on whichever album is showing, always at full size.
@@ -163,6 +189,19 @@
   navState();
 
   $('pick').addEventListener('change',function(){uploadAll([].slice.call(this.files||[]))});
+
+  // Remove doubles: finds copies of the same photo in the open album, keeps the first one added, and removes the rest
+  // (Drive keeps removed photos in its trash for 30 days).
+  var dupb=document.createElement('button');dupb.type='button';dupb.id='mk-dups';dupb.textContent='Remove Doubles';$('fullsize').parentNode.after(dupb);
+  var dst2=document.createElement('style');dst2.textContent='#mk-dups{font:inherit;font-size:13px;padding:10px 14px;min-height:40px;border:1px solid var(--ink,#111);background:transparent;color:var(--ink,#111);cursor:pointer;border-radius:2px}#mk-dups:disabled{opacity:.4;cursor:default}';document.head.appendChild(dst2);
+  dupb.onclick=function(){if(busy)return;var album=cur;busy=true;dupb.disabled=true;msg('Looking for doubles\u2026');
+    albumFps(album).then(function(l){l.sort(function(a,b){return(a.p.addedAt||0)-(b.p.addedAt||0)});var keep=[],extra=[];
+      l.forEach(function(x){if(keep.some(function(k){return same(k.fp,x.fp)}))extra.push(x);else keep.push(x)});
+      if(!extra.length){msg('No doubles in this album.');return}
+      if(!confirm('Found '+extra.length+' double'+(extra.length>1?'s':'')+' in this album. Remove the extra copies? The first one of each stays.')){msg('');return}
+      var n=0;return extra.reduce(function(pr,x){return pr.then(function(){return MK.api('delPhoto',{id:x.id}).then(function(st){n++;msg('Removing doubles: '+n+' of '+extra.length);MK.applyState(st)}).catch(function(){})})},Promise.resolve())
+        .then(function(){msg(n+' double'+(n===1?'':'s')+' removed.')});})
+      .catch(function(){msg('Could not check for doubles. Try again.')}).then(function(){busy=false;dupb.disabled=false});};
 
   // Drag and drop (Alexandra, Oct 23 2026): the Mac file window hides her Photos albums, so on a computer she can drag
   // pictures straight out of an album in the Photos app onto the page and they go into the album that's open.
