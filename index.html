@@ -498,6 +498,7 @@ details.days summary::-webkit-details-marker{display:none}
 <link rel="stylesheet" href="g/rx.css?v=9">
 <link rel="icon" href="icon.png">
 <link rel="apple-touch-icon" href="icon.png">
+<script src="/g/life.js?v=1"></script>
 <script src="/refresh.js?v=4" defer></script>
 <script src="/g/bats.js?v=2" defer></script>
 </head>
@@ -1878,15 +1879,18 @@ function homeMenu(){
   return h('div',{class:'hmenu'},h('div',{class:'mhead'},'Menu'),h('div',{class:'cgrid'},cells));
 }
 addEventListener('popstate',e=>{const st=e.state;if(st&&st.pp&&EDITION==='stylist'&&S.mine){HOME_OPEN='';navGo(st.pp,true)}});
+/* Back on Home leaves for Pretty Life when she came from there; the logo goes Home (g/life.js, Oct 24 2026) */
+const ppOut=()=>!!(window.PPLife&&PPLife.canOut());
 function staffNav(){
   const tabs=staffTabs(); if(tabs.length<2) return null;
+  if(window.PPLife)PPLife.app={atHome:()=>S.tab===homeKey(),home:()=>{HOME_OPEN='';navGo(homeKey())}};
   const {label,groups}=navGroups(tabs), cur=label[S.tab]||'';
   const sheet=NAV_OPEN?h('div',{class:'navsheet',id:'navsheet',role:'menu'},groups.map(([g,keys])=>h('div',{class:'navgrp'},
     h('span',{class:'lbl'},g),keys.map(k=>h('button',{type:'button',role:'menuitem','aria-current':S.tab===k?'page':null,onclick:()=>navGo(k)},label[k]))))):null;
   const scrim=NAV_OPEN?h('div',{class:'navscrim',onclick:()=>{NAV_OPEN=false;render()}}):null;
   return h('nav',{class:'nav menu','aria-label':'Sections'},scrim,sheet,
     h('div',{class:'navrow'},
-      (S.tab!==homeKey()||(history.state&&history.state.d>0))?h('button',{type:'button',class:'navback',onclick:()=>{if(history.state&&history.state.d>0)history.back();else navGo(homeKey())}},'‹ Back'):h('span',{class:'navback'}),
+      (S.tab!==homeKey()||(history.state&&history.state.d>0)||ppOut())?h('button',{type:'button',class:'navback',onclick:()=>{if(history.state&&history.state.d>0)history.back();else if(S.tab!==homeKey())navGo(homeKey());else PPLife.out()}},'‹ Back'):h('span',{class:'navback'}),
       h('button',{type:'button',class:'navhome','aria-label':'Home',title:'Home','aria-current':S.tab===homeKey()?'page':null,onclick:()=>{HOME_OPEN='';navGo(homeKey())}},h('img',{src:DISCO,alt:''})),
       h('button',{type:'button',class:'navbtn','aria-expanded':String(NAV_OPEN),'aria-controls':'navsheet',onclick:()=>{NAV_OPEN=!NAV_OPEN;render()}},
         h('span',{class:'navlbl'},NAV_OPEN?'Close ✕':'Menu ▾'))));
@@ -2308,13 +2312,14 @@ function reportHome(){
     h('div',{class:'hmenu'},h('div',{class:'mhead'},'Menu'),h('div',{class:'cgrid'},cells)))];
 }
 function reportNav(){
+  if(window.PPLife)PPLife.app={atHome:()=>S.rtab==='home',home:()=>prGo('home')};
   const groups=[['Home',['home']]].concat(reportGroups());
   const sheet=PR_NAV?h('div',{class:'navsheet',id:'navsheet',role:'menu'},groups.map(([g,keys])=>h('div',{class:'navgrp'},
     h('span',{class:'lbl'},g),keys.map(k=>h('button',{type:'button',role:'menuitem','aria-current':S.rtab===k?'page':null,onclick:()=>prGo(k)},PR_LABEL[k]))))):null;
   const scrim=PR_NAV?h('div',{class:'navscrim',onclick:()=>{PR_NAV=false;render()}}):null;
   return h('nav',{class:'nav menu','aria-label':'Sections'},scrim,sheet,
     h('div',{class:'navrow'},
-      (S.rtab!=='home'||(history.state&&history.state.d>0))?h('button',{type:'button',class:'navback',onclick:()=>{if(history.state&&history.state.d>0)history.back();else prGo('home')}},'‹ Back'):h('span',{class:'navback'}),
+      (S.rtab!=='home'||(history.state&&history.state.d>0)||ppOut())?h('button',{type:'button',class:'navback',onclick:()=>{if(history.state&&history.state.d>0)history.back();else if(S.rtab!=='home')prGo('home');else PPLife.out()}},'‹ Back'):h('span',{class:'navback'}),
       h('button',{type:'button',class:'navhome','aria-label':'Home',title:'Home','aria-current':S.rtab==='home'?'page':null,onclick:()=>prGo('home')},h('img',{src:DISCO,alt:''})),
       h('button',{type:'button',class:'navbtn','aria-expanded':String(PR_NAV),'aria-controls':'navsheet',onclick:()=>{PR_NAV=!PR_NAV;render()}},
         h('span',{class:'navlbl'},PR_NAV?'Close ✕':'Menu ▾'))));
