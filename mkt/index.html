@@ -71,17 +71,25 @@ MK.driveFull=function(id){return MK.api('thumbs',{ids:[id],full:true}).then(r=>r
 MK._tries=new Map();
 function thumbCss(){if(MK._tc)return;MK._tc=1;const st=document.createElement('style');
   st.textContent='img[data-d]:not([src]){visibility:hidden}.ptile button:has(img[data-d]:not([src])){background:#ece9e3}';document.head.append(st)}
+// Faster (Oct 24 2026): three batches of 12 at once, and every thumbnail is kept on this device, so an album opens
+// instantly the next time instead of asking the script again.
+const TDB=new Promise(res=>{try{const q=indexedDB.open('mkt-thumbs',1);q.onupgradeneeded=()=>q.result.createObjectStore('t');q.onsuccess=()=>res(q.result);q.onerror=()=>res(null)}catch(e){res(null)}});
+function tGet(id){return TDB.then(db=>db?new Promise(r=>{try{const g=db.transaction('t').objectStore('t').get(id);g.onsuccess=()=>r(g.result||null);g.onerror=()=>r(null)}catch(e){r(null)}}):null)}
+function tPut(id,u){TDB.then(db=>{try{if(db)db.transaction('t','readwrite').objectStore('t').put(u,id)}catch(e){}})}
+MK._fly=0;
 function flushThumbs(){MK._t=0;
-  const ids=[...MK._q].slice(0,8);ids.forEach(i=>MK._q.delete(i));if(!ids.length)return;
-  let wait=50;
-  MK.api('thumbs',{ids}).then(r=>{Object.entries(r.photos||{}).forEach(([id,u])=>{MK._thumbs.set(id,u);MK._tries.delete(id);document.querySelectorAll('img[data-d="'+id+'"]').forEach(im=>{im.src=u;im.classList.remove('mk-wait')})})})
-    .catch(()=>{wait=3000})
-    .then(()=>{ids.forEach(id=>{if(MK._thumbs.has(id))return;const n=(MK._tries.get(id)||0)+1;MK._tries.set(id,n);if(n<6){MK._q.add(id);wait=Math.max(wait,1500*n)}});
-      if(MK._q.size&&!MK._t)MK._t=setTimeout(flushThumbs,wait)})}
+  while(MK._fly<3&&MK._q.size){
+    const ids=[...MK._q].slice(0,12);ids.forEach(i=>MK._q.delete(i));MK._fly++;
+    let wait=50;
+    MK.api('thumbs',{ids}).then(r=>{Object.entries(r.photos||{}).forEach(([id,u])=>{MK._thumbs.set(id,u);tPut(id,u);MK._tries.delete(id);document.querySelectorAll('img[data-d="'+id+'"]').forEach(im=>{im.src=u;im.classList.remove('mk-wait')})})})
+      .catch(()=>{wait=3000})
+      .then(()=>{MK._fly--;ids.forEach(id=>{if(MK._thumbs.has(id))return;const n=(MK._tries.get(id)||0)+1;MK._tries.set(id,n);if(n<6){MK._q.add(id);wait=Math.max(wait,1500*n)}});
+        if(MK._q.size&&!MK._t)MK._t=setTimeout(flushThumbs,wait)})}}
 function load(el){
   if(el.dataset.e){el.classList.add('mk-wait');MK.url(el.dataset.e).then(u=>{el.src=u;el.classList.remove('mk-wait')}).catch(()=>{})}
   if(el.dataset.ep){MK.url(el.dataset.ep).then(u=>el.poster=u).catch(()=>{})}
-  if(el.dataset.d){thumbCss();const u=MK._thumbs.get(el.dataset.d);if(u)el.src=u;else{el.classList.add('mk-wait');MK._q.add(el.dataset.d);if(!MK._t)MK._t=setTimeout(flushThumbs,120)}}
+  if(el.dataset.d){thumbCss();const id=el.dataset.d,u=MK._thumbs.get(id);if(u){el.src=u;return}el.classList.add('mk-wait');
+    tGet(id).then(c=>{if(c){MK._thumbs.set(id,c);el.src=c;el.classList.remove('mk-wait');return}MK._q.add(id);if(!MK._t)MK._t=setTimeout(flushThumbs,120)})}
 }
 const io='IntersectionObserver' in window?new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){io.unobserve(e.target);load(e.target)}}),{rootMargin:'600px 0px'}):null;
 MK.scan=function(root){(root||document).querySelectorAll('[data-e],[data-ep],[data-d]').forEach(el=>{if(el._mk)return;el._mk=1;if(io)io.observe(el);else load(el)})};
