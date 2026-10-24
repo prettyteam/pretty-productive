@@ -2279,17 +2279,17 @@ function pvShrink(file,max,q){
 }
 async function pvUpload(p,kind,files){
   const st=$("#pv-up-"+kind),me=ROLE==="office"?"Office":(ME&&(ME.preferredName||ME.legalName))||"";
-  let done=0;
-  for(const f of files){
+  let done=0;upAwake(true);
+  try{for(const f of files){
     if(!/^image\//.test(f.type)&&!/\.(jpe?g|png|heic|heif|webp)$/i.test(f.name))continue;
     if(st)st.textContent="Uploading "+(done+1)+" of "+files.length+"…";
     try{
       const data=await pvShrink(f,1600,.82),thumb=await pvShrink(f,320,.7);
-      const j=await api("addPhoto",{key:p.key,photo:{kind,data,thumb}});
+      const j=await apiRetry("addPhoto",{key:p.key,photo:{kind,data,thumb}});
       p.info=j.info;pvThumbs[j.photo.id]="data:image/jpeg;base64,"+thumb;done++;
       if(pvSel===p.key)pvRenderPhotos(p,me);
     }catch(e){toast(e.code==="too_many"?e.message:"A photo didn't upload. Try again.")}
-  }
+  }}finally{upAwake(false)}
   if(st)st.textContent=done?done+" photo"+(done>1?"s":"")+" added.":"";
   renderPreviews();
 }
@@ -2298,6 +2298,27 @@ async function pvUpload(p,kind,files){
    A Photos card on each booked wedding (Schedule, and the office Timeline): the office adds new inspo the bride sends,
    artists add trial pictures, and every photo from the wedding's bridal preview shows up here on its own. */
 let wpCache={}, wpThumbs={};
+/* faster photos (Alexandra, Oct 24 2026): the screen stays awake while a batch uploads, a shaky connection retries,
+   and small pictures load a few at a time and are kept on the phone so they show right away next time. */
+let upWake=null;
+function upAwake(on){try{if(on&&!upWake&&navigator.wakeLock)navigator.wakeLock.request("screen").then(w=>{upWake=w;w.addEventListener("release",()=>{upWake=null})}).catch(()=>{});else if(!on&&upWake){upWake.release();upWake=null}}catch(e){}}
+async function apiRetry(action,data){for(let t=0;;t++){try{return await api(action,data)}catch(e){if(t>=2||(e.code&&e.code!=="server"))throw e;await new Promise(r=>setTimeout(r,1500*(t+1)))}}}
+const WTDB=new Promise(res=>{try{const q=indexedDB.open("wed-thumbs",1);q.onupgradeneeded=()=>q.result.createObjectStore("t");q.onsuccess=()=>res(q.result);q.onerror=()=>res(null)}catch(e){res(null)}});
+function wtGet(id){return WTDB.then(db=>db?new Promise(r=>{try{const g=db.transaction("t").objectStore("t").get(id);g.onsuccess=()=>r(g.result||null);g.onerror=()=>r(null)}catch(e){r(null)}}):null)}
+function wtPut(id,u){WTDB.then(db=>{try{if(db&&u)db.transaction("t","readwrite").objectStore("t").put(u,id)}catch(e){}})}
+const wpAsked={};
+async function wpFetchThumbs(id,ids){
+  ids=ids.filter(x=>!wpAsked[x]);if(!ids.length)return;ids.forEach(x=>{wpAsked[x]=1});
+  const miss=[];
+  await Promise.all(ids.map(async x=>{const c=await wtGet(x);if(c)wpThumbs[x]=c;else miss.push(x)}));
+  if(miss.length<ids.length)wpRefresh(id);
+  const batches=[];for(let i=0;i<miss.length;i+=12)batches.push(miss.slice(i,i+12));
+  const run=async()=>{for(let b;(b=batches.shift());){
+    try{const j=await apiRetry("wedPhotoData",{id,ids:b});Object.entries(j.photos||{}).forEach(([k,u])=>{wpThumbs[k]=u;wtPut(k,u)});b.forEach(x=>{if(!wpThumbs[x])wpThumbs[x]=""})}
+    catch(e){b.forEach(x=>{if(wpThumbs[x]===undefined)wpThumbs[x]=""})}
+    wpRefresh(id)}};
+  await Promise.all([run(),run(),run()]);
+}
 const wpMe=()=>ROLE==="office"?"Office":(ME&&(ME.preferredName||ME.legalName))||"";
 const WP_GROUPS=[["inspo","Inspiration from the bride"],["look","Trial & look photos"],["preview","From the bridal preview"],["fav","Wedding Day Favorites"]];
 function wpShow(where,id){
@@ -2336,28 +2357,29 @@ function wpRender(where){
     });
   });
   box.querySelectorAll('input[type="file"]').forEach(inp=>inp.onchange=()=>(inp.dataset.kind==="fav"?favUpload(id,[...inp.files]):wpUpload(id,inp.dataset.kind,[...inp.files],box.querySelector("[data-st]"))).finally(()=>{inp.value=""}));
-  const need=photos.filter(p=>!wpThumbs[p.id]).map(p=>p.id);
-  if(need.length&&!box.dataset.fetching){box.dataset.fetching="1";api("wedPhotoData",{id,ids:need}).then(j=>{Object.assign(wpThumbs,j.photos||{});need.forEach(x=>{if(!wpThumbs[x])wpThumbs[x]=""})}).catch(()=>{}).finally(()=>{delete box.dataset.fetching;wpRefresh(id)})}
+  const need=photos.filter(p=>wpThumbs[p.id]===undefined).map(p=>p.id);
+  if(need.length)wpFetchThumbs(id,need);
 }
 function wpRefresh(id){["team","build"].forEach(k=>{const b=$("#wp-"+k);if(b&&!b.hidden&&b.dataset.w===id)wpRender(k)})}
 async function wpOpen(id,ph){
+  if(ph.vf){window.open("https://drive.google.com/file/d/"+ph.vf+"/view","_blank");return}
   const w=window.open("","_blank");
   try{const j=await api("wedPhotoData",{id,ids:[ph.id],full:true});const src=(j.photos||{})[ph.id];
     if(w&&src){w.document.title="Wedding photo";w.document.body.style.margin="0";w.document.body.innerHTML='<img alt="Wedding photo" style="max-width:100%;display:block;margin:auto" src="'+src+'">'}else if(w)w.close()}
   catch(e){if(w)w.close();toast("Couldn't open that photo.")}
 }
 async function wpUpload(id,kind,files,st){
-  let done=0;
-  for(const f of files){
+  let done=0;upAwake(true);
+  try{for(const f of files){
     if(!/^image\//.test(f.type)&&!/\.(jpe?g|png|heic|heif|webp)$/i.test(f.name))continue;
     if(st)st.textContent="Uploading "+(done+1)+" of "+files.length+"…";
     try{
       const data=await pvShrink(f,1600,.82),thumb=await pvShrink(f,320,.7);
-      const j=await api("addWedPhoto",{id,photo:{kind,data,thumb}});
-      wpThumbs[j.photo.id]="data:image/jpeg;base64,"+thumb;(wpCache[id]=wpCache[id]||[]).push(j.photo);done++;
+      const j=await apiRetry("addWedPhoto",{id,photo:{kind,data,thumb}});
+      wpThumbs[j.photo.id]="data:image/jpeg;base64,"+thumb;wtPut(j.photo.id,wpThumbs[j.photo.id]);(wpCache[id]=wpCache[id]||[]).push(j.photo);done++;
       wpRefresh(id);st=null;
     }catch(e){toast(e.code==="too_many"?e.message:"A photo didn't upload. Try again.")}
-  }
+  }}finally{upAwake(false)}
   wpRefresh(id);
   if(done)toast(done+" photo"+(done>1?"s":"")+" added.");
 }
@@ -2379,8 +2401,8 @@ function favB64(blob){return new Promise((res,rej)=>{const r=new FileReader();r.
 function imgSize(file){return new Promise(res=>{const u=URL.createObjectURL(file),i=new Image();i.onload=()=>{URL.revokeObjectURL(u);res({w:i.naturalWidth,h:i.naturalHeight})};i.onerror=()=>{URL.revokeObjectURL(u);res({w:0,h:0})};i.src=u})}
 async function favUpload(id,files){
   const say=t=>{["team","build"].forEach(k=>{const b=$("#wp-"+k);if(b&&!b.hidden&&b.dataset.w===id){const st=b.querySelector("[data-st]");if(st)st.textContent=t}})};
-  let done=0,n=0;
-  for(const f of files){
+  let done=0,n=0;upAwake(true);
+  try{for(const f of files){
     n++;
     const isVid=/^video\//.test(f.type)||/\.(mov|mp4|m4v|3gp|webm)$/i.test(f.name);
     if(!isVid&&!/^image\//.test(f.type)&&!/\.(jpe?g|png|heic|heif|webp)$/i.test(f.name))continue;
@@ -2391,11 +2413,11 @@ async function favUpload(id,files){
       if(!isVid){
         const sz=await imgSize(f),k=Math.min(1,2560/Math.max(sz.w||1,sz.h||1));
         const data=await pvShrink(f,2560,.88),thumb=await pvShrink(f,320,.7);
-        photo=(await api("addFav",{id,photo:{data,thumb,w:Math.round(sz.w*k),h:Math.round(sz.h*k)}})).photo;
-        wpThumbs[photo.id]="data:image/jpeg;base64,"+thumb;
+        photo=(await apiRetry("addFav",{id,photo:{data,thumb,w:Math.round(sz.w*k),h:Math.round(sz.h*k)}})).photo;
+        wpThumbs[photo.id]="data:image/jpeg;base64,"+thumb;wtPut(photo.id,wpThumbs[photo.id]);
       }else{
         const c=await favCover(f)||{};
-        const st=await api("favVideoStart",{id,video:{name:f.name,type:f.type||"video/mp4",size:f.size,thumb:c.thumb||"",w:c.w||0,h:c.h||0}});
+        const st=await apiRetry("favVideoStart",{id,video:{name:f.name,type:f.type||"video/mp4",size:f.size,thumb:c.thumb||"",w:c.w||0,h:c.h||0}});
         let off=0;
         while(off<f.size){
           say(lead+"… "+Math.round(100*off/f.size)+"%. Keep this page open.");
@@ -2405,11 +2427,11 @@ async function favUpload(id,files){
           if(j.done){photo=j.photo;break}
           off=j.next||off+piece.size;
         }
-        if(c.thumb&&photo)wpThumbs[photo.id]="data:image/jpeg;base64,"+c.thumb;
+        if(c.thumb&&photo){wpThumbs[photo.id]="data:image/jpeg;base64,"+c.thumb;wtPut(photo.id,wpThumbs[photo.id])}
       }
       if(photo){(wpCache[id]=wpCache[id]||[]).push(photo);done++;wpRefresh(id)}
     }catch(e){toast(e.message&&e.message!=="error"&&e.message!=="server"?e.message:(isVid?"A video didn't upload. Try again.":"A photo didn't upload. Try again."))}
-  }
+  }}finally{upAwake(false)}
   wpRefresh(id);
   if(done)toast(done+(done>1?" favorites":" favorite")+" added. Thank you!");
 }
