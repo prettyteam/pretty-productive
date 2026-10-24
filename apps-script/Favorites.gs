@@ -10,8 +10,8 @@
  *
  * Hooked into Weddings.gs doPost:
  *   before the lock:  if (d.action === 'favVideoChunk') { const w0 = who_(d); return json_(w0 ? favVideoChunk_(w0, d) : { ok: false, error: 'signin' }); }
- *   inside the switch: case 'addFav': return json_(addFav_(who, d.id, d.photo));
- *                      case 'favVideoStart': return json_(favVideoStart_(who, d.id, d.video));
+ *                     if (d.action === 'addFav') { const w0 = who_(d); return json_(w0 ? addFav_(w0, d.id, d.photo) : { ok: false, error: 'signin' }); }
+ *   inside the switch: case 'favVideoStart': return json_(favVideoStart_(who, d.id, d.video));
  */
 const FAV_MAX = 200;   // per wedding
 
@@ -48,17 +48,31 @@ function favAlbum_(s, w) {
 
 function favFile_(by, ext) { return by + ' - ' + Utilities.formatDate(new Date(), TZ, 'yyyy-MM-dd HHmmss') + '-' + Math.floor(Math.random() * 1000) + '.' + ext; }
 
-/** photo: {data:'<base64 jpeg>', thumb:'<base64 jpeg>', w, h}. Runs inside doPost's lock. */
+/** photo: {data:'<base64 jpeg>', thumb:'<base64 jpeg>', w, h}. Runs before doPost's lock (Oct 24 2026): the lock is held only
+ *  to find or make the wedding's album, then again to list the photo, so several photos can go into Drive at once. */
 function addFav_(who, id, photo) {
   const w = wedFor_(who, id);
   if (!w || !photo || !photo.data) return { ok: false, error: 'not_found' };
-  const s = mktRead_();
-  if (s.photos.filter(p => p.wid === id).length >= FAV_MAX) return { ok: false, error: 'too_many', message: 'This wedding already has ' + FAV_MAX + ' favorites.' };
-  const by = favBy_(who), fa = favAlbum_(s, w), name = favFile_(by, 'jpg');
-  const full = fa.folder.createFile(Utilities.newBlob(Utilities.base64Decode(photo.data), 'image/jpeg', name));
-  const thumb = photo.thumb ? fa.folder.createFile(Utilities.newBlob(Utilities.base64Decode(photo.thumb), 'image/jpeg', name.replace('.jpg', ' (small).jpg'))) : full;
-  const p = { id: 'p' + Utilities.getUuid().replace(/-/g, '').slice(0, 14), album: fa.album.id, wid: id, kind: 'photo', w: Number(photo.w) || 0, h: Number(photo.h) || 0, addedAt: Date.now(), by: clean_(by, 40), f: full.getId(), t: thumb.getId() };
-  s.photos.unshift(p); mktWrite_(s);
+  const by = favBy_(who), lock = LockService.getScriptLock();
+  let album, folder;
+  try {
+    lock.waitLock(30000);
+    const s = mktRead_();
+    if (s.photos.filter(p => p.wid === id).length >= FAV_MAX) return { ok: false, error: 'too_many', message: 'This wedding already has ' + FAV_MAX + ' favorites.' };
+    const was = (s.albums.find(x => x.wid === id) || {}).folder || '';
+    const fa = favAlbum_(s, w);
+    if (fa.album.folder !== was) mktWrite_(s);   // keeps the album and its folder if they were just made
+    album = fa.album.id; folder = fa.folder;
+  } finally { lock.releaseLock(); }
+  const name = favFile_(by, 'jpg');
+  const full = folder.createFile(Utilities.newBlob(Utilities.base64Decode(photo.data), 'image/jpeg', name));
+  const thumb = photo.thumb ? folder.createFile(Utilities.newBlob(Utilities.base64Decode(photo.thumb), 'image/jpeg', name.replace('.jpg', ' (small).jpg'))) : full;
+  const p = { id: 'p' + Utilities.getUuid().replace(/-/g, '').slice(0, 14), album: album, wid: id, kind: 'photo', w: Number(photo.w) || 0, h: Number(photo.h) || 0, addedAt: Date.now(), by: clean_(by, 40), f: full.getId(), t: thumb.getId() };
+  try {
+    lock.waitLock(30000);
+    const s = mktRead_();
+    s.photos.unshift(p); mktWrite_(s);
+  } finally { lock.releaseLock(); }
   return { ok: true, photo: favOut_(p) };
 }
 
