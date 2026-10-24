@@ -48,6 +48,9 @@ function show(P){
   if(location.hash.slice(1).startsWith('b.')) history.replaceState(null,'',location.pathname);
   document.open();
   document.write('<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="robots" content="noindex,nofollow"><meta name="referrer" content="no-referrer"><link rel="apple-touch-icon" href="../icon.png"></head><body>'+P.html
+    /* app links open with ?from=life so the app's Back on Home comes back here (g/life.js, Oct 24 2026) */
+    +'<script>document.addEventListener("click",function(e){var a=e.target.closest&&e.target.closest("a[href]");if(!a)return;try{var u=new URL(a.href);'
+    +'if(/(^|\\.)(taffetadesign\\.com|github\\.io)$/.test(u.hostname)&&!/\\.pdf$/i.test(u.pathname)&&u.pathname.indexOf("/briefing/")<0){u.searchParams.set("from","life");a.href=u.toString()}}catch(_){}},true)<\/script>'
     +'<p style="text-align:center;margin:0 0 40px"><a href="#" onclick="try{localStorage.removeItem(\''+PINKEY+'\')}catch(e){};location.reload();return false" style="font-size:12px;color:#6d6868">Lock this page on this device</a></p></body></html>');
   document.close();
 }

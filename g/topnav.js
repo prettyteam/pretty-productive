@@ -9,7 +9,7 @@ const st=()=>history.state&&history.state.tn!=null?history.state:null;
 function draw(){
   if(!bar)return;
   const cur=cfg.get(); bar.hidden=cur==null; if(cur==null)return;
-  const s=st(); back.style.visibility=(cur!==cfg.home()||(s&&s.d>0))?'visible':'hidden';
+  const s=st(),out=window.PPLife&&PPLife.canOut(); back.style.visibility=(cur!==cfg.home()||(s&&s.d>0)||out)?'visible':'hidden';
   if(cur===cfg.home())ball.setAttribute('aria-current','page');else ball.removeAttribute('aria-current');
   drawMenu();
 }
@@ -51,7 +51,7 @@ function build(){
   document.head.append(css);
   bar=document.createElement('nav');bar.className='tnav';bar.setAttribute('aria-label','Back and Home');
   back=document.createElement('button');back.type='button';back.className='tnback';back.textContent='‹ Back';
-  back.onclick=()=>{const s=st();if(s&&s.d>0)history.back();else go(cfg.home())};
+  back.onclick=()=>{const s=st();if(s&&s.d>0)history.back();else if(cfg.get()!==cfg.home())go(cfg.home());else if(window.PPLife)PPLife.out()};
   ball=document.createElement('button');ball.type='button';ball.className='tnhome';ball.setAttribute('aria-label','Home');ball.title='Home';
   const im=document.createElement('img');im.src=DISCO;im.alt='';ball.append(im);
   ball.onclick=()=>go(cfg.home());
@@ -64,5 +64,6 @@ function build(){
   addEventListener('load',()=>document.body.prepend(bar));   // stay above the Refresh line
 }
 addEventListener('popstate',e=>{const s=e.state;if(cfg&&s&&s.tn!=null){cfg.set(s.tn);last=cfg.get();window.scrollTo(0,0);draw()}});
-window.TopNav={init(c){cfg=c;build();check();document.addEventListener('click',()=>setTimeout(check,0),true)},check};
+window.TopNav={init(c){cfg=c;build();check();
+  if(window.PPLife)PPLife.app={atHome:()=>{const cur=cfg.get();return cur==null||cur===cfg.home()},home:()=>go(cfg.home())};document.addEventListener('click',()=>setTimeout(check,0),true)},check};
 })();
