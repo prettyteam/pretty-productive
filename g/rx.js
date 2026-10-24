@@ -967,7 +967,10 @@ function rxTakeHomeView(me){
   let needs=[]; try{needs=rxNeeds(d)}catch(e){}
   if(kind==='hair'){const svc=opts.flatMap(o=>o.lines.map(l=>l.n)); needs=rxNeedsFor(needs,svc)}
   needs.forEach(k=>{let [n,p,why,alt]=RX_PROD[k]; if(alt&&RX_OUT.includes(n))[n,p]=alt; add(n,p,why,'match')});
-  if(!x.home){x.home=[];const df=cand.find(c=>c.grp==='def'&&c.p<=budget);if(df)x.home.push({n:df.n,p:df.p}); put()}
+  /* starts with the products already on the option she chose (a BR Bottle added on the build, Angelina Oct 24 2026),
+     otherwise the default for her budget */
+  if(!x.home){x.home=hcOf(opts[ch]).filter(l=>l.t!=='h').map(l=>({n:l.t==='t'?'Try Me: '+l.n:l.n,p:Number(l.p)||0}));
+    if(!x.home.length){const df=cand.find(c=>c.grp==='def'&&c.p<=budget);if(df)x.home.push({n:df.n,p:df.p})} put()}
   const picked=n=>x.home.find(p=>p.n===n), sum=rxTotal(x.home), left=budget-sum;
   /* the whole maintenance list, searchable, her stars on top; pick as many as she wants and the list stays open
      (Alexandra, Oct 20 2026). Consult matches are tagged, not a separate list. */
@@ -980,7 +983,7 @@ function rxTakeHomeView(me){
     const why=[tag,l?'Lasts '+l:''].filter(Boolean).join(' · ');
     const b=h('button',{type:'button',class:'rxth'+(on?' on':''),'aria-pressed':String(on),onclick:()=>{const now=!picked(n);
         if(now)x.home.push({n,p:pr});else x.home=x.home.filter(q=>q.n!==n); put();
-        b.classList.toggle('on',now);b.setAttribute('aria-pressed',String(now));b.querySelector('.rxbx').textContent=now?'✓':'';sumBox()}},
+        const y=window.scrollY;render();window.scrollTo(0,y)}},   /* re-render so How & When below lists it */
       h('span',{class:'rxbx','aria-hidden':'true'},on?'✓':''),h('span',{class:'rxthn'},h('b',{},(favs.includes(n)?'★ ':'')+n.replace(/^Biologique Recherche /,'BR ')),why?h('small',{},why):null),h('span',{class:'rxthp'},rxMoney(pr)));
     return b};
   const allP=(RX_PRICES[kind]||[]), q=RX_THQ.trim().toLowerCase(), hit=([n])=>!q||n.toLowerCase().includes(q);
@@ -1026,11 +1029,24 @@ function rxTakeHomeView(me){
     h('small',{class:'soft'},'Prints on her Home Care PDF with her aftercare when you Save & Send To Desk.'),h('label',{class:'fld'},ex));
   const proN=String((d&&d.pro)||'').trim();
   const proSec=proN?h('section',{class:'card2'},h('span',{class:'lbl'},'Pro Notes'),h('small',{class:'soft'},'Only the team sees these.'),h('p',{style:'margin:0;white-space:pre-wrap;font-size:14px'},proN)):null;
-  const toRG=()=>{const cat=typeof rgCatalog==='function'?rgCatalog(kind):[], whens=RG_WHEN[kind];
-    RG=rgBlank(); RG.guest=x.guest; RG.next=d.m&&d.m.when||''; RG.rid=x.id;   /* her card id: saving again replaces the desk's copy */
-    RG.picks=x.home.map(p=>{if(String(p.n).startsWith(RX_BRB_N+': '))return {n:String(p.n),how:rxHowTo(p.n)+' Lasts about 2 weeks.',when:whens[0],step:''};const b=rgNorm(rgBase(String(p.n).replace(/^Try Me: /,''))), it=cat.find(c=>rgNorm(c.n)===b||c.sizes.includes(p.n))||cat.find(c=>{const k=rgNorm(c.n);return k.length>8&&(b.startsWith(k)||k.startsWith(b))});
+  const cat=typeof rgCatalog==='function'?rgCatalog(kind):[], whens=RG_WHEN[kind];
+  const pickOf=p=>{if(String(p.n).startsWith(RX_BRB_N+': '))return {n:String(p.n),how:rxHowTo(p.n)+' Lasts about 2 weeks.',when:whens[0],step:''};const b=rgNorm(rgBase(String(p.n).replace(/^Try Me: /,''))), it=cat.find(c=>rgNorm(c.n)===b||c.sizes.includes(p.n))||cat.find(c=>{const k=rgNorm(c.n);return k.length>8&&(b.startsWith(k)||k.startsWith(b))});
       const nm=it?it.n:String(p.n).replace(/^Try Me: /,''), gen=kind==='skin'?rxHowTo(nm):'';
-      return it?{n:it.n,how:it.how||gen,when:it.w0&&whens.includes(it.w0)?it.w0:whens[0],step:it.step}:{n:nm,how:gen,when:whens[0],step:''}});
+      return it?{n:it.n,how:it.how||gen,when:it.w0&&whens.includes(it.w0)?it.w0:whens[0],step:it.step}:{n:nm,how:gen,when:whens[0],step:''}};
+  /* How & When (Oct 24 2026): what the artist types here for each product goes on her PDF. Before this the PDF always
+     used the standard wording, so an artist's own directions never made it to the guest (Angelina's card). */
+  if(!x.how||typeof x.how!=='object') x.how={};
+  const howOf=p=>Object.assign(pickOf(p),x.how[p.n]||{});
+  const hw=x.home.length?h('section',{class:'card2'},h('span',{class:'lbl'},'How & When'),
+    h('small',{class:'soft'},'This is what prints on her Home Care PDF. Change the wording or when to use it for her.'),
+    ...x.home.map(p=>{const q=howOf(p), set=(k,v)=>{x.how[p.n]=Object.assign({},x.how[p.n]||{},{[k]:v});put()};
+      const ta=h('textarea',{class:'rgta',rows:'3'}); ta.value=q.how||''; ta.addEventListener('input',()=>set('how',ta.value));
+      return h('div',{class:'rgitem'},h('div',{class:'rgitem-h'},h('b',{},q.n.replace(/^Biologique Recherche /,'BR '))),
+        h('div',{class:'seg'},whens.map(o=>h('button',{type:'button','aria-pressed':String(q.when===o),onclick:()=>{set('when',o);render()}},o))),
+        h('label',{class:'fld'},ta))})):null;
+  const toRG=()=>{
+    RG=rgBlank(); RG.guest=x.guest; RG.next=d.m&&d.m.when||''; RG.rid=x.id;   /* her card id: saving again replaces the desk's copy */
+    RG.picks=x.home.map(howOf);
     /* New to P50 (Alexandra, Oct 20 2026): the artist checks it and her P50 step gets the dilute / ease-in line */
     if(kind==='skin'&&x.newP50) RG.newP50=true;   /* g/regimen.js rgBake puts it on her P50 step, or with her aftercare notes */
     if(kind==='skin') RG.picks.sort((a,b)=>RX_HOW_STEP(a.n)-RX_HOW_STEP(b.n));
@@ -1051,7 +1067,7 @@ function rxTakeHomeView(me){
     kind==='skin'?h('section',{class:'card2'},h('span',{class:'lbl'},'P50 Options'),
       h('button',{type:'button',class:'rxth'+(x.newP50?' on':''),'aria-pressed':String(!!x.newP50),onclick:()=>{x.newP50=!x.newP50;put();render()}},
         h('span',{class:'rxbx','aria-hidden':'true'},x.newP50?'✓':''),h('span',{class:'rxthn'},h('b',{},'She’s new to P50'),h('small',{},'Adds to her PDF: dilute the cotton round, start 1–2 times a week, then add more days once her skin is used to it.')))):null,
-    addSec,exSec,proSec,
+    hw,addSec,exSec,proSec,
     h('section',{class:'card2',style:'align-items:center;text-align:center'},send,prev,toast,
       h('small',{class:'soft'},'Her Home Care PDF goes to the front desk app’s Home Care list, and the desk texts it to her at checkout. Changed your mind at the end of her service? Change the picks and tap Save & Send To Desk again: it replaces the one on the desk.'))];
 }
