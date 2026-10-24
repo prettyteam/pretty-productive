@@ -126,14 +126,21 @@
   function awake(on){try{if(on&&!wake&&navigator.wakeLock)navigator.wakeLock.request('screen').then(function(w){wake=w;w.addEventListener('release',function(){wake=null})}).catch(function(){});
     else if(!on&&wake){wake.release();wake=null}}catch(e){}}
   document.addEventListener('visibilitychange',function(){if(busy&&document.visibilityState==='visible')awake(true)});
-  function landed(ph,thumb,fp){var s=MK._state;if(!s||!ph)return;MK._thumbs.set(ph.id,'data:image/jpeg;base64,'+thumb);if(fp){fps[ph.id]=fp;keepFps()}
-    if(!(s.photos||[]).some(function(x){return x.id===ph.id}))MK.applyState(Object.assign({},s,{photos:[ph].concat(s.photos||[])}));}
+  var land=[],landT=0;
+  function landed(ph,thumb,fp){if(!ph)return;MK._thumbs.set(ph.id,'data:image/jpeg;base64,'+thumb);if(fp)fps[ph.id]=fp;land.push(ph);if(!landT)landT=setTimeout(flushLand,1500);}
+  // Big batches (Oct 24 2026): new photos are drawn in every second and a half instead of one redraw per photo.
+  function flushLand(){landT=0;keepFps();var s=MK._state,n=land.splice(0);if(!s||!n.length)return;
+    var ids={};(s.photos||[]).forEach(function(x){ids[x.id]=1});n=n.filter(function(x){return!ids[x.id]}).reverse();
+    if(n.length)MK.applyState(Object.assign({},s,{photos:n.concat(s.photos||[])}));}
+  var waiting=[];
   function uploadAll(files){
-    if(busy||!files.length)return;busy=true;MK.busy=true;awake(true);
+    if(!files.length)return;
+    if(busy){waiting=waiting.concat(files);msg('Got '+waiting.length+' more photo'+(waiting.length===1?'':'s')+'. They go up as soon as this batch is done.');return}
+    busy=true;MK.busy=true;awake(true);
     var album=cur,full=$('fullsize').checked,done=0,fail=0,dup=0,total=files.length,q=files.slice(),have=[],added=[];
     var bar=$('prog');bar.hidden=false;
-    function step(){bar.firstChild.style.width=Math.round(100*(done+fail+dup)/total)+'%';msg('Adding photos: '+(done+fail+dup)+' of '+total+(dup?' ('+dup+' already here, skipped)':'')+(fail?' ('+fail+' did not work)':'')+'. Keep this page open.');}
-    msg('Getting ready\u2026');
+    function step(){bar.firstChild.style.width=Math.round(100*(done+fail+dup)/total)+'%';msg('Adding photos: '+(done+fail+dup)+' of '+total+(dup?' ('+dup+' already here, skipped)':'')+(fail?' ('+fail+' did not work)':'')+'.'+(waiting.length?' '+waiting.length+' more after this.':'')+' Keep this page open.');}
+    msg('Got '+total+' photo'+(total===1?'':'s')+'. Getting ready\u2026'+(total>150?' A big batch takes a while, so keep this page open and the phone plugged in.':''));
     function worker(){var f=q.shift();if(!f)return Promise.resolve();
       return prep(f,full).then(function(p){
         if(have.some(function(x){return same(x,p.fp)})){dup++;return}
@@ -147,8 +154,10 @@
     // Waits at most 20 seconds for the album's fingerprints, so a slow connection never holds up the upload.
     Promise.race([albumFps(album),new Promise(function(r){setTimeout(function(){r(null)},20000)})]).catch(function(){return null}).then(function(l){return l||photos.filter(function(p){return p.album===album&&fps[p.id]}).map(function(p){return{fp:fps[p.id]}})}).then(function(l){have=l.map(function(x){return x.fp});step();return Promise.all([worker(),worker()])}).then(function(){busy=false;MK.busy=false;awake(false);bar.hidden=true;
       var said=done+' photo'+(done===1?'':'s')+' added'+(dup?'. '+dup+(dup===1?' was':' were')+' already in this album, so I skipped '+(dup===1?'it':'them'):'')+(fail?'. '+fail+' did not work. Try those again, or turn off Full size.':'.');
-      msg(said);$('pick').value='';
-      if(MK._state&&MK._state.sort&&added.length&&!isWed(album))autoSort(added,said);else MK.refresh();});
+      flushLand();msg(said);$('pick').value='';
+      if(MK._state&&MK._state.sort&&added.length&&!isWed(album))autoSort(added,said);else{MK.refresh();next()}});
+  }
+  function next(){if(!busy&&waiting.length)uploadAll(waiting.splice(0))
   }
 
   // Lightbox works on whichever album is showing, always at full size.
@@ -190,14 +199,19 @@
   $('mk-refresh').onclick=function(){this.disabled=true;this.textContent='Refreshing\u2026';location.reload();};
   navState();
 
-  $('pick').addEventListener('change',function(){uploadAll([].slice.call(this.files||[]))});
+  $('pick').addEventListener('change',function(){var f=[].slice.call(this.files||[]);
+    if(!f.length){msg('Your phone didn\u2019t hand over any photos. With a very big album, pick about 200 at a time.');return}uploadAll(f)});
+  // An iPhone gets every picked photo ready before the page sees any, which can take minutes for a whole album (Oct 24 2026).
+  $('pick').addEventListener('click',function(){if(!busy)msg('Pick your photos. If you choose a lot, your phone may take a few minutes to get them ready before they start.')});
+  $('pick').addEventListener('cancel',function(){if(!busy)msg('')});
 
   // Auto-sort (Alexandra, Oct 24 2026): after an upload, Claude looks at each new photo and the script moves any that clearly
   // belong in another album (never in or out of a wedding's Favorites). The message says what moved, with Undo.
   function autoSort(ids,said){busy=true;msg(said+' Sorting them into the right albums\u2026');var moves=[],b=[];
     for(var i=0;i<ids.length;i+=12)b.push(ids.slice(i,i+12));
     b.reduce(function(pr,x){return pr.then(function(){return MK.api('sort',{ids:x}).then(function(r){moves=moves.concat(r.moves||[]);MK.applyState(r)}).catch(function(e){console.warn(e)})})},Promise.resolve())
-      .then(function(){busy=false;if(!moves.length){msg(said+' They all look like they belong here.');return}
+      .then(function(){busy=false;if(waiting.length){msg(said+(moves.length?' Moved '+moves.length+' to a better album.':''));next();return}
+        if(!moves.length){msg(said+' They all look like they belong here.');return}
         var by={};moves.forEach(function(m){by[m.to]=(by[m.to]||0)+1});
         msg(said+' Moved '+Object.keys(by).map(function(k){var a=albumOf(k);return by[k]+' to '+(a?a.name:'another album')}).join(', ')+'. ');
         var u=document.createElement('button');u.type='button';u.className='mk-undo';u.textContent='Undo';$('upmsg').appendChild(u);
