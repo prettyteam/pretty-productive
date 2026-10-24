@@ -704,7 +704,8 @@ function teamPost_(d) {
     const data = JSON.stringify({ guest: guest, services: [].concat(r.services || []).slice(0, 12), type: clean_(r.type, 40),
       picks: [].concat(r.picks || []).slice(0, 40).map(p => ({ n: clean_(p.n, 120), how: String(p.how == null ? '' : p.how).split(/\r?\n/).map(x => clean_(x, 600)).filter(Boolean).join('\n').slice(0, 1600), when: clean_(p.when, 30), step: clean_(p.step, 40) })),   // keeps the step-by-step lines (Oct 20 2026)
       notes: [].concat(r.notes || []).slice(0, 20).map(n => clean_(n, 200)), own: clean_(r.own, 1500), next: clean_(r.next, 20),
-      nextDate: /^\d{4}-\d{2}-\d{2}$/.test(String(r.nextDate || '')) ? r.nextDate : '', msg: clean_(r.msg, 500), rid: clean_(r.rid, 40), plan: clean_(r.plan, 120) });
+      nextDate: /^\d{4}-\d{2}-\d{2}$/.test(String(r.nextDate || '')) ? r.nextDate : '', msg: clean_(r.msg, 500), rid: clean_(r.rid, 40), plan: clean_(r.plan, 120),
+      addons: [].concat(r.addons || []).slice(0, 10).map(x => ({ n: clean_(x && x.n, 80), p: Number(x && x.p) || 0 })).filter(x => x.n) });   // add-ons she picked at the end, for the desk to ring up (Oct 24 2026)
     if (!guest) return json_({ ok: false, error: 'guest' });
     const products = JSON.parse(data).picks.map(p => p.n.replace(/^Biologique Recherche /, '')).join(', ');
     // saved again from the same RX card before the desk texted it: replace that one instead of adding a second (Alexandra, Oct 20 2026)

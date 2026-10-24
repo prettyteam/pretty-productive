@@ -57,3 +57,4 @@
 .rxchose .obtn.on{background:var(--ink,#121212);color:#fff}
 .rxfin{display:flex;flex-direction:column;gap:6px;border-bottom:1px solid var(--line);padding-bottom:12px;margin-bottom:6px}
 .rxfin .obtn{width:auto;min-height:40px;padding:0 18px;margin:0}
+.rxpro{color:var(--ink,#121212);font-style:italic;white-space:pre-wrap}
