@@ -1,8 +1,10 @@
 /* Photos tab (prettyteam version, Oct 17 2026): albums and photos added from phones are saved in Google Drive;
    the photos added on the Claude version came along and stay in their albums. */
 (function(){
-  var BUILT=[{id:'branding',name:'Hi Pretty Branding Shoot'},{id:'bridal',name:'Taffeta Bridal'},{id:'salon',name:'Taffeta Salon & Spa'}];
-  var albums=BUILT.slice(),weds=[],photos=[],cur='branding',ready=false,busy=false;
+  var BUILT=[{id:'branding',name:'Hi Pretty Branding Shoot'},{id:'bridal',name:'Taffeta Bridal'},{id:'salon',name:'Taffeta Salon & Spa'},{id:'team',name:'Employee Content'}];
+  /* Employee Content (Alexandra, Oct 24 2026): each person's My Work album ("Amanda’s Work", made by the script when they
+     add before and afters in the team app) shows as a folder inside Employee Content, the same way weddings sit in Taffeta Bridal. */
+  var albums=BUILT.slice(),weds=[],staff=[],photos=[],cur='branding',ready=false,busy=false;
   /* Wedding Day Favorites (Oct 23 2026): each wedding the team adds favorites to gets its own album (album.parent 'bridal').
      They show as folders inside Taffeta Bridal, photos grouped by who added them; videos play from Drive. */
   var css=document.createElement('style');css.textContent='#p-photos .pfolders{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:14px;margin:0 0 22px}'
@@ -19,13 +21,16 @@
   var h=(location.hash.match(/album=([\w-]+)/)||[])[1];if(h)cur=h;
 
   function fmt(ms){try{return new Date(ms).toLocaleDateString(undefined,{month:'short',day:'numeric'})}catch(e){return''}}
-  function albumOf(id){var all=albums.concat(weds);for(var i=0;i<all.length;i++)if(all[i].id===id)return all[i];return null}
+  function albumOf(id){var all=albums.concat(weds,staff);for(var i=0;i<all.length;i++)if(all[i].id===id)return all[i];return null}
   function isWed(id){var a=albumOf(id);return !!(a&&a.parent==='bridal')}
+  function isKid(id){var a=albumOf(id);return !!(a&&a.parent)}
+  var FOLD={bridal:{kids:function(){return weds},head:'Weddings',back:'\u2190 All weddings',brand:'Taffeta Bridal'},
+    team:{kids:function(){return staff},head:'Team',back:'\u2190 Employee Content',brand:'Employee Content'}};
 
   function renderTabs(){
     var nav=$('albums');nav.textContent='';
     albums.forEach(function(a){var b=document.createElement('button');b.type='button';b.textContent=a.name;
-      b.setAttribute('aria-current',a.id===cur||(a.id==='bridal'&&isWed(cur))?'true':'false');b.onclick=function(){go(a.id)};nav.appendChild(b);});
+      b.setAttribute('aria-current',a.id===cur||(isKid(cur)&&(albumOf(cur)||{}).parent===a.id)?'true':'false');b.onclick=function(){go(a.id)};nav.appendChild(b);});
     if(ready){var n=document.createElement('button');n.type='button';n.className='add';n.textContent='+ New album';n.onclick=newAlbum;nav.appendChild(n);}
   }
   function tile(p){
@@ -48,13 +53,13 @@
     mine.forEach(function(p){grid.appendChild(tile(p))});
     if(isB){$('phone-n').textContent=mine.length;$('phone-count').textContent=mine.length+' photos';$('phone-empty').hidden=mine.length>0;}
     else{
-      var wed=a.parent==='bridal',nv=mine.filter(function(p){return p.video}).length,np=mine.length-nv;
-      $('o-brand').textContent=wed?'Taffeta Bridal':(a.brand||'');$('o-brand').hidden=!(wed||a.brand);$('o-title').textContent=a.name;
+      var wed=a.parent==='bridal',par=FOLD[a.parent],here=FOLD[cur],kids=here?here.kids():[],nv=mine.filter(function(p){return p.video}).length,np=mine.length-nv;
+      $('o-brand').textContent=par?par.brand:(a.brand||'');$('o-brand').hidden=!(par||a.brand);$('o-title').textContent=a.name;
       $('o-sub').textContent=mine.length?(wed?[np?np+(np>1?' photos':' photo'):'',nv?nv+(nv>1?' videos':' video'):''].filter(Boolean).join(' and ')+' from the team. Tap any one to see it bigger.':mine.length+' photos. Tap any photo to see it bigger.'):'';
-      var back=box('o-back','pback','button',$('o-title').parentNode);back.type='button';back.textContent='← All weddings';back.hidden=!wed;back.onclick=function(){go('bridal')};
-      var fold=box('o-folders','pfolders','div',$('o-empty'));fold.textContent='';fold.hidden=!(cur==='bridal'&&weds.length);
-      if(!fold.hidden){var fh=box('o-fh','pfh','h3',fold);fh.hidden=false;fh.textContent='Weddings';
-        weds.forEach(function(w){var list=photos.filter(function(p){return p.album===w.id});var k=document.createElement('button');k.type='button';k.className='pfolder';
+      var back=box('o-back','pback','button',$('o-title').parentNode);back.type='button';back.textContent=par?par.back:'';back.hidden=!par;back.onclick=function(){go(a.parent)};
+      var fold=box('o-folders','pfolders','div',$('o-empty'));fold.textContent='';fold.hidden=!kids.length;
+      if(!fold.hidden){var fh=box('o-fh','pfh','h3',fold);fh.hidden=false;fh.textContent=here.head;
+        kids.forEach(function(w){var list=photos.filter(function(p){return p.album===w.id});var k=document.createElement('button');k.type='button';k.className='pfolder';
           k.innerHTML='<div class="pcov"></div><b></b><small></small>';k.querySelector('b').textContent=w.name;k.querySelector('small').textContent=list.length+(list.length===1?' item':' items');
           if(list[0]){var im=document.createElement('img');im.alt='';im.dataset.d=list[0].id;k.querySelector('.pcov').appendChild(im)}
           k.onclick=function(){go(w.id)};fold.appendChild(k)});
@@ -63,7 +68,10 @@
       if(wed){grid.textContent='';var by=[];mine.forEach(function(p){var n=p.by||'Team';if(by.indexOf(n)<0)by.push(n)});
         by.forEach(function(n){var h3=document.createElement('h3');h3.className='pfh';h3.textContent=n;var g=document.createElement('div');g.className='pgrid';
           mine.filter(function(p){return(p.by||'Team')===n}).forEach(function(p){g.appendChild(tile(p))});groups.appendChild(h3);groups.appendChild(g)});MK.scan(groups);}
-      $('o-empty').hidden=mine.length>0||(cur==='bridal'&&weds.length>0);}
+      var em=$('o-empty');if(!em.dataset.t)em.dataset.t=em.textContent;
+      em.textContent=cur==='team'?'Each person gets their own album here as soon as they add a before and after in My Work in the team app.':em.dataset.t;
+      em.hidden=mine.length>0||kids.length>0;}
+    $('upbar').hidden=!ready||cur==='team';
     MK.scan(grid);
   }
   function go(id,back){if(!back&&id!==cur)remember();cur=id;try{localStorage.setItem('album',id)}catch(e){}
@@ -155,7 +163,7 @@
     Promise.race([albumFps(album),new Promise(function(r){setTimeout(function(){r(null)},20000)})]).catch(function(){return null}).then(function(l){return l||photos.filter(function(p){return p.album===album&&fps[p.id]}).map(function(p){return{fp:fps[p.id]}})}).then(function(l){have=l.map(function(x){return x.fp});step();return Promise.all([worker(),worker()])}).then(function(){busy=false;MK.busy=false;awake(false);bar.hidden=true;
       var said=done+' photo'+(done===1?'':'s')+' added'+(dup?'. '+dup+(dup===1?' was':' were')+' already in this album, so I skipped '+(dup===1?'it':'them'):'')+(fail?'. '+fail+' did not work. Try those again, or turn off Full size.':'.');
       flushLand();msg(said);$('pick').value='';
-      if(MK._state&&MK._state.sort&&added.length&&!isWed(album))autoSort(added,said);else{MK.refresh();next()}});
+      if(MK._state&&MK._state.sort&&added.length&&!isKid(album))autoSort(added,said);else{MK.refresh();next()}});
   }
   function next(){if(!busy&&waiting.length)uploadAll(waiting.splice(0))
   }
@@ -259,12 +267,13 @@
 
   MK.onState(function(s){
     var hide={};(s.hidden||[]).forEach(function(x){hide[x]=1});
-    var all=(s.albums||[]).map(function(a){return{id:a.id,name:String(a.name||'Album'),brand:'',parent:a.parent||'',date:a.date||''}});
+    var all=(s.albums||[]).map(function(a){return{id:a.id,name:String(a.name||'Album'),brand:'',parent:a.parent||(a.model?'team':''),date:a.date||''}});
     albums=BUILT.concat(all.filter(function(a){return !a.parent}));
     weds=all.filter(function(a){return a.parent==='bridal'}).sort(function(x,y){return(y.date||'').localeCompare(x.date||'')});
+    staff=all.filter(function(a){return a.parent==='team'}).sort(function(x,y){return x.name.localeCompare(y.name)});
     photos=(s.photos||[]).map(function(p){return{id:p.id,album:p.album,w:p.w,h:p.h,addedAt:p.addedAt,kind:'d',by:p.by||'',video:!!p.video,vf:p.vf||''}})
       .concat(MK.migrated.map(function(p){return{id:p.id,album:p.album,w:p.w,h:p.h,addedAt:p.addedAt,kind:'m'}}))
       .filter(function(p){return !hide[p.id]}).sort(function(a,b){return(b.addedAt||0)-(a.addedAt||0)});
-    ready=true;$('upbar').hidden=false;renderTabs();renderPhotos();
+    ready=true;renderTabs();renderPhotos();
   });
 })();

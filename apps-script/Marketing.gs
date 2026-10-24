@@ -103,13 +103,14 @@ function mktThumbs_(s, d) {
 // Auto-sort (Alexandra, Oct 24 2026): after an upload Claude looks at each new photo's small copy and moves it to the
 // album it fits best, so a photo added to the wrong album lands where it belongs. The page shows what moved, with Undo.
 // Wedding Day Favorites albums (album.parent 'bridal') are never sorted into or out of: those are per wedding.
+// Same for each person's My Work album (album.model), which shows inside Employee Content.
 function mktSortKey_() { return PropertiesService.getScriptProperties().getProperty('MKT_CLAUDE_KEY') || ''; }
 function mktSortAlbums_(s) {
   return [
     { id: 'branding', name: 'Hi Pretty Branding Shoot', about: 'the Hi Pretty brand photo shoot: styled model portraits, beauty and lifestyle shots, Hi Pretty products' },
     { id: 'bridal', name: 'Taffeta Bridal', about: 'weddings: brides, bridesmaids and bridal parties, wedding day hair and makeup, veils, getting-ready moments' },
     { id: 'salon', name: 'Taffeta Salon & Spa', about: 'the salon and spa: everyday hair color, cuts and styling, facials and skin care, the salon space, retail products, the team at work' }
-  ].concat(s.albums.filter(a => !a.parent).map(a => ({ id: a.id, name: a.name, about: '' })));
+  ].concat(s.albums.filter(a => !a.parent && !a.model).map(a => ({ id: a.id, name: a.name, about: '' })));
 }
 function mktSort_(d) {
   const key = mktSortKey_();
