@@ -66,13 +66,12 @@ MK.onState=function(fn){MK._subs.push(fn);if(MK._state)try{fn(MK._state)}catch(e
 MK.applyState=function(s){if(!s||!s.edits)return;MK._state=s;MK._subs.forEach(fn=>{try{fn(s)}catch(e){console.warn(e)}})};
 MK.refresh=function(){return MK.api('state').then(MK.applyState).catch(e=>console.warn(e))};
 MK.driveFull=function(id){return MK.api('thumbs',{ids:[id],full:true}).then(r=>r.photos[id])};
-// Team photo thumbnails come from Apps Script, which handles one request at a time. Ask for a few at a time,
-// wait while photos are uploading so the upload goes first, and try again when a batch doesn't come back (Oct 23 2026).
+// Team photo thumbnails come from Apps Script. Ask for a few at a time and try again when a batch doesn't come back
+// (Oct 23 2026). They no longer wait behind uploads, since the script answers them without its lock (Oct 24 2026).
 MK._tries=new Map();
 function thumbCss(){if(MK._tc)return;MK._tc=1;const st=document.createElement('style');
   st.textContent='img[data-d]:not([src]){visibility:hidden}.ptile button:has(img[data-d]:not([src])){background:#ece9e3}';document.head.append(st)}
 function flushThumbs(){MK._t=0;
-  if(MK.busy){MK._t=setTimeout(flushThumbs,1500);return}
   const ids=[...MK._q].slice(0,8);ids.forEach(i=>MK._q.delete(i));if(!ids.length)return;
   let wait=50;
   MK.api('thumbs',{ids}).then(r=>{Object.entries(r.photos||{}).forEach(([id,u])=>{MK._thumbs.set(id,u);MK._tries.delete(id);document.querySelectorAll('img[data-d="'+id+'"]').forEach(im=>{im.src=u;im.classList.remove('mk-wait')})})})
