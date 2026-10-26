@@ -6,7 +6,7 @@ input.json: {"week":"2026-09-28","label":"Sep 28 – Oct 4","runOn":"Oct 5, 2026
                "rate":45,"products":[same shape], "serviceTotal","retailTotal","commTotal"}]}
 Writes outdir/<week>/<slug>.pdf and outdir/meta.json for publish.mjs --cr. Client names are shortened to First + last initial.
 """
-import json, os, sys
+import json, os, re, sys
 from reportlab.lib.pagesizes import letter
 from reportlab.lib import colors
 from reportlab.lib.units import inch
@@ -23,7 +23,9 @@ def short(n):
 def m(x): return '${:,.2f}'.format(float(x or 0))
 def build(st, week, label, runOn, path):
     rate=float(st.get("rate") or 0); rrate=float(st.get("retailRate") if st.get("retailRate") is not None else 10)
-    for r in st.get("services",[]): r["comm"]=round(float(r.get("amount") or 0)*rate/100,2)
+    # 40 ML / 80 ML color mix is product cost, never commissioned (Alexandra, Oct 26, 2026). Model services pay $0 too.
+    nocomm=lambda n: bool(re.match(r'\s*(40|80)\s*ML\b.*mix',n or '',re.I)) or (n or '').strip().lower().startswith('model')
+    for r in st.get("services",[]): r["comm"]=0.0 if nocomm(r.get("item")) else round(float(r.get("amount") or 0)*rate/100,2)
     for r in st.get("products",[]): r["comm"]=round(float(r.get("amount") or 0)*rrate/100,2)
     st["commTotal"]=round(sum(r["comm"] for r in st.get("services",[]))+sum(r["comm"] for r in st.get("products",[])),2)
     H=ParagraphStyle('h',fontName='Times-Bold',fontSize=22,textColor=BROWN,leading=26)
