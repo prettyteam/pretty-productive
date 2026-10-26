@@ -405,7 +405,7 @@ input,select,textarea{background:#fff;border-radius:0}
             <label class="f">Makeup slot (min)<input id="muSlot" type="number" min="15" step="5" value="60"></label>
             <label class="f">Arrive early (min)<input id="arrival" type="number" min="0" step="5" value="30"></label>
           </div>
-          <label class="f" id="bothSlotWrap" hidden>Bride's hair &amp; makeup, one artist (min)<input id="bothSlot" type="number" min="30" step="15" placeholder="120"></label>
+          <label class="f" id="bothSlotWrap" hidden>Bride's hair &amp; makeup, one artist (min, total)<input id="bothSlot" type="number" min="30" step="10" placeholder="60"></label>
           <label class="f">Touch-ups before leaving (optional)<input id="touchups" placeholder="e.g. 1:30 PM - 2 PM"></label>
           <p class="hint">One hour per service. Bride mid-day, moms and MOH just before her.</p>
         </div>
@@ -869,11 +869,12 @@ function build(s){
   const hairA=s.artists.filter(a=>a.role==="hair"), muA=s.artists.filter(a=>a.role==="mu"), bothA=s.artists.filter(a=>a.role==="both");
   const bride=s.people.find(p=>p.role==="Bride");
   const order=p=>HELPERS.includes(p.role)?1:0;
-  /* One artist does the bride's hair AND makeup in one block (Alexandra, Oct 26 2026). The bride comes out of the
-     hair and makeup columns, her block sits mid-day where her hair would have started, and the moms and MOH
-     still go just before her. */
+  /* One artist does the bride's hair AND makeup (Alexandra, Oct 26 2026): one hour in all unless the office types
+     another length, shown as a Hair box then a Makeup box in her column. The bride comes out of the hair and makeup
+     columns, her time sits mid-day where her hair would have started, and the moms and MOH still go just before her. */
   const brideBoth=!!(bothA.length&&bride&&(bride.hair||bride.mu));
-  const bothLen=brideBoth?(Number(s.bothSlot)>0?Math.max(30,Number(s.bothSlot)):(bride.hair?hairSlot:0)+(bride.mu?muSlot:0)):0;
+  const bothLen=brideBoth?(Number(s.bothSlot)>0?Math.max(30,Number(s.bothSlot)):60):0;
+  const bothParts=brideBoth?[bride.hair&&"Hair",bride.mu&&"Makeup"].filter(Boolean):[];
   let bothT=0;
   if(brideBoth){
     const n=sv=>s.people.filter(p=>p[sv]&&p!==bride).length;
@@ -914,7 +915,8 @@ function build(s){
     return rows;
   });
   const cols=[...hair.cols,...mu.cols];
-  if(brideBoth&&bothLen)cols.unshift({artist:bothA[0],service:"both",slot:bothLen,off:bothT,cells:[bride.id]});
+  if(brideBoth&&bothLen){const sl=Math.max(5,Math.round(bothLen/bothParts.length/5)*5);
+    cols.unshift({artist:bothA[0],service:"both",slot:sl,off:bothT,cells:bothParts.map(()=>bride.id),parts:bothParts})}
   // resolve same-person overlaps by swapping makeup cells
   const iv=(col,r)=>[r*col.slot,(r+1)*col.slot];
   const overl=(a,b)=>a[0]<b[1]&&b[0]<a[1];
@@ -995,7 +997,7 @@ if(p.role==="Junior BM")txt+=" (Jr BM)";if(p.role==="Flower girl")txt+=" (Flower
 function servicesLine(s){
   const h=s.people.filter(p=>p.hair&&p.role!=="Bride").length, m=s.people.filter(p=>p.mu&&p.role!=="Bride").length;
   const b=s.people.find(p=>p.role==="Bride");
-  const part=(has,n,word)=>(has?"Bride + ":"")+n+" "+word;
+  const part=(has,n,word)=>has?(n?"Bride + "+n+" "+word:"Bride "+word):n+" "+word;   // a bride-only wedding reads "Bride Hair", not "Bride + 0 Hair"
   const bits=[];
   if(h||(b&&b.hair))bits.push(part(b&&b.hair,h,"Hair"));
   if(m||(b&&b.mu))bits.push(part(b&&b.mu,m,"Makeup"));
@@ -1074,7 +1076,7 @@ function sheetHTML(s,ver,editable){
 function timedRows(s,plan,labels,ver,editable){
   const g=(a,b)=>b?g(b,a%b):a;
   let base=0;plan.cols.forEach(c=>{base=g(base,c.slot);if(c.off)base=g(base,c.off)});base=Math.max(5,base);
-  const unit=Math.min(...plan.cols.filter(c=>c.service!=="both").map(c=>c.slot).concat([60]));
+  const unit=Math.min(...plan.cols.map(c=>c.slot));   // the shortest box keeps the usual box height
   const rowH=34*base/unit, n=Math.round((plan.end-plan.start)/base);
   const starts=new Set([0]);plan.cols.forEach(c=>c.cells.forEach((_,r)=>starts.add(cellT(c,r))));
   const st=[...starts].sort((a,b)=>a-b).concat([n*base]);   // a time box runs until the next box that starts
@@ -1090,7 +1092,7 @@ function timedRows(s,plan,labels,ver,editable){
       if(c.service==="both"){
         const end=off+c.cells.length*c.slot;
         if(t===0&&off>0)h+=box("c blank","",off/base,"");
-        else if(t>=off&&t<end&&(t-off)%c.slot===0){const pid=c.cells[(t-off)/c.slot];h+=pid?box("c bride",esc((labels[pid+":both"]||{}).txt||"Bride")+(s.mode==="tbd"?"":'<small class="until">Until '+fmt(plan.start+t+c.slot)+'</small>'),k,editable&&ver==="team"&&!moveOn?' contenteditable="true" data-key="'+pid+':both"':''):box("c empty","",k,"")}
+        else if(t>=off&&t<end&&(t-off)%c.slot===0){const pid=c.cells[(t-off)/c.slot];h+=pid?box("c bride",esc((labels[pid+":both"]||{}).txt||"Bride")+'<small class="until">'+esc(c.parts[(t-off)/c.slot]||"")+'</small>',k,""):box("c empty","",k,"")}
         else if(t===end&&end<plan.end-plan.start)h+=box("c blank","",(plan.end-plan.start-end)/base,"");
         return;
       }
@@ -1121,7 +1123,7 @@ function textOf(s){
   if(s.notes)L.push("Notes: "+s.notes);
   plan.cols.forEach(c=>{
     L.push("");L.push(SVC[c.service].toUpperCase()+(c.artist.name?" - "+c.artist.name.toUpperCase():""));
-    c.cells.forEach((pid,r)=>{if(pid)L.push(tm(s,plan.start+cellT(c,r))+"  "+((labels[pid+":"+c.service]||{}).txt||"")+(c.service==="both"?" (until "+tm(s,plan.start+cellT(c,r)+c.slot)+")":""))});
+    c.cells.forEach((pid,r)=>{if(pid)L.push(tm(s,plan.start+cellT(c,r))+"  "+((labels[pid+":"+c.service]||{}).txt||"")+(c.parts?" "+c.parts[r].toLowerCase():""))});
   });
   return L.join("\n");
 }
@@ -1129,9 +1131,9 @@ function tsvOf(s){
   const plan=build(s), labels=labelMap(s,plan,"team");
   const rows=Math.max(0,...plan.cols.map(c=>c.cells.length));
   const out=[["Time",...plan.cols.map(c=>SVC[c.service]+(c.artist.name?" ("+c.artist.name+")":""))].join("\t")];
-  if(plan.cols.some(c=>c.service==="both")){   // one line per start time when the bride's block is longer than the others
+  if(plan.cols.some(c=>c.service==="both")){   // one line per start time when the bride's boxes are a different length
     const ts=[...new Set(plan.cols.flatMap(c=>c.cells.map((_,r)=>cellT(c,r))))].sort((a,b)=>a-b);
-    ts.forEach(t=>out.push([tm(s,plan.start+t),...plan.cols.map(c=>{const r=(t-(c.off||0))/c.slot,pid=Number.isInteger(r)?c.cells[r]:null;return pid?((labels[pid+":"+c.service]||{}).txt||""):""})].join("\t")));
+    ts.forEach(t=>out.push([tm(s,plan.start+t),...plan.cols.map(c=>{const r=(t-(c.off||0))/c.slot,pid=Number.isInteger(r)?c.cells[r]:null;return pid?((labels[pid+":"+c.service]||{}).txt||"")+(c.parts?" "+c.parts[r].toLowerCase():""):""})].join("\t")));
     return out.join("\n");
   }
   for(let r=0;r<rows;r++){out.push([tm(s,plan.start+r*(plan.cols[0]?plan.cols[0].slot:60)),...plan.cols.map(c=>{const pid=c.cells[r];return pid?((labels[pid+":"+c.service]||{}).txt||""):""})].join("\t"))}
@@ -1191,10 +1193,9 @@ function renderArtists(){
   renderBothSlot();
   renderCalTeam();
 }
-/* the bride's one-artist block length only shows when a hair & makeup artist is on the team; blank = hair + makeup slots */
+/* the bride's one-artist time only shows when a hair & makeup artist is on the team; blank = 60 minutes */
 function renderBothSlot(){
   $("#bothSlotWrap").hidden=!S.artists.some(a=>a.role==="both");
-  $("#bothSlot").placeholder=String((Number(S.hairSlot)||60)+(Number(S.muSlot)||60));
 }
 /* Team names pop up as she types an artist or the day-of contact (Alexandra, Oct 21 2026), the same way client names
    pop up on the saved-card search. Tapping a name fills her cell. Names that start with what she typed come first. */
@@ -2239,7 +2240,7 @@ $("#adm-copy").onclick=()=>copy([ADM_COLS.map(c=>c[1]).join("\t"),...profiles.ma
 function artistPlan(a){
   const plan=build(S), labels=labelMap(S,plan,"team");
   const cols=plan.cols.filter(c=>c.artist.id===a.id);
-  const slots=[];cols.forEach(c=>c.cells.forEach((pid,r)=>{if(pid)slots.push({t:plan.start+cellT(c,r),end:plan.start+cellT(c,r)+c.slot,txt:(labels[pid+":"+c.service]||{}).txt||""})}));
+  const slots=[];cols.forEach(c=>c.cells.forEach((pid,r)=>{if(pid)slots.push({t:plan.start+cellT(c,r),end:plan.start+cellT(c,r)+c.slot,txt:((labels[pid+":"+c.service]||{}).txt||"")+(c.parts?" "+c.parts[r].toLowerCase():"")})}));
   slots.sort((x,y)=>x.t-y.t);
   return {plan,slots,start:plan.start-(Number(S.arrival)||0),end:slots.length?slots[slots.length-1].end:plan.end};
 }
