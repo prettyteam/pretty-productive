@@ -2466,6 +2466,11 @@ function favCover(file){
     v.onerror=()=>fin(null);setTimeout(()=>fin(null),8000);v.src=u;
   });
 }
+// Sends a file straight to a Drive upload link. Always resolves; the server then checks how much Drive got.
+function driveSend(url,file,type,pct){return new Promise(res=>{try{const x=new XMLHttpRequest();let last=-1;
+  x.open("PUT",url);x.setRequestHeader("Content-Type",type);
+  x.upload.onprogress=e=>{if(!e.lengthComputable)return;const p=Math.floor(100*e.loaded/e.total);if(p!==last){last=p;pct(p)}};
+  x.onload=x.onerror=x.onabort=x.ontimeout=()=>res();x.send(file)}catch(e){res()}})}
 function favB64(blob){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(String(r.result).split(",")[1]);r.onerror=rej;r.readAsDataURL(blob)})}
 function imgSize(file){return new Promise(res=>{const u=URL.createObjectURL(file),i=new Image();i.onload=()=>{URL.revokeObjectURL(u);res({w:i.naturalWidth,h:i.naturalHeight})};i.onerror=()=>{URL.revokeObjectURL(u);res({w:0,h:0})};i.src=u})}
 async function favUpload(id,files){
@@ -2488,7 +2493,10 @@ async function favUpload(id,files){
         const c=await favCover(f)||{};
         const st=await apiRetry("favVideoStart",{id,video:{name:f.name,type:f.type||"video/mp4",size:f.size,thumb:c.thumb||"",w:c.w||0,h:c.h||0}});
         let off=0;
-        while(off<f.size){
+        // Faster (Oct 26 2026): the whole video goes straight to Drive first; whatever didn't make it goes up in pieces below.
+        if(st.url){await driveSend(st.url,f,f.type||"video/mp4",p=>say(lead+"… "+p+"%. Keep this page open."));
+          try{const c=await api("favVideoCheck",{token:st.token});if(c.done)photo=c.photo;else off=c.next||0}catch(e){if(e.code==="expired")throw e}}
+        while(!photo&&off<f.size){
           say(lead+"… "+Math.round(100*off/f.size)+"%. Keep this page open.");
           const piece=f.slice(off,Math.min(f.size,off+FAV_PIECE)),data=await favB64(piece);
           let j,tries=0;
