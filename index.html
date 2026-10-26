@@ -1182,11 +1182,19 @@ async function mpMore(files){
 async function mpPost(body){const st=S.mine.staff;
   const r=await fetch(API(),{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({...body,slug:st.slug,t:st.t})});
   const j=await r.json(); if(!j.ok){const e=new Error(j.message||j.error||'x');e.code=j.error;throw e} return j}
+// Sends a file straight to a Drive upload link. Always resolves; the server then checks how much Drive got.
+function driveSend(url,file,type,pct){return new Promise(res=>{try{const x=new XMLHttpRequest();let last=-1;
+  x.open('PUT',url);x.setRequestHeader('Content-Type',type);
+  x.upload.onprogress=e=>{if(!e.lengthComputable)return;const p=Math.floor(100*e.loaded/e.total);if(p!==last){last=p;pct(p)}};
+  x.onload=x.onerror=x.onabort=x.ontimeout=()=>res();x.send(file)}catch(e){res()}})}
 async function mpVideo(which,sk,item,n,label){
   item=item||MP[which]; label=label||'your '+which+' video';
   const f=item.video, s=await mpPost({type:'mvideoStart',which,n,skill:sk[1],date:MP.date,
     video:{name:f.name,type:f.type||'video/mp4',size:f.size,thumb:item.small?item.small.split(',')[1]:''}});
   let off=0;
+  // Faster (Oct 26 2026): the whole video goes straight to Drive first; whatever didn't make it goes up in pieces below.
+  if(s.url){await driveSend(s.url,f,f.type||'video/mp4',p=>{MP.msg='Sending '+label+'… '+p+'%. Keep this page open.';render()});
+    try{const c=await mpPost({type:'mvideoCheck',token:s.token});if(c.done)return s.token;off=c.next||0}catch(e){if(e.code==='expired')throw e}}
   while(off<f.size){
     MP.msg='Sending '+label+'… '+Math.round(100*off/f.size)+'%. Keep this page open.';render();
     const piece=f.slice(off,Math.min(f.size,off+MP_PIECE)), data=await mpB64(piece);

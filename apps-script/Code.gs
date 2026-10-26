@@ -74,7 +74,7 @@ function doGet(e) {
 
 function doPost(e) {
   // video pieces for Photos/Videos of My Work skip the lock, so a long video doesn't hold up everyone else
-  if (String(e.postData.contents || '').indexOf('"mvideoChunk"') >= 0) { let d0 = {}; try { d0 = JSON.parse(e.postData.contents); } catch (x) {} if (d0.type === 'mvideoChunk') return json_(mvideoChunk_(d0)); }
+  if (/"mvideo(Chunk|Check)"/.test(String(e.postData.contents || ''))) { let d0 = {}; try { d0 = JSON.parse(e.postData.contents); } catch (x) {} if (d0.type === 'mvideoChunk') return json_(mvideoChunk_(d0)); if (d0.type === 'mvideoCheck') return json_(mvideoCheck_(d0)); }
   const lock = LockService.getScriptLock();
   lock.waitLock(20000);
   try {
@@ -462,6 +462,8 @@ function mphotoFull_(fid) {
  * Videos (Oct 23 2026): too big for one request, so the app sends 8 MB pieces, like the Weddings app's favorites.
  * mvideoStart opens a Drive resumable upload in her folder and saves the cover picture; mvideoChunk passes each piece along.
  * When the last piece lands, the finished file waits under its token (6 hours) for the 'mphoto' save that names it.
+ * Faster (Oct 26 2026): the phone first tries sending the whole video straight to Drive at the upload link (the link only
+ * lets it add this one file), then asks mvideoCheck how much Drive got. Anything left goes up in pieces the old way.
  */
 function mvideoStart_(me, d) {
   const v = d.video || {}, which = d.which === 'after' || d.which === 'more' ? d.which : 'before', date = String(d.date || '');
@@ -472,17 +474,41 @@ function mvideoStart_(me, d) {
   // extra videos are named like the extra photos ("- more 141502-11"), numbered after them so the album sync reads them the same way
   const tag = which === 'more' ? 'more ' + Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'HHmmss') + '-' + (10 + (Math.min(10, Math.max(1, Number(d.n) || 1)))) : which;
   const base = date + ' ' + clean_(d.skill, 80) + ' - ' + tag, mine = mphotoFolder_(me.name);
-  const r = UrlFetchApp.fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable', {
-    method: 'post', contentType: 'application/json; charset=UTF-8', muteHttpExceptions: true,
-    headers: { Authorization: 'Bearer ' + ScriptApp.getOAuthToken(), 'X-Upload-Content-Type': type, 'X-Upload-Content-Length': String(v.size) },
-    payload: JSON.stringify({ name: base + '.' + ext, mimeType: type, parents: [mine.getId()] })
-  });
-  const url = r.getHeaders().Location || r.getHeaders().location;
-  if (r.getResponseCode() !== 200 || !url) return { ok: false, error: 'server', message: 'Drive did not take the video. Try again.' };
+  const url = driveUploadUrl_({ name: base + '.' + ext, mimeType: type, parents: [mine.getId()] }, type, v.size);
+  if (!url) return { ok: false, error: 'server', message: 'Drive did not take the video. Try again.' };
   const t = v.thumb ? mphotoFile_('data:image/jpeg;base64,' + v.thumb, mphotoFolder_('.small'), me.slug + ' ' + base) : '';
   const token = Utilities.getUuid();
   CacheService.getScriptCache().put('mv:' + token, JSON.stringify({ url: url, size: v.size, type: type, slug: me.slug, t: t }), 21600);
-  return { ok: true, token: token };
+  return { ok: true, token: token, url: url };
+}
+/** Opens a Drive resumable upload. The Origin header lets the team app's page send the bytes to the link itself. */
+function driveUploadUrl_(meta, type, size) {
+  const go = origin => {
+    const h = { Authorization: 'Bearer ' + ScriptApp.getOAuthToken(), 'X-Upload-Content-Type': type, 'X-Upload-Content-Length': String(size) };
+    if (origin) h.Origin = 'https://prettyteam.taffetadesign.com';
+    const r = UrlFetchApp.fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable', {
+      method: 'post', contentType: 'application/json; charset=UTF-8', muteHttpExceptions: true, headers: h, payload: JSON.stringify(meta) });
+    return r.getResponseCode() === 200 ? (r.getHeaders().Location || r.getHeaders().location || '') : '';
+  };
+  let url = '';
+  try { url = go(true); } catch (e) {}
+  return url || go(false);
+}
+/** How much of the video Drive has: {next} to go on in pieces, or done once all of it is in. */
+function mvideoCheck_(d) {
+  const key = 'mv:' + String(d.token || ''), raw = CacheService.getScriptCache().get(key);
+  if (!raw) return CacheService.getScriptCache().get('mvdone:' + d.token) ? { ok: true, done: true } : { ok: false, error: 'expired', message: 'The upload timed out. Add the video again.' };
+  const u = JSON.parse(raw);
+  const r = UrlFetchApp.fetch(u.url, { method: 'put', muteHttpExceptions: true, headers: { 'Content-Range': 'bytes */' + u.size } });
+  const code = r.getResponseCode();
+  if (code === 308) { const m = String(r.getHeaders().Range || r.getHeaders().range || '').match(/-(\d+)$/); return { ok: true, next: m ? Number(m[1]) + 1 : 0 }; }
+  if (code !== 200 && code !== 201) return { ok: false, error: 'server', message: 'Drive did not take the video. Try again.' };
+  return mvideoDone_(d.token, u, JSON.parse(r.getContentText()).id);
+}
+function mvideoDone_(token, u, f) {
+  CacheService.getScriptCache().remove('mv:' + token);
+  CacheService.getScriptCache().put('mvdone:' + token, JSON.stringify({ f: f, t: u.t || f, slug: u.slug }), 21600);
+  return { ok: true, done: true };
 }
 function mvideoChunk_(d) {
   const key = 'mv:' + String(d.token || ''), raw = CacheService.getScriptCache().get(key);
@@ -492,10 +518,7 @@ function mvideoChunk_(d) {
   const code = r.getResponseCode();
   if (code === 308) { const m = String(r.getHeaders().Range || r.getHeaders().range || '').match(/-(\d+)$/); return { ok: true, next: m ? Number(m[1]) + 1 : end + 1 }; }
   if (code !== 200 && code !== 201) return { ok: false, error: 'server', message: 'A piece of the video did not go through. Try again.' };
-  const f = JSON.parse(r.getContentText()).id;
-  CacheService.getScriptCache().remove(key);
-  CacheService.getScriptCache().put('mvdone:' + d.token, JSON.stringify({ f: f, t: u.t || f, slug: u.slug }), 21600);
-  return { ok: true, done: true };
+  return mvideoDone_(d.token, u, JSON.parse(r.getContentText()).id);
 }
 function mySigs_(slug) {
   const o = {};
