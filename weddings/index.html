@@ -264,6 +264,7 @@ details.more .menu .btn:last-child{border-bottom:0}
 .tl td.c[contenteditable="true"]{cursor:text}
 .tl td.c[contenteditable="true"]:hover{background:var(--soft)}
 .tl td.c.bride{font-weight:600}
+.tl td.c .until{display:block;font:400 10px var(--sans);letter-spacing:.06em;text-transform:none;color:var(--paper-muted);margin-top:4px}
 .legend{margin-top:10px;font-size:12px;color:var(--muted)}
 .team{display:grid;grid-template-columns:minmax(0,340px) minmax(0,1fr);gap:24px;align-items:start}
 @media (max-width:900px){.team{grid-template-columns:minmax(0,1fr)}}
@@ -404,6 +405,7 @@ input,select,textarea{background:#fff;border-radius:0}
             <label class="f">Makeup slot (min)<input id="muSlot" type="number" min="15" step="5" value="60"></label>
             <label class="f">Arrive early (min)<input id="arrival" type="number" min="0" step="5" value="30"></label>
           </div>
+          <label class="f" id="bothSlotWrap" hidden>Bride's hair &amp; makeup, one artist (min)<input id="bothSlot" type="number" min="30" step="15" placeholder="120"></label>
           <label class="f">Touch-ups before leaving (optional)<input id="touchups" placeholder="e.g. 1:30 PM - 2 PM"></label>
           <p class="hint">One hour per service. Bride mid-day, moms and MOH just before her.</p>
         </div>
@@ -411,7 +413,7 @@ input,select,textarea{background:#fff;border-radius:0}
         <div class="card">
           <h2>Team on site</h2>
           <div class="list" id="artists"></div>
-          <div class="row"><button class="btn ghost small" id="addHair">+ Hair artist</button><button class="btn ghost small" id="addMu">+ Makeup artist</button></div>
+          <div class="row"><button class="btn ghost small" id="addHair">+ Hair artist</button><button class="btn ghost small" id="addMu">+ Makeup artist</button><button class="btn ghost small" id="addBoth">+ Hair &amp; makeup artist</button></div>
         </div>
 
         <div class="card" id="extCard">
@@ -860,32 +862,47 @@ function shortDate(d){if(!d)return"";if(!/^\d{4}-\d\d-\d\d/.test(d)){const t=new
 const tm=(s,min)=>s.mode==="tbd"?"TBD":fmt(min);
 /* ---------- scheduling ---------- */
 /* moves only count for the party they were made on; adding or removing people or artists goes back to the auto order */
-const moveSig=s=>s.people.map(p=>p.id+(p.hair?"h":"")+(p.mu?"m":"")+p.role).join(",")+"|"+s.artists.map(a=>a.id+a.role).join(",")+"|"+s.hairSlot+"/"+s.muSlot;
+const moveSig=s=>s.people.map(p=>p.id+(p.hair?"h":"")+(p.mu?"m":"")+p.role).join(",")+"|"+s.artists.map(a=>a.id+a.role).join(",")+"|"+s.hairSlot+"/"+s.muSlot+"/"+(s.bothSlot||"");
 function build(s){
   const warnings=[];
   const hairSlot=Math.max(15,Number(s.hairSlot)||60), muSlot=Math.max(15,Number(s.muSlot)||60);
-  const hairA=s.artists.filter(a=>a.role==="hair"), muA=s.artists.filter(a=>a.role==="mu");
+  const hairA=s.artists.filter(a=>a.role==="hair"), muA=s.artists.filter(a=>a.role==="mu"), bothA=s.artists.filter(a=>a.role==="both");
   const bride=s.people.find(p=>p.role==="Bride");
   const order=p=>HELPERS.includes(p.role)?1:0;
+  /* One artist does the bride's hair AND makeup in one block (Alexandra, Oct 26 2026). The bride comes out of the
+     hair and makeup columns, her block sits mid-day where her hair would have started, and the moms and MOH
+     still go just before her. */
+  const brideBoth=!!(bothA.length&&bride&&(bride.hair||bride.mu));
+  const bothLen=brideBoth?(Number(s.bothSlot)>0?Math.max(30,Number(s.bothSlot)):(bride.hair?hairSlot:0)+(bride.mu?muSlot:0)):0;
+  let bothT=0;
+  if(brideBoth){
+    const n=sv=>s.people.filter(p=>p[sv]&&p!==bride).length;
+    const [A,sl,cnt]=hairA.length&&n("hair")?[hairA.length,hairSlot,n("hair")]:muA.length&&n("mu")?[muA.length,muSlot,n("mu")]:[0,0,0];
+    if(A)bothT=Math.floor((Math.ceil((cnt+1)/A)-1)/2)*sl;
+  }
+  if(bothA.length&&!brideBoth)warnings.push("The hair & makeup artist does the bride. Check Hair or MU for the bride.");
+  if(bothA.length>1)warnings.push("Only one hair & makeup artist is used, for the bride. Change the others to Hair or Makeup.");
   function pool(service,artists,slot,brideRowFn){
-    const people=s.people.filter(p=>p[service]);
+    const people=s.people.filter(p=>p[service]&&!(brideBoth&&p===bride));
     if(!people.length)return {cols:[],slot};
     if(!artists.length){warnings.push((service==="hair"?"Hair":"Makeup")+" services need at least one "+(service==="hair"?"hair":"makeup")+" artist.");return {cols:[],slot}}
     const A=artists.length, rows=Math.ceil(people.length/A);
     const grid=artists.map(()=>Array(rows).fill(null));
-    const hasBride=bride&&bride[service];
+    const hasBride=bride&&bride[service]&&!brideBoth;
     let bRow=null;
     if(hasBride){bRow=brideRowFn(rows);if(bRow>=rows){grid.forEach(c=>c.push(null))}grid[0][bRow]=bride.id}
     const R=()=>grid[0].length;
     const helpers=people.filter(p=>p!==bride&&HELPERS.includes(p.role));
     const others=people.filter(p=>p!==bride&&!HELPERS.includes(p.role));
     const free=[];for(let c=0;c<A;c++)for(let r=0;r<R();r++)if(!grid[c][r])free.push([c,r]);
-    if(hasBride){
-      const near=free.slice().sort((a,b)=>{const da=a[1]<bRow?bRow-a[1]:a[1]-bRow+0.5, db_=b[1]<bRow?bRow-b[1]:b[1]-bRow+0.5;return da-db_||a[0]-b[0]});
+    if(brideBoth&&bothLen)bRow=Math.max(0,Math.ceil(bothT/slot));   // her own artist has her: moms and MOH just before her block
+    if(bRow!=null){
+      const after=hasBride?0.5:1.5;   // with her own artist, the box at her start time comes after the ones before it
+      const near=free.slice().sort((a,b)=>{const da=a[1]<bRow?bRow-a[1]:a[1]-bRow+after, db_=b[1]<bRow?bRow-b[1]:b[1]-bRow+after;return da-db_||a[0]-b[0]});
       helpers.forEach(p=>{const f=near.shift();grid[f[0]][f[1]]=p.id;free.splice(free.findIndex(x=>x[0]===f[0]&&x[1]===f[1]),1)});
     }else others.unshift(...helpers);
     others.forEach(p=>{const f=free.shift();if(f)grid[f[0]][f[1]]=p.id});
-    return {cols:artists.map((a,i)=>({artist:a,service,slot,cells:grid[i]})),slot,bRow};
+    return {cols:artists.map((a,i)=>({artist:a,service,slot,cells:grid[i]})),slot,bRow:hasBride?bRow:null};
   }
   const hair=pool("hair",hairA,hairSlot,rows=>Math.floor((rows-1)/2));
   let hairStartB=null,hairEndB=null;
@@ -897,6 +914,7 @@ function build(s){
     return rows;
   });
   const cols=[...hair.cols,...mu.cols];
+  if(brideBoth&&bothLen)cols.unshift({artist:bothA[0],service:"both",slot:bothLen,off:bothT,cells:[bride.id]});
   // resolve same-person overlaps by swapping makeup cells
   const iv=(col,r)=>[r*col.slot,(r+1)*col.slot];
   const overl=(a,b)=>a[0]<b[1]&&b[0]<a[1];
@@ -939,7 +957,7 @@ function build(s){
     }});
   // trim trailing empty rows
   cols.forEach(c=>{while(c.cells.length&&c.cells[c.cells.length-1]==null)c.cells.pop()});
-  let span=0;cols.forEach(c=>span=Math.max(span,c.cells.length*c.slot));
+  let span=0;cols.forEach(c=>span=Math.max(span,(c.off||0)+c.cells.length*c.slot));
   let start=s.mode==="finish"?toMin(s.finishBy)-span:toMin(s.start);
   // leftover same-person clashes
   const both={};s.people.forEach(p=>{if(p.hair&&p.mu){const h=slotsOf(p.id,"hair"),m=slotsOf(p.id,"mu");if(h.some(a=>m.some(b=>overl(a,b)))){const n=p.name||p.role;both[n]=(both[n]||0)+1}}});
@@ -948,11 +966,14 @@ function build(s){
 }
 
 /* ---------- labels ---------- */
+const SVC={hair:"Hair",mu:"Makeup",both:"Hair & Makeup"};
+const roleName=r=>({hair:"Hair",mu:"Makeup",both:"Hair & makeup"}[r]||"Hair");
+const cellT=(c,r)=>(c.off||0)+r*c.slot;   // minutes after the start that box r of a column begins
 function labelMap(s,plan,ver){
   const labels={};
-  ["hair","mu"].forEach(service=>{
+  ["both","hair","mu"].forEach(service=>{
     const seq=[];
-    plan.cols.filter(c=>c.service===service).forEach(c=>c.cells.forEach((pid,r)=>{if(pid)seq.push({pid,t:r*c.slot,c})}));
+    plan.cols.filter(c=>c.service===service).forEach(c=>c.cells.forEach((pid,r)=>{if(pid)seq.push({pid,t:cellT(c,r),c})}));
     seq.sort((a,b)=>a.t-b.t);
     seq.forEach(x=>{
       const p=s.people.find(q=>q.id===x.pid);if(!p)return;
@@ -1021,10 +1042,12 @@ function sheetHTML(s,ver,editable){
   if(s.notes&&ver!=="bride")h+='<div class="dline note">'+esc(s.notes)+'</div>';   // office notes stay off the bride's copy
   h+='<div class="sp"></div>';
   if(!plan.cols.length){h+='<p style="text-align:center;color:#5d554e;font-family:var(--serif)">Add an artist and the people getting ready to build the schedule.</p></div>';return {html:h,plan}}
-  h+='<table class="tl"><thead><tr>'+(sameSlot?'<th>Time</th>':'');
+  const timed=plan.cols.some(c=>c.service==="both");
+  h+='<table class="tl"><thead><tr>'+(sameSlot||timed?'<th>Time</th>':'');
   // bride's copy shows artists by first name only (Alexandra, Oct 21 2026)
-  plan.cols.forEach(c=>{const n=goBy(c.artist);h+='<th>'+(c.service==="hair"?"Hair":"Makeup")+(n?'<small>'+esc(n)+'</small>':'')+'</th>'});
+  plan.cols.forEach(c=>{const n=goBy(c.artist);h+='<th>'+SVC[c.service]+(n?'<small>'+esc(n)+'</small>':'')+'</th>'});
   h+='</tr></thead><tbody>';
+  if(timed){h+=timedRows(s,plan,labels,ver,editable)+'</tbody></table><div class="brandline bottom">TAFFETA WEDDINGS</div></div>';return {html:h,plan}}
   for(let r=0;r<rows;r++){
     h+='<tr>';
     if(sameSlot)h+='<td class="t">'+tm(s,plan.start+r*plan.cols[0].slot)+'</td>';
@@ -1046,6 +1069,45 @@ function sheetHTML(s,ver,editable){
   h+='<div class="brandline bottom">TAFFETA WEDDINGS</div></div>';
   return {html:h,plan};
 }
+/* With a hair & makeup artist the bride's block is longer than one box, so the grid runs on the time all the box
+   lengths share (30 min for 60-min boxes and a 90-min bride) and each box stretches over its rows. */
+function timedRows(s,plan,labels,ver,editable){
+  const g=(a,b)=>b?g(b,a%b):a;
+  let base=0;plan.cols.forEach(c=>{base=g(base,c.slot);if(c.off)base=g(base,c.off)});base=Math.max(5,base);
+  const unit=Math.min(...plan.cols.filter(c=>c.service!=="both").map(c=>c.slot).concat([60]));
+  const rowH=34*base/unit, n=Math.round((plan.end-plan.start)/base);
+  const starts=new Set([0]);plan.cols.forEach(c=>c.cells.forEach((_,r)=>starts.add(cellT(c,r))));
+  const st=[...starts].sort((a,b)=>a-b).concat([n*base]);   // a time box runs until the next box that starts
+  let h="";
+  for(let i=0;i<n;i++){
+    const t=i*base;
+    h+='<tr>';
+    if(starts.has(t)){const k=(st[st.indexOf(t)+1]-t)/base;h+='<td class="t" rowspan="'+k+'" style="height:'+(k*rowH)+'px;padding-top:0;padding-bottom:0">'+tm(s,plan.start+t)+'</td>'}
+    plan.cols.forEach((c,ci)=>{
+      const off=c.off||0, k=c.slot/base, svIdx=plan.cols.filter(x=>x.service===c.service).indexOf(c);
+      // the box to its left may be a tall one from a row above, so the single line between columns is set here
+      const box=(cls,inner,span,pos)=>'<td class="'+cls+'" rowspan="'+span+'" style="height:'+(span*rowH)+'px'+(ci?';border-left:0':'')+'"'+pos+'>'+inner+'</td>';
+      if(c.service==="both"){
+        const end=off+c.cells.length*c.slot;
+        if(t===0&&off>0)h+=box("c blank","",off/base,"");
+        else if(t>=off&&t<end&&(t-off)%c.slot===0){const pid=c.cells[(t-off)/c.slot];h+=pid?box("c bride",esc((labels[pid+":both"]||{}).txt||"Bride")+(s.mode==="tbd"?"":'<small class="until">Until '+fmt(plan.start+t+c.slot)+'</small>'),k,editable&&ver==="team"&&!moveOn?' contenteditable="true" data-key="'+pid+':both"':''):box("c empty","",k,"")}
+        else if(t===end&&end<plan.end-plan.start)h+=box("c blank","",(plan.end-plan.start-end)/base,"");
+        return;
+      }
+      if(t%c.slot)return;   // still inside the box above
+      const r=t/c.slot, pos=editable?' data-pos="'+c.service+':'+svIdx+':'+r+'"':'';
+      const span=Math.min(k,n-i);
+      if(r>=c.cells.length){h+=box("c blank","",span,pos);return}
+      const pid=c.cells[r];
+      if(!pid){h+=box("c empty","",span,pos);return}
+      const key=pid+":"+c.service, L=labels[key]||{txt:""}, p=s.people.find(q=>q.id===pid);
+      const ed=editable&&ver==="team"&&!moveOn?' contenteditable="true" data-key="'+key+'"':'';
+      h+=box('c'+(p&&p.role==="Bride"?' bride':''),esc(L.txt)+(L.blank?'<span class="fill"></span>':''),span,ed+pos);
+    });
+    h+='</tr>';
+  }
+  return h;
+}
 function textOf(s){
   const plan=build(s), labels=labelMap(s,plan,"team");
   const L=[];
@@ -1058,21 +1120,26 @@ function textOf(s){
   L.push("Services: "+servicesLine(s));
   if(s.notes)L.push("Notes: "+s.notes);
   plan.cols.forEach(c=>{
-    L.push("");L.push((c.service==="hair"?"HAIR":"MAKEUP")+(c.artist.name?" - "+c.artist.name.toUpperCase():""));
-    c.cells.forEach((pid,r)=>{if(pid)L.push(tm(s,plan.start+r*c.slot)+"  "+((labels[pid+":"+c.service]||{}).txt||""))});
+    L.push("");L.push(SVC[c.service].toUpperCase()+(c.artist.name?" - "+c.artist.name.toUpperCase():""));
+    c.cells.forEach((pid,r)=>{if(pid)L.push(tm(s,plan.start+cellT(c,r))+"  "+((labels[pid+":"+c.service]||{}).txt||"")+(c.service==="both"?" (until "+tm(s,plan.start+cellT(c,r)+c.slot)+")":""))});
   });
   return L.join("\n");
 }
 function tsvOf(s){
   const plan=build(s), labels=labelMap(s,plan,"team");
   const rows=Math.max(0,...plan.cols.map(c=>c.cells.length));
-  const out=[["Time",...plan.cols.map(c=>(c.service==="hair"?"Hair":"Makeup")+(c.artist.name?" ("+c.artist.name+")":""))].join("\t")];
+  const out=[["Time",...plan.cols.map(c=>SVC[c.service]+(c.artist.name?" ("+c.artist.name+")":""))].join("\t")];
+  if(plan.cols.some(c=>c.service==="both")){   // one line per start time when the bride's block is longer than the others
+    const ts=[...new Set(plan.cols.flatMap(c=>c.cells.map((_,r)=>cellT(c,r))))].sort((a,b)=>a-b);
+    ts.forEach(t=>out.push([tm(s,plan.start+t),...plan.cols.map(c=>{const r=(t-(c.off||0))/c.slot,pid=Number.isInteger(r)?c.cells[r]:null;return pid?((labels[pid+":"+c.service]||{}).txt||""):""})].join("\t")));
+    return out.join("\n");
+  }
   for(let r=0;r<rows;r++){out.push([tm(s,plan.start+r*(plan.cols[0]?plan.cols[0].slot:60)),...plan.cols.map(c=>{const pid=c.cells[r];return pid?((labels[pid+":"+c.service]||{}).txt||""):""})].join("\t"))}
   return out.join("\n");
 }
 
 /* ---------- form ---------- */
-const FIELDS=["bride","bridePhone","date","location","room","parking","contactName","contactPhone","notes","previewDate","previewTime","previewLen","previewLoc","start","finishBy","hairSlot","muSlot","arrival","touchups"];
+const FIELDS=["bride","bridePhone","date","location","room","parking","contactName","contactPhone","notes","previewDate","previewTime","previewLen","previewLoc","start","finishBy","hairSlot","muSlot","bothSlot","arrival","touchups"];
 function fillForm(){
   FIELDS.forEach(f=>{const el=$("#"+f);if(el)el.value=S[f]??""});
   setMode(S.mode,false);
@@ -1101,10 +1168,10 @@ function renderArtists(){
     const st=rsvpOf(a);
     const chip=st?'<span class="pill rsvp-'+st+'">'+({accepted:"Confirmed",declined:"Declined",tentative:"Maybe",needsAction:"Waiting"}[st]||st)+'</span>':'';
     const opts='<option value="">Pick from team…</option>'+profiles.map(pr=>'<option value="'+esc(pr._id)+'"'+(pr._id===a.uid?' selected':'')+'>'+esc(pr.preferredName||pr.legalName||"Unnamed")+'</option>').join("");
-    d.innerHTML='<select aria-label="Role" id="ar-'+a.id+'"><option value="hair">Hair</option><option value="mu">Makeup</option></select><input id="an-'+a.id+'" placeholder="Artist name" value="'+esc(a.name)+'"><button class="x" aria-label="Remove artist">×</button>'
+    d.innerHTML='<select aria-label="Role" id="ar-'+a.id+'"><option value="hair">Hair</option><option value="mu">Makeup</option><option value="both">Hair &amp; makeup</option></select><input id="an-'+a.id+'" placeholder="Artist name" value="'+esc(a.name)+'"><button class="x" aria-label="Remove artist">×</button>'
       +'<select class="pick" id="ap-'+a.id+'" aria-label="Team member" style="grid-column:1/2"'+(profiles.length?'':' hidden')+'>'+opts+'</select><input id="ae-'+a.id+'" class="aemail" type="email" placeholder="Email for calendar invite" value="'+esc(a.email||"")+'"><span class="astat">'+chip+(a.name.trim()?'<button type="button" class="poc'+(isPoc(a)?' on':'')+'" title="Day-of contact on the sheet">'+(isPoc(a)?'★ Contact':'Make contact')+'</button>':'')+'</span>';
     d.querySelector("#ar-"+a.id).value=a.role;
-    d.querySelector("#ar-"+a.id).onchange=e=>{a.role=e.target.value;changed()};
+    d.querySelector("#ar-"+a.id).onchange=e=>{a.role=e.target.value;renderBothSlot();changed()};
     d.querySelector("#an-"+a.id).oninput=e=>{a.name=e.target.value;changed()};
     d.querySelector("#ae-"+a.id).oninput=e=>{a.email=e.target.value.trim();queueSave()};
     d.querySelector("#ap-"+a.id).onchange=e=>{const pr=profiles.find(x=>x._id===e.target.value);a.uid=pr?pr._id:"";if(pr){a.name=pr.preferredName||pr.legalName||a.name;a.email=pr.email||a.email;if(!a.phone)a.phone=pr.phone||""}renderArtists();changed()};
@@ -1121,7 +1188,13 @@ function renderArtists(){
     });
     box.appendChild(d);
   });
+  renderBothSlot();
   renderCalTeam();
+}
+/* the bride's one-artist block length only shows when a hair & makeup artist is on the team; blank = hair + makeup slots */
+function renderBothSlot(){
+  $("#bothSlotWrap").hidden=!S.artists.some(a=>a.role==="both");
+  $("#bothSlot").placeholder=String((Number(S.hairSlot)||60)+(Number(S.muSlot)||60));
 }
 /* Team names pop up as she types an artist or the day-of contact (Alexandra, Oct 21 2026), the same way client names
    pop up on the saved-card search. Tapping a name fills her cell. Names that start with what she typed come first. */
@@ -1233,7 +1306,7 @@ function renderCalTeam(){
   box.innerHTML=S.artists.map(a=>{
     const st=rsvpOf(a);
     const chip=st?'<span class="pill rsvp-'+st+'">'+({accepted:"Confirmed",declined:"Declined",tentative:"Maybe",needsAction:"Waiting"}[st]||st)+'</span>':'<span class="hint">Not sent</span>';
-    return '<div class="item" style="display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center"><b>'+esc(a.name||"Unnamed")+'</b><span>'+(a.role==="hair"?"Hair":"Makeup")+'</span><span>'+(a.email?esc(a.email):'<span class="hint">No email yet: add it on the Timeline tab</span>')+'</span>'+chip+'</div>';
+    return '<div class="item" style="display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center"><b>'+esc(a.name||"Unnamed")+'</b><span>'+roleName(a.role)+'</span><span>'+(a.email?esc(a.email):'<span class="hint">No email yet: add it on the Timeline tab</span>')+'</span>'+chip+'</div>';
   }).join("");
 }
 $("#cal-wedding").onchange=e=>{const id=e.target.value;$("#calStatus").textContent="";if(!id){renderCalTeam();return}const s=$("#saved");s.value=id;s.onchange({target:s});renderCalTeam()};
@@ -1323,6 +1396,7 @@ function setMode(m,fire=true){S.mode=m;$("#mode-start").setAttribute("aria-press
 $("#mode-start").onclick=()=>setMode("start");$("#mode-tbd").onclick=()=>setMode("tbd");$("#mode-finish").onclick=()=>setMode("finish");
 $("#addHair").onclick=()=>{S.artists.push({id:uid(),role:"hair",name:""});renderArtists();changed()};
 $("#addMu").onclick=()=>{S.artists.push({id:uid(),role:"mu",name:""});renderArtists();changed()};
+$("#addBoth").onclick=()=>{S.artists.push({id:uid(),role:"both",name:""});renderArtists();changed()};
 $("#addPerson").onclick=()=>{S.people.push({id:uid(),name:"",role:"Bridesmaid",hair:true,mu:true});renderPeople();changed()};
 $("#addBms").onclick=()=>{const n=Math.min(30,Math.max(1,Number($("#bmCount").value)||1));for(let i=0;i<n;i++)S.people.push({id:uid(),name:"",role:"Bridesmaid",hair:true,mu:true});renderPeople();changed()};
 function setVersion(v){version=v;$("#ver-team").setAttribute("aria-pressed",v==="team");$("#ver-bride").setAttribute("aria-pressed",v==="bride");renderSheet()}
@@ -1871,7 +1945,7 @@ function renderTeam(){
     const d=w.d;let mo="",day="";
     if(d.date){const[y,m,dd]=d.date.split("-").map(Number);const dt=new Date(y,m-1,dd);mo=dt.toLocaleDateString("en-US",{month:"short"});day=dd}
     const b=document.createElement("button");b.className="wed";b.setAttribute("aria-current",teamSel===w.id);
-    const mine=af.value?(d.artists||[]).filter(a=>a.name.trim()===af.value).map(a=>a.role==="hair"?"Hair":"Makeup").join(" + "):"";
+    const mine=af.value?(d.artists||[]).filter(a=>a.name.trim()===af.value).map(a=>roleName(a.role)).join(" + "):"";
     b.innerHTML='<div class="d"><small>'+esc(mo)+'</small><b>'+esc(day||"–")+'</b></div><div><div class="who">'+esc(d.bride||"Untitled")+'</div><div class="sub">'+esc([d.location,d.room].filter(Boolean).join(" · "))+'</div><div class="sub">'+(d.mode==="tbd"?'Times TBD':d.startMin==null&&d.calTime?'Calendar: '+esc(d.calTime):'Arrive '+(d.startMin!=null?fmt(d.startMin-(Number(d.arrival)||0)):"–")+' · Start '+(d.startMin!=null?fmt(d.startMin):"–"))+(mine?' · You: '+esc(mine):'')+'</div><div>'+(d.artistNames||[]).map(n=>'<span class="pill">'+esc(n)+'</span>').join("")+'</div></div>';
     if(ROLE!=="office"&&d.calInfo&&(d.calInfo.mine==="waiting"||d.calInfo.mine==="maybe")){const n=document.createElement("div");n.className="sub";n.style.cssText="font-weight:600;color:var(--ink)";n.textContent="Please answer the Google Calendar invite";(b.lastElementChild||b).appendChild(n)}
     b.onclick=()=>{teamSel=w.id;renderTeam();renderTeamSheet();/* on a phone the details sit under the list: bring them into view so the tap shows something */if(window.innerWidth<900){const t=$("#teamCal").firstChild?$("#teamCal"):$("#teamSheet");t.scrollIntoView({behavior:"smooth",block:"start"})}};
@@ -2165,7 +2239,7 @@ $("#adm-copy").onclick=()=>copy([ADM_COLS.map(c=>c[1]).join("\t"),...profiles.ma
 function artistPlan(a){
   const plan=build(S), labels=labelMap(S,plan,"team");
   const cols=plan.cols.filter(c=>c.artist.id===a.id);
-  const slots=[];cols.forEach(c=>c.cells.forEach((pid,r)=>{if(pid)slots.push({t:plan.start+r*c.slot,end:plan.start+(r+1)*c.slot,txt:(labels[pid+":"+c.service]||{}).txt||""})}));
+  const slots=[];cols.forEach(c=>c.cells.forEach((pid,r)=>{if(pid)slots.push({t:plan.start+cellT(c,r),end:plan.start+cellT(c,r)+c.slot,txt:(labels[pid+":"+c.service]||{}).txt||""})}));
   slots.sort((x,y)=>x.t-y.t);
   return {plan,slots,start:plan.start-(Number(S.arrival)||0),end:slots.length?slots[slots.length-1].end:plan.end};
 }
@@ -2182,7 +2256,7 @@ function inviteText(a,ap,kind){
     L.push("Call time: "+fmt(ap.start)+"  ·  Services start: "+fmt(ap.plan.start));
     L.push("Location: "+loc);
     L.push("Day-of contact: "+[S.contactName,S.contactPhone].filter(Boolean).join(" "));
-    L.push("");L.push("Your schedule ("+(a.role==="hair"?"hair":"makeup")+")");
+    L.push("");L.push("Your schedule ("+roleName(a.role).toLowerCase()+")");
     ap.slots.forEach(x=>L.push(fmt(x.t)+"   "+x.txt));
     if(S.touchups)L.push("Touch-ups before leaving: "+S.touchups);
     if(S.notes){L.push("");L.push("Notes: "+S.notes)}
@@ -2207,11 +2281,11 @@ $("#calSync").onclick=async()=>{
     const events=[];
     for(const a of S.artists){
       const ap=artistPlan(a);
-      events.push({key:"w:"+a.id,email:a.email,summary:"Taffeta Wedding · "+S.bride+" · "+(a.role==="hair"?"Hair":"Makeup"),date:S.date,startMin:ap.start,endMin:ap.end,location:[S.location,S.room].filter(Boolean).join(", "),description:inviteText(a,ap,"wedding"),reminders:[1440,120]});
+      events.push({key:"w:"+a.id,email:a.email,summary:"Taffeta Wedding · "+S.bride+" · "+roleName(a.role),date:S.date,startMin:ap.start,endMin:ap.end,location:[S.location,S.room].filter(Boolean).join(", "),description:inviteText(a,ap,"wedding"),reminders:[1440,120]});
       const doesBride=plan.cols.some(c=>c.artist.id===a.id&&c.cells.includes(brideId));
       if(S.previewDate&&S.previewTime&&doesBride){
         const st=toMin(S.previewTime);
-        events.push({key:"p:"+a.id,email:a.email,summary:"Taffeta Preview · "+S.bride+" · "+(a.role==="hair"?"Hair":"Makeup"),date:S.previewDate,startMin:st,endMin:st+(Number(S.previewLen)||120),location:(S.previewLoc||"").trim()||"Taffeta Salon & Spa, 219 Bellevue Ave, Hammonton, NJ 08037",description:inviteText(a,ap,"preview"),reminders:[1440,60]});
+        events.push({key:"p:"+a.id,email:a.email,summary:"Taffeta Preview · "+S.bride+" · "+roleName(a.role),date:S.previewDate,startMin:st,endMin:st+(Number(S.previewLen)||120),location:(S.previewLoc||"").trim()||"Taffeta Salon & Spa, 219 Bellevue Ave, Hammonton, NJ 08037",description:inviteText(a,ap,"preview"),reminders:[1440,60]});
       }
     }
     const r=await api("sendInvites",{weddingId:docId,events});
@@ -2563,7 +2637,7 @@ function bkInfo(d){
   const ppl=d.people||[],hx=headDiff(d);let hair=ppl.filter(p=>p.hair).length,mu=ppl.filter(p=>p.mu).length;
   if(hx){hair=hair+" (calendar "+hx.cal.hair+")";mu=mu+" (calendar "+hx.cal.mu+")"}
   const cal=Object.values(d.cal||{}),yes=cal.filter(c=>c.status==="accepted").length;
-  const team=(d.artists||[]).filter(a=>(a.name||"").trim()).map(a=>a.name.trim()+" ("+(a.role==="hair"?"hair":"makeup")+")");
+  const team=(d.artists||[]).filter(a=>(a.name||"").trim()).map(a=>a.name.trim()+" ("+roleName(a.role).toLowerCase()+")");
   const prev=d.previewDate?shortDate(d.previewDate)+(d.previewTime?" "+fmt(Number(d.previewTime.split(":")[0])*60+Number(d.previewTime.split(":")[1]||0)):""):"";
   return {hair,mu,team,prev,invites:cal.length?yes+" of "+cal.length+" confirmed":"Not sent"};
 }
