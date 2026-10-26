@@ -64,8 +64,16 @@ head = [re.sub(r'<button type="button" role="tab" id="t-create"[^>]*>Create</but
 html = '\n'.join(head) + '\n' + '\n'.join(lines[sA[0]:sA[1] + 1]) + '\n<script>\n' + open(os.path.join(REPO, 'tools', 'mkt-edits.js'), encoding='utf-8').read() + '\n</script>\n' \
     + '\n'.join(lines[sR[1] + 1:sP[0]]) + '\n<script>\n' + open(os.path.join(REPO, 'tools', 'mkt-photos.js'), encoding='utf-8').read() + '\n</script>\n' + '\n'.join(lines[sP[1] + 1:])
 
+# pictures the artifact keeps in its asset store (/_blob/<id>, the November plan on) are saved as blobs/<id>.<ext>
+def blob(m):
+    f = glob.glob(os.path.join(SRC_DIR, 'blobs', m.group(2) + '.*'))
+    return m.group(1) + '="blobs/' + os.path.basename(f[0]) + '"' if f else m.group(0)
+html = re.sub(r'\b(src|poster)="/_blob/([0-9a-f]{32})"', blob, html)
+left = re.findall(r'"/_blob/([0-9a-f]{32})"', html)
+assert not left, 'download these assets into blobs/ first: ' + ' '.join(sorted(set(left))[:10])
+
 # media: every picture and video is fetched encrypted, so the page asks for it by path (data-e) instead of src
-MEDIA = re.compile(r'\b(src|poster)="((?:img|shoot|full)/[A-Za-z0-9._-]+\.(?:jpg|jpeg|png|mp4))"')
+MEDIA = re.compile(r'\b(src|poster)="((?:img|shoot|full|blobs)/[A-Za-z0-9._-]+\.(?:jpg|jpeg|png|webp|mp4))"')
 used = set(m.group(2) for m in MEDIA.finditer(html))
 html = MEDIA.sub(lambda m: ('data-e' if m.group(1) == 'src' else 'data-ep') + '="' + m.group(2) + '"', html)
 for p in list(used):
