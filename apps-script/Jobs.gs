@@ -1,7 +1,7 @@
 /**
  * Job offers (date holds): the office offers an upcoming wedding to chosen artists, with ranges only
  * (headcount, travel minimum, payout), and each artist answers Yes / No on her private link.
- * Nothing is emailed or texted from here; the office copies the text and sends it herself.
+ * The office still texts each artist herself; emails go out too (JobMail.gs).
  * Offers live on the "Job offers" tab of this Sheet, one row per artist.
  */
 const JOBS_TAB = 'Job offers';
@@ -53,6 +53,7 @@ function offerJob_(o) {
     clean_([w.d.location, w.d.room].filter(Boolean).join(', '), 200), m.id, clean_(m.preferredName || m.legalName, 120), role,
     clean_(o.headcount, 60), clean_(o.travel, 60), clean_(o.payout, 60), clean_(o.note, 500), 'Waiting', now, '']));
   pushJobOffer_(team.map(m => m.id), w.d.date, role);
+  mailJobOffer_(team, w, role, o);
   return jobs_();
 }
 
@@ -72,6 +73,7 @@ function answerJob_(member, id, yes) {
   jobsSheet_().getRange(j.row, 13, 1, 3).setValues([[yes ? 'Yes' : 'No', j.sentAt, new Date().toISOString()]]);
   pushOffice_(first_(j.artist) + ' said ' + (yes ? 'Yes' : 'No'), shortDate_(j.date) + ' · ' + first_(j.bride), 'jobs');
   if (yes) addToWedding_(j, member);
+  mailJobAnswer_(j, yes);
   return myJobs_(member);
 }
 
