@@ -27,8 +27,8 @@ const memberLink_ = m => APP_URL + '#a.' + m.id + '.' + m.secret;
 function mailHtml_(heading, intro, rows, button, outro) {
   const row = r => '<tr><td style="padding:6px 0;color:#886d4e;font-size:12px;letter-spacing:.08em;text-transform:uppercase;width:130px;vertical-align:top">'
     + mailEsc_(r[0]) + '</td><td style="padding:6px 0;color:#423327;font-size:15px">' + mailEsc_(r[1]) + '</td></tr>';
-  return '<div style="background:#f2f1ec;padding:32px 16px;font-family:Georgia,\'Times New Roman\',serif">'
-    + '<div style="max-width:520px;margin:0 auto;background:#ffffff;padding:32px 28px;color:#423327">'
+  return '<div style="max-width:560px;margin:0 auto;background:#f2f1ec;padding:16px;font-family:Georgia,\'Times New Roman\',serif">'   // same ivory border on all four sides
+    + '<div style="background:#ffffff;padding:32px 28px;color:#423327">'
     + '<div style="text-align:center;font-size:13px;letter-spacing:.3em;color:#423327">TAFFETA WEDDINGS</div>'
     + '<div style="width:48px;height:1px;background:#886d4e;margin:16px auto 24px"></div>'
     + '<div style="font-size:22px;font-style:italic;margin-bottom:12px">' + mailEsc_(heading) + '</div>'
