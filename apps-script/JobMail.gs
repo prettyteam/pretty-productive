@@ -4,13 +4,14 @@
  *   and the office gets one confirmation email (Alexandra and Dom on the same email).
  * - An artist taps Yes or No: the office gets one email.
  * Artist emails never include payout, the same as the phone banners. Office emails do.
- * Office addresses are in the script property OFFICE_EMAILS (comma separated); without it, info@ gets them.
+ * Office emails go to Alexandra (info@) and Dom (sales@) on one email; the script property OFFICE_EMAILS (comma separated) overrides them.
  * Sent from info@ through MailApp (needs the script.send_mail scope, approved once in the editor).
  */
 const MAIL_FROM_NAME = 'Taffeta Weddings';
+const OFFICE_EMAILS = 'info@taffetadesign.com,sales@taffetadesign.com';
 
 function officeEmails_() {
-  const raw = PropertiesService.getScriptProperties().getProperty('OFFICE_EMAILS') || Session.getEffectiveUser().getEmail();
+  const raw = PropertiesService.getScriptProperties().getProperty('OFFICE_EMAILS') || OFFICE_EMAILS;
   return String(raw || '').split(/[,;\s]+/).map(s => s.trim()).filter(s => /@/.test(s)).join(',');
 }
 
