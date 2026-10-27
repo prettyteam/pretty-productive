@@ -5,6 +5,7 @@
  * - An artist taps Yes or No: the office gets one email.
  * Artist emails never include payout, the same as the phone banners. Office emails do.
  * Office emails go to Alexandra (info@) and Dom (sales@) on one email; the script property OFFICE_EMAILS (comma separated) overrides them.
+ * An offer still waiting after 2 business days gets a reminder, and after 4 a last one (email and phone alert); the office gets one note each morning.
  * Sent from info@ through MailApp (needs the script.send_mail scope, approved once in the editor).
  */
 const MAIL_FROM_NAME = 'Taffeta Weddings';
@@ -84,4 +85,56 @@ function testJobEmails() {
   const to = officeEmails_();
   sendMail_(to, 'Test · Taffeta Weddings emails', 'Job offer emails are working.', mailHtml_('Emails are working', 'Job offer emails will look like this.', [['Sent to', to]], ['Open the app', APP_URL], ''));
   Logger.log('Sent a test to ' + to);
+}
+
+/* ---------- reminders: an offer still Waiting 2 and 4 business days after it went out ---------- */
+const JOB_REMIND_AFTER = [2, 4];     // business days after the offer (weekends don't count): a reminder, then a last one
+const JOB_REMIND_HOUR = 9;      // weekday mornings, New York time
+
+/** The day an offer sent at `iso` is n business days old, as yyyy-MM-dd (sent Thursday: Monday). */
+function businessDaysAfter_(iso, n) {
+  const d = new Date(iso);
+  if (isNaN(d)) return '';
+  for (let k = 0; k < n;) { d.setDate(d.getDate() + 1); if (+Utilities.formatDate(d, TZ, 'u') <= 5) k++; }
+  return Utilities.formatDate(d, TZ, 'yyyy-MM-dd');
+}
+
+/** Runs every weekday morning (see setupJobReminders): an email and phone alert per waiting offer that's due, then one note to the office.
+ *  "Reminded at" on the Job offers tab keeps each reminder's time (comma separated), so none goes out twice. */
+function remindJobOffers() {
+  if (+Utilities.formatDate(new Date(), TZ, 'u') > 5) return;
+  const now = new Date(), today = Utilities.formatDate(now, TZ, 'yyyy-MM-dd');
+  const sent = j => j.remindedAt ? j.remindedAt.split(',').length : 0;
+  const due = jobRows_().filter(j => j.status === 'Waiting' && (!j.date || j.date >= today) && sent(j) < JOB_REMIND_AFTER.length
+    && (businessDaysAfter_(j.sentAt, JOB_REMIND_AFTER[sent(j)]) || '9') <= today);
+  if (!due.length) return;
+  const team = members_(), sh = jobsSheet_(), done = [];
+  due.forEach(j => {
+    const m = team.find(x => x.id === j.artistId);
+    if (!m) return;
+    const name = first_(m.preferredName || m.legalName || j.artist) || 'there', link = memberLink_(m);
+    const last = sent(j) === JOB_REMIND_AFTER.length - 1, heading = last ? 'Last reminder' : 'Job offer reminder';
+    const rows = [['Date', longDate_(j.date)], ['Location', j.location || 'Location TBD'], ['Role', j.role]]
+      .concat(j.headcount ? [['Headcount', j.headcount]] : [], j.travel ? [['Travel minimum', j.travel]] : [], j.note ? [['Note', j.note]] : []);
+    const intro = 'Hi ' + name + ', we\u2019re still holding a spot for you on this wedding. Tap below to say Yes or No so we can plan the team.';
+    const outro = 'Your link is private to you, so please don’t share it.';
+    const mailed = /@/.test(m.email || '') && sendMail_(m.email, 'Can you hold ' + shortDate_(j.date) + '?',
+      mailText_(heading, intro, rows, 'Tap Yes or No here: ' + link, outro),
+      mailHtml_(heading, intro, rows, ['Answer Yes or No', link], outro));
+    let pushed = 0;
+    try { pushed = pushTo_(m.id, last ? 'Last reminder: job offer' : 'Reminder: job offer', shortDate_(j.date) + ' · ' + j.role + '. Tap to answer.', 'jobs'); } catch (e) { console.warn(e); }
+    sh.getRange(j.row, 16).setValue([j.remindedAt, now.toISOString()].filter(Boolean).join(','));
+    done.push([name, shortDate_(j.date) + ' · ' + first_(j.bride) + (last ? ' (last reminder)' : '') + (mailed ? '' : pushed ? ' (phone alert only, no email on file)' : ' (no email or alerts on file, please text her)')]);
+  });
+  if (!done.length) return;
+  const intro = done.length === 1 ? 'One artist hasn’t answered yet, so she got a reminder this morning.' : done.length + ' artists haven’t answered yet, so they got reminders this morning.';
+  sendMail_(officeEmails_(), 'Reminders sent · ' + done.map(d => d[0]).join(', '),
+    mailText_('Job offer reminders', intro, done, APP_URL, ''), mailHtml_('Job offer reminders', intro, done, ['Open the Jobs tab', APP_URL], ''));
+}
+
+/** Run once from the editor: checks for reminders every morning around 9 (weekends are skipped inside). */
+function setupJobReminders() {
+  ScriptApp.getProjectTriggers().filter(t => t.getHandlerFunction() === 'remindJobOffers').forEach(t => ScriptApp.deleteTrigger(t));
+  ScriptApp.newTrigger('remindJobOffers').timeBased().everyDays(1).atHour(JOB_REMIND_HOUR).inTimezone(TZ).create();
+  Logger.log('Job offer reminders run every weekday around ' + JOB_REMIND_HOUR + 'am.');
 }
