@@ -2802,7 +2802,7 @@ $("#jb-send").onclick=async()=>{
     // the app doesn't text anyone: give the office one button per artist, with her private link in the message
     const sent=ids.map(id=>profiles.find(p=>p._id===id)).filter(Boolean);
     jbOut=sent.map(p=>({p,text:jbText(linkFor(p))}));
-    out.innerHTML="Offer saved. It's waiting in "+(sent.length===1?"her":"their")+" app under Job offers. Now text "+(sent.length===1?"her":"each one")+" the offer and link:"
+    out.innerHTML="Offer saved and emailed to anyone with an email on file. It's waiting in "+(sent.length===1?"her":"their")+" app under Job offers. Now text "+(sent.length===1?"her":"each one")+" the offer and link:"
       +'<div class="row" style="margin-top:6px">'+jbOut.map((o,i)=>'<button class="btn small" data-jbtext="'+i+'">Text '+esc(o.p.preferredName||o.p.legalName||"artist")+'</button>').join("")+'</div>';
     out.querySelectorAll("[data-jbtext]").forEach(b=>b.onclick=()=>jbSend(jbOut[+b.dataset.jbtext],b));
     $("#jb-team").querySelectorAll("input:checked").forEach(c=>c.checked=false);
