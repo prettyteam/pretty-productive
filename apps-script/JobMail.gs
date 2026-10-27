@@ -113,7 +113,7 @@ function remindJobOffers() {
     const name = first_(m.preferredName || m.legalName || j.artist) || 'there', link = memberLink_(m);
     const rows = [['Date', longDate_(j.date)], ['Location', j.location || 'Location TBD'], ['Role', j.role]]
       .concat(j.headcount ? [['Headcount', j.headcount]] : [], j.travel ? [['Travel minimum', j.travel]] : [], j.note ? [['Note', j.note]] : []);
-    const intro = 'Hi ' + name + ', just a gentle reminder about the wedding below. Could you let us know if you can hold the date?';
+    const intro = 'Hi ' + name + ', we\u2019re still holding a spot for you on this wedding. Tap below to say Yes or No so we can plan the team.';
     const outro = 'Your link is private to you, so please don’t share it.';
     const mailed = /@/.test(m.email || '') && sendMail_(m.email, 'Reminder · Job offer ' + shortDate_(j.date),
       mailText_('Job offer reminder', intro, rows, 'Tap Yes or No here: ' + link, outro),
