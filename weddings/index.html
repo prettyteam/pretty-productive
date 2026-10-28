@@ -795,6 +795,12 @@ input,select,textarea{background:#fff;border-radius:0}
       <div class="status" id="pp-note">Loading…</div>
       <button class="btn ghost" id="pp-refresh">Refresh</button>
     </div>
+    <div id="pp-ab" hidden>
+      <h3 style="margin:4px 0 4px;font:500 12px var(--sans);letter-spacing:.14em;text-transform:uppercase">Abandoned Payments</h3>
+      <p class="hint" style="margin:0 0 8px">Brides who filled out Be a Taffeta Bride on the website but didn't pay. Each one gets a follow-up email the next day.</p>
+      <div style="overflow-x:auto"><table class="adm" id="pp-abandoned"></table></div>
+      <h3 style="margin:28px 0 8px;font:500 12px var(--sans);letter-spacing:.14em;text-transform:uppercase">Inquiries</h3>
+    </div>
     <div style="overflow-x:auto"><table class="adm" id="pp-table"></table></div>
     <h3 style="margin:28px 0 8px;font:500 12px var(--sans);letter-spacing:.14em;text-transform:uppercase">Marked paid in the app</h3>
     <div style="overflow-x:auto"><table class="adm" id="pp-marked"></table></div>
@@ -3055,6 +3061,10 @@ function renderPipeline(j){
       };
     }
   }
+  /* Abandoned Payments (Alexandra, Oct 28 2026): website bookings that stopped at the payment step (POWR emails, added by Zapier) */
+  const ab=(j&&j.abandoned)||[];
+  $("#pp-ab").hidden=!ab.length;
+  $("#pp-abandoned").innerHTML=ab.length?'<tr><th>Left On</th><th>Bride</th><th>Wedding</th><th>Location</th><th>Follow-Up Email</th></tr>'+ab.map(x=>'<tr><td>'+esc(shortDate(x.leftOn)||"–")+(x.leftAt?' <span class="hint">'+esc(x.leftAt)+'</span>':'')+'</td><td><b>'+esc(x.bride)+'</b></td><td>'+esc(shortDate(x.date)||"–")+'</td><td style="white-space:normal;min-width:160px">'+esc(x.location)+'</td><td>'+(x.emailed?"Sent "+esc(shortDate(x.emailed)||x.emailed):"Not sent yet")+'</td></tr>').join(""):"";
   const m=(j&&j.marked)||[],mt=$("#pp-marked");
   mt.innerHTML=m.length?'<tr><th>Bride</th><th>Wedding</th><th>Amount</th><th>How</th><th>Paid on</th><th>In HoneyBook</th></tr>'+m.map(x=>'<tr><td><b>'+esc(x.bride)+'</b></td><td>'+esc(shortDate(x.date)||"–")+'</td><td>$'+esc(x.amount)+'</td><td>'+esc(x.method)+'</td><td>'+esc(shortDate(x.paidOn))+'</td><td>'+(x.inHoneyBook?"Done "+esc(shortDate(x.inHoneyBook)||x.inHoneyBook):"Waiting")+'</td></tr>').join(""):'<tr><td><div class="empty-state">Nothing marked paid in the app yet.</div></td></tr>';
 }
