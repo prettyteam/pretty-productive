@@ -9,7 +9,7 @@
     ['SalonCentric','https://www.saloncentric.com','K18'],
     ['Paramount','https://www.paramountbeauty.com','All Brazilian Blowout'],
     ['Ethos','https://www.ethosbeauty.com','Davines'],
-    ['CosmoProf','https://www.cosmoprofbeauty.com/login','General supplies when it’s the best price']];
+    ['CosmoProf','https://www.cosmoprofbeauty.com/login','Blondor · foils · Procare developer · perms']];
   const RF={to:'Valentina@rossanoferrettigroup.com',cc:'Operations@rossanoferrettigroup.com,Alex@rossanoferrettigroup.com',
     subject:'Rossano Ferretti Parma – Taffeta Salon Order',
     body:'Hi Valentina,\n\nPlease see our attached order form for Taffeta Salon & Spa, 219 Bellevue Ave, Hammonton, NJ 08037.\n\nPlease send the draft order and payment link when ready.\n\nThank you!\nTaffeta Salon & Spa\n(609) 383-5504',
