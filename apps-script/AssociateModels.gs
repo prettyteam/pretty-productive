@@ -26,12 +26,12 @@ function mktModelsSync_(s) {
   while (subs.hasNext()) {
     const sub = subs.next(), name = sub.getName();
     if (name === '.small' || sub.isTrashed()) continue;
+    let a = s.albums.find(x => x.model === name);   // an empty folder still gets its album (Oct 24 2026)
+    if (!a) { a = { id: 'm' + Utilities.getUuid().replace(/-/g, '').slice(0, 10), name: (name + '’s Work').slice(0, 60), model: name, createdAt: Date.now() }; s.albums.push(a); changed = true; }
     const files = sub.getFiles();
     while (files.hasNext()) {
       const f = files.next();
       if (have[f.getId()] || f.isTrashed()) continue;
-      let a = s.albums.find(x => x.model === name);
-      if (!a) { a = { id: 'm' + Utilities.getUuid().replace(/-/g, '').slice(0, 10), name: (name + '’s Work').slice(0, 60), model: name, createdAt: Date.now() }; s.albums.push(a); }
       const m = f.getName().replace(/\.\w+$/, '').match(/^\d{4}-\d{2}-\d{2} (.+) - (before|after|more [\d-]+)$/);   // "2026-10-22 Basic blowdry - before"
       const by = name + (m ? ' · ' + m[1] + ', ' + m[2].replace(/^more .*/, 'more') : '');
       const vid = /^video\//.test(f.getMimeType());

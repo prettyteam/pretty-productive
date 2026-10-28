@@ -105,6 +105,8 @@ function doPost(e) {
   if (d.action === 'mkt') return json_(mkt_(d));   // Marketing Proofs (Marketing.gs), passcode-checked there
   if (/^coach(Save|Seen|Desk)$/.test(d.action || '')) return json_(coachPost_(d));   // Call Coach (Coach.gs), key-checked there
   if (d.action === 'favVideoChunk') { const w0 = who_(d); return json_(w0 ? favVideoChunk_(w0, d) : { ok: false, error: 'signin' }); }   // video pieces skip the lock (Favorites.gs)
+  if (d.action === 'favVideoCheck') { const w0 = who_(d); return json_(w0 ? favVideoCheck_(w0, d) : { ok: false, error: 'signin' }); }   // after a straight-to-Drive send (Favorites.gs)
+  if (d.action === 'addFav') { const w0 = who_(d); return json_(w0 ? addFav_(w0, d.id, d.photo) : { ok: false, error: 'signin' }); }   // takes the lock itself, only for the list (Favorites.gs)
   if (d.action === 'wedPhotoData') { const w0 = who_(d); return json_(w0 ? wedPhotoData_(w0, d.id, d.ids, !!d.full) : { ok: false, error: 'signin' }); }   // small pictures only read, so they skip the lock and never wait on uploads
   const who = who_(d);
   if (!who) return json_({ ok: false, error: 'signin' });
@@ -126,7 +128,6 @@ function doPost(e) {
       case 'addWedPhoto': return json_(addWedPhoto_(who, d.id, d.photo));
       case 'delWedPhoto': return json_(delWedPhoto_(who, d.id, d.photoId));
       case 'wedPhotoData': return json_(wedPhotoData_(who, d.id, d.ids, !!d.full));
-      case 'addFav': return json_(addFav_(who, d.id, d.photo));
       case 'favVideoStart': return json_(favVideoStart_(who, d.id, d.video));
       case 'myJobs': return json_(office ? { ok: true, jobs: [] } : myJobs_(who.member));
       case 'answerJob': return json_(office ? { ok: false, error: 'office_only' } : answerJob_(who.member, d.id, !!d.yes));

@@ -9,9 +9,10 @@
  * favVideoChunk passes each piece along. Pieces run outside the script lock so a long video doesn't hold up everyone else.
  *
  * Hooked into Weddings.gs doPost:
- *   before the lock:  if (d.action === 'favVideoChunk') { const w0 = who_(d); return json_(w0 ? favVideoChunk_(w0, d) : { ok: false, error: 'signin' }); }
- *   inside the switch: case 'addFav': return json_(addFav_(who, d.id, d.photo));
- *                      case 'favVideoStart': return json_(favVideoStart_(who, d.id, d.video));
+ *   before the lock:  if (d.action === 'favVideoChunk' || d.action === 'favVideoCheck') (both, the same way)
+ *                     if (d.action === 'favVideoChunk') { const w0 = who_(d); return json_(w0 ? favVideoChunk_(w0, d) : { ok: false, error: 'signin' }); }
+ *                     if (d.action === 'addFav') { const w0 = who_(d); return json_(w0 ? addFav_(w0, d.id, d.photo) : { ok: false, error: 'signin' }); }
+ *   inside the switch: case 'favVideoStart': return json_(favVideoStart_(who, d.id, d.video));
  */
 const FAV_MAX = 200;   // per wedding
 
@@ -48,17 +49,31 @@ function favAlbum_(s, w) {
 
 function favFile_(by, ext) { return by + ' - ' + Utilities.formatDate(new Date(), TZ, 'yyyy-MM-dd HHmmss') + '-' + Math.floor(Math.random() * 1000) + '.' + ext; }
 
-/** photo: {data:'<base64 jpeg>', thumb:'<base64 jpeg>', w, h}. Runs inside doPost's lock. */
+/** photo: {data:'<base64 jpeg>', thumb:'<base64 jpeg>', w, h}. Runs before doPost's lock (Oct 24 2026): the lock is held only
+ *  to find or make the wedding's album, then again to list the photo, so several photos can go into Drive at once. */
 function addFav_(who, id, photo) {
   const w = wedFor_(who, id);
   if (!w || !photo || !photo.data) return { ok: false, error: 'not_found' };
-  const s = mktRead_();
-  if (s.photos.filter(p => p.wid === id).length >= FAV_MAX) return { ok: false, error: 'too_many', message: 'This wedding already has ' + FAV_MAX + ' favorites.' };
-  const by = favBy_(who), fa = favAlbum_(s, w), name = favFile_(by, 'jpg');
-  const full = fa.folder.createFile(Utilities.newBlob(Utilities.base64Decode(photo.data), 'image/jpeg', name));
-  const thumb = photo.thumb ? fa.folder.createFile(Utilities.newBlob(Utilities.base64Decode(photo.thumb), 'image/jpeg', name.replace('.jpg', ' (small).jpg'))) : full;
-  const p = { id: 'p' + Utilities.getUuid().replace(/-/g, '').slice(0, 14), album: fa.album.id, wid: id, kind: 'photo', w: Number(photo.w) || 0, h: Number(photo.h) || 0, addedAt: Date.now(), by: clean_(by, 40), f: full.getId(), t: thumb.getId() };
-  s.photos.unshift(p); mktWrite_(s);
+  const by = favBy_(who), lock = LockService.getScriptLock();
+  let album, folder;
+  try {
+    lock.waitLock(30000);
+    const s = mktRead_();
+    if (s.photos.filter(p => p.wid === id).length >= FAV_MAX) return { ok: false, error: 'too_many', message: 'This wedding already has ' + FAV_MAX + ' favorites.' };
+    const was = (s.albums.find(x => x.wid === id) || {}).folder || '';
+    const fa = favAlbum_(s, w);
+    if (fa.album.folder !== was) mktWrite_(s);   // keeps the album and its folder if they were just made
+    album = fa.album.id; folder = fa.folder;
+  } finally { lock.releaseLock(); }
+  const name = favFile_(by, 'jpg');
+  const full = folder.createFile(Utilities.newBlob(Utilities.base64Decode(photo.data), 'image/jpeg', name));
+  const thumb = photo.thumb ? folder.createFile(Utilities.newBlob(Utilities.base64Decode(photo.thumb), 'image/jpeg', name.replace('.jpg', ' (small).jpg'))) : full;
+  const p = { id: 'p' + Utilities.getUuid().replace(/-/g, '').slice(0, 14), album: album, wid: id, kind: 'photo', w: Number(photo.w) || 0, h: Number(photo.h) || 0, addedAt: Date.now(), by: clean_(by, 40), f: full.getId(), t: thumb.getId() };
+  try {
+    lock.waitLock(30000);
+    const s = mktRead_();
+    s.photos.unshift(p); mktWrite_(s);
+  } finally { lock.releaseLock(); }
   return { ok: true, photo: favOut_(p) };
 }
 
@@ -74,17 +89,38 @@ function favVideoStart_(who, id, video) {
   const type = /^video\/[\w.+-]+$/.test(video.type || '') ? video.type : 'video/mp4';
   const ext = (String(video.name || '').match(/\.(\w{2,4})$/) || [, type === 'video/quicktime' ? 'mov' : 'mp4'])[1].toLowerCase();
   const name = favFile_(by, ext);
-  const r = UrlFetchApp.fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable', {
-    method: 'post', contentType: 'application/json; charset=UTF-8', muteHttpExceptions: true,
-    headers: { Authorization: 'Bearer ' + ScriptApp.getOAuthToken(), 'X-Upload-Content-Type': type, 'X-Upload-Content-Length': String(video.size) },
-    payload: JSON.stringify({ name: name, mimeType: type, parents: [fa.folder.getId()] })
-  });
-  const url = r.getHeaders().Location || r.getHeaders().location;
-  if (r.getResponseCode() !== 200 || !url) return { ok: false, error: 'server', message: 'Drive did not take the video. Try again.' };
+  const url = favUploadUrl_({ name: name, mimeType: type, parents: [fa.folder.getId()] }, type, video.size);
+  if (!url) return { ok: false, error: 'server', message: 'Drive did not take the video. Try again.' };
   const thumb = video.thumb ? fa.folder.createFile(Utilities.newBlob(Utilities.base64Decode(video.thumb), 'image/jpeg', name.replace(/\.\w+$/, ' (cover).jpg'))).getId() : '';
   const token = Utilities.getUuid();
   CacheService.getScriptCache().put('fav:' + token, JSON.stringify({ url: url, size: video.size, type: type, wid: id, album: fa.album.id, by: clean_(by, 40), t: thumb, w: Number(video.w) || 0, h: Number(video.h) || 0, uid: who.role === 'office' ? 'office' : who.member.id }), 21600);
-  return { ok: true, token: token };
+  return { ok: true, token: token, url: url };
+}
+
+/** Faster videos (Oct 26 2026): the Origin header lets the Weddings App page send the whole video straight to this Drive
+ *  upload link (it only lets it add this one file). favVideoCheck then asks Drive how much arrived; the rest goes in pieces. */
+function favUploadUrl_(meta, type, size) {
+  const go = origin => {
+    const h = { Authorization: 'Bearer ' + ScriptApp.getOAuthToken(), 'X-Upload-Content-Type': type, 'X-Upload-Content-Length': String(size) };
+    if (origin) h.Origin = 'https://prettyteam.taffetadesign.com';
+    const r = UrlFetchApp.fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable', {
+      method: 'post', contentType: 'application/json; charset=UTF-8', muteHttpExceptions: true, headers: h, payload: JSON.stringify(meta) });
+    return r.getResponseCode() === 200 ? (r.getHeaders().Location || r.getHeaders().location || '') : '';
+  };
+  let url = '';
+  try { url = go(true); } catch (e) {}
+  return url || go(false);
+}
+function favVideoCheck_(who, d) {
+  const key = 'fav:' + String(d.token || ''), raw = CacheService.getScriptCache().get(key);
+  if (!raw) return { ok: false, error: 'expired', message: 'The upload timed out. Add the video again.' };
+  const u = JSON.parse(raw);
+  if (u.uid !== (who.role === 'office' ? 'office' : who.member.id)) return { ok: false, error: 'signin' };
+  const r = UrlFetchApp.fetch(u.url, { method: 'put', muteHttpExceptions: true, headers: { 'Content-Range': 'bytes */' + u.size } });
+  const code = r.getResponseCode();
+  if (code === 308) { const m = String(r.getHeaders().Range || r.getHeaders().range || '').match(/-(\d+)$/); return { ok: true, next: m ? Number(m[1]) + 1 : 0 }; }
+  if (code !== 200 && code !== 201) return { ok: false, error: 'server', message: 'Drive did not take the video. Try again.' };
+  return favVideoSaved_(key, u, JSON.parse(r.getContentText()).id);
 }
 
 /** {token, offset, data:'<base64 piece>'}: every piece is a multiple of 256 KB except the last. */
@@ -98,7 +134,9 @@ function favVideoChunk_(who, d) {
   const code = r.getResponseCode();
   if (code === 308) { const m = String(r.getHeaders().Range || r.getHeaders().range || '').match(/-(\d+)$/); return { ok: true, next: m ? Number(m[1]) + 1 : end + 1 }; }
   if (code !== 200 && code !== 201) return { ok: false, error: 'server', message: 'A piece of the video did not go through. Try again.' };
-  const fileId = JSON.parse(r.getContentText()).id;
+  return favVideoSaved_(key, u, JSON.parse(r.getContentText()).id);
+}
+function favVideoSaved_(key, u, fileId) {
   CacheService.getScriptCache().remove(key);
   const lock = LockService.getScriptLock();
   try {
