@@ -31,6 +31,9 @@ html,body{background:#f8f6f0}
 .input{border-color:#2b2a28;background:#fff}
 .sec>.eyebrow{display:flex;align-items:center;justify-content:center;gap:12px;color:#121212;border-bottom:0;padding-bottom:0;text-align:center}
 .sec>.eyebrow::before,.sec>.eyebrow::after{content:"";width:28px;height:1px;background:#2b2a28;flex:none}
+/* tagline on one line (Alexandra, Oct 28 2026); shrinks with the screen and wraps only on very narrow phones */
+.quote{font-size:clamp(15px,3.6vw,19px);white-space:nowrap}
+@media (max-width:420px){.quote{white-space:normal}}
 </style>
 <script src="/g/life.js?v=1"></script>
 </head><body><a class="home-back" href="https://taffetadesign.com/" target="_top" aria-label="Back to taffetadesign.com"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg><span>Home</span></a>
