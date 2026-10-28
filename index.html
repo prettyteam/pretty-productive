@@ -2022,7 +2022,11 @@ const TIP_LITE=['rose','kat','adriana','ashley-b'], TIP_PICKS=[5,10]; let TIP_PI
 const tipOf=t=>Math.round((parseFloat(String(t).replace(/[^0-9.]/g,''))||0)*TIP_PCT);
 function venmoTipUrl(v,amt){return amt?'https://venmo.com/'+encodeURIComponent(v)+'?txn=pay&amount='+amt+'&note='+encodeURIComponent('Thank you! ✨'):'https://venmo.com/u/'+encodeURIComponent(v)}
 function qrEl(text){const d=h('div',{class:'tipqr'});d.innerHTML=qrSvg(text);return d}
+/* Team Activity (Alexandra, Oct 24 2026): opening Gratuity puts a line on the Team Hub's Team Activity tab for Pretty Life */
+function actLog(what){const st=(S.mine&&S.mine.staff)||{};if(!API()||!S.mine||!S.mine.name||actLog[what])return;actLog[what]=1;
+  fetch(API(),{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({type:'act',what,app:'team',name:S.mine.name,slug:st.slug||''})}).catch(()=>{})}
 function tipView(){
+  actLog('tip');
   const info=(HUB.data&&HUB.data.info)||{}, v=venmoUser(info.venmo), ok=v&&!/\s/.test(v), fn=firstName(S.mine.name), ph=myPhoto();
   const head=h('div',{},h('span',{class:'lbl'},'Thank you'),h('h1',{style:'font-size:28px'},'Gratuity'));
   const tip=!HUB.data?h('p',{class:'dmsg'},HUB.err?'Can’t reach your profile right now. Check your signal.':'Loading…'):
