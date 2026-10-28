@@ -283,10 +283,10 @@ const ROSTER = [
 ];
 
 function tss_() { return SpreadsheetApp.openById(TEAM_SHEET_ID); }
-/** Team Activity (Alexandra, Oct 24 2026): a line each time a girl opens her Gratuity code, shows the wedding add-on code or
+/** Team Activity (Alexandra, Oct 24 2026): a line each time a girl opens her Gratuity code or
    shares her thank-you card, and each time a guest opens a card, so Pretty Life can show it each morning.
    The same name and action within 10 minutes counts once. */
-const ACT_WHAT = { tip: 'Opened Gratuity', addon: 'Showed Add-On Code', card: 'Shared My Card', cardopen: 'Guest Opened Her Card' };
+const ACT_WHAT = { tip: 'Opened Gratuity', card: 'Shared My Card', cardopen: 'Guest Opened Her Card' };
 function actLog_(d) {
   const what = ACT_WHAT[d.what], name = clean_(d.name, 60);
   if (!what || !name) return json_({ ok: false });
