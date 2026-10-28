@@ -741,6 +741,10 @@ function teamBoard(){
   if(on.length) out.push(dailyRecap(on));
   if(S.week&&S.week.rows){
     const rows=S.week.rows.filter(r=>r.service||r.retail);
+    /* Contractor sales count in the team total but have no stylist row, so show them as their own line (Oct 28, 2026) */
+    const sum=rows.reduce((a,r)=>a+(r.service||0),0), wt=S.week.team||{}, ct=S.week.contractor;
+    const cs=ct?(ct.service||0):(typeof wt.service==='number'?Math.round((wt.service-sum)*100)/100:(wt.service&&typeof wt.service.actual==='number'?Math.round((wt.service.actual-sum)*100)/100:0));
+    if(cs>=0.5) rows.push({name:'Contractor',service:cs,retail:ct?(ct.retail||0):0});
     const T=rows.reduce((a,r)=>({s:a.s+r.service,r:a.r+r.retail}),{s:0,r:0});
     const rp=(r,s)=>s>0?Math.round(r/s*1000)/10:0;
     const pc=(r,s)=>{const v=rp(r,s);return h('td',{class:v>=15?'over':'under'},v.toFixed(1)+'%')};
