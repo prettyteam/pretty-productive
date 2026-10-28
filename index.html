@@ -1772,7 +1772,7 @@ let SKIN={data:null,err:null,loading:false,key:null};
 function orderView(){
   const mode=orderMode(); if(mode==='full') invLoad();
   const R=mode==='full'&&INV.data&&INV.data.report, box=h('div',{class:'hub'});
-  box.innerHTML=window.Ordering.html(mode,R&&R.prices);
+  box.innerHTML=window.Ordering.html(mode,R&&R.prices,mode==='full'&&S.mine.ordering);
   return [box];
 }
 function skinView(){

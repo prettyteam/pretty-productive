@@ -478,7 +478,7 @@ function render(){
   ['.runbar','#alerts'].forEach(q=>{const el=$(q);if(el)el.style.display=home?'':'none'});
   ['#send','#after'].forEach(q=>{const el=$(q);if(el){el.style.display=send?'':'none';if(send){el.open=true;el.dataset.page='1'}else delete el.dataset.page}});
   $('#body').style.display=home||send?'none':'';
-  const body=g?guests():home||send?'':area==='T'?todoView():area==='D'?guideView():area==='K'?'<div id="ccDesk"></div>':area==='C'?cleanView():area==='O'?(window.Ordering?Ordering.html('full'):''):busyView();
+  const body=g?guests():home||send?'':area==='T'?todoView():area==='D'?guideView():area==='K'?'<div id="ccDesk"></div>':area==='C'?cleanView():area==='O'?(window.Ordering?Ordering.html('full',null,GUIDE&&GUIDE.ordering):''):busyView();
   if(!g)guests();
   todoCount();
   if(home)deskHome();
