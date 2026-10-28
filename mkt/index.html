@@ -97,19 +97,116 @@ MK.scan=function(root){(root||document).querySelectorAll('[data-e],[data-ep],[da
 /* Save photos: the post's pictures at full quality, ready for Meta Business Suite or the Instagram app */
 function addSave(){
   document.querySelectorAll('article.post').forEach(a=>{
-    const media=[...a.querySelectorAll('.strip [data-e], video[data-e]')];if(!media.length||a.querySelector('.mk-save'))return;
+    const media=[...a.querySelectorAll('.strip img, video[data-e]')].filter(m=>m.dataset.e||m.dataset.sd);if(!media.length||a.querySelector('.mk-save'))return;
     const b=document.createElement('button');b.type='button';b.className='copy mk-save';b.textContent=media.length>1?'Save '+media.length+' photos':(media[0].tagName==='VIDEO'?'Save video':'Save photo');
     const lab=b.textContent;
     b.onclick=async()=>{b.disabled=true;b.textContent='Getting them ready…';
-      try{const files=await Promise.all(media.map(async(m,i)=>{const u=await MK.url(m.dataset.e);const bl=await (await fetch(u)).blob();
+      try{const files=await Promise.all(media.map(async(m,i)=>{const u=m.dataset.sd?await MK.driveFull(m.dataset.sd):await MK.url(m.dataset.e);const bl=await (await fetch(u)).blob();
           const t=(a.dataset.title||'taffeta-post').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,40);
-          return new File([bl],t+(media.length>1?'-'+(i+1):'')+'.'+m.dataset.e.split('.').pop(),{type:bl.type})}));
+          return new File([bl],t+(media.length>1?'-'+(i+1):'')+'.'+(m.dataset.sd?'jpg':m.dataset.e.split('.').pop()),{type:bl.type})}));
         if(navigator.canShare&&navigator.canShare({files})){try{await navigator.share({files})}catch(e){}}
         else files.forEach(f=>{const x=document.createElement('a');x.href=URL.createObjectURL(f);x.download=f.name;document.body.append(x);x.click();x.remove();setTimeout(()=>URL.revokeObjectURL(x.href),4000)});
       }catch(e){alert('Those photos could not be saved. Try again.')}
       b.disabled=false;b.textContent=lab};
     const strip=a.querySelector('.strip')||a.querySelector('video[data-e]');strip.after(b);
   });
+}
+/* Change photo (Alexandra, Oct 28 2026): swap any post or Story picture for one from the albums or the phone.
+   Saved with the caption edits as text 'img:<post>:<n>' = 'e:<page path>' or 'd:<Drive photo id>' ('' = the original). */
+function addSwap(){
+  const posts=[...document.querySelectorAll('.post[id^="post-"]')];
+  const pics=p=>[...p.querySelectorAll(p.classList.contains('story')?':scope > img':'.strip img')];
+  const key=(p,i)=>'img:'+p.id.slice(5)+':'+i;
+  const st=document.createElement('style');st.textContent=
+    '.mk-chg{margin-top:-4px}.stories .mk-chg{align-self:center;margin:2px 0 0;font-size:12px;padding:5px 8px;min-height:0}'
+    +'#mk-swp{border:0;padding:0;width:min(94vw,640px);max-height:88vh;background:var(--paper,#fff);color:var(--ink,#111);font-family:var(--body,inherit)}'
+    +'#mk-swp::backdrop{background:rgba(10,10,10,.7)}#mk-swp .si{display:flex;flex-direction:column;gap:12px;padding:18px 16px}'
+    +'#mk-swp h2{font-family:var(--display,Georgia,serif);font-weight:400;font-size:24px;margin:0}#mk-swp .sp{margin:0;color:var(--soft,#5c5c5c);font-size:14px}'
+    +'#mk-swp .sr{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}#mk-swp .sr::-webkit-scrollbar{display:none}'
+    +'#mk-swp .sr button{flex:none;font:inherit;font-size:14px;padding:9px 14px;min-height:40px;border:1px solid var(--line,#ddd);background:var(--paper,#fff);color:var(--ink,#111);cursor:pointer;white-space:nowrap}'
+    +'#mk-swp .sr button[aria-current="true"]{background:var(--ink,#111);color:var(--paper,#fff);border-color:var(--ink,#111)}'
+    +'#mk-swp .sg{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:3px;max-height:48vh;overflow-y:auto}'
+    +'#mk-swp .sg button{padding:0;border:0;background:var(--line,#ddd);aspect-ratio:1/1;overflow:hidden;cursor:pointer}#mk-swp .sg img{width:100%;height:100%;object-fit:cover;display:block}'
+    +'#mk-swp button:focus-visible{outline:2px solid var(--gold,#8b6b4c);outline-offset:2px}'
+    +'#mk-swp .ph{display:inline-flex;align-items:center;justify-content:center;font-weight:600;font-size:16px;padding:12px 22px;min-height:46px;background:var(--ink,#111);color:var(--paper,#fff);cursor:pointer;position:relative;align-self:flex-start}'
+    +'#mk-swp .ph input{position:absolute;width:1px;height:1px;opacity:0}#mk-swp .sf{display:flex;flex-wrap:wrap;gap:10px}'
+    +'#mk-swp .sf button{font:inherit;font-size:14px;padding:8px 14px;min-height:40px;border:1px solid var(--ink,#111);background:none;color:var(--ink,#111);cursor:pointer}'
+    +'#mk-swp .sm{margin:0;font-size:14px;color:var(--gold,#8b6b4c)}#mk-swp .sm:empty{display:none}#mk-swp .se{color:var(--soft,#5c5c5c);font-size:14px;margin:0;padding:12px 0}';
+  document.head.append(st);
+  const d=document.createElement('dialog');d.id='mk-swp';d.setAttribute('aria-labelledby','mk-swh');
+  d.innerHTML='<div class="si"><h2 id="mk-swh">Change photo</h2>'
+    +'<div id="mk-sw1" hidden><p class="sp">Tap the photo you want to change.</p><div class="sg" id="mk-swc"></div></div>'
+    +'<div id="mk-sw2" hidden><p class="sp" id="mk-swp2">Pick the new photo.</p><label class="ph">Use a photo from my phone<input type="file" id="mk-swf" accept="image/*"></label>'
+    +'<p class="sp">Or pick one from an album:</p><div class="sr" id="mk-swa"></div><div class="sg" id="mk-swg"></div></div>'
+    +'<p class="sm" id="mk-swm" role="status" aria-live="polite"></p>'
+    +'<div class="sf"><button type="button" id="mk-swb" hidden>Back</button><button type="button" id="mk-swr" hidden>Put the original back</button><button type="button" id="mk-swx">Close</button></div></div>';
+  document.body.append(d);
+  const $=id=>document.getElementById(id),msg=t=>{$('mk-swm').textContent=t};
+  let post=null,idx=0,album='branding',busy=false,cur={};
+  try{album=localStorage.getItem('mk-swalbum')||album}catch(e){}
+
+  // show a saved swap (or the original) on the post
+  function show(im,v){
+    if(!im.dataset.oe)im.dataset.oe=im.dataset.e||'';
+    const want=v||'e:'+im.dataset.oe;if(im.dataset.sw===want)return;im.dataset.sw=want;
+    if(want.startsWith('d:')){const id=want.slice(2);delete im.dataset.e;im.dataset.sd=id;const t=MK._thumbs.get(id);if(t)im.src=t;
+      MK.driveFull(id).then(u=>{if(u&&im.dataset.sw===want)im.src=u}).catch(()=>{})}
+    else{const p=want.slice(2);delete im.dataset.sd;im.dataset.e=p;MK.url(p).then(u=>{if(im.dataset.sw===want)im.src=u}).catch(()=>{})}
+  }
+  MK.onState(s=>{cur=s.edits.text||{};posts.forEach(p=>pics(p).forEach((im,i)=>{const v=cur[key(p,i)];if(v||im.dataset.sw)show(im,v)}))});
+
+  // the albums, the same ones as the Photos tab
+  const BUILT=[{id:'branding',name:'Hi Pretty Branding Shoot'},{id:'bridal',name:'Taffeta Bridal'},{id:'salon',name:'Taffeta Salon & Spa'},{id:'team',name:'Employee Content'}];
+  function albums(){const s=MK._state||{};const all=(s.albums||[]);return BUILT.concat(all.filter(a=>!a.parent&&!a.model).map(a=>({id:a.id,name:String(a.name||'Album')})))}
+  function parentOf(id){const a=((MK._state||{}).albums||[]).find(x=>x.id===id);return a?(a.parent||(a.model?'team':'')):''}
+  function items(id){const s=MK._state||{},hide={};(s.hidden||[]).forEach(x=>hide[x]=1);
+    const inA=a=>a===id||parentOf(a)===id;
+    const out=(s.photos||[]).filter(p=>!p.video&&!hide[p.id]&&inA(p.album)).map(p=>({at:p.addedAt||0,v:'d:'+p.id,d:p.id}))
+      .concat((MK.migrated||[]).filter(p=>!hide[p.id]&&inA(p.album)&&MK.files['alb/'+p.id+'.jpg']).map(p=>({at:p.addedAt||0,v:'e:alb/'+p.id+'.jpg',e:'alb/t/'+p.id+'.jpg'})))
+      .sort((a,b)=>b.at-a.at);
+    if(id==='branding')document.querySelectorAll('#v-branding section:not(#phone) .ptile img').forEach(im=>{const p=im.dataset.e;if(p)out.push({v:'e:'+p,e:p})});
+    return out}
+  function thumb(it){const im=document.createElement('img');im.alt='';if(it.d)im.dataset.d=it.d;else im.dataset.e=it.e;return im}
+  function renderAlbums(){const r=$('mk-swa');r.textContent='';albums().forEach(a=>{const b=document.createElement('button');b.type='button';b.textContent=a.name;
+    b.setAttribute('aria-current',a.id===album?'true':'false');b.onclick=()=>{album=a.id;try{localStorage.setItem('mk-swalbum',a.id)}catch(e){}renderAlbums();renderGrid()};r.append(b)})}
+  function renderGrid(){const g=$('mk-swg');g.textContent='';const list=items(album);
+    if(!list.length){const p=document.createElement('p');p.className='se';p.textContent='No photos in this album yet.';g.append(p);return}
+    list.forEach(it=>{const b=document.createElement('button');b.type='button';b.setAttribute('aria-label','Use this photo');b.append(thumb(it));b.onclick=()=>use(it.v);g.append(b)});
+    g.scrollTop=0;MK.scan(g)}
+  function step1(){const list=pics(post);$('mk-sw2').hidden=true;$('mk-swb').hidden=true;$('mk-swr').hidden=true;
+    if(list.length<2){idx=0;return step2()}
+    $('mk-sw1').hidden=false;const g=$('mk-swc');g.textContent='';
+    list.forEach((im,i)=>{const b=document.createElement('button');b.type='button';b.setAttribute('aria-label','Photo '+(i+1));const t=document.createElement('img');t.alt='';if(im.src)t.src=im.src;b.append(t);b.onclick=()=>{idx=i;step2()};g.append(b)})}
+  function step2(){$('mk-sw1').hidden=true;$('mk-sw2').hidden=false;const n=pics(post).length;
+    $('mk-swb').hidden=n<2;$('mk-swp2').textContent=n<2?'Pick the new photo.':'Pick the new photo for photo '+(idx+1)+'.';
+    $('mk-swr').hidden=!cur[key(post,idx)];renderAlbums();renderGrid()}
+  async function use(v){if(!post||busy)return;const im=pics(post)[idx];if(!im)return;
+    if(v==='e:'+im.dataset.oe)v='';busy=true;msg('Saving…');
+    try{const s=await MK.api('save',{text:{[key(post,idx)]:v},ok:{}});MK.applyState(s);msg('Done. Photo changed and saved.');setTimeout(()=>d.close(),900)}
+    catch(e){msg(e&&e.message==='offline'?'No connection. Try again in a moment.':'Could not save. Try again.')}
+    busy=false}
+  function open(p){post=p;msg('');d.showModal();step1()}
+  $('mk-swb').onclick=step1;$('mk-swx').onclick=()=>d.close();$('mk-swr').onclick=()=>use('');
+  d.addEventListener('click',e=>{if(e.target===d)d.close()});
+
+  // from the phone: also lands in the album that's open, like Add photos on the Photos tab
+  function shrink(im,max,q){const k=Math.min(1,max/Math.max(im.naturalWidth,im.naturalHeight)),c=document.createElement('canvas');
+    c.width=Math.round(im.naturalWidth*k);c.height=Math.round(im.naturalHeight*k);c.getContext('2d').drawImage(im,0,0,c.width,c.height);
+    return new Promise((res,rej)=>c.toBlob(b=>b?res({b,w:c.width,h:c.height}):rej(new Error('encode')),'image/jpeg',q))}
+  const b64=b=>new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(String(r.result).split(',')[1]);r.onerror=rej;r.readAsDataURL(b)});
+  $('mk-swf').addEventListener('change',async function(){const f=this.files&&this.files[0];this.value='';if(!f||busy)return;
+    busy=true;msg('Adding your photo…');const u=URL.createObjectURL(f);
+    try{const im=await new Promise((res,rej)=>{const i=new Image();i.onload=()=>res(i);i.onerror=rej;i.src=u});
+      const [m,t]=await Promise.all([shrink(im,2048,.86),shrink(im,480,.82)]);
+      const [dm,dt]=await Promise.all([b64(m.b),b64(t.b)]);
+      const to=album==='branding'||album==='team'?'salon':album;
+      const r=await MK.api('addPhoto',{album:to,data:dm,thumb:dt,w:m.w,h:m.h,type:'image/jpeg'});
+      MK._thumbs.set(r.photo.id,'data:image/jpeg;base64,'+dt);busy=false;await use('d:'+r.photo.id);MK.refresh()}
+    catch(e){busy=false;msg('That photo did not work. Try another one, or add it in the Photos tab first.')}
+    URL.revokeObjectURL(u)});
+
+  posts.forEach(p=>{if(!pics(p).length)return;const b=document.createElement('button');b.type='button';b.className='copy mk-chg';b.textContent='Change photo';b.onclick=()=>open(p);
+    if(p.classList.contains('story'))p.append(b);else{const s=p.querySelector('.strip');(p.querySelector('.mk-save')||s).after(b)}});
 }
 function inject(html){
   const doc=new DOMParser().parseFromString(html,'text/html');
@@ -129,7 +226,7 @@ async function open(code,remember){
   let P;try{P=JSON.parse(new TextDecoder().decode(await dec(await r.arrayBuffer())))}catch(e){throw new Error('code')}
   MK.code=code;MK.files=P.files||{};MK.migrated=P.migrated||[];
   try{localStorage.setItem('mkt-code',remember?code:'')}catch(e){}
-  inject(P.html);MK.scan(document);addSave();
+  inject(P.html);MK.scan(document);addSave();addSwap();
   const s=await MK.api('state').catch(()=>null);
   if(s&&!s.rev&&P.seed){const t=await MK.api('seed',{edits:P.seed}).catch(()=>null);MK.applyState(t||s)}else if(s)MK.applyState(s);
   document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')MK.refresh()});
