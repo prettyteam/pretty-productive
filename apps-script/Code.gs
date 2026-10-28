@@ -286,17 +286,17 @@ function tss_() { return SpreadsheetApp.openById(TEAM_SHEET_ID); }
 /** Team Activity (Alexandra, Oct 24 2026): a line each time a girl opens her Gratuity code or
    shares her thank-you card, and each time a guest opens a card, so Pretty Life can show it each morning.
    The same name and action within 10 minutes counts once. */
-const ACT_WHAT = { tip: 'Opened Gratuity', card: 'Shared My Card', cardopen: 'Guest Opened Her Card' };
+const ACT_WHAT = { tip: 'Opened Gratuity', card: 'Shared My Card', cardopen: 'Guest Opened Her Card', addon: 'Logged an Add-On' };
 function actLog_(d) {
   const what = ACT_WHAT[d.what], name = clean_(d.name, 60);
   if (!what || !name) return json_({ ok: false });
   const app = d.app === 'weddings' ? 'Weddings' : d.app === 'card' ? 'Thank-You Card' : 'Team';
   const sh = ttab_(TT.act), n = sh.getLastRow(), now = new Date();
-  if (n > 1) {
+  if (n > 1 && d.what !== 'addon') {   // every add-on she logs counts, even two in a row (Oct 28 2026)
     const k = Math.min(n - 1, 200), rows = sh.getRange(n - k + 1, 1, k, 5).getValues();
     if (rows.some(r => String(r[1]) === name && String(r[4]) === what && r[0] instanceof Date && now - r[0] < 6e5)) return json_({ ok: true });
   }
-  sh.appendRow([now, name, clean_(d.slug, 40), app, what, clean_(d.detail, 120)]);
+  sh.appendRow([now, name, clean_(d.slug, 40), app, what, clean_(d.detail, 200)]);
   return json_({ ok: true });
 }
 

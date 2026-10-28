@@ -242,6 +242,15 @@ details.more .menu .btn:last-child{border-bottom:0}
 .paper .brandline.bottom{margin:30px 0 0}
 .ao .ao-list{width:100%;max-width:520px;overflow-x:auto}
 .ao .ao-list .paper{min-width:0;padding:28px 20px 30px}
+.ao .aol{width:100%;max-width:360px;border-top:1px solid #d9d5ce;padding-top:18px;display:flex;flex-direction:column;align-items:center;gap:12px}
+.ao .aol .chips{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.ao .aol .chip{border:1px solid #121212;background:#fff;padding:8px 12px;font:400 12px var(--sans);letter-spacing:.08em;color:#121212;cursor:pointer}
+.ao .aol .chip[aria-pressed="true"]{background:#121212;color:#fff}
+.ao .aol label{display:flex;flex-direction:column;gap:4px;width:260px;text-align:left;font:400 11px var(--sans);letter-spacing:.14em;text-transform:uppercase;color:#555250}
+.ao .aol input{font:400 16px var(--sans);padding:10px;border:1px solid #c9c4bc;letter-spacing:0;text-transform:none;color:#121212}
+.ao .aol .done{width:100%;font:400 14px var(--sans);text-align:left}
+.ao .aol .done div{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid #eee}
+.ao .aol .done button{border:1px solid #121212;background:#fff;font:400 11px var(--sans);letter-spacing:.1em;text-transform:uppercase;padding:6px 8px;cursor:pointer}
 .paper .aop{width:100%;max-width:440px;margin:0 auto;border-collapse:collapse}
 .paper .aop td{padding:11px 4px;border-bottom:1px solid var(--line);font-family:var(--serif);font-size:15px;color:var(--paper-ink);text-align:left;vertical-align:top}
 .paper .aop td:last-child{text-align:right;white-space:nowrap;padding-left:14px}
@@ -1821,8 +1830,8 @@ function aoPriceHTML(){
    Team Hub's Team Activity tab, so Pretty Life can show it each morning. Once per screen visit; the server skips repeats.
    Showing the add-on code isn't logged (Oct 28 2026): it doesn't mean anyone owed or paid for an add-on. */
 const ACT_DONE={};
-function actLog(what,again){const ep=window.TAFFETA_ENDPOINT,nm=String(myName()||"").trim();if(!ep||!nm||(ACT_DONE[what]&&!again))return;ACT_DONE[what]=1;
-  fetch(ep,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({type:"act",what,app:"weddings",name:nm,slug:String((ME&&ME.id)||"")})}).catch(()=>{})}
+function actLog(what,again,detail){const ep=window.TAFFETA_ENDPOINT,nm=String(myName()||"").trim();if(!ep||!nm||(ACT_DONE[what]&&!again))return;ACT_DONE[what]=1;
+  fetch(ep,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({type:"act",what,app:"weddings",name:nm,slug:String((ME&&ME.id)||""),detail:detail||""})}).catch(()=>{})}
 function renderAddon(){
   const box=$("#view-addon");if(!box)return;const L=payLinks();
   if(AO_SHOW==="card"&&!L.card)AO_SHOW="venmo";if(AO_SHOW==="venmo"&&!L.venmo&&L.card)AO_SHOW="card";
@@ -1835,9 +1844,47 @@ function renderAddon(){
   if(L.venmo)h+='<button type="button" class="pay" data-s="venmo" aria-pressed="'+(AO_SHOW==="venmo")+'">Pay with Venmo</button>';
   if(L.card)h+='<button type="button" class="pay" data-s="card" aria-pressed="'+(AO_SHOW==="card")+'">Card or Apple Pay</button>';
   if(L.venmo&&L.card)h+='<p style="font-size:14px">Tap a button to show that code.</p>';
-  h+='</div>';
+  h+=aoLogHTML()+'</div>';
   box.innerHTML=h;box.querySelectorAll(".pay[data-s]").forEach(b=>b.onclick=()=>{AO_SHOW=b.dataset.s;renderAddon()});
   const sh=$("#aoShare");if(sh)sh.onclick=e=>sendPdf(e.currentTarget,[aoPriceHTML()],"wedding-day-add-ons.jpg","",true);
+  aoLogWire(box);
+}
+/* Log an Add-On (Alexandra, Oct 28 2026): the artist records each add-on as she does it: the service, the guest's first
+   name and whether she paid. It goes to the Team Activity tab, so Pretty Life and Cherish can see who owed what and match
+   it to the Taffeta Weddings Venmo and card payments. "Not Paid Yet" stays on her list with a Mark Paid button. */
+let AO_PICK=[];
+const aoNum=v=>parseFloat(String(v).replace(/[^0-9.]/g,""))||0;
+const aoDayKey=()=>"tw-addons:"+((ME&&ME.id)||"me")+":"+cardDay();
+function aoToday(){try{return JSON.parse(localStorage.getItem(aoDayKey())||"[]")}catch(e){return[]}}
+function aoSaveToday(L){try{localStorage.setItem(aoDayKey(),JSON.stringify(L))}catch(e){}}
+function aoLogHTML(){
+  const amt=AO_PICK.reduce((t,n)=>t+aoNum((AO_PRICES.find(x=>x[0]===n)||[])[1]),0), mine=aoToday();
+  let bride="";try{bride=localStorage.getItem("tw-ao-bride:"+cardDay())||""}catch(e){}
+  return '<div class="aol"><div class="mhead">Log an Add-On</div><p>Did a guest add a service? Log it here so the office knows.</p>'
+    +'<div class="chips">'+AO_PRICES.map(([n])=>'<button type="button" class="chip" data-ao="'+esc(n)+'" aria-pressed="'+AO_PICK.includes(n)+'">'+esc(n)+'</button>').join("")+'</div>'
+    +'<label>Amount<input id="aoAmt" inputmode="decimal" value="'+(amt?"$"+amt:"")+'" placeholder="$"></label>'
+    +'<label>Guest’s First Name<input id="aoGuest" autocomplete="off"></label>'
+    +'<label>Bride’s Name<input id="aoBride" autocomplete="off" value="'+esc(bride)+'"></label>'
+    +'<button type="button" class="pay" data-paid="Paid Venmo">Paid Venmo</button><button type="button" class="pay" data-paid="Paid Card">Paid Card</button>'
+    +'<button type="button" class="pay" data-paid="Not Paid Yet">Not Paid Yet</button>'
+    +(mine.length?'<div class="done"><div class="mhead" style="border:0">Logged Today</div>'+mine.map((x,i)=>'<div><span>'+esc(x.svc)+' '+esc(x.amt)+' · '+esc(x.guest)+'<br><small>'+esc(x.paid)+'</small></span>'
+      +(x.paid==="Not Paid Yet"?'<button type="button" data-mark="'+i+'">Mark Paid</button>':'')+'</div>').join("")+'</div>':'')
+    +'</div>';
+}
+function aoSend(x,note){actLog("addon",true,x.svc+" "+x.amt+" · "+x.guest+(x.bride?" · Bride: "+x.bride:"")+" · "+(note||x.paid))}
+function aoLogWire(box){
+  box.querySelectorAll("[data-ao]").forEach(b=>b.onclick=()=>{const n=b.dataset.ao;AO_PICK=AO_PICK.includes(n)?AO_PICK.filter(x=>x!==n):[...AO_PICK,n];
+    const g=$("#aoGuest").value,br=$("#aoBride").value;renderAddon();$("#aoGuest").value=g;$("#aoBride").value=br});
+  box.querySelectorAll("[data-paid]").forEach(b=>b.onclick=()=>{
+    const guest=$("#aoGuest").value.trim(),bride=$("#aoBride").value.trim(),a=aoNum($("#aoAmt").value);
+    if(!AO_PICK.length){toast("Tap the service first.");return}
+    if(!guest){toast("Add the guest’s first name.");$("#aoGuest").focus();return}
+    const x={svc:AO_PICK.join(" + "),amt:a?"$"+a:"",guest,bride,paid:b.dataset.paid};
+    try{localStorage.setItem("tw-ao-bride:"+cardDay(),bride)}catch(e){}
+    aoSaveToday([...aoToday(),x]);aoSend(x);AO_PICK=[];renderAddon();toast("Add-on logged. Thank you!")});
+  box.querySelectorAll("[data-mark]").forEach(b=>b.onclick=()=>{const L=aoToday(),x=L[+b.dataset.mark];if(!x)return;
+    const how=confirm("Did she pay by Venmo? Tap Cancel for card.")?"Paid Venmo":"Paid Card";
+    x.paid=how;aoSaveToday(L);aoSend(x,how+" (was Not Paid Yet)");renderAddon();toast("Marked paid.")});
 }
 
 /* Gratuity (Alexandra, Oct 21 2026): each bridesmaid scans the artist's own code and tips her straight to the Venmo on
