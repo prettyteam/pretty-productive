@@ -18,12 +18,31 @@ body{padding-bottom:calc(56px + env(safe-area-inset-bottom))}
   bar.append(msg,btn);
   const page=location.href.split('#')[0];
   btn.addEventListener('click',async()=>{
-    btn.disabled=true; btn.textContent='Refreshing…';
+    btn.disabled=true; btn.textContent='Refreshing…'; keep(1);
     try{await fetch(page,{cache:'reload'});await fetch('/refresh.js',{cache:'reload'})}catch(e){}
     /* a plain reload can show the old copy in a Home Screen app, so open the page at a fresh address (keeps the link after #) */
     const u=new URL(page); u.searchParams.set('_r',Date.now().toString(36));
     location.replace(u.toString()+location.hash);
   });
+  /* Refresh stays on the page you were on (Alexandra, Oct 23 2026). Each app names its page with window.__ppView={get,set}
+     (TopNav does it for the desk, weddings and cards apps). Refresh notes the page and scroll spot for this tab, and once the
+     app is back and signed in, it opens that page again. A fresh open of the app still starts on Home. */
+  const VK='pp-view:'+location.pathname;
+  function keep(r){try{const v=window.__ppView&&window.__ppView.get();if(v!=null)sessionStorage.setItem(VK,JSON.stringify({v,y:Math.round(scrollY),r,t:Date.now()}))}catch(e){}}
+  addEventListener('pagehide',()=>{try{const o=JSON.parse(sessionStorage.getItem(VK)||'null');if(!(o&&o.r&&Date.now()-o.t<5000))keep(0)}catch(e){}});
+  (function back(){
+    let o=null;try{o=JSON.parse(sessionStorage.getItem(VK)||'null');sessionStorage.removeItem(VK)}catch(e){}
+    let nav='';try{nav=(performance.getEntriesByType('navigation')[0]||{}).type||''}catch(e){}
+    if(!o||Date.now()-o.t>10*60*1000||!(o.r||nav==='reload'))return;
+    let tries=0,moved=false;['touchstart','wheel','keydown'].forEach(e=>addEventListener(e,()=>{moved=true},{once:true,passive:true}));
+    (function wait(){
+      const p=window.__ppView;let cur=null;try{cur=p&&p.get()}catch(e){}
+      if(cur==null){if(++tries<150)setTimeout(wait,200);return}   /* still signing in or loading: try for about 30 seconds */
+      if(cur!==o.v){try{p.set(o.v)}catch(e){return}}
+      const y=o.y||0;if(!y)return;
+      [50,600,1500].forEach(ms=>setTimeout(()=>{if(!moved&&scrollY<y-40)scrollTo(0,y)},ms));
+    })();
+  })();
   /* the copy on this phone vs. the copy on the site, by Last-Modified */
   const mine=Date.parse(document.lastModified)||0;
   async function check(){
