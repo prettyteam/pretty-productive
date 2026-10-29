@@ -20,20 +20,17 @@
   const AMZ='https://www.amazon.com/shop/taffetaweddings';
   const LISTS=[
     ['Spa Supplies',AMZ+'/list/1ZINQ9LH8C90O','spa'],
-    ['Salon Supplies',AMZ+'/list/331OUHMPQPTVJ','spa'],
-    ['Beauty Professionals',AMZ+'/list/3E4UF3RYKN0QA'],
-    ['Toiletries',AMZ+'/list/2CQXLO97DEI1N'],
-    ['Health & Wellness',AMZ+'/list/1WBZAAHR6H9RA']];
+    ['Salon Supplies',AMZ+'/list/331OUHMPQPTVJ','spa']];
   const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
   const css='<style>.ord{display:grid;gap:22px;max-width:640px}.ord h1{margin:0}.ord .osec{display:grid;gap:10px;border-top:1px solid var(--line,#e2ded5);padding-top:16px}'
     +'.ord h2{margin:0;font-size:12px;letter-spacing:.16em;text-transform:uppercase;font-weight:600}.ord p{margin:0;font-size:13.5px;color:var(--soft,#5f5b55)}'
-    +'.ord .obtns{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}'
-    +'.ord a.obtn{display:block;text-decoration:none;color:var(--ink,#121212);background:var(--card,#fff);border:1px solid var(--line,#e2ded5);border-radius:4px;padding:12px 10px;text-align:center;font-size:14.5px;font-weight:500}'
-    +'.ord a.obtn.dk{background:var(--ink,#121212);color:#fff;border-color:var(--ink,#121212)}.ord a.obtn:focus-visible{outline:2px solid var(--gold,#4a3426);outline-offset:2px}'
+    +'.ord .ordbs{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}'
+    +'.ord a.ordb{display:block;text-decoration:none;color:var(--ink,#121212);background:var(--card,#fff);border:1px solid var(--line,#e2ded5);border-radius:4px;padding:12px 10px;text-align:center;font-size:14.5px;font-weight:500}'
+    +'.ord a.ordb.dk{background:var(--ink,#121212);color:#fff;border-color:var(--ink,#121212)}.ord a.ordb:focus-visible{outline:2px solid var(--gold,#4a3426);outline-offset:2px}'
     +'.ord .orow{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px solid var(--line,#e2ded5);font-size:14px}.ord .orow:last-child{border-bottom:0}'
     +'.ord .olg{border:1px solid var(--line,#e2ded5);border-radius:4px;padding:10px 12px;display:grid;gap:6px;font-size:14px;background:var(--card,#fff)}.ord .olg .r{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.ord .olg .r>span:first-child{width:70px;color:var(--soft,#5f5b55);font-size:12.5px}.ord .olg .r>span:nth-child(2){flex:1;min-width:0;overflow-wrap:anywhere}.ord .olg button{font:inherit;font-size:12px;letter-spacing:.08em;text-transform:uppercase;background:none;border:1px solid var(--line,#e2ded5);border-radius:3px;padding:4px 8px;cursor:pointer;color:var(--ink,#121212)}'
     +'.ord .orow small{display:block;color:var(--soft,#5f5b55);font-size:12.5px}.ord .orow>span{min-width:0}</style>';
-  const btn=(label,href,dark)=>'<a class="obtn'+(dark?' dk':'')+'" href="'+esc(href)+'"'+(/^mailto:/.test(href)?'':' target="_blank" rel="noopener"')+'>'+esc(label)+'</a>';
+  const btn=(label,href,dark)=>'<a class="ordb'+(dark?' dk':'')+'" href="'+esc(href)+'"'+(/^mailto:/.test(href)?'':' target="_blank" rel="noopener"')+'>'+esc(label)+'</a>';
   const shown={};
   const lrow=(k,v,copy)=>v?'<div class="r"><span>'+k+'</span><span>'+esc(v)+'</span>'+(copy?'<button type="button" data-ocopy="'+esc(v)+'">Copy</button>':'')+'</div>':'';
   function loginCard(l,i){
@@ -52,18 +49,18 @@
   let LAST=[];
   function html(mode,prices,logins){
     const full=mode!=='spa', lists=full?LISTS:LISTS.filter(l=>l[2]==='spa');
-    const amazon='<section class="osec"><h2>Hi Pretty Amazon Lists</h2><p>Tap a list to open it on Amazon.</p><div class="obtns">'+lists.map(l=>btn(l[0],l[1])).join('')+'</div></section>';
+    const amazon='<section class="osec"><h2>Hi Pretty Amazon Lists</h2><p>Tap a list to open it on Amazon.</p><div class="ordbs">'+lists.map(l=>btn(l[0],l[1])).join('')+'</div></section>';
     if(!full) return css+'<div class="ord"><h1>Ordering</h1>'+amazon+'</div>';
     const mail='mailto:'+RF.to+'?cc='+encodeURIComponent(RF.cc)+'&subject='+encodeURIComponent(RF.subject)+'&body='+encodeURIComponent(RF.body);
     const best=prices&&prices.length?'<section class="osec"><h2>Best Price Right Now</h2><p>From this week’s color report.</p><div>'
       +prices.map(([i,s,p])=>'<div class="orow"><span><b>'+esc(i)+'</b><small>'+esc(s)+'</small></span><b>'+esc(p)+'</b></div>').join('')+'</div></section>':'';
     return css+'<div class="ord"><h1>Ordering</h1>'
-      +'<section class="osec"><h2>Salon Back Bar</h2><p>Tap a store to sign in and order.</p><div class="obtns">'+STORES.map(s=>btn(s[0],s[1])).join('')+'</div></section>'
+      +'<section class="osec"><h2>Salon Back Bar</h2><p>Tap a store to sign in and order.</p><div class="ordbs">'+STORES.map(s=>btn(s[0],s[1])).join('')+'</div></section>'
+      +best
       +(LAST=logins||[],LAST.length?'<section class="osec"><h2>Store Logins</h2><p>For the team only. Please don’t share or screenshot.</p>'+LAST.map(loginCard).join('')+'</section>':'')
       +'<section class="osec"><h2>What We Order Where</h2><div>'+STORES.map(s=>'<div class="orow"><span><b>'+esc(s[0])+'</b><small>'+esc(s[2])+'</small></span></div>').join('')
         +'<div class="orow"><span><b>Rossano Ferretti</b><small>By email with the order form</small></span></div></div></section>'
-      +best
-      +'<section class="osec"><h2>Rossano Ferretti</h2><p>Fill in the order form, download it, then tap Email The Order and attach it. They reply with a draft order and a payment link.</p><div class="obtns">'
+      +'<section class="osec"><h2>Rossano Ferretti</h2><p>Fill in the order form, download it, then tap Email The Order and attach it. They reply with a draft order and a payment link.</p><div class="ordbs">'
         +btn('Open Order Form',RF.form)+btn('Email The Order',mail,true)+'</div><p>Sends to '+esc(RF.to)+'</p></section>'
       +amazon+'</div>';
   }
