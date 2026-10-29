@@ -417,6 +417,11 @@ body .rbar.new button{background:none;color:#2b2a28;font-weight:700;text-decorat
 .mbtn:active{background:#121212;color:#f8f6f0}.mbtn:focus-visible{outline:2px solid #121212;outline-offset:3px}
 .mtoast{position:fixed;left:16px;right:16px;bottom:calc(80px + env(safe-area-inset-bottom));z-index:7;max-width:520px;margin:0 auto;box-shadow:0 4px 14px rgba(18,18,18,.18);display:flex;align-items:center;justify-content:space-between;gap:10px;background:#121212;color:#f8f6f0;border-radius:12px;padding:10px 14px;font-size:14px}
 .mpgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.mpmore{display:flex;flex-direction:column;gap:8px}.mpthumbs{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.mpth{position:relative;aspect-ratio:1;padding:0;border:0;border-radius:4px;overflow:hidden;cursor:pointer;background:#ece9e3}.mpth img{width:100%;height:100%;object-fit:cover;display:block}
+.mpth em{position:absolute;left:4px;bottom:3px;color:#f8f6f0;font-style:normal;font-size:13px;text-shadow:0 0 4px #121212}.mpth span{position:absolute;top:2px;right:2px;width:18px;height:18px;border-radius:50%;background:#121212;color:#f8f6f0;font-size:12px;line-height:18px;text-align:center}
+.mpaddmore{position:relative;border:1px dashed #121212;border-radius:6px;background:#f8f6f0;padding:12px;text-align:center;font-size:14px;cursor:pointer}
+.mpaddmore input{position:absolute;inset:0;opacity:0;cursor:pointer}
 .mpslot{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;aspect-ratio:3/4;border:1px dashed #121212;border-radius:6px;background:#f8f6f0;cursor:pointer;overflow:hidden;font-size:14px;text-align:center}
 .mpslot img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .mpslot .mpvid{position:absolute;right:6px;bottom:6px;z-index:1;background:#121212;color:#f8f6f0;border-radius:999px;padding:2px 10px;font-size:11px}
@@ -488,11 +493,13 @@ details.days summary::-webkit-details-marker{display:none}
 <script src="g/regimen.js?v=49"></script>
 <script src="g/qr.js?v=1"></script>
 <script src="g/jokes.js?v=2"></script>
-<script src="g/rx.js?v=119"></script>
+<script src="g/rx.js?v=121"></script>
 <script src="g/prices.js?v=7"></script>
+<script src="g/ordering.js?v=1"></script>
 <link rel="stylesheet" href="g/rx.css?v=9">
 <link rel="icon" href="icon.png">
-<link rel="apple-touch-icon" href="icon.png">
+<link rel="apple-touch-icon" href="briefing/icons/employee-experience-180.png">
+<script src="/g/life.js?v=1"></script>
 <script src="/refresh.js?v=5" defer></script>
 <script src="/g/bats.js?v=2" defer></script>
 </head>
@@ -735,6 +742,10 @@ function teamBoard(){
   if(on.length) out.push(dailyRecap(on));
   if(S.week&&S.week.rows){
     const rows=S.week.rows.filter(r=>r.service||r.retail);
+    /* Contractor sales count in the team total but have no stylist row, so show them as their own line (Oct 28, 2026) */
+    const sum=rows.reduce((a,r)=>a+(r.service||0),0), wt=S.week.team||{}, ct=S.week.contractor;
+    const cs=ct?(ct.service||0):(typeof wt.service==='number'?Math.round((wt.service-sum)*100)/100:(wt.service&&typeof wt.service.actual==='number'?Math.round((wt.service.actual-sum)*100)/100:0));
+    if(cs>=0.5) rows.push({name:'Contractor',service:cs,retail:ct?(ct.retail||0):0});
     const T=rows.reduce((a,r)=>({s:a.s+r.service,r:a.r+r.retail}),{s:0,r:0});
     const rp=(r,s)=>s>0?Math.round(r/s*1000)/10:0;
     const pc=(r,s)=>{const v=rp(r,s);return h('td',{class:v>=15?'over':'under'},v.toFixed(1)+'%')};
@@ -1135,9 +1146,9 @@ function mphView(){
   return [h('div',{class:'hub'},h('h1',{style:'font-size:28px'},MW_ICONS?mwLabel(MW_NAME):MW_NAME),
     API()?mpCard(next,logged):h('p',{class:'soft'},'Uploads switch on soon.'))];
 }
-/* A before and an after, each a photo or a video. Pictures are shrunk on the phone first; videos go up in 8 MB pieces. */
-let MP={open:false,skill:'',date:'',note:'',before:null,after:null,busy:false,msg:''};
-const MP_PIECE=8*1048576;
+/* A before and an after, each a photo or a video. Pictures are shrunk on the phone first; videos go up in 16 MB pieces, the before and after at the same time. */
+let MP={open:false,skill:'',date:'',note:'',before:null,after:null,more:[],busy:false,msg:''};
+const MP_PIECE=16*1048576;   // a multiple of 256 KB, as Drive needs; fewer pieces means fewer trips (Oct 24 2026)
 function mpShrink(file,max,q){return new Promise((res,rej)=>{const u=URL.createObjectURL(file),im=new Image();
   im.onload=()=>{const k=Math.min(1,max/Math.max(im.naturalWidth,im.naturalHeight)),c=document.createElement('canvas');
     c.width=Math.round(im.naturalWidth*k);c.height=Math.round(im.naturalHeight*k);c.getContext('2d').drawImage(im,0,0,c.width,c.height);URL.revokeObjectURL(u);res(c.toDataURL('image/jpeg',q))};
@@ -1159,15 +1170,38 @@ async function mpPick(which,file){
   catch(e){MP.msg='That picture didn’t open. Try another one.'}
   render();
 }
+// More photos (Alexandra, Oct 24 2026): besides the before and after, pick up to 10 more photos at once.
+// Videos too (Oct 26 2026, Angelina): several videos picked at once, once the desk script says mvmore.
+const mpIsVid=f=>/^video\//.test(f.type)||/\.(mov|mp4|m4v|3gp|webm)$/i.test(f.name);
+async function mpMore(files){
+  const vids=!!(HUB.data&&HUB.data.mvmore), all=[...(files||[])];
+  const list=all.filter(f=>vids&&mpIsVid(f)||/^image\//.test(f.type)||/\.(hei[cf]|jpe?g|png|webp)$/i.test(f.name)),room=10-MP.more.length;
+  if(!list.length) return;
+  const big=list.filter(f=>mpIsVid(f)&&f.size>1024*1048576), ok=list.filter(f=>!big.includes(f));
+  MP.msg=ok.length>room?'Up to 10 more at a time. I kept the first '+Math.max(room,0)+'.':'Getting them ready…';render();
+  for(const f of ok.slice(0,Math.max(room,0))){try{MP.more.push(mpIsVid(f)?{video:f,small:await mpCover(f)}:{full:await mpShrink(f,1600,.82),small:await mpShrink(f,480,.75)})}catch(e){}}
+  if(big.length) MP.msg=(big.length===1?'One video is':big.length+' videos are')+' over 1 GB, so I left '+(big.length===1?'it':'them')+' out. Trim on your phone first.';
+  else if(MP.msg==='Getting them ready…')MP.msg='';
+  render();
+}
 async function mpPost(body){const st=S.mine.staff;
   const r=await fetch(API(),{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({...body,slug:st.slug,t:st.t})});
   const j=await r.json(); if(!j.ok){const e=new Error(j.message||j.error||'x');e.code=j.error;throw e} return j}
-async function mpVideo(which,sk){
-  const f=MP[which].video, s=await mpPost({type:'mvideoStart',which,skill:sk[1],date:MP.date,
-    video:{name:f.name,type:f.type||'video/mp4',size:f.size,thumb:MP[which].small?MP[which].small.split(',')[1]:''}});
+// Sends a file straight to a Drive upload link. Always resolves; the server then checks how much Drive got.
+function driveSend(url,file,type,pct){return new Promise(res=>{try{const x=new XMLHttpRequest();let last=-1;
+  x.open('PUT',url);x.setRequestHeader('Content-Type',type);
+  x.upload.onprogress=e=>{if(!e.lengthComputable)return;const p=Math.floor(100*e.loaded/e.total);if(p!==last){last=p;pct(p)}};
+  x.onload=x.onerror=x.onabort=x.ontimeout=()=>res();x.send(file)}catch(e){res()}})}
+async function mpVideo(which,sk,item,n,label){
+  item=item||MP[which]; label=label||'your '+which+' video';
+  const f=item.video, s=await mpPost({type:'mvideoStart',which,n,skill:sk[1],date:MP.date,
+    video:{name:f.name,type:f.type||'video/mp4',size:f.size,thumb:item.small?item.small.split(',')[1]:''}});
   let off=0;
+  // Faster (Oct 26 2026): the whole video goes straight to Drive first; whatever didn't make it goes up in pieces below.
+  if(s.url){await driveSend(s.url,f,f.type||'video/mp4',p=>{MP.msg='Sending '+label+'… '+p+'%. Keep this page open.';render()});
+    try{const c=await mpPost({type:'mvideoCheck',token:s.token});if(c.done)return s.token;off=c.next||0}catch(e){if(e.code==='expired')throw e}}
   while(off<f.size){
-    MP.msg='Sending your '+which+' video… '+Math.round(100*off/f.size)+'%. Keep this page open.';render();
+    MP.msg='Sending '+label+'… '+Math.round(100*off/f.size)+'%. Keep this page open.';render();
     const piece=f.slice(off,Math.min(f.size,off+MP_PIECE)), data=await mpB64(piece);
     let j,tries=0;
     for(;;){try{j=await mpPost({type:'mvideoChunk',token:s.token,offset:off,data});break}catch(e){if(++tries>=3||e.code==='expired')throw e;await new Promise(r=>setTimeout(r,2000*tries))}}
@@ -1178,29 +1212,31 @@ async function mpVideo(which,sk){
 }
 async function mpSave(){
   const sk=mwList().flatMap(x=>x[1]).find(x=>x[0]===MP.skill);
-  if(!sk||!(MP.before||MP.after)) return;
+  if(!sk||!(MP.before||MP.after||MP.more.length)) return;
   MP.busy=true;MP.msg='';render();
   try{const tok={};
-    for(const w of ['before','after']) if(MP[w]&&MP[w].video) tok[w]=await mpVideo(w,sk);
+    await Promise.all(['before','after'].filter(w=>MP[w]&&MP[w].video).map(async w=>{tok[w]=await mpVideo(w,sk)}));
+    const mv=MP.more.filter(m=>m.video), moreToks=[];
+    for(let i=0;i<mv.length;i++) moreToks.push(await mpVideo('more',sk,mv[i],i+1,mv.length>1?'video '+(i+1)+' of '+mv.length:'your video'));
     const img=w=>MP[w]&&!MP[w].video?MP[w]:null;
     await mpPost({type:'mphoto',id:sk[0],skill:sk[1],date:MP.date,note:MP.note,
       before:img('before')&&img('before').full,beforeT:img('before')&&img('before').small,after:img('after')&&img('after').full,afterT:img('after')&&img('after').small,
-      beforeTok:tok.before||null,afterTok:tok.after||null});
-    MP={open:false,skill:'',date:'',note:'',before:null,after:null,busy:false,msg:'Saved! Your '+sk[1].toLowerCase()+' is on its way to Marketing Proofs.'};
+      beforeTok:tok.before||null,afterTok:tok.after||null,more:MP.more.filter(m=>!m.video),moreToks});
+    MP={open:false,skill:'',date:'',note:'',before:null,after:null,more:[],busy:false,msg:'Saved! Your '+sk[1].toLowerCase()+' is on its way to Marketing Proofs.'};
     hubGet(); setTimeout(()=>{if(!MP.open&&MP.msg){MP.msg='';render()}},6000);}
   catch(e){MP.busy=false;MP.msg=e.code==='too_big'||e.code==='expired'?e.message:'That didn’t send. Check your signal and tap Save again.'}
   render();
 }
 function mpCard(next,logged){
-  const on=HUB.data&&HUB.data.mphoto, mine=(HUB.data&&HUB.data.mphotos)||[], vid=!!(HUB.data&&HUB.data.mvideo);
+  const on=HUB.data&&HUB.data.mphoto, mine=(HUB.data&&HUB.data.mphotos)||[], vid=!!(HUB.data&&HUB.data.mvideo), mvm=!!(HUB.data&&HUB.data.mvmore);
   const head=[h('span',{class:'lbl'},'Before & after'),h('p',{class:'soft',style:'font-size:13.5px;margin:0'},'Add a before and an after, as photos'+(vid?' or videos':'')+'. They go to Marketing Proofs, in your own album.')];
   if(HUB.data&&!on) return h('div',{class:'gcard'},...head,h('p',{class:'soft',style:'font-size:13px;margin:0'},'Uploads switch on soon.'));
   if(!MP.open) return h('div',{class:'gcard'},...head,
     MP.msg?h('p',{style:'font-size:14px;margin:0'},MP.msg):null,
     h('button',{type:'button',class:'mpadd',onclick:()=>{const last=S.mine.adv&&logged.length?logged[logged.length-1].id:null;
-      MP={open:true,skill:last||(next?next[0]:(S.mine.skin?'w-facial':'w-color')),date:ymd(new Date()),note:'',before:null,after:null,busy:false,msg:''};render()}},vid?'+ Add photos or videos':'+ Add photos'),
+      MP={open:true,skill:last||(next?next[0]:(S.mine.skin?'w-facial':'w-color')),date:ymd(new Date()),note:'',before:null,after:null,more:[],busy:false,msg:''};render()}},vid?'+ Add photos or videos':'+ Add photos'),
     mine.length?h('div',{class:'sec2'},h('span',{class:'lbl',style:'font-size:10px'},'You’ve added '+mine.length+(mine.length===1?' set':' sets')),
-      mine.slice(-4).reverse().map(m=>h('div',{class:'lrow'},h('span',{},m.skill),h('span',{class:'soft'},(m.before&&m.after?'Before & after · ':m.after?'After · ':'Before · ')+niceDay(m.date))))):null);
+      mine.slice(-4).reverse().map(m=>h('div',{class:'lrow'},h('span',{},m.skill),h('span',{class:'soft'},([m.before&&m.after?'Before & after':m.after?'After':m.before?'Before':'',m.more?m.more+' more':''].filter(Boolean).join(' + ')+' · ')+niceDay(m.date))))):null);
   const slot=which=>{const ph=MP[which];
     return h('label',{class:'mpslot'},h('span',{class:'mptag'},which==='before'?'Before':'After'),
       ph&&ph.small?h('img',{src:ph.small,alt:which+(ph.video?' video':' photo')}):null,ph&&ph.video?h('span',{class:'mpvid'},ph.small?'▶ Video':'▶ Video added'):null,
@@ -1210,12 +1246,16 @@ function mpCard(next,logged){
   return h('div',{class:'gcard'},...head,
     h('label',{class:'mpf'},'What you did',sel),
     h('div',{class:'mpgrid'},slot('before'),slot('after')),
+    h('div',{class:'mpmore'},h('span',{class:'lbl',style:'font-size:10px'},mvm?'More photos or videos (optional)':'More photos (optional)'),
+      MP.more.length?h('div',{class:'mpthumbs'},MP.more.map((m,i)=>h('button',{type:'button',class:'mpth','aria-label':m.video?'Remove this video':'Remove this photo',onclick:()=>{MP.more.splice(i,1);render()}},m.small?h('img',{src:m.small,alt:''}):null,m.video?h('em',{},'▶'):null,h('span',{},'×')))):null,
+      MP.more.length<10?h('label',{class:'mpaddmore'},MP.more.length?'+ Add more':mvm?'+ Pick several photos or videos at once':'+ Pick several photos at once',
+        h('input',{type:'file',accept:mvm?'image/*,video/*':'image/*',multiple:'',onchange:e=>{mpMore(e.target.files);e.target.value=''}})):null),
     h('label',{class:'mpf'},'Date',h('input',{type:'date',value:MP.date,max:ymd(new Date()),onchange:e=>{MP.date=e.target.value||ymd(new Date())}})),
     h('label',{class:'mpf'},'Note (optional)',h('textarea',{rows:'2',maxlength:'300',placeholder:'Formula, products, what you’d do next time',oninput:e=>{MP.note=e.target.value}},MP.note)),
     MP.msg?h('p',{role:'alert',style:'font-size:14px;margin:0'},MP.msg):null,
     h('div',{style:'display:flex;gap:10px;justify-content:space-between;align-items:center'},
-      h('button',{type:'button',class:'tab',disabled:MP.busy?'':null,onclick:()=>{MP={open:false,skill:'',date:'',note:'',before:null,after:null,busy:false,msg:''};render()}},'Cancel'),
-      h('button',{type:'button',class:'mpgo',disabled:(MP.busy||!(MP.before||MP.after))?'':null,onclick:mpSave},MP.busy?'Saving…':'Save')));
+      h('button',{type:'button',class:'tab',disabled:MP.busy?'':null,onclick:()=>{MP={open:false,skill:'',date:'',note:'',before:null,after:null,more:[],busy:false,msg:''};render()}},'Cancel'),
+      h('button',{type:'button',class:'mpgo',disabled:(MP.busy||!(MP.before||MP.after||MP.more.length))?'':null,onclick:mpSave},MP.busy?'Saving…':'Save')));
 }
 
 /* My Binder (Alexandra, Oct 22 2026): her printed associate binder from Canva, on the phone, in sections.
@@ -1728,6 +1768,13 @@ function invSpa(){
 
 /* estheticians: Skincare stock (Biologique Recherche on-hand counts, no costs) */
 let SKIN={data:null,err:null,loading:false,key:null};
+/* Ordering: the shared page from g/ordering.js, plus the color report's best prices for anyone who has the Inventory tab */
+function orderView(){
+  const mode=orderMode(); if(mode==='full') invLoad();
+  const R=mode==='full'&&INV.data&&INV.data.report, box=h('div',{class:'hub'});
+  box.innerHTML=window.Ordering.html(mode,R&&R.prices,mode==='full'&&S.mine.ordering);
+  return [box];
+}
 function skinView(){
   const p=S.mine.skin;
   if(p&&!(SKIN.key===p.file&&(SKIN.data||SKIN.loading))){SKIN={data:null,err:null,loading:true,key:p.file};
@@ -1793,6 +1840,9 @@ function cardsView(){
 /* Taffeta Marketing Proofs (Alexandra, Oct 17 2026): the weekly social posts board lives on Claude (one link that updates
    in place). Dominique and Isabella get a Marketing Proofs square that opens it, and so does The Pretty Report. */
 const MKT_URL='https://prettyteam.taffetadesign.com/mkt/', MKT_SLUGS=['dominique','isabella'];
+/* Ordering tab (Oct 28 2026): Rose and Alexandra get every store link; Carolyn gets the Hi Pretty Amazon lists only (g/ordering.js) */
+const ORDER_FULL=['rose','alexandra'], ORDER_SPA=['carolyn'];
+function orderMode(){const sl=((S.mine||{}).staff||{}).slug;return ORDER_FULL.includes(sl)?'full':ORDER_SPA.includes(sl)?'spa':''}
 /* Customer Cards (RX card + Home care) for people without daily goals (Alexandra, Oct 22-23 2026: every associate). */
 const CC_SLUGS=['adriana','kat','rose','ashley-b','amanda','isabella'];
 function openMkt(){const w=window.open(MKT_URL,'_blank','noopener');if(!w)location.href=MKT_URL}
@@ -1812,6 +1862,7 @@ function staffTabs(){
   if(p.cr&&p.cr.weeks&&p.cr.weeks.length) t.push(['cr','Weekly CR']);
   if(st.slug) t.push(['off','Time Off']);
   if(st.slug) t.push(['prices','Prices']);
+  if(orderMode()&&window.Ordering) t.push(['order','Ordering']);
   if(st.slug&&p.pk&&p.pk.groups&&p.pk.groups.length) t.push(['pk','PK Knowledge']);
   t.push(['guide','Culture']);
   const dc=p.docs||{}; if(dc.hb) t.push(['hb','Handbook']); if(dc.fg) t.push(['fg','Desk Guide']);
@@ -1823,7 +1874,7 @@ function staffTabs(){
 }
 /* One menu instead of a row of tabs (Alexandra, Oct 2026). Sections are grouped; Customer cards holds RX card and Home care. */
 const NAV_GROUPS=[['Appointments',['home','today','tomorrow','tip']],['Customer Cards',['rx','reg']],[MW_NAME,['mph']],['Goals',['growth','binder','cr']],
-  ['Salon & Spa',['prices','pk','inv','skin','cards','off']],['Taffeta',['guide','hb','fg']],['Self Promotion',['promo']],['Marketing Proofs',['mkt']],['My Profile',['me']]];
+  ['Salon & Spa',['prices','order','pk','inv','skin','cards','off']],['Taffeta',['guide','hb','fg']],['Self Promotion',['promo']],['Marketing Proofs',['mkt']],['My Profile',['me']]];
 let NAV_OPEN=false;
 /* Disco ball = Home, Back arrow = the page before (Alexandra, Oct 15 2026). Each page change is a browser history step,
    so the Back arrow and the phone's own back swipe both work. */
@@ -1861,15 +1912,18 @@ function homeMenu(){
   return h('div',{class:'hmenu'},h('div',{class:'mhead'},'Menu'),h('div',{class:'cgrid'},cells));
 }
 addEventListener('popstate',e=>{const st=e.state;if(st&&st.pp&&EDITION==='stylist'&&S.mine){HOME_OPEN='';navGo(st.pp,true)}});
+/* Back on Home leaves for Pretty Life when she came from there; the logo goes Home (g/life.js, Oct 24 2026) */
+const ppOut=()=>!!(window.PPLife&&PPLife.canOut());
 function staffNav(){
   const tabs=staffTabs(); if(tabs.length<2) return null;
+  if(window.PPLife)PPLife.app={atHome:()=>S.tab===homeKey(),home:()=>{HOME_OPEN='';navGo(homeKey())}};
   const {label,groups}=navGroups(tabs), cur=label[S.tab]||'';
   const sheet=NAV_OPEN?h('div',{class:'navsheet',id:'navsheet',role:'menu'},groups.map(([g,keys])=>h('div',{class:'navgrp'},
     h('span',{class:'lbl'},g),keys.map(k=>h('button',{type:'button',role:'menuitem','aria-current':S.tab===k?'page':null,onclick:()=>navGo(k)},label[k]))))):null;
   const scrim=NAV_OPEN?h('div',{class:'navscrim',onclick:()=>{NAV_OPEN=false;render()}}):null;
   return h('nav',{class:'nav menu','aria-label':'Sections'},scrim,sheet,
     h('div',{class:'navrow'},
-      (S.tab!==homeKey()||(history.state&&history.state.d>0))?h('button',{type:'button',class:'navback',onclick:()=>{if(history.state&&history.state.d>0)history.back();else navGo(homeKey())}},'‹ Back'):h('span',{class:'navback'}),
+      (S.tab!==homeKey()||(history.state&&history.state.d>0)||ppOut())?h('button',{type:'button',class:'navback',onclick:()=>{if(history.state&&history.state.d>0)history.back();else if(S.tab!==homeKey())navGo(homeKey());else PPLife.out()}},'‹ Back'):h('span',{class:'navback'}),
       h('button',{type:'button',class:'navhome','aria-label':'Home',title:'Home','aria-current':S.tab===homeKey()?'page':null,onclick:()=>{HOME_OPEN='';navGo(homeKey())}},h('img',{src:DISCO,alt:''})),
       h('button',{type:'button',class:'navbtn','aria-expanded':String(NAV_OPEN),'aria-controls':'navsheet',onclick:()=>{NAV_OPEN=!NAV_OPEN;render()}},
         h('span',{class:'navlbl'},NAV_OPEN?'Close ✕':'Menu ▾'))));
@@ -1950,6 +2004,7 @@ function staffRender(){
   if(S.tab==='reg') return regimenView();
   if(S.tab==='rx') return rxView();
   if(S.tab==='prices') return pricesView();
+  if(S.tab==='order') return orderView();
   if(S.tab==='pk') return pkView();
   if(S.tab==='growth') return growthView();
   if(S.tab==='mph') return mphView();
@@ -1984,7 +2039,11 @@ const TIP_LITE=['rose','kat','adriana','ashley-b'], TIP_PICKS=[5,10]; let TIP_PI
 const tipOf=t=>Math.round((parseFloat(String(t).replace(/[^0-9.]/g,''))||0)*TIP_PCT);
 function venmoTipUrl(v,amt){return amt?'https://venmo.com/'+encodeURIComponent(v)+'?txn=pay&amount='+amt+'&note='+encodeURIComponent('Thank you! ✨'):'https://venmo.com/u/'+encodeURIComponent(v)}
 function qrEl(text){const d=h('div',{class:'tipqr'});d.innerHTML=qrSvg(text);return d}
+/* Team Activity (Alexandra, Oct 24 2026): opening Gratuity puts a line on the Team Hub's Team Activity tab for Pretty Life */
+function actLog(what){const st=(S.mine&&S.mine.staff)||{};if(!API()||!S.mine||!S.mine.name||actLog[what])return;actLog[what]=1;
+  fetch(API(),{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({type:'act',what,app:'team',name:S.mine.name,slug:st.slug||''})}).catch(()=>{})}
 function tipView(){
+  actLog('tip');
   const info=(HUB.data&&HUB.data.info)||{}, v=venmoUser(info.venmo), ok=v&&!/\s/.test(v), fn=firstName(S.mine.name), ph=myPhoto();
   const head=h('div',{},h('span',{class:'lbl'},'Thank you'),h('h1',{style:'font-size:28px'},'Gratuity'));
   const tip=!HUB.data?h('p',{class:'dmsg'},HUB.err?'Can’t reach your profile right now. Check your signal.':'Loading…'):
@@ -2295,13 +2354,14 @@ function reportHome(){
     h('div',{class:'hmenu'},h('div',{class:'mhead'},'Menu'),h('div',{class:'cgrid'},cells)))];
 }
 function reportNav(){
+  if(window.PPLife)PPLife.app={atHome:()=>S.rtab==='home',home:()=>prGo('home')};
   const groups=[['Home',['home']]].concat(reportGroups());
   const sheet=PR_NAV?h('div',{class:'navsheet',id:'navsheet',role:'menu'},groups.map(([g,keys])=>h('div',{class:'navgrp'},
     h('span',{class:'lbl'},g),keys.map(k=>h('button',{type:'button',role:'menuitem','aria-current':S.rtab===k?'page':null,onclick:()=>prGo(k)},PR_LABEL[k]))))):null;
   const scrim=PR_NAV?h('div',{class:'navscrim',onclick:()=>{PR_NAV=false;render()}}):null;
   return h('nav',{class:'nav menu','aria-label':'Sections'},scrim,sheet,
     h('div',{class:'navrow'},
-      (S.rtab!=='home'||(history.state&&history.state.d>0))?h('button',{type:'button',class:'navback',onclick:()=>{if(history.state&&history.state.d>0)history.back();else prGo('home')}},'‹ Back'):h('span',{class:'navback'}),
+      (S.rtab!=='home'||(history.state&&history.state.d>0)||ppOut())?h('button',{type:'button',class:'navback',onclick:()=>{if(history.state&&history.state.d>0)history.back();else if(S.rtab!=='home')prGo('home');else PPLife.out()}},'‹ Back'):h('span',{class:'navback'}),
       h('button',{type:'button',class:'navhome','aria-label':'Home',title:'Home','aria-current':S.rtab==='home'?'page':null,onclick:()=>prGo('home')},h('img',{src:DISCO,alt:''})),
       h('button',{type:'button',class:'navbtn','aria-expanded':String(PR_NAV),'aria-controls':'navsheet',onclick:()=>{PR_NAV=!PR_NAV;render()}},
         h('span',{class:'navlbl'},PR_NAV?'Close ✕':'Menu ▾'))));
@@ -2341,7 +2401,7 @@ function apply(P){
   S.daily=P.daily||null;
   if(EDITION==='team'){S.isAdmin=true;S.pages=(P.pages||[]).filter(isGoalsPerson);S.week=P.week||null;S.hubKey=P.hub&&P.hub.admin;S.payroll=P.payroll||[];S.rates=P.rates||{};S.hoursList=P.hoursList||[];S.retailRate=P.retailRate==null?10:P.retailRate;S.month=P.month||null;S.guideUrl=P.guideUrl||null;S.docs=P.docs||null;S.access=P.access||null;S.inv=P.inv||null;S.rtab=S.rtab||'home';setHead()}
   else{S.mine=P.mine||null;setHead(S.mine&&S.mine.name);
-    if(S.mine&&!S.tab){const st=S.mine.staff||{};S.tab=store.get('pp-tab:'+ID)||(st.clock?'home':isGoalsPerson(S.mine)?'today':'home')}
+    if(S.mine&&!S.tab){const st=S.mine.staff||{}, ask=new URLSearchParams(location.search).get('tab');S.tab=(ask&&staffTabs().some(x=>x[0]===ask)?ask:'')||store.get('pp-tab:'+ID)||(st.clock?'home':isGoalsPerson(S.mine)?'today':'home')}
     if(S.mine&&!(history.state&&history.state.pp)){try{history.replaceState({pp:S.tab,d:0},'',location.href)}catch(e){}}
     if(S.mine&&S.mine.staff&&!HUB.started){HUB.started=true;hubGet();
       setInterval(()=>{if(document.visibilityState==='visible'&&(S.tab==='home'||S.tab==='off'))hubGet()},90*1000);

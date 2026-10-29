@@ -6,6 +6,8 @@ the page itself (captions, plans, emails, texts) and every photo and video. The 
 
   MKT_CODE=<passcode> python3 tools/mkt-build.py <artifact index.html> <artifact files dir> <album photos dir> <photos db dir> <edits.json> <cache dir>
 
+Weekly rebuild: pass - for both the album photos dir and the photos db dir to keep the album photos already on the page.
+
 Only the passcode is needed (Alexandra has it). The salt is read from mkt/c/meta.json; file names come from the passcode.
 The cache dir (outside the repo) just skips re-encrypting unchanged pictures; an empty folder is fine.
 
@@ -37,17 +39,41 @@ def name_of(path):
     return hmac.new(namekey, path.encode(), hashlib.sha256).hexdigest()[:24]
 
 lines = open(SRC_HTML, encoding='utf-8').read().split('\n')
-L = lambda a, b: lines[a - 1:b]          # 1-based, inclusive
-assert lines[280].startswith('<script>') and lines[289].startswith('<script>') and lines[323].startswith('<script>') and lines[456].startswith('<script>'), 'artifact layout changed'
-assert 'id="p-create"' in lines[194] and "const RULES=" in lines[325] and "var BUILT=" in lines[458]
-
-head = L(1, 194) + L(214, 280)            # markup and styles without the Create panel
+# Find the pieces by what they hold, not by line number, so a longer or shorter week of posts doesn't break the build.
+def at(text):
+    hits = [i for i, x in enumerate(lines) if text in x]
+    assert hits, 'artifact layout changed: ' + text
+    return hits[0]
+blocks, i = [], 0
+while i < len(lines):
+    if lines[i].strip() == '<script>':
+        j = i
+        while '</script>' not in lines[j]: j += 1
+        blocks.append((i, j)); i = j
+    i += 1
+def block(text):
+    b = [x for x in blocks if any(text in lines[k] for k in range(x[0], x[1] + 1))]
+    assert b, 'artifact layout changed: ' + text
+    return b[0]
+cs, ce = at('id="p-create"'), at('id="p-photos"')   # the Create panel, left out
+sA, sB = block("const tabs=[...document.querySelectorAll('[role=tab]')]"), block('let E={text:{},ok:{}}')
+sR, sP = block('const RULES='), block('var BUILT=')
+assert cs < ce < sA[0] < sB[0] < sR[0] < sP[0]
+head = lines[:cs] + lines[ce:sA[0]]
 head = [re.sub(r'<button type="button" role="tab" id="t-create"[^>]*>Create</button>', '', x) for x in head]
-html = '\n'.join(head) + '\n' + '\n'.join(L(281, 289)) + '\n<script>\n' + open(os.path.join(REPO, 'tools', 'mkt-edits.js'), encoding='utf-8').read() + '\n</script>\n' \
-    + '\n'.join(L(398, 456)) + '\n<script>\n' + open(os.path.join(REPO, 'tools', 'mkt-photos.js'), encoding='utf-8').read() + '\n</script>\n' + '\n'.join(L(560, 563))
+html = '\n'.join(head) + '\n' + '\n'.join(lines[sA[0]:sA[1] + 1]) + '\n<script>\n' + open(os.path.join(REPO, 'tools', 'mkt-edits.js'), encoding='utf-8').read() + '\n</script>\n' \
+    + '\n'.join(lines[sR[1] + 1:sP[0]]) + '\n<script>\n' + open(os.path.join(REPO, 'tools', 'mkt-photos.js'), encoding='utf-8').read() + '\n</script>\n' + '\n'.join(lines[sP[1] + 1:])
+
+# pictures the artifact keeps in its asset store (/_blob/<id>, the November plan on) are saved as blobs/<id>.<ext>
+def blob(m):
+    f = glob.glob(os.path.join(SRC_DIR, 'blobs', m.group(2) + '.*'))
+    return m.group(1) + '="blobs/' + os.path.basename(f[0]) + '"' if f else m.group(0)
+html = re.sub(r'\b(src|poster)="/_blob/([0-9a-f]{32})"', blob, html)
+left = re.findall(r'"/_blob/([0-9a-f]{32})"', html)
+assert not left, 'download these assets into blobs/ first: ' + ' '.join(sorted(set(left))[:10])
 
 # media: every picture and video is fetched encrypted, so the page asks for it by path (data-e) instead of src
-MEDIA = re.compile(r'\b(src|poster)="((?:img|shoot|full)/[A-Za-z0-9._-]+\.(?:jpg|jpeg|png|mp4))"')
+MEDIA = re.compile(r'\b(src|poster)="((?:img|shoot|full|blobs)/[A-Za-z0-9._-]+\.(?:jpg|jpeg|png|webp|mp4))"')
 used = set(m.group(2) for m in MEDIA.finditer(html))
 html = MEDIA.sub(lambda m: ('data-e' if m.group(1) == 'src' else 'data-ep') + '="' + m.group(2) + '"', html)
 for p in list(used):
@@ -64,6 +90,11 @@ def put(path, data):
     out = os.path.join(OUT, 'c', n + '.bin'); h = hashlib.sha256(data).hexdigest()
     if CACHE.get(n) == h and os.path.exists(out):   # unchanged: keep the same file so git doesn't re-upload it
         return
+    if n not in CACHE and os.path.exists(out):   # no cache on this machine: open the sealed copy to see if it changed
+        try:
+            d = open(out, 'rb').read()
+            if hashlib.sha256(aes.decrypt(d[:12], d[12:], None)).hexdigest() == h: CACHE[n] = h; return
+        except Exception: pass
     open(out, 'wb').write(seal(data)); CACHE[n] = h
 
 missing = []
@@ -74,7 +105,12 @@ for p in sorted(used):
 
 # album photos the team added on the Claude version: full size plus a small square-ish preview
 migrated = []
-for f in glob.glob(os.path.join(DB_DIR, '*.json')):
+if DB_DIR == '-':   # weekly rebuilds: keep the album photos already sealed on the live page (their files don't change)
+    d = open(os.path.join(OUT, 'c', 'page.bin'), 'rb').read(); prev = json.loads(aes.decrypt(d[:12], d[12:], None))
+    migrated = prev.get('migrated', [])
+    for pth, n in prev['files'].items():
+        if pth.startswith('alb/'): files[pth] = n; keep.add(n + '.bin')
+for f in glob.glob(os.path.join(DB_DIR, '*.json')) if DB_DIR != '-' else []:
     d = json.load(open(f)); a = d['asset']
     src = glob.glob(os.path.join(ALB_DIR, a + '.*'))
     if not src: missing.append('album ' + a); continue

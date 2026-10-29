@@ -5,5 +5,5 @@
   "display": "standalone",
   "background_color": "#f8f6f0",
   "theme_color": "#f2f1ec",
-  "icons": [{ "src": "../icon.png", "sizes": "180x180", "type": "image/png" }]
+  "icons": [{ "src": "../briefing/icons/front-desk-180.png", "sizes": "180x180", "type": "image/png" }]
 }

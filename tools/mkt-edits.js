@@ -19,7 +19,8 @@ saveB.addEventListener('click',async()=>{if(!dirty)return;const T={};for(const i
  try{const s=await MK.api('save',{text:T,ok:D});changed.clear();dirty=false;st.textContent='Saved';MK.applyState(s)}
  catch(e){st.textContent=e&&e.message==='offline'?'No connection. Try again in a moment.':'Could not save. Try again.';saveB.disabled=false}});
 function sched(){const only=document.getElementById('onlyok').checked;
- const all=[...document.querySelectorAll('.post[data-date]')].map(a=>({a,ok:!!E.ok[a.id.slice(5)]})).filter(r=>!only||r.ok).sort((x,y)=>x.a.dataset.date.localeCompare(y.a.dataset.date)||x.a.dataset.acct.localeCompare(y.a.dataset.acct));
+ const pm=(document.getElementById('planm')||{}).value||'';   // the plan's month picker: Archive, this week of October, or November (Oct 26 2026)
+ const all=[...document.querySelectorAll('.post[data-date]')].filter(a=>{const d=a.dataset.date;return !pm||(pm==='arch'?d<'2026-10-26':pm==='2026-10'?(d>='2026-10-26'&&d<'2026-11'):d.startsWith(pm))}).map(a=>({a,ok:!!E.ok[a.id.slice(5)]})).filter(r=>!only||r.ok).sort((x,y)=>x.a.dataset.date.localeCompare(y.a.dataset.date)||x.a.dataset.acct.localeCompare(y.a.dataset.acct));
  const fill=(id,rows,cols)=>{const tb=document.getElementById(id);tb.replaceChildren(...rows.map(({a,ok})=>{const tr=document.createElement('tr');const d=a.dataset;
   cols.forEach(k=>{const td=document.createElement('td');td.textContent=d[k];tr.append(td)});
   const td=document.createElement('td');const l=document.createElement('a');l.href='#'+a.id;l.textContent=d.title;td.append(l);tr.append(td);
@@ -28,12 +29,13 @@ function sched(){const only=document.getElementById('onlyok').checked;
  fill('rowsapp',all.filter(r=>r.a.dataset.fmt==='Reel'),['day','time','acct']);
  fill('rowsbs',all.filter(r=>r.a.dataset.fmt!=='Reel'),['day','time','acct','fmt'])}
 document.getElementById('onlyok').addEventListener('change',sched);
+{const pm=document.getElementById('planm');if(pm){pm.addEventListener('change',sched);if(new Date()>=new Date('2026-11-02T00:00:00'))pm.value='2026-11'}}
 const _apply=apply;apply=function(){_apply();sched()};sched();
 document.querySelectorAll('.okb').forEach(c=>c.addEventListener('change',sched));
 $('#bar').classList.add('on');document.querySelectorAll('.okb').forEach(c=>c.disabled=false);
 /* Each "Week of …" (and the Stories block) folds behind a + so the page isn't one long scroll (her ask, Oct 22 2026). A link to a post opens its week. */
-(function(){const css=document.createElement('style');css.textContent='details.wk{border-top:1px solid rgba(0,0,0,.12)}details.wk>summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;padding:14px 4px;font-weight:600;font-size:1.05em}details.wk>summary::-webkit-details-marker{display:none}details.wk>summary::after{content:"+";font-size:1.5em;line-height:1;font-weight:400}details.wk[open]>summary::after{content:"\\2212"}';document.head.append(css);
+setTimeout(function(){const css=document.createElement('style');css.textContent='details.wk{border-top:1px solid rgba(0,0,0,.12)}details.wk>summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;padding:14px 4px;font-weight:600;font-size:1.05em}details.wk>summary::-webkit-details-marker{display:none}details.wk>summary::after{content:"+";font-size:1.5em;line-height:1;font-weight:400}details.wk[open]>summary::after{content:"\\2212"}';document.head.append(css);
  document.querySelectorAll('section.acct h3').forEach(h=>{const d=document.createElement('details');d.className='wk';const s=document.createElement('summary');s.textContent=h.textContent;d.append(s);
   let n=h.nextElementSibling;while(n&&n.tagName!=='H3'&&n.tagName!=='H2'){const x=n.nextElementSibling;d.append(n);n=x}h.replaceWith(d)});
  function openTo(){const id=decodeURIComponent(location.hash.slice(1));const el=id&&document.getElementById(id);const d=el&&el.closest('details.wk');if(d){d.open=true;el.scrollIntoView()}}
- addEventListener('hashchange',openTo);openTo()})();
+ addEventListener('hashchange',openTo);openTo()},0);   // after the page's own scripts, which move older weeks into Archive first

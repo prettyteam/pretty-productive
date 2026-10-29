@@ -27,10 +27,19 @@ function mktStateFile_() {
 }
 function mktRead_() { const s = JSON.parse(mktStateFile_().getBlob().getDataAsString() || '{}'); s.edits = s.edits || { text: {}, ok: {} }; s.edits.text = s.edits.text || {}; s.edits.ok = s.edits.ok || {}; s.albums = s.albums || []; s.photos = s.photos || []; s.hidden = s.hidden || []; return s; }
 function mktWrite_(s) { s.rev = (s.rev || 0) + 1; s.updatedAt = new Date().toISOString(); mktStateFile_().setContent(JSON.stringify(s)); return s; }
-function mktPublic_(s) { return { ok: true, edits: s.edits, albums: s.albums, photos: s.photos.map(p => ({ id: p.id, album: p.album, w: p.w, h: p.h, addedAt: p.addedAt, by: p.by || '', video: p.kind === 'video' || undefined, wid: p.wid || undefined })), hidden: s.hidden, rev: s.rev || 0 }; }
+function mktPublic_(s) { return { ok: true, edits: s.edits, albums: s.albums, photos: s.photos.map(p => ({ id: p.id, album: p.album, w: p.w, h: p.h, addedAt: p.addedAt, by: p.by || '', video: p.kind === 'video' || undefined, vf: p.kind === 'video' ? p.f : undefined, wid: p.wid || undefined })), hidden: s.hidden, rev: s.rev || 0, sort: !!mktSortKey_() }; }
 
 function mkt_(d) {
   if (mktHex_(String(d.code || '').replace(/\s+/g, '')) !== MKT_CODE_SHA) return { ok: false, error: 'signin' };
+  if (d.op === 'thumbs') return mktThumbs_(mktRead_(), d);   // read-only, so it doesn't queue behind uploads (Oct 23 2026)
+  if (d.op === 'addPhoto') return mktAddPhoto_(d);            // saves to Drive first, takes the lock only to list it (Oct 24 2026)
+  if (d.op === 'sort') return mktSort_(d);                    // asks Claude first, takes the lock only to save the moves
+  if (d.op === 'sortKey') {                                    // one time: the Claude key for auto-sort, kept in Script Properties
+    const k = String(d.key || '').trim();
+    if (!/^sk-ant-[\w-]{20,}$/.test(k)) return { ok: false, error: 'key' };
+    PropertiesService.getScriptProperties().setProperty('MKT_CLAUDE_KEY', k);
+    return { ok: true, sort: true };
+  }
   const lock = LockService.getScriptLock();
   try {
     lock.waitLock(20000);
@@ -54,23 +63,11 @@ function mkt_(d) {
         s.albums.push(a); mktWrite_(s);
         return Object.assign(mktPublic_(s), { id: a.id });
       }
-      case 'addPhoto': {   // {album, data:<base64 jpeg>, thumb:<base64 jpeg>, w, h, type}
-        if (!d.data || !d.album) return { ok: false, error: 'bad_request' };
-        if (s.photos.length >= 3000) return { ok: false, error: 'too_many' };
-        const folder = mktFolder_(), id = 'p' + Utilities.getUuid().replace(/-/g, '').slice(0, 14);
-        const type = /^image\/(jpeg|png|webp|gif)$/.test(d.type || '') ? d.type : 'image/jpeg';
-        const ext = type.split('/')[1].replace('jpeg', 'jpg');
-        const full = folder.createFile(Utilities.newBlob(Utilities.base64Decode(d.data), type, id + '.' + ext));
-        const thumb = d.thumb ? folder.createFile(Utilities.newBlob(Utilities.base64Decode(d.thumb), 'image/jpeg', id + ' (small).jpg')) : full;
-        const p = { id: id, album: String(d.album).slice(0, 40), w: Number(d.w) || 0, h: Number(d.h) || 0, addedAt: Date.now(), by: String(d.by || '').slice(0, 40), f: full.getId(), t: thumb.getId() };
-        s.photos.unshift(p); mktWrite_(s);
-        return { ok: true, photo: { id: p.id, album: p.album, w: p.w, h: p.h, addedAt: p.addedAt } };
-      }
-      case 'thumbs': {   // {ids:[…]} -> {id: 'data:image/jpeg;base64,…'}
-        const out = {};
-        (d.ids || []).slice(0, 40).forEach(id => { const p = s.photos.find(x => x.id === id); if (!p) return;
-          try { const b = DriveApp.getFileById(d.full && p.kind !== 'video' ? p.f : p.t).getBlob(); out[id] = 'data:' + b.getContentType() + ';base64,' + Utilities.base64Encode(b.getBytes()); } catch (e) {} });
-        return { ok: true, photos: out };
+      case 'move': {   // {id, album}: Undo after auto-sort, or moving one by hand
+        const p = s.photos.find(x => x.id === d.id), to = String(d.album || '');
+        if (!p || !mktSortAlbums_(s).some(a => a.id === to) && !s.albums.some(a => a.id === to)) return { ok: false, error: 'bad_request' };
+        p.album = to; p.sorted = 1;
+        return mktPublic_(mktWrite_(s));
       }
       case 'delPhoto': {   // Drive photos go to Drive's trash (kept 30 days); carried-over photos are just hidden
         const p = s.photos.find(x => x.id === d.id);
@@ -80,5 +77,104 @@ function mkt_(d) {
       }
     }
     return { ok: false, error: 'bad_request' };
+  } finally { lock.releaseLock(); }
+}
+
+// Faster uploads (Alexandra, Oct 24 2026): the photo goes into Drive before the lock, so several can go up at once;
+// the lock is held only for the moment it takes to add the photo to the list.
+function mktAddPhoto_(d) {   // {album, data:<base64 jpeg>, thumb:<base64 jpeg>, w, h, type}
+  if (!d.data || !d.album) return { ok: false, error: 'bad_request' };
+  const folder = mktFolder_(), id = 'p' + Utilities.getUuid().replace(/-/g, '').slice(0, 14);
+  const type = /^image\/(jpeg|png|webp|gif)$/.test(d.type || '') ? d.type : 'image/jpeg';
+  const ext = type.split('/')[1].replace('jpeg', 'jpg');
+  const full = folder.createFile(Utilities.newBlob(Utilities.base64Decode(d.data), type, id + '.' + ext));
+  const thumb = d.thumb ? folder.createFile(Utilities.newBlob(Utilities.base64Decode(d.thumb), 'image/jpeg', id + ' (small).jpg')) : full;
+  const p = { id: id, album: String(d.album).slice(0, 40), w: Number(d.w) || 0, h: Number(d.h) || 0, addedAt: Date.now(), by: String(d.by || '').slice(0, 40), f: full.getId(), t: thumb.getId() };
+  const lock = LockService.getScriptLock();
+  try {
+    lock.waitLock(30000);
+    const s = mktRead_();
+    if (s.photos.length >= 3000) { [full, thumb].forEach(f => { try { f.setTrashed(true); } catch (e) {} }); return { ok: false, error: 'too_many' }; }
+    s.photos.unshift(p); mktWrite_(s);
+  } finally { lock.releaseLock(); }
+  return { ok: true, photo: { id: p.id, album: p.album, w: p.w, h: p.h, addedAt: p.addedAt } };
+}
+
+// {ids:[…]} -> {id: 'data:image/jpeg;base64,…'}; skips anything over 4 MB (a video with no small cover) so one big file can't stall the rest.
+function mktThumbs_(s, d) {
+  const out = {};
+  (d.ids || []).slice(0, 40).forEach(id => { const p = s.photos.find(x => x.id === id); if (!p) return;
+    try { const f = DriveApp.getFileById(d.full && p.kind !== 'video' ? p.f : p.t);
+      // A video with no cover picture (iPhones don't always make one) gets Drive's own still instead (Oct 24 2026).
+      const b = /^image\//.test(f.getMimeType()) && f.getSize() <= 4 * 1048576 ? f.getBlob() : d.full ? null : f.getThumbnail();
+      if (b) out[id] = 'data:' + (b.getContentType() || 'image/jpeg') + ';base64,' + Utilities.base64Encode(b.getBytes()); } catch (e) {} });
+  return { ok: true, photos: out };
+}
+
+// Auto-sort (Alexandra, Oct 24 2026): after an upload Claude looks at each new photo's small copy and moves it to the
+// album it fits best, so a photo added to the wrong album lands where it belongs. The page shows what moved, with Undo.
+// Wedding Day Favorites albums (album.parent 'bridal') are never sorted into or out of: those are per wedding.
+// Same for each person's My Work album (album.model), which shows inside Employee Content.
+function mktSortKey_() { return PropertiesService.getScriptProperties().getProperty('MKT_CLAUDE_KEY') || ''; }
+function mktSortAlbums_(s) {
+  return [
+    { id: 'branding', name: 'Hi Pretty Branding Shoot', about: 'the Hi Pretty brand photo shoot: styled model portraits, beauty and lifestyle shots, Hi Pretty products' },
+    { id: 'bridal', name: 'Taffeta Bridal', about: 'weddings: brides, bridesmaids and bridal parties, wedding day hair and makeup, veils, getting-ready moments' },
+    { id: 'salon', name: 'Taffeta Salon & Spa', about: 'the salon and spa: everyday hair color, cuts and styling, facials and skin care, the salon space, retail products, the team at work' }
+  ].concat(s.albums.filter(a => !a.parent && !a.model).map(a => ({ id: a.id, name: a.name, about: '' })));
+}
+function mktSort_(d) {
+  const key = mktSortKey_();
+  if (!key) return { ok: false, error: 'nokey' };
+  let s = mktRead_();
+  const albums = mktSortAlbums_(s), ok = {};
+  albums.forEach(a => { ok[a.id] = 1; });
+  const list = (d.ids || []).slice(0, 12).map(id => s.photos.find(x => x.id === id))
+    .filter(p => p && p.kind !== 'video' && !p.sorted && ok[p.album]);
+  const menu = albums.map(a => '- ' + a.id + ': ' + a.name + (a.about ? ' (' + a.about + ')' : '')).join('\n');
+  const reqs = [], todo = [];
+  list.forEach(p => {
+    let b;
+    try { const f = DriveApp.getFileById(p.t); if (f.getSize() > 4 * 1048576) return; b = f.getBlob(); } catch (e) { return; }
+    todo.push(p);
+    reqs.push({
+      url: 'https://api.anthropic.com/v1/messages', method: 'post', contentType: 'application/json', muteHttpExceptions: true,
+      headers: { 'x-api-key': key, 'anthropic-version': '2026-10-21', 'anthropic-beta': 'server-side-fallback-2026-07-01' },
+      payload: JSON.stringify({
+        model: 'claude-opus-5-5', max_tokens: 1024, fallbacks: 'default',
+        output_config: { effort: 'low', format: { type: 'json_schema', schema: {
+          type: 'object', properties: { album: { type: 'string', enum: albums.map(a => a.id) }, sure: { type: 'boolean' } },
+          required: ['album', 'sure'], additionalProperties: false } } },
+        messages: [{ role: 'user', content: [
+          { type: 'image', source: { type: 'base64', media_type: b.getContentType() || 'image/jpeg', data: Utilities.base64Encode(b.getBytes()) } },
+          { type: 'text', text: 'This photo is for Taffeta, a salon, spa and bridal hair and makeup business. Which album does it belong in?\n' + menu +
+            '\n\nIt was added to "' + p.album + '". Set sure to true only if it clearly belongs in the album you pick.' }
+        ] }]
+      })
+    });
+  });
+  const picks = {};
+  if (reqs.length) UrlFetchApp.fetchAll(reqs).forEach((r, i) => {
+    try {
+      const j = JSON.parse(r.getContentText());
+      if (r.getResponseCode() !== 200 || j.stop_reason === 'refusal') return;
+      const t = (j.content || []).find(c => c.type === 'text');
+      const a = t && JSON.parse(t.text);
+      if (a && ok[a.album]) picks[todo[i].id] = a;
+    } catch (e) {}
+  });
+  const lock = LockService.getScriptLock();
+  try {
+    lock.waitLock(20000);
+    s = mktRead_();
+    const moves = [];
+    todo.forEach(q => {
+      const p = s.photos.find(x => x.id === q.id), a = picks[q.id];
+      if (!p || !a || p.album !== q.album) return;   // someone moved or deleted it meanwhile
+      p.sorted = 1;
+      if (a.sure && a.album !== p.album) { moves.push({ id: p.id, from: p.album, to: a.album }); p.album = a.album; }
+    });
+    if (Object.keys(picks).length) mktWrite_(s);
+    return Object.assign(mktPublic_(s), { moves: moves });
   } finally { lock.releaseLock(); }
 }

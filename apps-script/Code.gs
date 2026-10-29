@@ -69,12 +69,13 @@ function doGet(e) {
   if (p.rxall) return json_({ ok: true, rxall: rxDeskList_(0) });          // every saved RX card, for the desk's filing
   if (p.rgall) return json_({ ok: true, rgall: rows_(TABS.regimen, 3650).reverse().slice(0, 1500) });   // every saved home care card, searchable (Oct 20 2026)
   if (p.rxcard) return json_(rxDeskCard_(p.rxcard));
+  consultRemindEnsure_();   // switches on the 24-hour booking reminder (ConsultRemind.gs)
   return json_({ ok: true, now: Date.now(), concierge: rows_(TABS.concierge, 2), consult: rows_(TABS.consult, 60), profiles: rows_(TABS.profile, 60), todo: todoRows_(), regimen: rows_(TABS.regimen, 14), rx: rxDeskList_(21), seen: deskSeen_() });
 }
 
 function doPost(e) {
   // video pieces for Photos/Videos of My Work skip the lock, so a long video doesn't hold up everyone else
-  if (String(e.postData.contents || '').indexOf('"mvideoChunk"') >= 0) { let d0 = {}; try { d0 = JSON.parse(e.postData.contents); } catch (x) {} if (d0.type === 'mvideoChunk') return json_(mvideoChunk_(d0)); }
+  if (/"mvideo(Chunk|Check)"/.test(String(e.postData.contents || ''))) { let d0 = {}; try { d0 = JSON.parse(e.postData.contents); } catch (x) {} if (d0.type === 'mvideoChunk') return json_(mvideoChunk_(d0)); if (d0.type === 'mvideoCheck') return json_(mvideoCheck_(d0)); }
   const lock = LockService.getScriptLock();
   lock.waitLock(20000);
   try {
@@ -84,6 +85,7 @@ function doPost(e) {
     if (d.type === 'rxdesk') return rxDeskSet_(d);
     if (d.type === 'deskseen') return deskSeenSet_(d);
     if (d.type === 'rxopen') return rxOpened_(d);
+    if (d.type === 'act') return actLog_(d);
     if (d.website) return json_({ ok: true });                       // spam trap
     const now = new Date();
     if (d.type === 'status') return setStatus_(d);
@@ -263,8 +265,9 @@ const TT = {
   sigs:  { name: 'Handbook Signatures', headers: ['Signed', 'Name', 'App ID', 'Typed signature', 'Document'] },
   stock: { name: 'Stock Counts', headers: ['Updated', 'Name', 'App ID', 'Item ID', 'Item', 'On hand'] },
   models: { name: 'Model Log', headers: ['Logged', 'Name', 'App ID', 'Skill ID', 'Skill', 'Model date'] },
-  mphoto: { name: 'Model Photos', headers: ['Logged', 'Name', 'App ID', 'Skill ID', 'Skill', 'Model date', 'Note', 'Before', 'After', 'Before (small)', 'After (small)'] },
+  mphoto: { name: 'Model Photos', headers: ['Logged', 'Name', 'App ID', 'Skill ID', 'Skill', 'Model date', 'Note', 'Before', 'After', 'Before (small)', 'After (small)', 'More'] },
   rxme:  { name: 'RX Artists', headers: ['Updated', 'Name', 'App ID', 'iPad PIN (scrambled)', 'Starred products', 'Wrong tries', 'Locked until'] },
+  act:   { name: 'Team Activity', headers: ['When', 'Name', 'App ID', 'App', 'What', 'Detail'] },
   rxcard: { name: 'RX Saved Cards', headers: ['Saved', 'Name', 'App ID', 'Card ID', 'Guest', 'Card', 'Desk', 'Desk at', 'Opened at'] }
 };
 const STOCK_EDITORS = ['alexandra', 'rose', 'carolyn'];   // who can change stock counts in the app (everyone else only sees them)
@@ -281,6 +284,23 @@ const ROSTER = [
 ];
 
 function tss_() { return SpreadsheetApp.openById(TEAM_SHEET_ID); }
+/** Team Activity (Alexandra, Oct 24 2026): a line each time a girl opens her Gratuity code or
+   shares her thank-you card, and each time a guest opens a card, so Pretty Life can show it each morning.
+   The same name and action within 10 minutes counts once. */
+const ACT_WHAT = { tip: 'Opened Gratuity', card: 'Shared My Card', cardopen: 'Guest Opened Her Card', addon: 'Logged an Add-On' };
+function actLog_(d) {
+  const what = ACT_WHAT[d.what], name = clean_(d.name, 60);
+  if (!what || !name) return json_({ ok: false });
+  const app = d.app === 'weddings' ? 'Weddings' : d.app === 'card' ? 'Thank-You Card' : 'Team';
+  const sh = ttab_(TT.act), n = sh.getLastRow(), now = new Date();
+  if (n > 1 && d.what !== 'addon') {   // every add-on she logs counts, even two in a row (Oct 28 2026)
+    const k = Math.min(n - 1, 200), rows = sh.getRange(n - k + 1, 1, k, 5).getValues();
+    if (rows.some(r => String(r[1]) === name && String(r[4]) === what && r[0] instanceof Date && now - r[0] < 6e5)) return json_({ ok: true });
+  }
+  sh.appendRow([now, name, clean_(d.slug, 40), app, what, clean_(d.detail, 200)]);
+  return json_({ ok: true });
+}
+
 function ttab_(t) {
   const ss = tss_();
   let sh = ss.getSheetByName(t.name);
@@ -377,6 +397,7 @@ function staffGet_(p) {
     cardAddr: CARD_WRITERS.indexOf(me.slug) >= 0 ? cardAddr_() : null,
     mphoto: true,       // tells the team app this version takes model photos (type 'mphoto')
     mvideo: true,       // ...and videos for them (mvideoStart / mvideoChunk)
+    mvmore: true,       // ...and several videos at once under More (moreToks, Oct 26 2026)
     regimen: true,      // tells the team app this version takes Home care PDFs (type 'regimen')
     rx: { pin: !!rxMe_(me.slug).pin } });   // tells the team app this version syncs stars and RX cards, and whether her iPad PIN is set
 }
@@ -420,19 +441,24 @@ function mphotoSave_(me, d) {
   if (!/^[a-z0-9-]{2,40}$/.test(id) || !/^\d{4}-\d{2}-\d{2}$/.test(date)) return json_({ ok: false, error: 'model' });
   const vid = tok => { if (!tok) return null; const v = CacheService.getScriptCache().get('mvdone:' + tok); const o = v ? JSON.parse(v) : null; return o && o.slug === me.slug ? o : null; };
   const bv = vid(d.beforeTok), av = vid(d.afterTok);
-  if (!d.before && !d.after && !bv && !av) return json_({ ok: false, error: 'photo' });
+  const more = (Array.isArray(d.more) ? d.more : []).slice(0, 10);   // extra photos picked all at once (Oct 24 2026)
+  const mv = (Array.isArray(d.moreToks) ? d.moreToks : []).slice(0, 10).map(vid).filter(Boolean);   // ...and extra videos (Oct 26 2026)
+  if (!d.before && !d.after && !bv && !av && !more.length && !mv.length) return json_({ ok: false, error: 'photo' });
   const skill = clean_(d.skill, 80), base = date + ' ' + skill;
   const mine = mphotoFolder_(me.name), small = mphotoFolder_('.small');
   const b = bv ? bv.f : mphotoFile_(d.before, mine, base + ' - before'), a = av ? av.f : mphotoFile_(d.after, mine, base + ' - after');
   const bt = bv ? bv.t : b ? mphotoFile_(d.beforeT, small, me.slug + ' ' + base + ' - before') : '', at = av ? av.t : a ? mphotoFile_(d.afterT, small, me.slug + ' ' + base + ' - after') : '';
-  if (!b && !a) return json_({ ok: false, error: 'photo' });
-  ttab_(TT.mphoto).appendRow([new Date(), me.name, me.slug, id, skill, date, clean_(d.note, 300), b, a, bt, at]);
+  const stamp = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'HHmmss');
+  const extra = more.map((m, i) => { const n = base + ' - more ' + stamp + '-' + (i + 1), f = mphotoFile_(m && m.full, mine, n);
+    if (f) mphotoFile_(m.small, small, me.slug + ' ' + n); return f; }).filter(Boolean).concat(mv.map(v => v.f));
+  if (!b && !a && !extra.length) return json_({ ok: false, error: 'photo' });
+  ttab_(TT.mphoto).appendRow([new Date(), me.name, me.slug, id, skill, date, clean_(d.note, 300), b, a, bt, at, extra.join(',')]);
   return json_({ ok: true });
 }
 /** Her own list only (no pictures), for the Associate Program page. */
 function myMPhotos_(slug) {
   return tvals_(TT.mphoto).filter(r => String(r[2]) === slug)
-    .map(r => ({ id: String(r[3]), skill: String(r[4]), date: r[5] instanceof Date ? day_(r[5]) : String(r[5]), before: !!r[7], after: !!r[8] }));
+    .map(r => ({ id: String(r[3]), skill: String(r[4]), date: r[5] instanceof Date ? day_(r[5]) : String(r[5]), before: !!r[7], after: !!r[8], more: r[11] ? String(r[11]).split(',').length : 0 }));
 }
 function mphotoData_(fid) {
   if (!fid) return '';
@@ -447,7 +473,7 @@ function mphotoAlbum_() {
   return { ok: true, photos: rows, folder: mphotoFolder_().getUrl() };
 }
 function mphotoFull_(fid) {
-  const ok = tvals_(TT.mphoto).some(r => String(r[7]) === String(fid) || String(r[8]) === String(fid));
+  const ok = tvals_(TT.mphoto).some(r => String(r[7]) === String(fid) || String(r[8]) === String(fid) || String(r[11] || '').split(',').indexOf(String(fid)) >= 0);
   if (!ok) return { ok: false };
   try { const f = DriveApp.getFileById(String(fid)); if (/^video\//.test(f.getMimeType())) return { ok: true, video: f.getUrl() }; } catch (e) { return { ok: false }; }
   return { ok: true, src: mphotoData_(fid) };
@@ -456,25 +482,53 @@ function mphotoFull_(fid) {
  * Videos (Oct 23 2026): too big for one request, so the app sends 8 MB pieces, like the Weddings app's favorites.
  * mvideoStart opens a Drive resumable upload in her folder and saves the cover picture; mvideoChunk passes each piece along.
  * When the last piece lands, the finished file waits under its token (6 hours) for the 'mphoto' save that names it.
+ * Faster (Oct 26 2026): the phone first tries sending the whole video straight to Drive at the upload link (the link only
+ * lets it add this one file), then asks mvideoCheck how much Drive got. Anything left goes up in pieces the old way.
  */
 function mvideoStart_(me, d) {
-  const v = d.video || {}, which = d.which === 'after' ? 'after' : 'before', date = String(d.date || '');
+  const v = d.video || {}, which = d.which === 'after' || d.which === 'more' ? d.which : 'before', date = String(d.date || '');
   if (!(v.size > 0) || !/^\d{4}-\d{2}-\d{2}$/.test(date)) return { ok: false, error: 'video' };
   if (v.size > 1024 * 1048576) return { ok: false, error: 'too_big', message: 'That video is over 1 GB. Trim it on your phone first.' };
   const type = /^video\/[\w.+-]+$/.test(v.type || '') ? v.type : 'video/mp4';
   const ext = (String(v.name || '').match(/\.(\w{2,4})$/) || [, type === 'video/quicktime' ? 'mov' : 'mp4'])[1].toLowerCase();
-  const base = date + ' ' + clean_(d.skill, 80) + ' - ' + which, mine = mphotoFolder_(me.name);
-  const r = UrlFetchApp.fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable', {
-    method: 'post', contentType: 'application/json; charset=UTF-8', muteHttpExceptions: true,
-    headers: { Authorization: 'Bearer ' + ScriptApp.getOAuthToken(), 'X-Upload-Content-Type': type, 'X-Upload-Content-Length': String(v.size) },
-    payload: JSON.stringify({ name: base + '.' + ext, mimeType: type, parents: [mine.getId()] })
-  });
-  const url = r.getHeaders().Location || r.getHeaders().location;
-  if (r.getResponseCode() !== 200 || !url) return { ok: false, error: 'server', message: 'Drive did not take the video. Try again.' };
+  // extra videos are named like the extra photos ("- more 141502-11"), numbered after them so the album sync reads them the same way
+  const tag = which === 'more' ? 'more ' + Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'HHmmss') + '-' + (10 + (Math.min(10, Math.max(1, Number(d.n) || 1)))) : which;
+  const base = date + ' ' + clean_(d.skill, 80) + ' - ' + tag, mine = mphotoFolder_(me.name);
+  const url = driveUploadUrl_({ name: base + '.' + ext, mimeType: type, parents: [mine.getId()] }, type, v.size);
+  if (!url) return { ok: false, error: 'server', message: 'Drive did not take the video. Try again.' };
   const t = v.thumb ? mphotoFile_('data:image/jpeg;base64,' + v.thumb, mphotoFolder_('.small'), me.slug + ' ' + base) : '';
   const token = Utilities.getUuid();
   CacheService.getScriptCache().put('mv:' + token, JSON.stringify({ url: url, size: v.size, type: type, slug: me.slug, t: t }), 21600);
-  return { ok: true, token: token };
+  return { ok: true, token: token, url: url };
+}
+/** Opens a Drive resumable upload. The Origin header lets the team app's page send the bytes to the link itself. */
+function driveUploadUrl_(meta, type, size) {
+  const go = origin => {
+    const h = { Authorization: 'Bearer ' + ScriptApp.getOAuthToken(), 'X-Upload-Content-Type': type, 'X-Upload-Content-Length': String(size) };
+    if (origin) h.Origin = 'https://prettyteam.taffetadesign.com';
+    const r = UrlFetchApp.fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable', {
+      method: 'post', contentType: 'application/json; charset=UTF-8', muteHttpExceptions: true, headers: h, payload: JSON.stringify(meta) });
+    return r.getResponseCode() === 200 ? (r.getHeaders().Location || r.getHeaders().location || '') : '';
+  };
+  let url = '';
+  try { url = go(true); } catch (e) {}
+  return url || go(false);
+}
+/** How much of the video Drive has: {next} to go on in pieces, or done once all of it is in. */
+function mvideoCheck_(d) {
+  const key = 'mv:' + String(d.token || ''), raw = CacheService.getScriptCache().get(key);
+  if (!raw) return CacheService.getScriptCache().get('mvdone:' + d.token) ? { ok: true, done: true } : { ok: false, error: 'expired', message: 'The upload timed out. Add the video again.' };
+  const u = JSON.parse(raw);
+  const r = UrlFetchApp.fetch(u.url, { method: 'put', muteHttpExceptions: true, headers: { 'Content-Range': 'bytes */' + u.size } });
+  const code = r.getResponseCode();
+  if (code === 308) { const m = String(r.getHeaders().Range || r.getHeaders().range || '').match(/-(\d+)$/); return { ok: true, next: m ? Number(m[1]) + 1 : 0 }; }
+  if (code !== 200 && code !== 201) return { ok: false, error: 'server', message: 'Drive did not take the video. Try again.' };
+  return mvideoDone_(d.token, u, JSON.parse(r.getContentText()).id);
+}
+function mvideoDone_(token, u, f) {
+  CacheService.getScriptCache().remove('mv:' + token);
+  CacheService.getScriptCache().put('mvdone:' + token, JSON.stringify({ f: f, t: u.t || f, slug: u.slug }), 21600);
+  return { ok: true, done: true };
 }
 function mvideoChunk_(d) {
   const key = 'mv:' + String(d.token || ''), raw = CacheService.getScriptCache().get(key);
@@ -484,10 +538,7 @@ function mvideoChunk_(d) {
   const code = r.getResponseCode();
   if (code === 308) { const m = String(r.getHeaders().Range || r.getHeaders().range || '').match(/-(\d+)$/); return { ok: true, next: m ? Number(m[1]) + 1 : end + 1 }; }
   if (code !== 200 && code !== 201) return { ok: false, error: 'server', message: 'A piece of the video did not go through. Try again.' };
-  const f = JSON.parse(r.getContentText()).id;
-  CacheService.getScriptCache().remove(key);
-  CacheService.getScriptCache().put('mvdone:' + d.token, JSON.stringify({ f: f, t: u.t || f, slug: u.slug }), 21600);
-  return { ok: true, done: true };
+  return mvideoDone_(d.token, u, JSON.parse(r.getContentText()).id);
 }
 function mySigs_(slug) {
   const o = {};
@@ -704,7 +755,8 @@ function teamPost_(d) {
     const data = JSON.stringify({ guest: guest, services: [].concat(r.services || []).slice(0, 12), type: clean_(r.type, 40),
       picks: [].concat(r.picks || []).slice(0, 40).map(p => ({ n: clean_(p.n, 120), how: String(p.how == null ? '' : p.how).split(/\r?\n/).map(x => clean_(x, 600)).filter(Boolean).join('\n').slice(0, 1600), when: clean_(p.when, 30), step: clean_(p.step, 40) })),   // keeps the step-by-step lines (Oct 20 2026)
       notes: [].concat(r.notes || []).slice(0, 20).map(n => clean_(n, 200)), own: clean_(r.own, 1500), next: clean_(r.next, 20),
-      nextDate: /^\d{4}-\d{2}-\d{2}$/.test(String(r.nextDate || '')) ? r.nextDate : '', msg: clean_(r.msg, 500), rid: clean_(r.rid, 40), plan: clean_(r.plan, 120) });
+      nextDate: /^\d{4}-\d{2}-\d{2}$/.test(String(r.nextDate || '')) ? r.nextDate : '', msg: clean_(r.msg, 500), rid: clean_(r.rid, 40), plan: clean_(r.plan, 120),
+      addons: [].concat(r.addons || []).slice(0, 10).map(x => ({ n: clean_(x && x.n, 80), p: Number(x && x.p) || 0 })).filter(x => x.n) });   // add-ons she picked at the end, for the desk to ring up (Oct 24 2026)
     if (!guest) return json_({ ok: false, error: 'guest' });
     const products = JSON.parse(data).picks.map(p => p.n.replace(/^Biologique Recherche /, '')).join(', ');
     // saved again from the same RX card before the desk texted it: replace that one instead of adding a second (Alexandra, Oct 20 2026)

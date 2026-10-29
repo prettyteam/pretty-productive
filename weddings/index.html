@@ -4,13 +4,14 @@
 <meta name="robots" content="noindex,nofollow">
 <link rel="icon" href="../icon.png">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="apple-touch-icon" href="../briefing/icons/weddings-180.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Taffeta Weddings">
 <meta name="theme-color" content="#f8f6f0">
 <script src="config.js"></script>
-<script src="../g/topnav.js?v=3"></script>
+<script src="/g/life.js?v=1"></script>
+<script src="../g/topnav.js?v=4"></script>
 <script src="../g/jokes.js?v=2"></script>
 <script src="../g/coach.js?v=1"></script>
 <link rel="stylesheet" href="../g/coach.css?v=1">
@@ -52,6 +53,16 @@ body.tw-home header.top{display:none}
 .hgig{display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;padding:14px 8px 4px}
 .hgig .lbl{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:#121212}
 .hgig p{margin:0;font-family:"TaffetaJ",Georgia,serif;font-style:italic;font-size:16px;line-height:1.5;color:#555250;max-width:440px;text-wrap:balance}
+.hwx{display:flex;flex-direction:column;align-items:center;gap:6px;margin:16px auto 0;padding:14px 22px 13px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);width:fit-content;min-width:260px;max-width:100%;box-sizing:border-box;text-align:center}
+.hwx .lbl{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:#121212}
+.hwx .now{display:flex;align-items:center;justify-content:center;gap:10px;font-family:"TaffetaJ",Georgia,serif;color:#121212}
+.hwx .now svg{width:30px;height:30px;flex:none}
+.hwx .t{font-size:30px;line-height:1}
+.hwx .c{font-size:17px;font-style:italic;color:#555250}
+.hwx .wrow{display:flex;flex-direction:column;align-items:center;gap:4px;padding-top:6px}
+.hwx .wrow+.wrow{border-top:1px solid var(--line);margin-top:6px;padding-top:12px}
+.hwx .wd{font-family:"TaffetaJ",Georgia,serif;font-size:15px;color:#121212}
+.hwx .hl{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
 .hmenu{display:flex;flex-direction:column;gap:14px;margin-top:22px}
 .mhead{display:flex;align-items:center;justify-content:center;gap:12px;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:#121212}
 .mhead::before,.mhead::after{content:"";width:28px;height:1px;background:#2b2a28}
@@ -231,6 +242,15 @@ details.more .menu .btn:last-child{border-bottom:0}
 .paper .brandline.bottom{margin:30px 0 0}
 .ao .ao-list{width:100%;max-width:520px;overflow-x:auto}
 .ao .ao-list .paper{min-width:0;padding:28px 20px 30px}
+.ao .aol{width:100%;max-width:360px;border-top:1px solid #d9d5ce;padding-top:18px;display:flex;flex-direction:column;align-items:center;gap:12px}
+.ao .aol .chips{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.ao .aol .chip{border:1px solid #121212;background:#fff;padding:8px 12px;font:400 12px var(--sans);letter-spacing:.08em;color:#121212;cursor:pointer}
+.ao .aol .chip[aria-pressed="true"]{background:#121212;color:#fff}
+.ao .aol label{display:flex;flex-direction:column;gap:4px;width:260px;text-align:left;font:400 11px var(--sans);letter-spacing:.14em;text-transform:uppercase;color:#555250}
+.ao .aol input{font:400 16px var(--sans);padding:10px;border:1px solid #c9c4bc;letter-spacing:0;text-transform:none;color:#121212}
+.ao .aol .done{width:100%;font:400 14px var(--sans);text-align:left}
+.ao .aol .done div{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid #eee}
+.ao .aol .done button{border:1px solid #121212;background:#fff;font:400 11px var(--sans);letter-spacing:.1em;text-transform:uppercase;padding:6px 8px;cursor:pointer}
 .paper .aop{width:100%;max-width:440px;margin:0 auto;border-collapse:collapse}
 .paper .aop td{padding:11px 4px;border-bottom:1px solid var(--line);font-family:var(--serif);font-size:15px;color:var(--paper-ink);text-align:left;vertical-align:top}
 .paper .aop td:last-child{text-align:right;white-space:nowrap;padding-left:14px}
@@ -253,6 +273,7 @@ details.more .menu .btn:last-child{border-bottom:0}
 .tl td.c[contenteditable="true"]{cursor:text}
 .tl td.c[contenteditable="true"]:hover{background:var(--soft)}
 .tl td.c.bride{font-weight:600}
+.tl td.c .until{display:block;font:400 10px var(--sans);letter-spacing:.06em;text-transform:none;color:var(--paper-muted);margin-top:4px}
 .legend{margin-top:10px;font-size:12px;color:var(--muted)}
 .team{display:grid;grid-template-columns:minmax(0,340px) minmax(0,1fr);gap:24px;align-items:start}
 @media (max-width:900px){.team{grid-template-columns:minmax(0,1fr)}}
@@ -285,7 +306,10 @@ table.adm{border-collapse:collapse;font-size:13px;min-width:100%}table.adm th,ta
 #sheet.moving{touch-action:manipulation;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}   /* quick taps on a phone move people instead of zooming or selecting text */
 #sheet.moving td[data-pos]{cursor:pointer;-webkit-tap-highlight-color:transparent}
 .movehelp{position:sticky;top:52px;z-index:21;margin:0 0 10px;padding:10px 14px;background:var(--accent);color:var(--accent-ink);font:500 14px/1.35 var(--sans);text-align:center}
-#sheet.moving td.swapped{background:#f3e3c4;transition:background .2s}
+/* Undo sits in the sticky step line while moving (Alexandra, Oct 23 2026) */
+.movehelp{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;min-height:29px}
+.movehelp .mvundo{background:var(--accent-ink);color:var(--accent);border:0;border-radius:999px;padding:6px 16px;font:600 14px/1.2 var(--sans);cursor:pointer}
+#sheet td.swapped{background:#f3e3c4;transition:background .2s}
 #sheet.moving td.pick{outline:3px solid #b08d57;outline-offset:-3px;background:#faf3e6}
 .paper .look{display:grid;gap:10px;margin:26px auto 0;max-width:640px}
 .paper.has-look .bow{display:none}
@@ -390,6 +414,7 @@ input,select,textarea{background:#fff;border-radius:0}
             <label class="f">Makeup slot (min)<input id="muSlot" type="number" min="15" step="5" value="60"></label>
             <label class="f">Arrive early (min)<input id="arrival" type="number" min="0" step="5" value="30"></label>
           </div>
+          <label class="f" id="bothSlotWrap" hidden>Bride's hair &amp; makeup, one artist (min each)<input id="bothSlot" type="number" min="15" step="5" placeholder="60"></label>
           <label class="f">Touch-ups before leaving (optional)<input id="touchups" placeholder="e.g. 1:30 PM - 2 PM"></label>
           <p class="hint">One hour per service. Bride mid-day, moms and MOH just before her.</p>
         </div>
@@ -397,7 +422,7 @@ input,select,textarea{background:#fff;border-radius:0}
         <div class="card">
           <h2>Team on site</h2>
           <div class="list" id="artists"></div>
-          <div class="row"><button class="btn ghost small" id="addHair">+ Hair artist</button><button class="btn ghost small" id="addMu">+ Makeup artist</button></div>
+          <div class="row"><button class="btn ghost small" id="addHair">+ Hair artist</button><button class="btn ghost small" id="addMu">+ Makeup artist</button><button class="btn ghost small" id="addBoth">+ Hair &amp; makeup artist</button></div>
         </div>
 
         <div class="card" id="extCard">
@@ -480,7 +505,8 @@ input,select,textarea{background:#fff;border-radius:0}
             <button class="btn" id="txTeam">Text Team</button>
             <button class="btn ghost" id="moveMode" aria-pressed="false">Move People</button>
             <details class="more"><summary class="btn ghost">More</summary><div class="menu">
-              <button class="btn ghost" id="moveReset" hidden>Undo My Moves</button>
+              <button class="btn ghost" id="moveUndoMenu" hidden>Undo Last Move</button>
+              <button class="btn ghost" id="moveReset" hidden>Undo All Moves</button>
               <button class="btn ghost" id="pdfBride">Bride PDF</button>
               <button class="btn ghost" id="pdfTeam">Team PDF</button>
               <button class="btn ghost" id="copyText">Copy as text</button>
@@ -490,7 +516,7 @@ input,select,textarea{background:#fff;border-radius:0}
           </div>
         </div>
         <div id="txStep" class="card" hidden style="margin-bottom:12px"></div>
-        <div id="moveHelp" class="movehelp" role="status" hidden></div>
+        <div id="moveHelp" class="movehelp" hidden><span id="moveHelpTxt" role="status"></span><button type="button" class="mvundo" id="moveUndo" hidden>Undo</button></div>
         <div class="paperwrap"><div id="sheet"></div></div>
         <p class="legend">Click any box on the sheet to change its wording. Your edits stay when you change the times or add people.</p>
         <div class="card" id="cfCard" style="margin-top:18px">
@@ -769,6 +795,12 @@ input,select,textarea{background:#fff;border-radius:0}
       <div class="status" id="pp-note">Loading…</div>
       <button class="btn ghost" id="pp-refresh">Refresh</button>
     </div>
+    <div id="pp-ab" hidden>
+      <h3 style="margin:4px 0 4px;font:500 12px var(--sans);letter-spacing:.14em;text-transform:uppercase">Abandoned Payments</h3>
+      <p class="hint" style="margin:0 0 8px">Brides who filled out Be a Taffeta Bride on the website but didn't pay. Each one gets a follow-up email the next day.</p>
+      <div style="overflow-x:auto"><table class="adm" id="pp-abandoned"></table></div>
+      <h3 style="margin:28px 0 8px;font:500 12px var(--sans);letter-spacing:.14em;text-transform:uppercase">Inquiries</h3>
+    </div>
     <div style="overflow-x:auto"><table class="adm" id="pp-table"></table></div>
     <h3 style="margin:28px 0 8px;font:500 12px var(--sans);letter-spacing:.14em;text-transform:uppercase">Marked paid in the app</h3>
     <div style="overflow-x:auto"><table class="adm" id="pp-marked"></table></div>
@@ -813,6 +845,7 @@ const $=s=>document.querySelector(s);
 const uid=()=>Math.random().toString(36).slice(2,10);
 const BOW="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";
 const ROLES=["Bride","MOH","MOH 1","MOH 2","MOB","MOG","Bridesmaid","Junior BM","Flower girl","Family","Other"];
+const BUSY="busy";   // a box the hair & makeup artist can't take: she has the bride then
 const HELPERS=["MOH","MOH 1","MOH 2","MOB","MOG"];   // MOH 1 / MOH 2 for a bride with two maids of honor (Alexandra, Oct 23 2026)
 let canWrite=false, ROLE=null, AUTH=null, ME=null;
 const API=window.TW_ENDPOINT||"";
@@ -845,37 +878,65 @@ function shortDate(d){if(!d)return"";if(!/^\d{4}-\d\d-\d\d/.test(d)){const t=new
 const tm=(s,min)=>s.mode==="tbd"?"TBD":fmt(min);
 /* ---------- scheduling ---------- */
 /* moves only count for the party they were made on; adding or removing people or artists goes back to the auto order */
-const moveSig=s=>s.people.map(p=>p.id+(p.hair?"h":"")+(p.mu?"m":"")+p.role).join(",")+"|"+s.artists.map(a=>a.id+a.role).join(",")+"|"+s.hairSlot+"/"+s.muSlot;
+const moveSig=s=>s.people.map(p=>p.id+(p.hair?"h":"")+(p.mu?"m":"")+p.role).join(",")+"|"+s.artists.map(a=>a.id+a.role+(a.role==="both"?a.then||"":"")).join(",")+"|"+s.hairSlot+"/"+s.muSlot+"/"+(s.bothSlot||"");
 function build(s){
   const warnings=[];
   const hairSlot=Math.max(15,Number(s.hairSlot)||60), muSlot=Math.max(15,Number(s.muSlot)||60);
-  const hairA=s.artists.filter(a=>a.role==="hair"), muA=s.artists.filter(a=>a.role==="mu");
+  const hairA=s.artists.filter(a=>a.role==="hair"), muA=s.artists.filter(a=>a.role==="mu"), bothA=s.artists.filter(a=>a.role==="both");
   const bride=s.people.find(p=>p.role==="Bride");
   const order=p=>HELPERS.includes(p.role)?1:0;
+  /* One artist does the bride's hair AND makeup (Alexandra, Oct 26 2026): a Hair box then a Makeup box in her column,
+     60 minutes each unless the office types another length. The bride comes out of the hair and makeup
+     columns, her time sits mid-day where her hair would have started, and the moms and MOH still go just before her. */
+  const brideBoth=!!(bothA.length&&bride&&(bride.hair||bride.mu));
+  const bothParts=brideBoth?[bride.hair&&"Hair",bride.mu&&"Makeup"].filter(Boolean):[];
+  const bothBox=Number(s.bothSlot)>0?Math.max(15,Number(s.bothSlot)):60, bothLen=bothBox*bothParts.length;
+  let bothT=0;
+  /* ...and after the bride she can go on to hair (or makeup) for the rest of the party, e.g. Emily does the bride's hair
+     and makeup, then hair for everyone else (Dom, Oct 27 2026). She joins that column's artists, kept free during the bride. */
+  const then=brideBoth&&bothLen&&(bothA[0].then==="hair"||bothA[0].then==="mu")?bothA[0].then:"";
+  const n=sv=>s.people.filter(p=>p[sv]&&p!==bride).length;
+  if(then){
+    const sl=then==="hair"?hairSlot:muSlot, A=(then==="hair"?hairA:muA).length+1, bk=Math.ceil(bothLen/sl);
+    bothT=Math.floor((Math.ceil((n(then)+bk)/A)-bk)/2)*sl;   // her own column: about as many girls before the bride as after
+  }else if(brideBoth){
+    const [A,sl,cnt]=hairA.length&&n("hair")?[hairA.length,hairSlot,n("hair")]:muA.length&&n("mu")?[muA.length,muSlot,n("mu")]:[0,0,0];
+    if(A)bothT=Math.floor((Math.ceil((cnt+1)/A)-1)/2)*sl;
+  }
+  if(bothA.length&&!brideBoth)warnings.push("The hair & makeup artist does the bride. Check Hair or MU for the bride.");
+  if(bothA.length>1)warnings.push("Only one hair & makeup artist is used, for the bride. Change the others to Hair or Makeup.");
   function pool(service,artists,slot,brideRowFn){
-    const people=s.people.filter(p=>p[service]);
+    const people=s.people.filter(p=>p[service]&&!(brideBoth&&p===bride));
     if(!people.length)return {cols:[],slot};
     if(!artists.length){warnings.push((service==="hair"?"Hair":"Makeup")+" services need at least one "+(service==="hair"?"hair":"makeup")+" artist.");return {cols:[],slot}}
     const A=artists.length, rows=Math.ceil(people.length/A);
     const grid=artists.map(()=>Array(rows).fill(null));
-    const hasBride=bride&&bride[service];
+    if(then===service){   // the hair & makeup artist (last in the list) is busy with the bride from bothT
+      const addRow=()=>grid.forEach(c=>c.push(null)), r1=Math.ceil((bothT+bothLen)/slot);
+      while(grid[0].length<r1)addRow();
+      for(let r=Math.floor(bothT/slot);r<r1;r++)grid[A-1][r]=BUSY;
+      while(grid.reduce((k,c)=>k+c.filter(x=>x===null).length,0)<people.length)addRow();
+    }
+    const hasBride=bride&&bride[service]&&!brideBoth;
     let bRow=null;
     if(hasBride){bRow=brideRowFn(rows);if(bRow>=rows){grid.forEach(c=>c.push(null))}grid[0][bRow]=bride.id}
     const R=()=>grid[0].length;
     const helpers=people.filter(p=>p!==bride&&HELPERS.includes(p.role));
     const others=people.filter(p=>p!==bride&&!HELPERS.includes(p.role));
     const free=[];for(let c=0;c<A;c++)for(let r=0;r<R();r++)if(!grid[c][r])free.push([c,r]);
-    if(hasBride){
-      const near=free.slice().sort((a,b)=>{const da=a[1]<bRow?bRow-a[1]:a[1]-bRow+0.5, db_=b[1]<bRow?bRow-b[1]:b[1]-bRow+0.5;return da-db_||a[0]-b[0]});
+    if(brideBoth&&bothLen)bRow=Math.max(0,Math.ceil(bothT/slot));   // her own artist has her: moms and MOH just before her block
+    if(bRow!=null){
+      const after=hasBride?0.5:1.5;   // with her own artist, the box at her start time comes after the ones before it
+      const near=free.slice().sort((a,b)=>{const da=a[1]<bRow?bRow-a[1]:a[1]-bRow+after, db_=b[1]<bRow?bRow-b[1]:b[1]-bRow+after;return da-db_||a[0]-b[0]});
       helpers.forEach(p=>{const f=near.shift();grid[f[0]][f[1]]=p.id;free.splice(free.findIndex(x=>x[0]===f[0]&&x[1]===f[1]),1)});
     }else others.unshift(...helpers);
     others.forEach(p=>{const f=free.shift();if(f)grid[f[0]][f[1]]=p.id});
-    return {cols:artists.map((a,i)=>({artist:a,service,slot,cells:grid[i]})),slot,bRow};
+    return {cols:artists.map((a,i)=>({artist:a,service,slot,cells:grid[i]})),slot,bRow:hasBride?bRow:null};
   }
-  const hair=pool("hair",hairA,hairSlot,rows=>Math.floor((rows-1)/2));
+  const hair=pool("hair",then==="hair"?[...hairA,bothA[0]]:hairA,hairSlot,rows=>Math.floor((rows-1)/2));
   let hairStartB=null,hairEndB=null;
   if(hair.bRow!=null){hairStartB=hair.bRow*hairSlot;hairEndB=hairStartB+hairSlot}
-  const mu=pool("mu",muA,muSlot,rows=>{
+  const mu=pool("mu",then==="mu"?[...muA,bothA[0]]:muA,muSlot,rows=>{
     if(hairEndB==null)return Math.floor((rows-1)/2);
     for(let i=0;i<rows;i++)if(i*muSlot>=hairEndB)return i;
     for(let i=rows-1;i>=0;i--)if((i+1)*muSlot<=hairStartB)return i;
@@ -883,7 +944,7 @@ function build(s){
   });
   const cols=[...hair.cols,...mu.cols];
   // resolve same-person overlaps by swapping makeup cells
-  const iv=(col,r)=>[r*col.slot,(r+1)*col.slot];
+  const iv=(col,r)=>[cellT(col,r),cellT(col,r)+cellLen(col,r)];
   const overl=(a,b)=>a[0]<b[1]&&b[0]<a[1];
   function slotsOf(pid,service){const out=[];cols.forEach(c=>{if(c.service===service)c.cells.forEach((x,r)=>{if(x===pid)out.push(iv(c,r))})});return out}
   function clash(pid,interval,service){const other=service==="hair"?"mu":"hair";return slotsOf(pid,other).some(o=>overl(o,interval))}
@@ -893,7 +954,7 @@ function build(s){
       if(!pid||(bride&&pid===bride.id))return;
       if(!clash(pid,iv(c,r),"mu"))return;
       outer: for(const c2 of mu.cols)for(let r2=0;r2<c2.cells.length;r2++){
-        const q=c2.cells[r2]; if(c2===c&&r2===r)continue; if(bride&&q===bride.id)continue;
+        const q=c2.cells[r2]; if(c2===c&&r2===r)continue; if(bride&&q===bride.id||q===BUSY)continue;
         if(clash(pid,iv(c2,r2),"mu"))continue;
         if(q&&clash(q,iv(c,r),"mu"))continue;
         c2.cells[r2]=pid;c.cells[r]=q;changed=true;break outer;
@@ -903,7 +964,7 @@ function build(s){
   }
   // the office's own moves ("Move people", Alexandra Oct 23 2026): swap two boxes of the same service
   if(s.moves&&s.moves.length&&s.movesSig===moveSig(s))s.moves.forEach(m=>{
-    const list=m.svc==="hair"?hair.cols:mu.cols,A=list[m.a[0]],B=list[m.b[0]];if(!A||!B)return;
+    const list=m.svc==="hair"?hair.cols:mu.cols,A=list[m.a[0]],B=list[m.b[0]];if(!A||!B||A.cells[m.a[1]]===BUSY||B.cells[m.b[1]]===BUSY)return;
     [[A,m.a[1]],[B,m.b[1]]].forEach(([c,r])=>{while(c.cells.length<=r)c.cells.push(null)});
     const t=A.cells[m.a[1]];A.cells[m.a[1]]=B.cells[m.b[1]];B.cells[m.b[1]]=t;
   });
@@ -924,20 +985,38 @@ function build(s){
     }});
   // trim trailing empty rows
   cols.forEach(c=>{while(c.cells.length&&c.cells[c.cells.length-1]==null)c.cells.pop()});
-  let span=0;cols.forEach(c=>span=Math.max(span,c.cells.length*c.slot));
-  let start=s.mode==="finish"?toMin(s.finishBy)-span:toMin(s.start);
   // leftover same-person clashes
   const both={};s.people.forEach(p=>{if(p.hair&&p.mu){const h=slotsOf(p.id,"hair"),m=slotsOf(p.id,"mu");if(h.some(a=>m.some(b=>overl(a,b)))){const n=p.name||p.role;both[n]=(both[n]||0)+1}}});
   Object.keys(both).forEach(n=>warnings.push((both[n]>1?both[n]+" "+n+"s have":n+" has")+" hair and makeup at the same time. Add an artist or move "+(both[n]>1?"them":"her")+" by hand."));
+  /* the hair & makeup artist's one column: the bride's Hair and Makeup boxes, plus her hair (or makeup) girls around them.
+     Each box keeps its own start (at), length (lens) and service (svcs). */
+  if(brideBoth&&bothLen){
+    const c={artist:bothA[0],service:"both",slot:bothBox,cells:[],at:[],lens:[],svcs:[],parts:[]};
+    const add=(pid,t,len,sv,part)=>{c.cells.push(pid);c.at.push(t);c.lens.push(len);c.svcs.push(sv);c.parts.push(part)};
+    bothParts.forEach((p,i)=>add(bride.id,bothT+i*bothBox,bothBox,"both",p));
+    const own=then?cols.find(x=>x.artist===bothA[0]&&x.service===then):null;
+    if(own){own.cells.forEach((pid,r)=>{if(pid!==BUSY)add(pid,r*own.slot,own.slot,then,"")});cols.splice(cols.indexOf(own),1)}
+    const ord=c.at.map((_,i)=>i).sort((a,b)=>c.at[a]-c.at[b]);
+    ["cells","at","lens","svcs","parts"].forEach(k=>c[k]=ord.map(i=>c[k][i]));
+    cols.unshift(c);
+  }
+  let span=0;cols.forEach(c=>c.cells.forEach((_,r)=>span=Math.max(span,cellT(c,r)+cellLen(c,r))));
+  let start=s.mode==="finish"?toMin(s.finishBy)-span:toMin(s.start);
   return {cols,start,end:start+span,warnings};
 }
 
 /* ---------- labels ---------- */
+const SVC={hair:"Hair",mu:"Makeup",both:"Hair & Makeup"};
+const roleName=r=>({hair:"Hair",mu:"Makeup",both:"Hair & makeup"}[r]||"Hair");
+const cellT=(c,r)=>c.at?c.at[r]:(c.off||0)+r*c.slot;   // minutes after the start that box r of a column begins
+const cellLen=(c,r)=>c.lens?c.lens[r]:c.slot;
+const cellSvc=(c,r)=>c.svcs?c.svcs[r]:c.service;   // the hair & makeup artist's column holds both kinds of box
+const cellPart=(c,r)=>c.parts&&c.parts[r]?" "+c.parts[r].toLowerCase():"";
 function labelMap(s,plan,ver){
   const labels={};
-  ["hair","mu"].forEach(service=>{
+  ["both","hair","mu"].forEach(service=>{
     const seq=[];
-    plan.cols.filter(c=>c.service===service).forEach(c=>c.cells.forEach((pid,r)=>{if(pid)seq.push({pid,t:r*c.slot,c})}));
+    plan.cols.forEach(c=>c.cells.forEach((pid,r)=>{if(pid&&cellSvc(c,r)===service)seq.push({pid,t:cellT(c,r),c})}));
     seq.sort((a,b)=>a.t-b.t);
     seq.forEach(x=>{
       const p=s.people.find(q=>q.id===x.pid);if(!p)return;
@@ -959,7 +1038,7 @@ if(p.role==="Junior BM")txt+=" (Jr BM)";if(p.role==="Flower girl")txt+=" (Flower
 function servicesLine(s){
   const h=s.people.filter(p=>p.hair&&p.role!=="Bride").length, m=s.people.filter(p=>p.mu&&p.role!=="Bride").length;
   const b=s.people.find(p=>p.role==="Bride");
-  const part=(has,n,word)=>(has?"Bride + ":"")+n+" "+word;
+  const part=(has,n,word)=>has?(n?"Bride + "+n+" "+word:"Bride "+word):n+" "+word;   // a bride-only wedding reads "Bride Hair", not "Bride + 0 Hair"
   const bits=[];
   if(h||(b&&b.hair))bits.push(part(b&&b.hair,h,"Hair"));
   if(m||(b&&b.mu))bits.push(part(b&&b.mu,m,"Makeup"));
@@ -1006,10 +1085,12 @@ function sheetHTML(s,ver,editable){
   if(s.notes&&ver!=="bride")h+='<div class="dline note">'+esc(s.notes)+'</div>';   // office notes stay off the bride's copy
   h+='<div class="sp"></div>';
   if(!plan.cols.length){h+='<p style="text-align:center;color:#5d554e;font-family:var(--serif)">Add an artist and the people getting ready to build the schedule.</p></div>';return {html:h,plan}}
-  h+='<table class="tl"><thead><tr>'+(sameSlot?'<th>Time</th>':'');
+  const timed=plan.cols.some(c=>c.service==="both");
+  h+='<table class="tl"><thead><tr>'+(sameSlot||timed?'<th>Time</th>':'');
   // bride's copy shows artists by first name only (Alexandra, Oct 21 2026)
-  plan.cols.forEach(c=>{const n=goBy(c.artist);h+='<th>'+(c.service==="hair"?"Hair":"Makeup")+(n?'<small>'+esc(n)+'</small>':'')+'</th>'});
+  plan.cols.forEach(c=>{const n=goBy(c.artist);h+='<th>'+SVC[c.service]+(n?'<small>'+esc(n)+'</small>':'')+'</th>'});
   h+='</tr></thead><tbody>';
+  if(timed){h+=timedRows(s,plan,labels,ver,editable)+'</tbody></table><div class="brandline bottom">TAFFETA WEDDINGS</div></div>';return {html:h,plan}}
   for(let r=0;r<rows;r++){
     h+='<tr>';
     if(sameSlot)h+='<td class="t">'+tm(s,plan.start+r*plan.cols[0].slot)+'</td>';
@@ -1031,6 +1112,55 @@ function sheetHTML(s,ver,editable){
   h+='<div class="brandline bottom">TAFFETA WEDDINGS</div></div>';
   return {html:h,plan};
 }
+/* With a hair & makeup artist the bride's block is longer than one box, so the grid runs on the time all the box
+   lengths share (30 min for 60-min boxes and a 90-min bride) and each box stretches over its rows. */
+function timedRows(s,plan,labels,ver,editable){
+  const g=(a,b)=>b?g(b,a%b):a;
+  let base=0;plan.cols.forEach(c=>{base=g(base,c.slot);c.cells.forEach((_,r)=>{base=g(g(base,cellT(c,r)),cellLen(c,r))})});base=Math.max(5,base);
+  const unit=Math.min(...plan.cols.flatMap(c=>c.cells.length?c.cells.map((_,r)=>cellLen(c,r)):[c.slot]));   // the shortest box keeps the usual box height
+  const rowH=34*base/unit, n=Math.round((plan.end-plan.start)/base);
+  const starts=new Set([0]);plan.cols.forEach(c=>c.cells.forEach((_,r)=>starts.add(cellT(c,r))));
+  const st=[...starts].sort((a,b)=>a-b).concat([n*base]);   // a time box runs until the next box that starts
+  let h="";
+  for(let i=0;i<n;i++){
+    const t=i*base;
+    h+='<tr>';
+    if(starts.has(t)){const k=(st[st.indexOf(t)+1]-t)/base;h+='<td class="t" rowspan="'+k+'" style="height:'+(k*rowH)+'px;padding-top:0;padding-bottom:0">'+tm(s,plan.start+t)+'</td>'}
+    plan.cols.forEach((c,ci)=>{
+      const off=c.off||0, k=c.slot/base, svIdx=plan.cols.filter(x=>x.service===c.service).indexOf(c);
+      // the box to its left may be a tall one from a row above, so the single line between columns is set here
+      const box=(cls,inner,span,pos)=>'<td class="'+cls+'" rowspan="'+span+'" style="height:'+(span*rowH)+'px'+(ci?';border-left:0':'')+'"'+pos+'>'+inner+'</td>';
+      if(c.service==="both"){   // boxes of different lengths: the bride's, then any hair or makeup girls she also has
+        const at=c.cells.map((_,r)=>cellT(c,r)), r=at.indexOf(t), total=plan.end-plan.start;
+        if(r>=0){
+          const pid=c.cells[r], sv=cellSvc(c,r), span=cellLen(c,r)/base;
+          if(!pid){h+=box("c empty","",span,"");return}
+          const L=labels[pid+":"+sv]||{txt:sv==="both"?"Bride":""}, p=s.people.find(q=>q.id===pid);
+          const ed=sv!=="both"&&editable&&ver==="team"&&!moveOn?' contenteditable="true" data-key="'+pid+":"+sv+'"':'';
+          h+=box('c'+(p&&p.role==="Bride"?' bride':''),esc(L.txt)+(sv==="both"?'<small class="until">'+esc(c.parts[r]||"")+'</small>':L.blank?'<span class="fill"></span>':''),span,ed);
+          return;
+        }
+        if(at.some((a,i)=>t>a&&t<a+cellLen(c,i)))return;   // still inside a box above
+        if(t===0||at.some((a,i)=>a+cellLen(c,i)===t)){   // a gap starts here: one blank box until her next box
+          const next=Math.min(total,...at.filter(a=>a>t));
+          if(next>t)h+=box("c blank","",(next-t)/base,"");
+        }
+        return;
+      }
+      if(t%c.slot)return;   // still inside the box above
+      const r=t/c.slot, pos=editable?' data-pos="'+c.service+':'+svIdx+':'+r+'"':'';
+      const span=Math.min(k,n-i);
+      if(r>=c.cells.length){h+=box("c blank","",span,pos);return}
+      const pid=c.cells[r];
+      if(!pid){h+=box("c empty","",span,pos);return}
+      const key=pid+":"+c.service, L=labels[key]||{txt:""}, p=s.people.find(q=>q.id===pid);
+      const ed=editable&&ver==="team"&&!moveOn?' contenteditable="true" data-key="'+key+'"':'';
+      h+=box('c'+(p&&p.role==="Bride"?' bride':''),esc(L.txt)+(L.blank?'<span class="fill"></span>':''),span,ed+pos);
+    });
+    h+='</tr>';
+  }
+  return h;
+}
 function textOf(s){
   const plan=build(s), labels=labelMap(s,plan,"team");
   const L=[];
@@ -1043,21 +1173,26 @@ function textOf(s){
   L.push("Services: "+servicesLine(s));
   if(s.notes)L.push("Notes: "+s.notes);
   plan.cols.forEach(c=>{
-    L.push("");L.push((c.service==="hair"?"HAIR":"MAKEUP")+(c.artist.name?" - "+c.artist.name.toUpperCase():""));
-    c.cells.forEach((pid,r)=>{if(pid)L.push(tm(s,plan.start+r*c.slot)+"  "+((labels[pid+":"+c.service]||{}).txt||""))});
+    L.push("");L.push(SVC[c.service].toUpperCase()+(c.artist.name?" - "+c.artist.name.toUpperCase():""));
+    c.cells.forEach((pid,r)=>{if(pid)L.push(tm(s,plan.start+cellT(c,r))+"  "+((labels[pid+":"+cellSvc(c,r)]||{}).txt||"")+cellPart(c,r))});
   });
   return L.join("\n");
 }
 function tsvOf(s){
   const plan=build(s), labels=labelMap(s,plan,"team");
   const rows=Math.max(0,...plan.cols.map(c=>c.cells.length));
-  const out=[["Time",...plan.cols.map(c=>(c.service==="hair"?"Hair":"Makeup")+(c.artist.name?" ("+c.artist.name+")":""))].join("\t")];
+  const out=[["Time",...plan.cols.map(c=>SVC[c.service]+(c.artist.name?" ("+c.artist.name+")":""))].join("\t")];
+  if(plan.cols.some(c=>c.service==="both")){   // one line per start time when the bride's boxes are a different length
+    const ts=[...new Set(plan.cols.flatMap(c=>c.cells.map((_,r)=>cellT(c,r))))].sort((a,b)=>a-b);
+    ts.forEach(t=>out.push([tm(s,plan.start+t),...plan.cols.map(c=>{const r=c.cells.findIndex((_,i)=>cellT(c,i)===t),pid=r>=0?c.cells[r]:null;return pid?((labels[pid+":"+cellSvc(c,r)]||{}).txt||"")+cellPart(c,r):""})].join("\t")));
+    return out.join("\n");
+  }
   for(let r=0;r<rows;r++){out.push([tm(s,plan.start+r*(plan.cols[0]?plan.cols[0].slot:60)),...plan.cols.map(c=>{const pid=c.cells[r];return pid?((labels[pid+":"+c.service]||{}).txt||""):""})].join("\t"))}
   return out.join("\n");
 }
 
 /* ---------- form ---------- */
-const FIELDS=["bride","bridePhone","date","location","room","parking","contactName","contactPhone","notes","previewDate","previewTime","previewLen","previewLoc","start","finishBy","hairSlot","muSlot","arrival","touchups"];
+const FIELDS=["bride","bridePhone","date","location","room","parking","contactName","contactPhone","notes","previewDate","previewTime","previewLen","previewLoc","start","finishBy","hairSlot","muSlot","bothSlot","arrival","touchups"];
 function fillForm(){
   FIELDS.forEach(f=>{const el=$("#"+f);if(el)el.value=S[f]??""});
   setMode(S.mode,false);
@@ -1086,10 +1221,11 @@ function renderArtists(){
     const st=rsvpOf(a);
     const chip=st?'<span class="pill rsvp-'+st+'">'+({accepted:"Confirmed",declined:"Declined",tentative:"Maybe",needsAction:"Waiting"}[st]||st)+'</span>':'';
     const opts='<option value="">Pick from team…</option>'+profiles.map(pr=>'<option value="'+esc(pr._id)+'"'+(pr._id===a.uid?' selected':'')+'>'+esc(pr.preferredName||pr.legalName||"Unnamed")+'</option>').join("");
-    d.innerHTML='<select aria-label="Role" id="ar-'+a.id+'"><option value="hair">Hair</option><option value="mu">Makeup</option></select><input id="an-'+a.id+'" placeholder="Artist name" value="'+esc(a.name)+'"><button class="x" aria-label="Remove artist">×</button>'
-      +'<select class="pick" id="ap-'+a.id+'" aria-label="Team member" style="grid-column:1/2"'+(profiles.length?'':' hidden')+'>'+opts+'</select><input id="ae-'+a.id+'" class="aemail" type="email" placeholder="Email for calendar invite" value="'+esc(a.email||"")+'"><span class="astat">'+chip+(a.name.trim()?'<button type="button" class="poc'+(isPoc(a)?' on':'')+'" title="Day-of contact on the sheet">'+(isPoc(a)?'★ Contact':'Make contact')+'</button>':'')+'</span>';
+    d.innerHTML='<select aria-label="Role" id="ar-'+a.id+'"><option value="hair">Hair</option><option value="mu">Makeup</option><option value="both">Hair &amp; makeup</option></select><input id="an-'+a.id+'" placeholder="Artist name" value="'+esc(a.name)+'"><button class="x" aria-label="Remove artist">×</button>'
+      +'<select class="pick" id="ap-'+a.id+'" aria-label="Team member" style="grid-column:1/2"'+(profiles.length?'':' hidden')+'>'+opts+'</select><input id="ae-'+a.id+'" class="aemail" type="email" placeholder="Email for calendar invite" value="'+esc(a.email||"")+'">'+(a.role==="both"?'<select class="then" id="at-'+a.id+'" aria-label="After the bride" style="grid-column:1/-1"><option value="">Bride only</option><option value="hair">Bride, then hair for the party</option><option value="mu">Bride, then makeup for the party</option></select>':'')+'<span class="astat">'+chip+(a.name.trim()?'<button type="button" class="poc'+(isPoc(a)?' on':'')+'" title="Day-of contact on the sheet">'+(isPoc(a)?'★ Contact':'Make contact')+'</button>':'')+'</span>';
     d.querySelector("#ar-"+a.id).value=a.role;
-    d.querySelector("#ar-"+a.id).onchange=e=>{a.role=e.target.value;changed()};
+    d.querySelector("#ar-"+a.id).onchange=e=>{a.role=e.target.value;renderArtists();changed()};
+    const th=d.querySelector("#at-"+a.id);if(th){th.value=a.then||"";th.onchange=e=>{a.then=e.target.value;changed()}}
     d.querySelector("#an-"+a.id).oninput=e=>{a.name=e.target.value;changed()};
     d.querySelector("#ae-"+a.id).oninput=e=>{a.email=e.target.value.trim();queueSave()};
     d.querySelector("#ap-"+a.id).onchange=e=>{const pr=profiles.find(x=>x._id===e.target.value);a.uid=pr?pr._id:"";if(pr){a.name=pr.preferredName||pr.legalName||a.name;a.email=pr.email||a.email;if(!a.phone)a.phone=pr.phone||""}renderArtists();changed()};
@@ -1106,7 +1242,12 @@ function renderArtists(){
     });
     box.appendChild(d);
   });
+  renderBothSlot();
   renderCalTeam();
+}
+/* the bride's one-artist box length only shows when a hair & makeup artist is on the team; blank = 60 minutes each */
+function renderBothSlot(){
+  $("#bothSlotWrap").hidden=!S.artists.some(a=>a.role==="both");
 }
 /* Team names pop up as she types an artist or the day-of contact (Alexandra, Oct 21 2026), the same way client names
    pop up on the saved-card search. Tapping a name fills her cell. Names that start with what she typed come first. */
@@ -1218,7 +1359,7 @@ function renderCalTeam(){
   box.innerHTML=S.artists.map(a=>{
     const st=rsvpOf(a);
     const chip=st?'<span class="pill rsvp-'+st+'">'+({accepted:"Confirmed",declined:"Declined",tentative:"Maybe",needsAction:"Waiting"}[st]||st)+'</span>':'<span class="hint">Not sent</span>';
-    return '<div class="item" style="display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center"><b>'+esc(a.name||"Unnamed")+'</b><span>'+(a.role==="hair"?"Hair":"Makeup")+'</span><span>'+(a.email?esc(a.email):'<span class="hint">No email yet: add it on the Timeline tab</span>')+'</span>'+chip+'</div>';
+    return '<div class="item" style="display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center"><b>'+esc(a.name||"Unnamed")+'</b><span>'+roleName(a.role)+'</span><span>'+(a.email?esc(a.email):'<span class="hint">No email yet: add it on the Timeline tab</span>')+'</span>'+chip+'</div>';
   }).join("");
 }
 $("#cal-wedding").onchange=e=>{const id=e.target.value;$("#calStatus").textContent="";if(!id){renderCalTeam();return}const s=$("#saved");s.value=id;s.onchange({target:s});renderCalTeam()};
@@ -1256,9 +1397,10 @@ function renderSheet(){
   $("#sheet").innerHTML=html;renderConfirm();
   $("#sheet").classList.toggle("moving",moveOn);
   $("#moveMode").textContent=moveOn?"Done Moving":"Move People";$("#moveMode").setAttribute("aria-pressed",moveOn);
-  $("#moveReset").hidden=!(S.moves&&S.moves.length&&S.movesSig===moveSig(S));
+  const canUndo=!!(S.moves&&S.moves.length&&S.movesSig===moveSig(S));
+  $("#moveReset").hidden=$("#moveUndoMenu").hidden=$("#moveUndo").hidden=!canUndo;
   const mh=$("#moveHelp");mh.hidden=!moveOn;   // the steps stay on screen while moving (a toast hides behind the Refresh bar on a phone)
-  if(moveOn)mh.textContent=movePick?(movePick.startsWith("hair")?"Now Tap the Hair Box Where She Should Go":"Now Tap the Makeup Box Where She Should Go"):"Tap the Box You Want to Move";
+  if(moveOn)$("#moveHelpTxt").textContent=movePick?(movePick.startsWith("hair")?"Now Tap the Hair Box Where She Should Go":"Now Tap the Makeup Box Where She Should Go"):"Tap the Box You Want to Move";
   if(moveOn)$("#sheet").querySelectorAll("[data-pos]").forEach(td=>{if(td.dataset.pos===movePick)td.classList.add("pick")});
   $("#warnings").textContent=plan.warnings?plan.warnings.join(" "):"";
   $("#sheet").querySelectorAll("[data-key]").forEach(td=>{
@@ -1292,12 +1434,22 @@ function moveTap(p){
 function movedFrom(x){return $("#sheet").querySelector('[data-pos="'+x.join(":")+'"]')}
 function changed(skipSheet){if(!skipSheet)renderSheet();queueSave()}
 $("#moveMode").onclick=()=>{moveOn=!moveOn;movePick=null;renderSheet();if(moveOn)toast("Tap a box, then tap where it should go")};
+/* Undo (Alexandra, Oct 23 2026): takes back the last swap, one tap per move, even after saving */
+function undoMove(){
+  if(!(S.moves&&S.moves.length&&S.movesSig===moveSig(S)))return;
+  const m=S.moves.pop();if(!S.moves.length)delete S.movesSig;movePick=null;changed();
+  const flash=[movedFrom([m.svc,...m.a]),movedFrom([m.svc,...m.b])].filter(Boolean);flash.forEach(td=>td.classList.add("swapped"));setTimeout(()=>flash.forEach(td=>td.classList.remove("swapped")),1200);
+  toast(S.moves.length?"Undone. Tap Undo Again for the One Before":"Undone");
+}
+$("#moveUndo").onclick=undoMove;
+$("#moveUndoMenu").onclick=e=>{e.target.closest("details").open=false;undoMove()};
 $("#moveReset").onclick=()=>{S.moves=[];delete S.movesSig;movePick=null;changed()};
 FIELDS.forEach(f=>{const el=$("#"+f);el.addEventListener("input",()=>{S[f]=el.type==="number"?Number(el.value):el.value;changed()})});
 function setMode(m,fire=true){S.mode=m;$("#mode-start").setAttribute("aria-pressed",m==="start");$("#mode-finish").setAttribute("aria-pressed",m==="finish");$("#mode-tbd").setAttribute("aria-pressed",m==="tbd");$("#startWrap").hidden=m!=="start";$("#finishWrap").hidden=m!=="finish";if(fire)changed()}
 $("#mode-start").onclick=()=>setMode("start");$("#mode-tbd").onclick=()=>setMode("tbd");$("#mode-finish").onclick=()=>setMode("finish");
 $("#addHair").onclick=()=>{S.artists.push({id:uid(),role:"hair",name:""});renderArtists();changed()};
 $("#addMu").onclick=()=>{S.artists.push({id:uid(),role:"mu",name:""});renderArtists();changed()};
+$("#addBoth").onclick=()=>{S.artists.push({id:uid(),role:"both",name:""});renderArtists();changed()};
 $("#addPerson").onclick=()=>{S.people.push({id:uid(),name:"",role:"Bridesmaid",hair:true,mu:true});renderPeople();changed()};
 $("#addBms").onclick=()=>{const n=Math.min(30,Math.max(1,Number($("#bmCount").value)||1));for(let i=0;i<n;i++)S.people.push({id:uid(),name:"",role:"Bridesmaid",hair:true,mu:true});renderPeople();changed()};
 function setVersion(v){version=v;$("#ver-team").setAttribute("aria-pressed",v==="team");$("#ver-bride").setAttribute("aria-pressed",v==="bride");renderSheet()}
@@ -1574,6 +1726,7 @@ function renderHome(){
     h+='<button type="button" class="hphoto" id="hPhoto">'+(ph?"Change photo":"Add your photo")+'</button>'+(ROLE==="office"?'<button type="button" class="hphoto" id="hWho">Not '+esc(first)+'?</button>':'')+'</div>';
   }
   h+='<div class="hgig"><span class="lbl">'+esc(today)+'</span><p>'+esc(window.dayJoke?dayJoke("bridal"):"")+'</p></div>';
+  {const wx=wxHTML();h+='<div class="hwx" id="hWx"'+(wx?'':' hidden')+'>'+wx+'</div>'}
   const gs=homeGroups();
   h+='<div class="hmenu"><div class="mhead">Menu</div><div class="cgrid">';
   gs.forEach(([g,keys],i)=>{
@@ -1590,6 +1743,61 @@ function renderHome(){
   box.querySelectorAll(".cgrid>button[data-g]").forEach(b=>b.onclick=()=>{const g=b.dataset.g,keys=(gs.find(x=>x[0]===g)||[0,[]])[1];
     if(keys.length===1)goTab(keys[0]);else{HOME_OPEN=HOME_OPEN===g?"":g;renderHome();if(HOME_OPEN)setTimeout(()=>{const p=document.querySelector(".hpages");if(p)p.scrollIntoView({behavior:"smooth",block:"center"})},30)}});
   box.querySelectorAll(".hpages button").forEach(b=>b.onclick=()=>goTab(b.dataset.p));
+  loadWx();
+}
+/* wedding day forecasts (Alexandra, Oct 24 2026): the team works on location, so instead of Hammonton the home page shows
+   the weather at each wedding in the next 7 days, at its getting-ready location, on the wedding day. Artists see their own
+   weddings, the office sees all. Places are found through Photon (free, no key) and remembered on the phone; the weather is
+   Open-Meteo (free, no key), kept for 30 minutes. Weddings whose place can't be found are left out, and if none are left,
+   nothing shows (no blank boxes). */
+let WX=null;try{WX=JSON.parse(lsGet("tw-wx2")||"null")}catch(e){}
+function wxKind(c){return c<=1?"sun":c<=3?"part":c<=48?"fog":c<=67||(c>=80&&c<=82)?"rain":c<=77||c===85||c===86?"snow":"storm"}
+const WX_WORD={0:"Sunny",1:"Mostly Sunny",2:"Partly Cloudy",3:"Cloudy",45:"Foggy",48:"Foggy",51:"Light Drizzle",53:"Drizzle",55:"Heavy Drizzle",56:"Freezing Drizzle",57:"Freezing Drizzle",61:"Light Rain",63:"Rain",65:"Heavy Rain",66:"Freezing Rain",67:"Freezing Rain",71:"Light Snow",73:"Snow",75:"Heavy Snow",77:"Snow",80:"Showers",81:"Showers",82:"Heavy Showers",85:"Snow Showers",86:"Snow Showers",95:"Thunderstorms",96:"Thunderstorms",99:"Thunderstorms"};
+const WX_ICON={sun:'<circle cx="16" cy="16" r="5.5"/><path d="M16 3.5v4M16 24.5v4M3.5 16h4M24.5 16h4M7.2 7.2l2.8 2.8M22 22l2.8 2.8M7.2 24.8l2.8-2.8M22 10l2.8-2.8"/>',
+  part:'<circle cx="12" cy="12" r="4.5"/><path d="M12 3v2.5M3 12h2.5M5.6 5.6l1.8 1.8M18.4 5.6l-1.8 1.8"/><path d="M11 26h12a4.5 4.5 0 0 0 0-9 6 6 0 0 0-11.4 1.6A3.7 3.7 0 0 0 11 26z" fill="#fff"/>',
+  cloud:'<path d="M9 24h14a5 5 0 0 0 0-10 7 7 0 0 0-13.4 2A4 4 0 0 0 9 24z"/>',
+  fog:'<path d="M5 12h22M5 17h22M8 22h16"/>',
+  rain:'<path d="M9 19h14a5 5 0 0 0 0-10 7 7 0 0 0-13.4 2A4 4 0 0 0 9 19z"/><path d="M11 23l-1.5 3.5M16.5 23l-1.5 3.5M22 23l-1.5 3.5"/>',
+  snow:'<path d="M9 19h14a5 5 0 0 0 0-10 7 7 0 0 0-13.4 2A4 4 0 0 0 9 19z"/><path d="M11 24v.1M16 26v.1M21 24v.1" stroke-width="2.6"/>',
+  storm:'<path d="M9 19h14a5 5 0 0 0 0-10 7 7 0 0 0-13.4 2A4 4 0 0 0 9 19z"/><path d="M17 19l-3 5h4l-2.5 4.5"/>'};
+function wxSoon(){
+  const t=new Date();t.setHours(0,0,0,0);const iso=d=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+  const a=iso(t),e=new Date(t);e.setDate(e.getDate()+7);const z=iso(e);
+  return allWeddings.filter(w=>w.d.date&&w.d.date>=a&&w.d.date<=z&&(w.d.location||"").trim()).sort((x,y)=>x.d.date.localeCompare(y.d.date)).slice(0,6);
+}
+const wxSig=ws=>ws.map(w=>w.id+"|"+w.d.date+"|"+w.d.location.trim()).join("~");
+function wxDay(ds){const[y,m,d]=ds.split("-").map(Number),dt=new Date(y,m-1,d),t=new Date();t.setHours(0,0,0,0);
+  const n=Math.round((dt-t)/864e5);return n===0?"Today":n===1?"Tomorrow":dt.toLocaleDateString("en-US",{weekday:"long",month:"short",day:"numeric"})}
+function wxHTML(){if(!WX||!WX.rows||!WX.rows.length)return"";
+  return '<span class="lbl">Wedding Day Forecast</span>'+WX.rows.map(r=>{const k=r.code===3?"cloud":wxKind(r.code);
+    return '<div class="wrow"><span class="wd">'+esc(wxDay(r.date))+' · '+esc(r.who)+(r.town?' · '+esc(r.town):'')+'</span><div class="now"><svg viewBox="0 0 32 32" fill="none" stroke="#121212" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+WX_ICON[k]+'</svg><span class="t">'+r.hi+'°</span><span class="c">'+esc(WX_WORD[r.code]||"")+'</span></div>'+
+      '<span class="hl">Low '+r.lo+'°'+(r.rain>=10?' · '+r.rain+'% Rain':'')+'</span></div>'}).join("")}
+function wxPaint(){const b=$("#hWx");if(b){b.innerHTML=wxHTML();b.hidden=!b.innerHTML}}
+async function wxPlace(loc){
+  const key="tw-geo:"+loc.toLowerCase();try{const c=JSON.parse(lsGet(key)||"null");if(c)return c}catch(e){}
+  const parts=loc.split(",").map(x=>x.trim()).filter(Boolean);
+  for(const q of [loc,parts.slice(1).join(", ")].filter(Boolean)){
+    try{const j=await (await fetch("https://photon.komoot.io/api/?limit=1&lang=en&lat=39.636&lon=-74.802&q="+encodeURIComponent(q))).json();
+      const f=(j.features||[]).find(f=>(f.properties||{}).countrycode==="US");
+      if(f){const g={lat:f.geometry.coordinates[1],lon:f.geometry.coordinates[0],town:addrParts(f).city};lsSet(key,JSON.stringify(g));return g}}catch(e){}
+  }
+  return null;
+}
+let wxBusy=null;
+async function loadWx(){
+  if(!ROLE)return;const ws=wxSoon(),sig=wxSig(ws);if(wxBusy===sig)return;
+  if(!ws.length){WX=null;lsSet("tw-wx2","");wxPaint();return}
+  if(WX&&WX.sig===sig&&Date.now()-WX.at<30*60e3)return;
+  const rows=[];wxBusy=sig;
+  for(const w of ws){
+    const g=await wxPlace(w.d.location.trim());if(!g)continue;
+    try{const r=await fetch("https://api.open-meteo.com/v1/forecast?latitude="+g.lat+"&longitude="+g.lon+"&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&temperature_unit=fahrenheit&timezone=America%2FNew_York&start_date="+w.d.date+"&end_date="+w.d.date);
+      if(!r.ok)continue;const D=(await r.json()).daily;
+      rows.push({date:w.d.date,who:firstName(w.d)||w.d.bride||"Wedding",town:g.town,code:D.weather_code[0],hi:Math.round(D.temperature_2m_max[0]),lo:Math.round(D.temperature_2m_min[0]),rain:Math.round(D.precipitation_probability_max[0]||0)})}catch(e){}
+  }
+  wxBusy=null;
+  if(!rows.length&&WX&&WX.sig===sig)return;   // offline: keep the last good forecast
+  WX={at:Date.now(),sig,rows};lsSet("tw-wx2",JSON.stringify(WX));wxPaint();
 }
 /* her photo is kept on her own phone, cropped square, small enough to load instantly */
 function homePhoto(file){
@@ -1624,6 +1832,12 @@ function aoPriceHTML(){
     +'<div class="dline muted" style="margin-top:14px">Venmo @TaffetaWeddings</div>'
     +'<div class="brandline bottom">TAFFETA WEDDINGS</div></div>';
 }
+/* Team Activity (Alexandra, Oct 24 2026): opening Gratuity or sharing her card puts a line on the
+   Team Hub's Team Activity tab, so Pretty Life can show it each morning. Once per screen visit; the server skips repeats.
+   Showing the add-on code isn't logged (Oct 28 2026): it doesn't mean anyone owed or paid for an add-on. */
+const ACT_DONE={};
+function actLog(what,again,detail){const ep=window.TAFFETA_ENDPOINT,nm=String(myName()||"").trim();if(!ep||!nm||(ACT_DONE[what]&&!again))return;ACT_DONE[what]=1;
+  fetch(ep,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({type:"act",what,app:"weddings",name:nm,slug:String((ME&&ME.id)||""),detail:detail||""})}).catch(()=>{})}
 function renderAddon(){
   const box=$("#view-addon");if(!box)return;const L=payLinks();
   if(AO_SHOW==="card"&&!L.card)AO_SHOW="venmo";if(AO_SHOW==="venmo"&&!L.venmo&&L.card)AO_SHOW="card";
@@ -1636,9 +1850,47 @@ function renderAddon(){
   if(L.venmo)h+='<button type="button" class="pay" data-s="venmo" aria-pressed="'+(AO_SHOW==="venmo")+'">Pay with Venmo</button>';
   if(L.card)h+='<button type="button" class="pay" data-s="card" aria-pressed="'+(AO_SHOW==="card")+'">Card or Apple Pay</button>';
   if(L.venmo&&L.card)h+='<p style="font-size:14px">Tap a button to show that code.</p>';
-  h+='</div>';
+  h+=aoLogHTML()+'</div>';
   box.innerHTML=h;box.querySelectorAll(".pay[data-s]").forEach(b=>b.onclick=()=>{AO_SHOW=b.dataset.s;renderAddon()});
   const sh=$("#aoShare");if(sh)sh.onclick=e=>sendPdf(e.currentTarget,[aoPriceHTML()],"wedding-day-add-ons.jpg","",true);
+  aoLogWire(box);
+}
+/* Log an Add-On (Alexandra, Oct 28 2026): the artist records each add-on as she does it: the service, the guest's first
+   name and whether she paid. It goes to the Team Activity tab, so Pretty Life and Cherish can see who owed what and match
+   it to the Taffeta Weddings Venmo and card payments. "Not Paid Yet" stays on her list with a Mark Paid button. */
+let AO_PICK=[];
+const aoNum=v=>parseFloat(String(v).replace(/[^0-9.]/g,""))||0;
+const aoDayKey=()=>"tw-addons:"+((ME&&ME.id)||"me")+":"+cardDay();
+function aoToday(){try{return JSON.parse(localStorage.getItem(aoDayKey())||"[]")}catch(e){return[]}}
+function aoSaveToday(L){try{localStorage.setItem(aoDayKey(),JSON.stringify(L))}catch(e){}}
+function aoLogHTML(){
+  const amt=AO_PICK.reduce((t,n)=>t+aoNum((AO_PRICES.find(x=>x[0]===n)||[])[1]),0), mine=aoToday();
+  let bride="";try{bride=localStorage.getItem("tw-ao-bride:"+cardDay())||""}catch(e){}
+  return '<div class="aol"><div class="mhead">Log an Add-On</div><p>Did a guest add a service? Log it here so the office knows.</p>'
+    +'<div class="chips">'+AO_PRICES.map(([n])=>'<button type="button" class="chip" data-ao="'+esc(n)+'" aria-pressed="'+AO_PICK.includes(n)+'">'+esc(n)+'</button>').join("")+'</div>'
+    +'<label>Amount<input id="aoAmt" inputmode="decimal" value="'+(amt?"$"+amt:"")+'" placeholder="$"></label>'
+    +'<label>Guest’s First Name<input id="aoGuest" autocomplete="off"></label>'
+    +'<label>Bride’s Name<input id="aoBride" autocomplete="off" value="'+esc(bride)+'"></label>'
+    +'<button type="button" class="pay" data-paid="Paid Venmo">Paid Venmo</button><button type="button" class="pay" data-paid="Paid Card">Paid Card</button>'
+    +'<button type="button" class="pay" data-paid="Not Paid Yet">Not Paid Yet</button>'
+    +(mine.length?'<div class="done"><div class="mhead" style="border:0">Logged Today</div>'+mine.map((x,i)=>'<div><span>'+esc(x.svc)+' '+esc(x.amt)+' · '+esc(x.guest)+'<br><small>'+esc(x.paid)+'</small></span>'
+      +(x.paid==="Not Paid Yet"?'<button type="button" data-mark="'+i+'">Mark Paid</button>':'')+'</div>').join("")+'</div>':'')
+    +'</div>';
+}
+function aoSend(x,note){actLog("addon",true,x.svc+" "+x.amt+" · "+x.guest+(x.bride?" · Bride: "+x.bride:"")+" · "+(note||x.paid))}
+function aoLogWire(box){
+  box.querySelectorAll("[data-ao]").forEach(b=>b.onclick=()=>{const n=b.dataset.ao;AO_PICK=AO_PICK.includes(n)?AO_PICK.filter(x=>x!==n):[...AO_PICK,n];
+    const g=$("#aoGuest").value,br=$("#aoBride").value;renderAddon();$("#aoGuest").value=g;$("#aoBride").value=br});
+  box.querySelectorAll("[data-paid]").forEach(b=>b.onclick=()=>{
+    const guest=$("#aoGuest").value.trim(),bride=$("#aoBride").value.trim(),a=aoNum($("#aoAmt").value);
+    if(!AO_PICK.length){toast("Tap the service first.");return}
+    if(!guest){toast("Add the guest’s first name.");$("#aoGuest").focus();return}
+    const x={svc:AO_PICK.join(" + "),amt:a?"$"+a:"",guest,bride,paid:b.dataset.paid};
+    try{localStorage.setItem("tw-ao-bride:"+cardDay(),bride)}catch(e){}
+    aoSaveToday([...aoToday(),x]);aoSend(x);AO_PICK=[];renderAddon();toast("Add-on logged. Thank you!")});
+  box.querySelectorAll("[data-mark]").forEach(b=>b.onclick=()=>{const L=aoToday(),x=L[+b.dataset.mark];if(!x)return;
+    const how=confirm("Did she pay by Venmo? Tap Cancel for card.")?"Paid Venmo":"Paid Card";
+    x.paid=how;aoSaveToday(L);aoSend(x,how+" (was Not Paid Yet)");renderAddon();toast("Marked paid.")});
 }
 
 /* Gratuity (Alexandra, Oct 21 2026): each bridesmaid scans the artist's own code and tips her straight to the Venmo on
@@ -1666,11 +1918,11 @@ function myCardUrl(){
   const r=/hair/.test(role)&&/makeup/.test(role)?"both":/makeup/.test(role)?"makeup":/hair/.test(role)?"hair":"";
   return new URL("../hello/?a="+encodeURIComponent(first)+(r?"&r="+r:"")+(salon?"&s=1&k="+k+"&d="+cardDay():""),location.href).href}
 const cardDay=()=>{const t=new Date();return t.getFullYear()+"-"+String(t.getMonth()+1).padStart(2,"0")+"-"+String(t.getDate()).padStart(2,"0")};   // the $20 offer runs 3 months from the day the guest scans it
-async function shareCard(){const url=myCardUrl();
+async function shareCard(){const url=myCardUrl();actLog("card",true);
   if(navigator.share){try{await navigator.share({title:"A little thank you from Taffeta Weddings",url})}catch(e){}return}
   try{await navigator.clipboard.writeText(url);toast("Card link copied.")}catch(e){prompt("Copy your card link:",url)}}
 function renderTip(){
-  const box=$("#view-tip");if(!box)return;
+  const box=$("#view-tip");if(!box)return;actLog("tip");
   const v=venmoUser((ME&&ME.venmo)||lsGet(venmoKey())),first=String(myName()).trim().split(/\s+/)[0]||"",ok=v&&!/\s/.test(v);
   let h='<div class="ao"><div class="mhead">Gratuity</div>';
   if(!ok)h+='<p>'+(v?"Your Venmo has a space in it. Use your Venmo username, the @ name, like @Jane-Smith-12.":"Add your Venmo username on My Profile and your tip code shows here.")+'</p>'
@@ -1688,7 +1940,7 @@ function renderTip(){
 
 /* ---------- tabs ---------- */
 const TABS=["home","addon","tip","build","team","cal","jobs","prev","booked","pipe","coach","todo","tpl","info","pay","admin"];
-function showTab(t){if(!TABS.includes(t))t="home";document.body.classList.toggle("tw-home",t==="home");if(t==="home")renderHome();if(t==="addon")renderAddon();if(t==="tip")renderTip();TABS.forEach(k=>{$("#tab-"+k).setAttribute("aria-selected",k===t);$("#view-"+k).hidden=k!==t});$("#pageTitle").textContent=$("#tab-"+t).textContent;try{localStorage.setItem("tt-tab",t)}catch(e){}}
+function showTab(t){if(!TABS.includes(t))t="home";document.body.classList.toggle("tw-home",t==="home");if(t==="home")renderHome();if(t==="addon")renderAddon();if(t==="tip"){delete ACT_DONE.tip;renderTip()}TABS.forEach(k=>{$("#tab-"+k).setAttribute("aria-selected",k===t);$("#view-"+k).hidden=k!==t});$("#pageTitle").textContent=$("#tab-"+t).textContent;try{localStorage.setItem("tt-tab",t)}catch(e){}}
 TABS.forEach(k=>$("#tab-"+k).onclick=()=>showTab(k));
 
 /* ---------- storage ---------- */
@@ -1790,7 +2042,7 @@ function renderTeam(){
     const d=w.d;let mo="",day="";
     if(d.date){const[y,m,dd]=d.date.split("-").map(Number);const dt=new Date(y,m-1,dd);mo=dt.toLocaleDateString("en-US",{month:"short"});day=dd}
     const b=document.createElement("button");b.className="wed";b.setAttribute("aria-current",teamSel===w.id);
-    const mine=af.value?(d.artists||[]).filter(a=>a.name.trim()===af.value).map(a=>a.role==="hair"?"Hair":"Makeup").join(" + "):"";
+    const mine=af.value?(d.artists||[]).filter(a=>a.name.trim()===af.value).map(a=>roleName(a.role)).join(" + "):"";
     b.innerHTML='<div class="d"><small>'+esc(mo)+'</small><b>'+esc(day||"–")+'</b></div><div><div class="who">'+esc(d.bride||"Untitled")+'</div><div class="sub">'+esc([d.location,d.room].filter(Boolean).join(" · "))+'</div><div class="sub">'+(d.mode==="tbd"?'Times TBD':d.startMin==null&&d.calTime?'Calendar: '+esc(d.calTime):'Arrive '+(d.startMin!=null?fmt(d.startMin-(Number(d.arrival)||0)):"–")+' · Start '+(d.startMin!=null?fmt(d.startMin):"–"))+(mine?' · You: '+esc(mine):'')+'</div><div>'+(d.artistNames||[]).map(n=>'<span class="pill">'+esc(n)+'</span>').join("")+'</div></div>';
     if(ROLE!=="office"&&d.calInfo&&(d.calInfo.mine==="waiting"||d.calInfo.mine==="maybe")){const n=document.createElement("div");n.className="sub";n.style.cssText="font-weight:600;color:var(--ink)";n.textContent="Please answer the Google Calendar invite";(b.lastElementChild||b).appendChild(n)}
     b.onclick=()=>{teamSel=w.id;renderTeam();renderTeamSheet();/* on a phone the details sit under the list: bring them into view so the tap shows something */if(window.innerWidth<900){const t=$("#teamCal").firstChild?$("#teamCal"):$("#teamSheet");t.scrollIntoView({behavior:"smooth",block:"start"})}};
@@ -2084,7 +2336,7 @@ $("#adm-copy").onclick=()=>copy([ADM_COLS.map(c=>c[1]).join("\t"),...profiles.ma
 function artistPlan(a){
   const plan=build(S), labels=labelMap(S,plan,"team");
   const cols=plan.cols.filter(c=>c.artist.id===a.id);
-  const slots=[];cols.forEach(c=>c.cells.forEach((pid,r)=>{if(pid)slots.push({t:plan.start+r*c.slot,end:plan.start+(r+1)*c.slot,txt:(labels[pid+":"+c.service]||{}).txt||""})}));
+  const slots=[];cols.forEach(c=>c.cells.forEach((pid,r)=>{if(pid)slots.push({t:plan.start+cellT(c,r),end:plan.start+cellT(c,r)+cellLen(c,r),txt:((labels[pid+":"+cellSvc(c,r)]||{}).txt||"")+cellPart(c,r)})}));
   slots.sort((x,y)=>x.t-y.t);
   return {plan,slots,start:plan.start-(Number(S.arrival)||0),end:slots.length?slots[slots.length-1].end:plan.end};
 }
@@ -2101,7 +2353,7 @@ function inviteText(a,ap,kind){
     L.push("Call time: "+fmt(ap.start)+"  ·  Services start: "+fmt(ap.plan.start));
     L.push("Location: "+loc);
     L.push("Day-of contact: "+[S.contactName,S.contactPhone].filter(Boolean).join(" "));
-    L.push("");L.push("Your schedule ("+(a.role==="hair"?"hair":"makeup")+")");
+    L.push("");L.push("Your schedule ("+roleName(a.role).toLowerCase()+")");
     ap.slots.forEach(x=>L.push(fmt(x.t)+"   "+x.txt));
     if(S.touchups)L.push("Touch-ups before leaving: "+S.touchups);
     if(S.notes){L.push("");L.push("Notes: "+S.notes)}
@@ -2126,11 +2378,11 @@ $("#calSync").onclick=async()=>{
     const events=[];
     for(const a of S.artists){
       const ap=artistPlan(a);
-      events.push({key:"w:"+a.id,email:a.email,summary:"Taffeta Wedding · "+S.bride+" · "+(a.role==="hair"?"Hair":"Makeup"),date:S.date,startMin:ap.start,endMin:ap.end,location:[S.location,S.room].filter(Boolean).join(", "),description:inviteText(a,ap,"wedding"),reminders:[1440,120]});
+      events.push({key:"w:"+a.id,email:a.email,summary:"Taffeta Wedding · "+S.bride+" · "+roleName(a.role),date:S.date,startMin:ap.start,endMin:ap.end,location:[S.location,S.room].filter(Boolean).join(", "),description:inviteText(a,ap,"wedding"),reminders:[1440,120]});
       const doesBride=plan.cols.some(c=>c.artist.id===a.id&&c.cells.includes(brideId));
       if(S.previewDate&&S.previewTime&&doesBride){
         const st=toMin(S.previewTime);
-        events.push({key:"p:"+a.id,email:a.email,summary:"Taffeta Preview · "+S.bride+" · "+(a.role==="hair"?"Hair":"Makeup"),date:S.previewDate,startMin:st,endMin:st+(Number(S.previewLen)||120),location:(S.previewLoc||"").trim()||"Taffeta Salon & Spa, 219 Bellevue Ave, Hammonton, NJ 08037",description:inviteText(a,ap,"preview"),reminders:[1440,60]});
+        events.push({key:"p:"+a.id,email:a.email,summary:"Taffeta Preview · "+S.bride+" · "+roleName(a.role),date:S.previewDate,startMin:st,endMin:st+(Number(S.previewLen)||120),location:(S.previewLoc||"").trim()||"Taffeta Salon & Spa, 219 Bellevue Ave, Hammonton, NJ 08037",description:inviteText(a,ap,"preview"),reminders:[1440,60]});
       }
     }
     const r=await api("sendInvites",{weddingId:docId,events});
@@ -2265,17 +2517,18 @@ function pvShrink(file,max,q){
 }
 async function pvUpload(p,kind,files){
   const st=$("#pv-up-"+kind),me=ROLE==="office"?"Office":(ME&&(ME.preferredName||ME.legalName))||"";
-  let done=0;
-  for(const f of files){
-    if(!/^image\//.test(f.type)&&!/\.(jpe?g|png|heic|heif|webp)$/i.test(f.name))continue;
-    if(st)st.textContent="Uploading "+(done+1)+" of "+files.length+"…";
+  let done=0;upAwake(true);
+  const q=files.filter(f=>/^image\//.test(f.type)||/\.(jpe?g|png|heic|heif|webp)$/i.test(f.name)),total=q.length;
+  const worker=async()=>{for(let f;(f=q.shift());){   // three at a time (Oct 24 2026)
+    if(st)st.textContent="Uploading "+(done+1)+" of "+total+"…";
     try{
       const data=await pvShrink(f,1600,.82),thumb=await pvShrink(f,320,.7);
-      const j=await api("addPhoto",{key:p.key,photo:{kind,data,thumb}});
+      const j=await apiRetry("addPhoto",{key:p.key,photo:{kind,data,thumb}});
       p.info=j.info;pvThumbs[j.photo.id]="data:image/jpeg;base64,"+thumb;done++;
       if(pvSel===p.key)pvRenderPhotos(p,me);
     }catch(e){toast(e.code==="too_many"?e.message:"A photo didn't upload. Try again.")}
-  }
+  }};
+  try{await Promise.all([worker(),worker(),worker()])}finally{upAwake(false)}
   if(st)st.textContent=done?done+" photo"+(done>1?"s":"")+" added.":"";
   renderPreviews();
 }
@@ -2284,6 +2537,27 @@ async function pvUpload(p,kind,files){
    A Photos card on each booked wedding (Schedule, and the office Timeline): the office adds new inspo the bride sends,
    artists add trial pictures, and every photo from the wedding's bridal preview shows up here on its own. */
 let wpCache={}, wpThumbs={};
+/* faster photos (Alexandra, Oct 24 2026): the screen stays awake while a batch uploads, a shaky connection retries,
+   and small pictures load a few at a time and are kept on the phone so they show right away next time. */
+let upWake=null;
+function upAwake(on){try{if(on&&!upWake&&navigator.wakeLock)navigator.wakeLock.request("screen").then(w=>{upWake=w;w.addEventListener("release",()=>{upWake=null})}).catch(()=>{});else if(!on&&upWake){upWake.release();upWake=null}}catch(e){}}
+async function apiRetry(action,data){for(let t=0;;t++){try{return await api(action,data)}catch(e){if(t>=2||(e.code&&e.code!=="server"))throw e;await new Promise(r=>setTimeout(r,1500*(t+1)))}}}
+const WTDB=new Promise(res=>{try{const q=indexedDB.open("wed-thumbs",1);q.onupgradeneeded=()=>q.result.createObjectStore("t");q.onsuccess=()=>res(q.result);q.onerror=()=>res(null)}catch(e){res(null)}});
+function wtGet(id){return WTDB.then(db=>db?new Promise(r=>{try{const g=db.transaction("t").objectStore("t").get(id);g.onsuccess=()=>r(g.result||null);g.onerror=()=>r(null)}catch(e){r(null)}}):null)}
+function wtPut(id,u){WTDB.then(db=>{try{if(db&&u)db.transaction("t","readwrite").objectStore("t").put(u,id)}catch(e){}})}
+const wpAsked={};
+async function wpFetchThumbs(id,ids){
+  ids=ids.filter(x=>!wpAsked[x]);if(!ids.length)return;ids.forEach(x=>{wpAsked[x]=1});
+  const miss=[];
+  await Promise.all(ids.map(async x=>{const c=await wtGet(x);if(c)wpThumbs[x]=c;else miss.push(x)}));
+  if(miss.length<ids.length)wpRefresh(id);
+  const batches=[];for(let i=0;i<miss.length;i+=12)batches.push(miss.slice(i,i+12));
+  const run=async()=>{for(let b;(b=batches.shift());){
+    try{const j=await apiRetry("wedPhotoData",{id,ids:b});Object.entries(j.photos||{}).forEach(([k,u])=>{wpThumbs[k]=u;wtPut(k,u)});b.forEach(x=>{if(!wpThumbs[x])wpThumbs[x]=""})}
+    catch(e){b.forEach(x=>{if(wpThumbs[x]===undefined)wpThumbs[x]=""})}
+    wpRefresh(id)}};
+  await Promise.all([run(),run(),run()]);
+}
 const wpMe=()=>ROLE==="office"?"Office":(ME&&(ME.preferredName||ME.legalName))||"";
 const WP_GROUPS=[["inspo","Inspiration from the bride"],["look","Trial & look photos"],["preview","From the bridal preview"],["fav","Wedding Day Favorites"]];
 function wpShow(where,id){
@@ -2322,34 +2596,36 @@ function wpRender(where){
     });
   });
   box.querySelectorAll('input[type="file"]').forEach(inp=>inp.onchange=()=>(inp.dataset.kind==="fav"?favUpload(id,[...inp.files]):wpUpload(id,inp.dataset.kind,[...inp.files],box.querySelector("[data-st]"))).finally(()=>{inp.value=""}));
-  const need=photos.filter(p=>!wpThumbs[p.id]).map(p=>p.id);
-  if(need.length&&!box.dataset.fetching){box.dataset.fetching="1";api("wedPhotoData",{id,ids:need}).then(j=>{Object.assign(wpThumbs,j.photos||{});need.forEach(x=>{if(!wpThumbs[x])wpThumbs[x]=""})}).catch(()=>{}).finally(()=>{delete box.dataset.fetching;wpRefresh(id)})}
+  const need=photos.filter(p=>wpThumbs[p.id]===undefined).map(p=>p.id);
+  if(need.length)wpFetchThumbs(id,need);
 }
 function wpRefresh(id){["team","build"].forEach(k=>{const b=$("#wp-"+k);if(b&&!b.hidden&&b.dataset.w===id)wpRender(k)})}
 async function wpOpen(id,ph){
+  if(ph.vf){window.open("https://drive.google.com/file/d/"+ph.vf+"/view","_blank");return}
   const w=window.open("","_blank");
   try{const j=await api("wedPhotoData",{id,ids:[ph.id],full:true});const src=(j.photos||{})[ph.id];
     if(w&&src){w.document.title="Wedding photo";w.document.body.style.margin="0";w.document.body.innerHTML='<img alt="Wedding photo" style="max-width:100%;display:block;margin:auto" src="'+src+'">'}else if(w)w.close()}
   catch(e){if(w)w.close();toast("Couldn't open that photo.")}
 }
-async function wpUpload(id,kind,files,st){
-  let done=0;
-  for(const f of files){
-    if(!/^image\//.test(f.type)&&!/\.(jpe?g|png|heic|heif|webp)$/i.test(f.name))continue;
-    if(st)st.textContent="Uploading "+(done+1)+" of "+files.length+"…";
+async function wpUpload(id,kind,files,st){   // three at a time (Oct 24 2026)
+  let done=0;upAwake(true);
+  const q=files.filter(f=>/^image\//.test(f.type)||/\.(jpe?g|png|heic|heif|webp)$/i.test(f.name)),total=q.length;
+  const worker=async()=>{for(let f;(f=q.shift());){
+    if(st)st.textContent="Uploading "+(done+1)+" of "+total+"…";
     try{
       const data=await pvShrink(f,1600,.82),thumb=await pvShrink(f,320,.7);
-      const j=await api("addWedPhoto",{id,photo:{kind,data,thumb}});
-      wpThumbs[j.photo.id]="data:image/jpeg;base64,"+thumb;(wpCache[id]=wpCache[id]||[]).push(j.photo);done++;
+      const j=await apiRetry("addWedPhoto",{id,photo:{kind,data,thumb}});
+      wpThumbs[j.photo.id]="data:image/jpeg;base64,"+thumb;wtPut(j.photo.id,wpThumbs[j.photo.id]);(wpCache[id]=wpCache[id]||[]).push(j.photo);done++;
       wpRefresh(id);st=null;
     }catch(e){toast(e.code==="too_many"?e.message:"A photo didn't upload. Try again.")}
-  }
+  }};
+  try{await Promise.all([worker(),worker(),worker()])}finally{upAwake(false)}
   wpRefresh(id);
   if(done)toast(done+" photo"+(done>1?"s":"")+" added.");
 }
 /* Wedding day favorites (Alexandra, Oct 23 2026): the artists add their favorite photos and videos after the wedding.
-   Each wedding gets its own album on Marketing Proofs (and a Drive folder) for Alexandra and Dom. Videos go up in 8 MB pieces. */
-const FAV_PIECE=8*1048576;
+   Each wedding gets its own album on Marketing Proofs (and a Drive folder) for Alexandra and Dom. Videos go up in 16 MB pieces; photos go up three at a time (Oct 24 2026). */
+const FAV_PIECE=16*1048576;
 function favCover(file){
   return new Promise(res=>{
     const v=document.createElement("video"),u=URL.createObjectURL(file);let done=false;
@@ -2361,29 +2637,37 @@ function favCover(file){
     v.onerror=()=>fin(null);setTimeout(()=>fin(null),8000);v.src=u;
   });
 }
+// Sends a file straight to a Drive upload link. Always resolves; the server then checks how much Drive got.
+function driveSend(url,file,type,pct){return new Promise(res=>{try{const x=new XMLHttpRequest();let last=-1;
+  x.open("PUT",url);x.setRequestHeader("Content-Type",type);
+  x.upload.onprogress=e=>{if(!e.lengthComputable)return;const p=Math.floor(100*e.loaded/e.total);if(p!==last){last=p;pct(p)}};
+  x.onload=x.onerror=x.onabort=x.ontimeout=()=>res();x.send(file)}catch(e){res()}})}
 function favB64(blob){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(String(r.result).split(",")[1]);r.onerror=rej;r.readAsDataURL(blob)})}
 function imgSize(file){return new Promise(res=>{const u=URL.createObjectURL(file),i=new Image();i.onload=()=>{URL.revokeObjectURL(u);res({w:i.naturalWidth,h:i.naturalHeight})};i.onerror=()=>{URL.revokeObjectURL(u);res({w:0,h:0})};i.src=u})}
 async function favUpload(id,files){
   const say=t=>{["team","build"].forEach(k=>{const b=$("#wp-"+k);if(b&&!b.hidden&&b.dataset.w===id){const st=b.querySelector("[data-st]");if(st)st.textContent=t}})};
-  let done=0,n=0;
-  for(const f of files){
-    n++;
-    const isVid=/^video\//.test(f.type)||/\.(mov|mp4|m4v|3gp|webm)$/i.test(f.name);
-    if(!isVid&&!/^image\//.test(f.type)&&!/\.(jpe?g|png|heic|heif|webp)$/i.test(f.name))continue;
-    const lead=(isVid?"Uploading video ":"Uploading ")+n+" of "+files.length;
-    say(lead+"…");
+  const isVid=f=>/^video\//.test(f.type)||/\.(mov|mp4|m4v|3gp|webm)$/i.test(f.name);
+  const list=files.filter(f=>isVid(f)||/^image\//.test(f.type)||/\.(jpe?g|png|heic|heif|webp)$/i.test(f.name)),total=list.length;
+  let done=0,tried=0;upAwake(true);
+  async function one(f){
+    const vid=isVid(f),lead=(vid?"Uploading video ":"Uploading ")+Math.min(total,tried+1)+" of "+total;
+    if(!vid)say(lead+"…");
     try{
       let photo;
-      if(!isVid){
+      if(!vid){
         const sz=await imgSize(f),k=Math.min(1,2560/Math.max(sz.w||1,sz.h||1));
         const data=await pvShrink(f,2560,.88),thumb=await pvShrink(f,320,.7);
-        photo=(await api("addFav",{id,photo:{data,thumb,w:Math.round(sz.w*k),h:Math.round(sz.h*k)}})).photo;
-        wpThumbs[photo.id]="data:image/jpeg;base64,"+thumb;
+        photo=(await apiRetry("addFav",{id,photo:{data,thumb,w:Math.round(sz.w*k),h:Math.round(sz.h*k)}})).photo;
+        wpThumbs[photo.id]="data:image/jpeg;base64,"+thumb;wtPut(photo.id,wpThumbs[photo.id]);
       }else{
+        say(lead+"…");
         const c=await favCover(f)||{};
-        const st=await api("favVideoStart",{id,video:{name:f.name,type:f.type||"video/mp4",size:f.size,thumb:c.thumb||"",w:c.w||0,h:c.h||0}});
+        const st=await apiRetry("favVideoStart",{id,video:{name:f.name,type:f.type||"video/mp4",size:f.size,thumb:c.thumb||"",w:c.w||0,h:c.h||0}});
         let off=0;
-        while(off<f.size){
+        // Faster (Oct 26 2026): the whole video goes straight to Drive first; whatever didn't make it goes up in pieces below.
+        if(st.url){await driveSend(st.url,f,f.type||"video/mp4",p=>say(lead+"… "+p+"%. Keep this page open."));
+          try{const c=await api("favVideoCheck",{token:st.token});if(c.done)photo=c.photo;else off=c.next||0}catch(e){if(e.code==="expired")throw e}}
+        while(!photo&&off<f.size){
           say(lead+"… "+Math.round(100*off/f.size)+"%. Keep this page open.");
           const piece=f.slice(off,Math.min(f.size,off+FAV_PIECE)),data=await favB64(piece);
           let j,tries=0;
@@ -2391,11 +2675,18 @@ async function favUpload(id,files){
           if(j.done){photo=j.photo;break}
           off=j.next||off+piece.size;
         }
-        if(c.thumb&&photo)wpThumbs[photo.id]="data:image/jpeg;base64,"+c.thumb;
+        if(c.thumb&&photo){wpThumbs[photo.id]="data:image/jpeg;base64,"+c.thumb;wtPut(photo.id,wpThumbs[photo.id])}
       }
       if(photo){(wpCache[id]=wpCache[id]||[]).push(photo);done++;wpRefresh(id)}
-    }catch(e){toast(e.message&&e.message!=="error"&&e.message!=="server"?e.message:(isVid?"A video didn't upload. Try again.":"A photo didn't upload. Try again."))}
+    }catch(e){toast(e.message&&e.message!=="error"&&e.message!=="server"?e.message:(vid?"A video didn't upload. Try again.":"A photo didn't upload. Try again."))}
+    tried++;
   }
+  try{
+    const pics=list.filter(f=>!isVid(f)),vids=list.filter(isVid);
+    const worker=async()=>{for(let f;(f=pics.shift());)await one(f)};
+    await Promise.all([worker(),worker(),worker()]);
+    for(const f of vids)await one(f);   // videos one at a time, each in big pieces
+  }finally{upAwake(false)}
   wpRefresh(id);
   if(done)toast(done+(done>1?" favorites":" favorite")+" added. Thank you!");
 }
@@ -2443,7 +2734,7 @@ function bkInfo(d){
   const ppl=d.people||[],hx=headDiff(d);let hair=ppl.filter(p=>p.hair).length,mu=ppl.filter(p=>p.mu).length;
   if(hx){hair=hair+" (calendar "+hx.cal.hair+")";mu=mu+" (calendar "+hx.cal.mu+")"}
   const cal=Object.values(d.cal||{}),yes=cal.filter(c=>c.status==="accepted").length;
-  const team=(d.artists||[]).filter(a=>(a.name||"").trim()).map(a=>a.name.trim()+" ("+(a.role==="hair"?"hair":"makeup")+")");
+  const team=(d.artists||[]).filter(a=>(a.name||"").trim()).map(a=>a.name.trim()+" ("+roleName(a.role).toLowerCase()+")");
   const prev=d.previewDate?shortDate(d.previewDate)+(d.previewTime?" "+fmt(Number(d.previewTime.split(":")[0])*60+Number(d.previewTime.split(":")[1]||0)):""):"";
   return {hair,mu,team,prev,invites:cal.length?yes+" of "+cal.length+" confirmed":"Not sent"};
 }
@@ -2608,7 +2899,7 @@ $("#jb-send").onclick=async()=>{
     // the app doesn't text anyone: give the office one button per artist, with her private link in the message
     const sent=ids.map(id=>profiles.find(p=>p._id===id)).filter(Boolean);
     jbOut=sent.map(p=>({p,text:jbText(linkFor(p))}));
-    out.innerHTML="Offer saved. It's waiting in "+(sent.length===1?"her":"their")+" app under Job offers. Now text "+(sent.length===1?"her":"each one")+" the offer and link:"
+    out.innerHTML="Offer saved and emailed to anyone with an email on file. It's waiting in "+(sent.length===1?"her":"their")+" app under Job offers. Now text "+(sent.length===1?"her":"each one")+" the offer and link:"
       +'<div class="row" style="margin-top:6px">'+jbOut.map((o,i)=>'<button class="btn small" data-jbtext="'+i+'">Text '+esc(o.p.preferredName||o.p.legalName||"artist")+'</button>').join("")+'</div>';
     out.querySelectorAll("[data-jbtext]").forEach(b=>b.onclick=()=>jbSend(jbOut[+b.dataset.jbtext],b));
     $("#jb-team").querySelectorAll("input:checked").forEach(c=>c.checked=false);
@@ -2770,6 +3061,10 @@ function renderPipeline(j){
       };
     }
   }
+  /* Abandoned Payments (Alexandra, Oct 28 2026): website bookings that stopped at the payment step (POWR emails, added by Zapier) */
+  const ab=(j&&j.abandoned)||[];
+  $("#pp-ab").hidden=!ab.length;
+  $("#pp-abandoned").innerHTML=ab.length?'<tr><th>Left On</th><th>Bride</th><th>Wedding</th><th>Location</th><th>Follow-Up Email</th></tr>'+ab.map(x=>'<tr><td>'+esc(shortDate(x.leftOn)||"–")+(x.leftAt?' <span class="hint">'+esc(x.leftAt)+'</span>':'')+'</td><td><b>'+esc(x.bride)+'</b></td><td>'+esc(shortDate(x.date)||"–")+'</td><td style="white-space:normal;min-width:160px">'+esc(x.location)+'</td><td>'+(x.emailed?"Sent "+esc(shortDate(x.emailed)||x.emailed):"Not sent yet")+'</td></tr>').join(""):"";
   const m=(j&&j.marked)||[],mt=$("#pp-marked");
   mt.innerHTML=m.length?'<tr><th>Bride</th><th>Wedding</th><th>Amount</th><th>How</th><th>Paid on</th><th>In HoneyBook</th></tr>'+m.map(x=>'<tr><td><b>'+esc(x.bride)+'</b></td><td>'+esc(shortDate(x.date)||"–")+'</td><td>$'+esc(x.amount)+'</td><td>'+esc(x.method)+'</td><td>'+esc(shortDate(x.paidOn))+'</td><td>'+(x.inHoneyBook?"Done "+esc(shortDate(x.inHoneyBook)||x.inHoneyBook):"Waiting")+'</td></tr>').join(""):'<tr><td><div class="empty-state">Nothing marked paid in the app yet.</div></td></tr>';
 }
@@ -2835,6 +3130,7 @@ function applyData(j){
   else{myPayouts=j.payouts||[];renderMine()}
   if(docId&&S.cal){const w=allWeddings.find(x=>x.id===docId);if(w&&w.d.cal)S.cal=w.d.cal}
   refreshSavedSelect();poBrides();renderTeam();renderTeamSheet();renderBooked();
+  if(!$("#view-home").hidden)loadWx();
 }
 async function start(){
   const j=await api("load");
