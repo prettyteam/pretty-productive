@@ -496,7 +496,7 @@ details.days summary::-webkit-details-marker{display:none}
 <script src="g/rx.js?v=121"></script>
 <script src="g/prices.js?v=7"></script>
 <script src="g/ordering.js?v=2"></script>
-<script src="g/inventory.js?v=1"></script>
+<script src="g/inventory.js?v=2"></script>
 <link rel="stylesheet" href="g/rx.css?v=9">
 <link rel="icon" href="icon.png">
 <link rel="apple-touch-icon" href="briefing/icons/employee-experience-180.png">
@@ -1563,6 +1563,15 @@ function invAll(){
 }
 const invPct=v=>v==null?'—':(v>0?'+':'')+v+'%';
 const cpgTxt=v=>v==null?'—':'$'+(v<0.1?v.toFixed(3):v.toFixed(2))+'/g';
+/* On order (Oct 29 2026): items already ordered, read each morning from the vendor order emails in info@ (desk script, Inventory.gs) */
+const invOO=()=>{wrepLoad();return (WREP.d&&WREP.d.onOrder)||[]};
+const invDay=d=>{const x=new Date(String(d)+'T12:00:00');return isNaN(x)?String(d):x.toLocaleDateString('en-US',{month:'short',day:'numeric'})};
+function invOnOrderSec(){
+  const oo=invOO(); if(!oo.length) return null;
+  const by={}; oo.forEach(o=>(by[o[1]+' · '+invDay(o[0])+(o[2]?' · #'+o[2]:'')]||=[]).push(o));
+  return h('section',{class:'section'},h('h2',{},'On order'),h('small',{class:'soft',style:'margin-top:-8px'},'From the order emails in info@. Receive each box in Paired Plus when it comes in.'),
+    h('div',{class:'sec2'},Object.entries(by).map(([k,its])=>h('div',{class:'lrow'},h('span',{},h('b',{},k),h('small',{},its.map(o=>o[3]+(o[4]?' ('+o[4]+')':'')).join(', ')))))));
+}
 function invReport(R){
   const t=R.tiles, stat=(l,v,sub)=>h('div',{class:'cell tcell'},h('span',{class:'label',style:'font-size:11px'},l),h('span',{class:'num',style:'font-family:var(--display);font-size:24px'},v),sub?h('small',{class:'soft',style:'font-size:12px'},sub):null);
   const KIND={'Color charged, no bowl weighed':'Charged, never weighed','Color mixed, no ticket found':'Mixed, no ticket found','Color mixed, no color service charged':'Mixed, no color charged','Charged under another artist':'Rung up under another artist','Extra bowl (2 bowls for a 1-bowl service)':'Extra bowl','Mixed 20%+ over recommended':'20%+ over the recipe','Date differs (mixed vs. charged)':'Different day','Charged differs from what was mixed':'Charged for something else'};
@@ -1575,7 +1584,9 @@ function invReport(R){
     h('section',{class:'section'},h('h2',{},'Details'),
       Object.entries(R.flags).map(([k,rows])=>h('details',{class:'tryd'},h('summary',{},h('span',{class:'tlabel'},(KIND[k]||k)+' · '+rows.length),h('span',{class:'tplus','aria-hidden':'true'},'+')),
         h('div',{class:'sec2'},rows.map(([d,a,c,m,ch,g,v])=>h('div',{class:'lrow'},h('span',{},h('b',{},c),h('small',{},d+' · '+a+(m&&m!=='—'?' · mixed '+m:'')+(ch&&ch!=='—'?' · charged '+ch:''))),g?h('span',{class:'soft',style:'font-size:13px;white-space:nowrap'},g+' g'+(v!=null?' · '+invPct(v):'')):null)))))),
-    h('section',{class:'section'},h('h2',{},'What to order'),h('div',{class:'sec2'},R.order.map(([s,x])=>h('div',{class:'lrow'},h('span',{},h('b',{},s),h('small',{},x)))))),
+    invOnOrderSec(),
+    h('section',{class:'section'},h('h2',{},'What to order'),h('div',{class:'sec2'},R.order.map(([s,x])=>{const oo=invOO().filter(o=>o[1].toLowerCase()===String(s).toLowerCase());
+      return h('div',{class:'lrow'},h('span',{},h('b',{},s),h('small',{},x),oo.length?h('small',{style:'color:var(--green,#2f5d46)'},'Already on order since '+invDay(oo[oo.length-1][0])+': '+oo.map(o=>o[3]+(o[4]?' ('+o[4]+')':'')).join(', ')):null))}))),
     h('section',{class:'section'},h('h2',{},'Best price right now'),h('div',{class:'sec2'},R.prices.map(([i,s,p])=>h('div',{class:'lrow'},h('span',{},h('b',{},i),h('small',{},s)),h('b',{},p))))),
     h('section',{class:'section'},h('h2',{},'Fastest-used'),h('div',{class:'sec2'},R.fastest.map(([l,p,u])=>h('div',{class:'lrow'},h('span',{},h('b',{},p),h('small',{},l)),h('span',{class:'soft',style:'font-size:13px'},u+' / wk'))))),
     R.missing&&R.missing.length?h('p',{class:'soft',style:'font-size:12.5px;margin:0'},'No price yet: '+R.missing.join(' · ')):null];
@@ -1729,11 +1740,14 @@ function invMerch(R){
 }
 /* Weekly Report sub-tab (Oct 29 2026): the Retail Inventory Report from Drive via the desk script, same as the Front Desk's Inventory page (g/inventory.js) */
 let WREP={d:null,at:0,busy:false,err:false};
-function weekReport(){
-  const st=S.mine.staff, box=h('div',{});
+function wrepLoad(){
+  const st=S.mine.staff;
   if(st&&API()&&!WREP.busy&&Date.now()-WREP.at>10*60000){WREP.busy=true;
     fetch(API()+'?staff='+encodeURIComponent(st.slug)+'&t='+encodeURIComponent(st.t)+'&inv=1&_='+Date.now()).then(r=>r.json())
       .then(j=>{WREP.d=j.error==='inv'?null:j;WREP.err=j.error==='inv';WREP.at=Date.now()}).catch(()=>{WREP.err=true}).then(()=>{WREP.busy=false;if(S.tab==='inv')render()})}
+}
+function weekReport(){
+  const box=h('div',{}); wrepLoad();
   box.innerHTML=window.Inventory?Inventory.html(WREP.d,{err:WREP.err}).replace('<h1>Inventory</h1>',''):'';
   return [box];
 }

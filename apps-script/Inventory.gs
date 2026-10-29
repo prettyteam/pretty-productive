@@ -7,14 +7,33 @@
  */
 const INV_FOLDER_ID = '12caB_cJkBiE6_dm8rBqOeolmMOMUX650';   // Taffeta Business Brain > Front Desk & Inventory
 const INV_PEOPLE = ['alexandra', 'rose'];                     // who sees the weekly report in the staff app
+// "Taffeta On Order" sheet (owned by info@): one row per item ordered, filled each morning from the vendor order emails in info@
+const ONORDER_SHEET_ID = '1nXeNpv2-SRJVYfuofE97ECvtXwPIe94Wnbt5cHabdUg';
+const ONORDER_DAYS = 21;                                      // stop showing an order this many days after it was placed
 
 function invReport_() {
   const c = CacheService.getScriptCache(), hit = c.get('invReport1');
-  if (hit) return JSON.parse(hit);
-  let out;
-  try { out = invBuild_(); } catch (err) { return { error: 'read' }; }
-  if (!out.error) { try { c.put('invReport1', JSON.stringify(out), 3600); } catch (e) {} }
+  let out = hit ? JSON.parse(hit) : null;
+  if (!out) {
+    try { out = invBuild_(); } catch (err) { return { error: 'read' }; }
+    if (!out.error) { try { c.put('invReport1', JSON.stringify(out), 3600); } catch (e) {} }
+  }
+  if (!out.error) out.onOrder = invOnOrder_();   // read fresh each time, so an order shows as soon as it's on the sheet
   return out;
+}
+
+/** Items ordered but not received yet: [date, store, order #, item, qty, status], newest first. */
+function invOnOrder_() {
+  try {
+    const v = SpreadsheetApp.openById(ONORDER_SHEET_ID).getSheets()[0].getDataRange().getValues();
+    const cut = Date.now() - ONORDER_DAYS * 864e5;
+    return v.slice(1).map(r => {
+      const d = r[0] instanceof Date ? r[0] : new Date(String(r[0]) + 'T12:00:00');
+      if (isNaN(d)) return { d, row: [] };
+      return { d, row: [Utilities.formatDate(d, 'America/New_York', 'yyyy-MM-dd'), String(r[1]), String(r[2]), String(r[3]), Number(r[4]) || 0, String(r[5] || 'Ordered')] };
+    }).filter(x => x.row[3] && !isNaN(x.d) && x.d.getTime() >= cut && !/received|cancel/i.test(x.row[5]))
+      .sort((a, b) => b.d - a.d).map(x => x.row);
+  } catch (e) { return []; }
 }
 
 function invNewest_() {
