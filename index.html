@@ -496,6 +496,7 @@ details.days summary::-webkit-details-marker{display:none}
 <script src="g/rx.js?v=121"></script>
 <script src="g/prices.js?v=7"></script>
 <script src="g/ordering.js?v=1"></script>
+<script src="g/inventory.js?v=1"></script>
 <link rel="stylesheet" href="g/rx.css?v=9">
 <link rel="icon" href="icon.png">
 <link rel="apple-touch-icon" href="briefing/icons/employee-experience-180.png">
@@ -1726,11 +1727,22 @@ function invMerch(R){
     h('section',{class:'section',id:'invm1'},h('h2',{},'In stock · '+inS.length),h('div',{class:'sec2'},inS.length?inS:h('p',{class:'soft'},'Nothing counted yet.'))),
     h('section',{class:'section',id:'invm0'},h('h2',{},'Out or not counted · '+outS.length),h('small',{class:'soft',style:'margin-top:-8px'},'Type a count and it moves up next time you open this tab.'),h('div',{class:'sec2'},outS))];
 }
+/* Weekly Report sub-tab (Oct 29 2026): the Retail Inventory Report from Drive via the desk script, same as the Front Desk's Inventory page (g/inventory.js) */
+let WREP={d:null,at:0,busy:false,err:false};
+function weekReport(){
+  const st=S.mine.staff, box=h('div',{});
+  if(st&&API()&&!WREP.busy&&Date.now()-WREP.at>10*60000){WREP.busy=true;
+    fetch(API()+'?staff='+encodeURIComponent(st.slug)+'&t='+encodeURIComponent(st.t)+'&inv=1&_='+Date.now()).then(r=>r.json())
+      .then(j=>{WREP.d=j.error==='inv'?null:j;WREP.err=j.error==='inv';WREP.at=Date.now()}).catch(()=>{WREP.err=true}).then(()=>{WREP.busy=false;if(S.tab==='inv')render()})}
+  box.innerHTML=window.Inventory?Inventory.html(WREP.d,{err:WREP.err}).replace('<h1>Inventory</h1>',''):'';
+  return [box];
+}
 function invView(){
   invLoad();
-  const sub=S.invt||'back';
+  const sub=S.invt||'week';
   const head=h('div',{},h('span',{class:'lbl'},'Just for you'),h('h1',{style:'font-size:28px'},'Inventory'));
-  const tabs=h('div',{class:'dtabs',role:'tablist'},[['back','Backbar counts'],['retail','Retail counts'],['report','Color report'],['merch','Hi Pretty merch']].concat(S.mine.spa?[['spa','Spa supplies & cost']]:[]).map(([k,l])=>h('button',{role:'tab','aria-current':String(sub===k),onclick:()=>{S.invt=k;render();window.scrollTo(0,0)}},l)));
+  const tabs=h('div',{class:'dtabs',role:'tablist'},[['week','Weekly Report'],['back','Backbar counts'],['retail','Retail counts'],['report','Color report'],['merch','Hi Pretty merch']].concat(S.mine.spa?[['spa','Spa supplies & cost']]:[]).map(([k,l])=>h('button',{role:'tab','aria-current':String(sub===k),onclick:()=>{S.invt=k;render();window.scrollTo(0,0)}},l)));
+  if(sub==='week') return [h('div',{class:'hub'},head,tabs,...weekReport())];
   if(!INV.data) return [h('div',{class:'hub'},head,tabs,h('p',{class:'dmsg'},INV.err?'Couldn’t open this right now. Check your signal and try again.':'Opening…'))];
   const D=INV.data;
   const body=sub==='spa'&&S.mine.spa?invSpa():sub==='back'?invBackbar(D.backbar):sub==='retail'?invRetail(D.retail,D.merged,D.check):sub==='merch'?invMerch(D.retail):invReport(D.report);
