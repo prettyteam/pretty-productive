@@ -12,6 +12,7 @@
 <script src="../g/aftercare.js?v=12"></script>
 <script src="/g/life.js?v=1"></script>
 <script src="../g/topnav.js?v=3"></script>
+<script src="../g/ordering.js?v=1"></script>
 <script src="../g/jokes.js?v=2"></script>
 <script src="../g/coach.js?v=1"></script>
 <link rel="stylesheet" href="../g/coach.css?v=1">
@@ -436,8 +437,8 @@ function guideView(){
 
 const DESK_PEOPLE=['Adriana','Alexandra','Amanda','Ashley','Carolyn','Flower'];   // Rose is listed as Flower   // who works the desk (Alexandra, Oct 17 2026)
 const NAME_PICS=['adriana','alexandra','amanda','ashley','carolyn'];
-const DESK_GROUPS=[['Guest Requests',['G|C']],['Consultations',['G|K']],['Profiles & Home Care',['G|P','G|R','G|H']],['To Do',['T|C']],['Send to a Guest',['S|C']],['Desk Guide',['D|C','K|C','C|C','B|C']]];
-const DESK_LABEL={'H|C':'Home','G|C':'Guest Requests','G|K':'Consultations','G|P':'Profiles','G|R':'RX Cards','G|H':'Home Care','T|C':'To Do','S|C':'Send a Link or Aftercare','D|C':'Desk Guide','K|C':'Call Coach','C|C':'Cleaning','B|C':'Keep Busy'};
+const DESK_GROUPS=[['Guest Requests',['G|C']],['Consultations',['G|K']],['Profiles & Home Care',['G|P','G|R','G|H']],['To Do',['T|C']],['Send to a Guest',['S|C']],['Ordering',['O|C']],['Desk Guide',['D|C','K|C','C|C','B|C']]];
+const DESK_LABEL={'H|C':'Home','G|C':'Guest Requests','G|K':'Consultations','G|P':'Profiles','G|R':'RX Cards','G|H':'Home Care','T|C':'To Do','S|C':'Send a Link or Aftercare','O|C':'Ordering','D|C':'Desk Guide','K|C':'Call Coach','C|C':'Cleaning','B|C':'Keep Busy'};
 let HOME_OPEN='';
 function deskGo(k){const [a,t]=k.split('|');area=a;if(a==='G')tab=t;store.set('desk-tab',tab);HOME_OPEN='';render();scrollTo(0,0);if(window.TopNav)TopNav.check()}
 function deskCount(k){const n=id=>Number(($('#'+id)||{}).textContent)||0;return {'G|C':n('nC'),'G|K':n('nK'),'G|P':n('nP'),'G|R':n('nR'),'G|H':n('nH'),'T|C':todoCount()}[k]||0}
@@ -453,7 +454,7 @@ function deskHome(){
   h+=`<div class="hmenu"><div class="mhead">Menu</div><div class="cgrid">`;
   DESK_GROUPS.forEach(([g,keys],i)=>{const c=keys.reduce((a,x)=>a+deskCount(x),0);
     h+=`<button type="button" data-g="${esc(g)}"${keys.length>1?` aria-expanded="${HOME_OPEN===g}"`:''}>${c?`<span class="n">${c}</span>`:''}${esc(g)}</button>`;
-    if(i%2===1&&DESK_GROUPS.slice(i-1,i+1).some(x=>x[0]===HOME_OPEN)){const o=DESK_GROUPS.find(x=>x[0]===HOME_OPEN);
+    if((i%2===1||i===DESK_GROUPS.length-1)&&DESK_GROUPS.slice(i-(i%2),i+1).some(x=>x[0]===HOME_OPEN)){const o=DESK_GROUPS.find(x=>x[0]===HOME_OPEN);
       h+=`<div class="hpages">${o[1].map(p=>{const c=deskCount(p);return `<button type="button" data-p="${p}">${esc(DESK_LABEL[p])}${c?`<span class="n">${c}</span>`:''}</button>`}).join('')}</div>`}});
   h+=`</div></div><input type="file" accept="image/*" id="hFile" hidden>`;
   const box=$('#dhome');box.innerHTML=h;
@@ -477,7 +478,7 @@ function render(){
   ['.runbar','#alerts'].forEach(q=>{const el=$(q);if(el)el.style.display=home?'':'none'});
   ['#send','#after'].forEach(q=>{const el=$(q);if(el){el.style.display=send?'':'none';if(send){el.open=true;el.dataset.page='1'}else delete el.dataset.page}});
   $('#body').style.display=home||send?'none':'';
-  const body=g?guests():home||send?'':area==='T'?todoView():area==='D'?guideView():area==='K'?'<div id="ccDesk"></div>':area==='C'?cleanView():busyView();
+  const body=g?guests():home||send?'':area==='T'?todoView():area==='D'?guideView():area==='K'?'<div id="ccDesk"></div>':area==='C'?cleanView():area==='O'?(window.Ordering?Ordering.html('full',null,GUIDE&&GUIDE.ordering):''):busyView();
   if(!g)guests();
   todoCount();
   if(home)deskHome();

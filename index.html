@@ -495,6 +495,7 @@ details.days summary::-webkit-details-marker{display:none}
 <script src="g/jokes.js?v=2"></script>
 <script src="g/rx.js?v=121"></script>
 <script src="g/prices.js?v=7"></script>
+<script src="g/ordering.js?v=1"></script>
 <link rel="stylesheet" href="g/rx.css?v=9">
 <link rel="icon" href="icon.png">
 <link rel="apple-touch-icon" href="briefing/icons/employee-experience-180.png">
@@ -1767,6 +1768,13 @@ function invSpa(){
 
 /* estheticians: Skincare stock (Biologique Recherche on-hand counts, no costs) */
 let SKIN={data:null,err:null,loading:false,key:null};
+/* Ordering: the shared page from g/ordering.js, plus the color report's best prices for anyone who has the Inventory tab */
+function orderView(){
+  const mode=orderMode(); if(mode==='full') invLoad();
+  const R=mode==='full'&&INV.data&&INV.data.report, box=h('div',{class:'hub'});
+  box.innerHTML=window.Ordering.html(mode,R&&R.prices,mode==='full'&&S.mine.ordering);
+  return [box];
+}
 function skinView(){
   const p=S.mine.skin;
   if(p&&!(SKIN.key===p.file&&(SKIN.data||SKIN.loading))){SKIN={data:null,err:null,loading:true,key:p.file};
@@ -1832,6 +1840,9 @@ function cardsView(){
 /* Taffeta Marketing Proofs (Alexandra, Oct 17 2026): the weekly social posts board lives on Claude (one link that updates
    in place). Dominique and Isabella get a Marketing Proofs square that opens it, and so does The Pretty Report. */
 const MKT_URL='https://prettyteam.taffetadesign.com/mkt/', MKT_SLUGS=['dominique','isabella'];
+/* Ordering tab (Oct 28 2026): Rose and Alexandra get every store link; Carolyn gets the Hi Pretty Amazon lists only (g/ordering.js) */
+const ORDER_FULL=['rose','alexandra'], ORDER_SPA=['carolyn'];
+function orderMode(){const sl=((S.mine||{}).staff||{}).slug;return ORDER_FULL.includes(sl)?'full':ORDER_SPA.includes(sl)?'spa':''}
 /* Customer Cards (RX card + Home care) for people without daily goals (Alexandra, Oct 22-23 2026: every associate). */
 const CC_SLUGS=['adriana','kat','rose','ashley-b','amanda','isabella'];
 function openMkt(){const w=window.open(MKT_URL,'_blank','noopener');if(!w)location.href=MKT_URL}
@@ -1851,6 +1862,7 @@ function staffTabs(){
   if(p.cr&&p.cr.weeks&&p.cr.weeks.length) t.push(['cr','Weekly CR']);
   if(st.slug) t.push(['off','Time Off']);
   if(st.slug) t.push(['prices','Prices']);
+  if(orderMode()&&window.Ordering) t.push(['order','Ordering']);
   if(st.slug&&p.pk&&p.pk.groups&&p.pk.groups.length) t.push(['pk','PK Knowledge']);
   t.push(['guide','Culture']);
   const dc=p.docs||{}; if(dc.hb) t.push(['hb','Handbook']); if(dc.fg) t.push(['fg','Desk Guide']);
@@ -1862,7 +1874,7 @@ function staffTabs(){
 }
 /* One menu instead of a row of tabs (Alexandra, Oct 2026). Sections are grouped; Customer cards holds RX card and Home care. */
 const NAV_GROUPS=[['Appointments',['home','today','tomorrow','tip']],['Customer Cards',['rx','reg']],[MW_NAME,['mph']],['Goals',['growth','binder','cr']],
-  ['Salon & Spa',['prices','pk','inv','skin','cards','off']],['Taffeta',['guide','hb','fg']],['Self Promotion',['promo']],['Marketing Proofs',['mkt']],['My Profile',['me']]];
+  ['Salon & Spa',['prices','order','pk','inv','skin','cards','off']],['Taffeta',['guide','hb','fg']],['Self Promotion',['promo']],['Marketing Proofs',['mkt']],['My Profile',['me']]];
 let NAV_OPEN=false;
 /* Disco ball = Home, Back arrow = the page before (Alexandra, Oct 15 2026). Each page change is a browser history step,
    so the Back arrow and the phone's own back swipe both work. */
@@ -1992,6 +2004,7 @@ function staffRender(){
   if(S.tab==='reg') return regimenView();
   if(S.tab==='rx') return rxView();
   if(S.tab==='prices') return pricesView();
+  if(S.tab==='order') return orderView();
   if(S.tab==='pk') return pkView();
   if(S.tab==='growth') return growthView();
   if(S.tab==='mph') return mphView();
@@ -2384,7 +2397,7 @@ function apply(P){
   S.daily=P.daily||null;
   if(EDITION==='team'){S.isAdmin=true;S.pages=(P.pages||[]).filter(isGoalsPerson);S.week=P.week||null;S.hubKey=P.hub&&P.hub.admin;S.payroll=P.payroll||[];S.rates=P.rates||{};S.hoursList=P.hoursList||[];S.retailRate=P.retailRate==null?10:P.retailRate;S.month=P.month||null;S.guideUrl=P.guideUrl||null;S.docs=P.docs||null;S.access=P.access||null;S.inv=P.inv||null;S.rtab=S.rtab||'home';setHead()}
   else{S.mine=P.mine||null;setHead(S.mine&&S.mine.name);
-    if(S.mine&&!S.tab){const st=S.mine.staff||{};S.tab=store.get('pp-tab:'+ID)||(st.clock?'home':isGoalsPerson(S.mine)?'today':'home')}
+    if(S.mine&&!S.tab){const st=S.mine.staff||{}, ask=new URLSearchParams(location.search).get('tab');S.tab=(ask&&staffTabs().some(x=>x[0]===ask)?ask:'')||store.get('pp-tab:'+ID)||(st.clock?'home':isGoalsPerson(S.mine)?'today':'home')}
     if(S.mine&&!(history.state&&history.state.pp)){try{history.replaceState({pp:S.tab,d:0},'',location.href)}catch(e){}}
     if(S.mine&&S.mine.staff&&!HUB.started){HUB.started=true;hubGet();
       setInterval(()=>{if(document.visibilityState==='visible'&&(S.tab==='home'||S.tab==='off'))hubGet()},90*1000);
