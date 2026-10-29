@@ -55,6 +55,7 @@
     const best=prices&&prices.length?'<section class="osec"><h2>Best Price Right Now</h2><p>From this week’s color report.</p><div>'
       +prices.map(([i,s,p])=>'<div class="orow"><span><b>'+esc(i)+'</b><small>'+esc(s)+'</small></span><b>'+esc(p)+'</b></div>').join('')+'</div></section>':'';
     return css+'<div class="ord"><h1>Ordering</h1>'
+      +amazon
       +'<section class="osec"><h2>Salon Back Bar</h2><p>Tap a store to sign in and order.</p><div class="ordbs">'+STORES.map(s=>btn(s[0],s[1])).join('')+'</div></section>'
       +best
       +(LAST=logins||[],LAST.length?'<section class="osec"><h2>Store Logins</h2><p>For the team only. Please don’t share or screenshot.</p>'+LAST.map(loginCard).join('')+'</section>':'')
@@ -62,7 +63,7 @@
         +'<div class="orow"><span><b>Rossano Ferretti</b><small>By email with the order form</small></span></div></div></section>'
       +'<section class="osec"><h2>Rossano Ferretti</h2><p>Fill in the order form, download it, then tap Email The Order and attach it. They reply with a draft order and a payment link.</p><div class="ordbs">'
         +btn('Open Order Form',RF.form)+btn('Email The Order',mail,true)+'</div><p>Sends to '+esc(RF.to)+'</p></section>'
-      +amazon+'</div>';
+      +'</div>';
   }
   window.Ordering={html};
 })();
