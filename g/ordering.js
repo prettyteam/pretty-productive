@@ -20,10 +20,7 @@
   const AMZ='https://www.amazon.com/shop/taffetaweddings';
   const LISTS=[
     ['Spa Supplies',AMZ+'/list/1ZINQ9LH8C90O','spa'],
-    ['Salon Supplies',AMZ+'/list/331OUHMPQPTVJ','spa'],
-    ['Beauty Professionals',AMZ+'/list/3E4UF3RYKN0QA'],
-    ['Toiletries',AMZ+'/list/2CQXLO97DEI1N'],
-    ['Health & Wellness',AMZ+'/list/1WBZAAHR6H9RA']];
+    ['Salon Supplies',AMZ+'/list/331OUHMPQPTVJ','spa']];
   const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
   const css='<style>.ord{display:grid;gap:22px;max-width:640px}.ord h1{margin:0}.ord .osec{display:grid;gap:10px;border-top:1px solid var(--line,#e2ded5);padding-top:16px}'
     +'.ord h2{margin:0;font-size:12px;letter-spacing:.16em;text-transform:uppercase;font-weight:600}.ord p{margin:0;font-size:13.5px;color:var(--soft,#5f5b55)}'
