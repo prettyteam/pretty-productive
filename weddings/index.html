@@ -795,6 +795,12 @@ input,select,textarea{background:#fff;border-radius:0}
       <div class="status" id="pp-note">Loading…</div>
       <button class="btn ghost" id="pp-refresh">Refresh</button>
     </div>
+    <div id="pp-vm" hidden>
+      <h3 style="margin:4px 0 4px;font:500 12px var(--sans);letter-spacing:.14em;text-transform:uppercase">Venmo Payments to Match</h3>
+      <p class="hint" style="margin:0 0 8px">Venmo payments to sales@ that Claude couldn't match to a bride (a mom or fiancé paying, or a name that isn't on the Pipeline). Tap <b>Add</b> to put her in Booked weddings, or <b>Not a Booking</b> to clear it.</p>
+      <div style="overflow-x:auto"><table class="adm" id="pp-venmo"></table></div>
+      <div style="height:20px"></div>
+    </div>
     <div id="pp-ab" hidden>
       <h3 style="margin:4px 0 4px;font:500 12px var(--sans);letter-spacing:.14em;text-transform:uppercase">Abandoned Payments</h3>
       <p class="hint" style="margin:0 0 8px">Brides who filled out Be a Taffeta Bride on the website but didn't pay. Each one gets a follow-up email the next day.</p>
@@ -804,7 +810,7 @@ input,select,textarea{background:#fff;border-radius:0}
     <div style="overflow-x:auto"><table class="adm" id="pp-table"></table></div>
     <h3 style="margin:28px 0 8px;font:500 12px var(--sans);letter-spacing:.14em;text-transform:uppercase">Marked paid in the app</h3>
     <div style="overflow-x:auto"><table class="adm" id="pp-marked"></table></div>
-    <p class="hint" style="margin-top:10px">Marking a bride paid here adds her to Booked weddings right away. HoneyBook still needs the payment marked too: ask Claude to "mark the app payments in HoneyBook", and the last column fills in once it's done.</p>
+    <p class="hint" style="margin-top:10px">Venmo deposits to sales@ from a bride on the Pipeline are marked paid here on their own. Marking a bride paid here adds her to Booked weddings right away. HoneyBook still needs the payment marked too: ask Claude to "mark the app payments in HoneyBook", and the last column fills in once it's done.</p>
   </section>
 
   <section id="view-admin" hidden>
@@ -2764,7 +2770,7 @@ $("#bk-copy").onclick=()=>{
 };
 
 /* ---------- pipeline (office) ---------- */
-let ppRows=[],ppOpen=null;
+let ppRows=[],ppOpen=null,vmOpen=null;
 /* ---------- extensions (office only, saved with the wedding) ---------- */
 const EXT_TEXT={type:"ext-type",color:"ext-color",length:"ext-length",pieces:"ext-pieces",shipName:"ext-sname",shipPhone:"ext-sphone",shipStreet:"ext-sstreet",shipStreet2:"ext-sstreet2",shipCity:"ext-scity",shipState:"ext-sstate",shipZip:"ext-szip",shipBy:"ext-shipby",labelCost:"ext-label",tracking:"ext-track"};
 const EXT_CHECK={prepped:"ext-prepped",bought:"ext-bought",shipped:"ext-shipped",returned:"ext-returned"};
@@ -3061,6 +3067,42 @@ function renderPipeline(j){
       };
     }
   }
+  /* Venmo Payments to Match (Alexandra, Oct 29 2026): Venmo deposits to sales@ the script couldn't match to a bride (Venmo.js) */
+  const vm=(j&&j.venmo)||[],brides=[...new Set(ppRows.map(r=>r.bride))];
+  $("#pp-vm").hidden=!vm.length;
+  $("#pp-venmo").innerHTML=vm.length?'<tr><th>Paid On</th><th>From</th><th>Amount</th><th>Venmo Note</th><th></th></tr>'+vm.map((x,i)=>{
+    const row='<tr><td>'+esc(shortDate(x.paidOn)||"–")+'</td><td><b>'+esc(x.payer)+'</b></td><td>$'+esc(x.amount)+'</td><td style="white-space:normal;min-width:160px">'+esc(x.note)+'</td><td style="white-space:nowrap"><button class="btn ghost small" data-vm="'+i+'">Add</button> <button class="btn ghost small" data-vmskip="'+i+'">Not a Booking</button></td></tr>';
+    if(vmOpen!==i)return row;
+    return row+'<tr><td colspan="5"><div class="row" style="align-items:flex-end">'+
+      '<label class="f" style="flex:1 1 180px">Bride<input id="vm-bride" list="vm-brides" value="'+esc(x.bride||x.payer)+'"></label>'+
+      '<label class="f" style="flex:0 1 160px">Wedding Date<input id="vm-date" type="date" value="'+esc(x.date||"")+'"></label>'+
+      '<label class="f" style="flex:1 1 180px">Location<input id="vm-loc"></label>'+
+      '<button class="btn" id="vm-save" style="flex:0 0 auto">Add to Booked</button><button class="btn ghost" id="vm-cancel" style="flex:0 0 auto">Cancel</button>'+
+      '<span class="status" id="vm-status"></span></div><datalist id="vm-brides">'+brides.map(b=>'<option value="'+esc(b)+'">').join("")+'</datalist></td></tr>';
+  }).join(""):"";
+  const vmFill=()=>{const b=$("#vm-bride");if(!b)return;const r=ppRows.find(x=>x.bride.toLowerCase()===b.value.trim().toLowerCase());if(r){if(r.date&&!$("#vm-date").value)$("#vm-date").value=r.date;if(r.location&&!$("#vm-loc").value)$("#vm-loc").value=r.location}};
+  $("#pp-venmo").querySelectorAll("[data-vm]").forEach(b=>b.onclick=()=>{vmOpen=Number(b.dataset.vm);renderPipeline(j);vmFill()});
+  $("#pp-venmo").querySelectorAll("[data-vmskip]").forEach(b=>b.onclick=async()=>{
+    const x=vm[Number(b.dataset.vmskip)];if(!confirm("Clear the $"+x.amount+" from "+x.payer+"? It won't be added to Booked weddings."))return;
+    b.disabled=true;try{await api("venmoHandle",{venmo:{row:x.row,skip:true}});vmOpen=null;await loadPipeline()}catch(e){b.disabled=false;toast("That didn't save. Try again.")}
+  });
+  if(vmOpen!==null&&$("#vm-save")){
+    $("#vm-bride").onchange=vmFill;
+    $("#vm-cancel").onclick=()=>{vmOpen=null;renderPipeline(j)};
+    $("#vm-save").onclick=async()=>{
+      const x=vm[vmOpen],bride=$("#vm-bride").value.trim(),date=$("#vm-date").value;
+      if(!bride||!date){$("#vm-status").textContent="Add her name and wedding date.";return}
+      $("#vm-save").disabled=true;$("#vm-status").textContent="Saving…";
+      try{
+        const res=await api("venmoHandle",{venmo:{row:x.row,bride,date,location:$("#vm-loc").value.trim()}});
+        if(res&&res.ok===false)throw new Error(res.message||"Couldn't save. Try again.");
+        vmOpen=null;
+        if(res.added){try{applyData(await api("load"))}catch(e){}}
+        await loadPipeline();
+        $("#pp-note").textContent=bride+" is marked paid by Venmo"+(res.added?" and added to Booked weddings":"")+". "+$("#pp-note").textContent;
+      }catch(e){$("#vm-save").disabled=false;$("#vm-status").textContent=e.message||"Couldn't save. Try again."}
+    };
+  }
   /* Abandoned Payments (Alexandra, Oct 28 2026): website bookings that stopped at the payment step (POWR emails, added by Zapier) */
   const ab=(j&&j.abandoned)||[];
   $("#pp-ab").hidden=!ab.length;
@@ -3068,7 +3110,7 @@ function renderPipeline(j){
   const m=(j&&j.marked)||[],mt=$("#pp-marked");
   mt.innerHTML=m.length?'<tr><th>Bride</th><th>Wedding</th><th>Amount</th><th>How</th><th>Paid on</th><th>In HoneyBook</th></tr>'+m.map(x=>'<tr><td><b>'+esc(x.bride)+'</b></td><td>'+esc(shortDate(x.date)||"–")+'</td><td>$'+esc(x.amount)+'</td><td>'+esc(x.method)+'</td><td>'+esc(shortDate(x.paidOn))+'</td><td>'+(x.inHoneyBook?"Done "+esc(shortDate(x.inHoneyBook)||x.inHoneyBook):"Waiting")+'</td></tr>').join(""):'<tr><td><div class="empty-state">Nothing marked paid in the app yet.</div></td></tr>';
 }
-$("#pp-refresh").onclick=()=>{ppOpen=null;loadPipeline()};
+$("#pp-refresh").onclick=()=>{ppOpen=null;vmOpen=null;loadPipeline()};
 /* Call Coach (Coach.gs): sales calls graded from Granola, for Alexandra and Dom */
 let ccData=null;
 async function loadCoach(){
