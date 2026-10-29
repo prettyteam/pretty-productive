@@ -69,6 +69,7 @@ function doGet(e) {
   if (p.rxall) return json_({ ok: true, rxall: rxDeskList_(0) });          // every saved RX card, for the desk's filing
   if (p.rgall) return json_({ ok: true, rgall: rows_(TABS.regimen, 3650).reverse().slice(0, 1500) });   // every saved home care card, searchable (Oct 20 2026)
   if (p.rxcard) return json_(rxDeskCard_(p.rxcard));
+  consultRemindEnsure_();   // switches on the 24-hour booking reminder (ConsultRemind.gs)
   return json_({ ok: true, now: Date.now(), concierge: rows_(TABS.concierge, 2), consult: rows_(TABS.consult, 60), profiles: rows_(TABS.profile, 60), todo: todoRows_(), regimen: rows_(TABS.regimen, 14), rx: rxDeskList_(21), seen: deskSeen_() });
 }
 
