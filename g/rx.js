@@ -13,7 +13,7 @@ const RX_SVC={
     ['Single Process',65],['Shadow Root',60],['Glaze',45],['Additional Mix',25],['Face Frame/Spot Highlight',100],['Minimum Foil',85],
     ['Half Foil',150],['Full Foil',175],['Minimum Balayage',125],['Half Head Balayage',185],['Full Head Balayage',325],
     ['Base Lightener',55],['K18 Bond Protection',25],['Goldwell Leave-In Treatment',20],['Permanent Wave',100],['Formal Style',105]],
-  skin:[['Taffeta Facial',130],['Express Acne Treatment',99],['Hydration Boost',99],['Brightening Mini Facial',99],
+  skin:[['Taffeta Facial',130],['Taffeta HydroDiamond Facial',225],['Taffeta HydroDiamond Express',99],['Express Acne Treatment',99],['Hydration Boost',99],['Brightening Mini Facial',99],
     ['Mini Redness Reversal',99],['Anti-Aging Express',99],['Dermaplaning',60],['Dermaplaning Add-On',40],
     ...RX_MASQUES.map(m=>[RX_MQ+m,50]),
     ['Nano Needling Facial',199],['Biologique Recherche Lift & Remodel',200],['Biologique Recherche Cure All',200],['Taffeta Facial with MC 110',130],['Microdermabrasion',150],['Brow Sculpt Maintenance',25],['Brow Tint',25],['Brow Lamination',85],['Lip Wax',15]]

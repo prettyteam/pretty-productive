@@ -16,7 +16,7 @@ const PR_MENU=[
     ['Individual false lashes','$25'],['Strip lash application','$15'],['Lash lift & tint','$125'],['Eyelash extensions','Upon consultation']]],
   ['Brows & waxing',[['First-time brow sculpt','$40'],['Maintenance brow sculpt','$25'],['Brow tint','$25'],['Brow lamination (with kit)','$85'],
     ['Lamination package (tint, sculpt, laminate)','$125'],['Lip or chin','$15'],['Arm','$40'],['Leg','$70'],['Bikini','$50'],['Specialty areas','$68']]],
-  ['Facials',[['New guest treatment & take-home regimen · 30 min','$130'],['Taffeta Facial · 60 min','$130'],['Brightening · 60 min','$160'],
+  ['Facials',[['New guest treatment & take-home regimen · 30 min','$130'],['Taffeta Facial · 60 min','$130'],['Taffeta HydroDiamond Facial','$225'],['Taffeta HydroDiamond Express','$99'],['Brightening · 60 min','$160'],
     ['Anti-aging · 60 min','$160'],['Acne · 60 min','$160'],['Gentleman’s · 60 min','$160'],
     ['Express Targeted Treatment · 30–35 min','$99'],['Biologique Recherche Lift & Remodel · 90 min','$200'],['Biologique Recherche Cure All · 90 min','$200']]],
   ['Facial enhancements',[['Microdermabrasion','$50'],['Dermaplaning','$50'],['Cold seaweed masque','$50'],['Cryo stick therapy','$50'],
