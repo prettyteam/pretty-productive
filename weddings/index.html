@@ -403,6 +403,7 @@ input,select,textarea{background:#fff;border-radius:0}
             <label class="f" style="flex:0 1 110px">Length (min)<input id="previewLen" type="number" min="30" step="15" value="120"></label>
           </div>
           <label class="f">Preview location<input id="previewLoc" placeholder="Blank = salon. NY: bride's address"></label>
+          <div class="f" id="pvWhoWrap" hidden><span>At the Preview (Gets the Calendar Invite)</span><div id="pvWho" class="row" style="gap:6px 16px"></div></div>
           <p class="hint">NY previews happen at the bride's location, so add travel and parking.</p>
         </div>
         <div class="card">
@@ -1300,6 +1301,7 @@ function renderArtists(){
   });
   renderBothSlot();
   renderCalTeam();
+  renderPvWho();
 }
 /* the bride's one-artist box length only shows when a hair & makeup artist is on the team; blank = 60 minutes each */
 function renderBothSlot(){
@@ -2444,12 +2446,11 @@ $("#calSync").onclick=async()=>{
 async function pushInvites(onlyPreview){
     const plan=build(S);
     const brideId=(S.people.find(p=>p.role==="Bride")||{}).id;
-    const events=[];
+    const events=[],pvIds=previewArtists().map(a=>a.id);
     for(const a of S.artists){
       const ap=artistPlan(a);
       if(!onlyPreview)events.push({key:"w:"+a.id,email:a.email,summary:"Taffeta Wedding · "+S.bride+" · "+roleName(a.role),date:S.date,startMin:ap.start,endMin:ap.end,location:[S.location,S.room].filter(Boolean).join(", "),description:inviteText(a,ap,"wedding"),reminders:[1440,120]});
-      const doesBride=plan.cols.some(c=>c.artist.id===a.id&&c.cells.includes(brideId));
-      if(S.previewDate&&S.previewTime&&doesBride){
+      if(S.previewDate&&S.previewTime&&pvIds.includes(a.id)){
         const st=toMin(S.previewTime);
         events.push({key:"p:"+a.id,email:a.email,summary:"Taffeta Preview · "+S.bride+" · "+roleName(a.role),date:S.previewDate,startMin:st,endMin:st+(Number(S.previewLen)||120),location:(S.previewLoc||"").trim()||"Taffeta Salon & Spa, 219 Bellevue Ave, Hammonton, NJ 08037",description:inviteText(a,ap,"preview"),reminders:[1440,60]});
       }
@@ -2460,10 +2461,25 @@ async function pushInvites(onlyPreview){
 /* the bridal preview goes into her artists' Google Calendars as soon as it's on the Timeline, and moves when it changes
    (Laura Frankenford's preview for Lexi and Dom, Oct 30 2026). Wedding invites still wait for Send Invites. */
 let pvSentSig=null,pvBusy=false;
+/* who is at the preview: the office ticks them (Lexi & Dom at Laura Frankenford's, though Bianca does the bride on the day);
+   until she does, it's whoever does the bride */
+function previewArtists(){
+  const named=S.artists.filter(a=>(a.name||"").trim());
+  if(Array.isArray(S.previewWho))return named.filter(a=>S.previewWho.includes(a.id));
+  const plan=build(S),brideId=(S.people.find(p=>p.role==="Bride")||{}).id;
+  return named.filter(a=>plan.cols.some(c=>c.artist.id===a.id&&c.cells.includes(brideId)));
+}
+function renderPvWho(){
+  const box=$("#pvWho");if(!box)return;
+  const named=S.artists.filter(a=>(a.name||"").trim());
+  $("#pvWhoWrap").hidden=!named.length;
+  let on=[];try{on=previewArtists().map(a=>a.id)}catch(e){}
+  box.innerHTML=named.map(a=>'<label class="chk"><input type="checkbox" data-id="'+esc(a.id)+'"'+(on.includes(a.id)?" checked":"")+'> '+esc(a.name.trim())+'</label>').join("");
+  box.querySelectorAll("input").forEach(cb=>cb.onchange=()=>{S.previewWho=[...box.querySelectorAll("input:checked")].map(x=>x.dataset.id);changed(true)});
+}
 function previewSig(){
   if(!S.previewDate||!S.previewTime||S.previewDate<new Date().toISOString().slice(0,10))return "";
-  const plan=build(S),brideId=(S.people.find(p=>p.role==="Bride")||{}).id;
-  const who=S.artists.filter(a=>plan.cols.some(c=>c.artist.id===a.id&&c.cells.includes(brideId))).map(a=>a.id+"/"+(a.email||""));
+  const who=previewArtists().map(a=>a.id+"/"+(a.email||""));
   return who.length?JSON.stringify([S.bride,S.previewDate,S.previewTime,S.previewLen,S.previewLoc,who]):"";
 }
 async function autoPreview(onOpen){
