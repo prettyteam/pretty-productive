@@ -303,6 +303,8 @@ table.adm{border-collapse:collapse;font-size:13px;min-width:100%}table.adm th,ta
 .wp-card{margin-top:18px}
 .wp-card h3{font:500 11px var(--sans);letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:14px 0 8px}
 .wp-card .wp-btns{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.wp-card details.wp-add .menu{left:0;right:auto;min-width:240px}
+.wp-card details.wp-add .menu .filebtn{justify-content:flex-start;text-align:left}
 #sheet.moving{touch-action:manipulation;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}   /* quick taps on a phone move people instead of zooming or selecting text */
 #sheet.moving td[data-pos]{cursor:pointer;-webkit-tap-highlight-color:transparent}
 .movehelp{position:sticky;top:52px;z-index:21;margin:0 0 10px;padding:10px 14px;background:var(--accent);color:var(--accent-ink);font:500 14px/1.35 var(--sans);text-align:center}
@@ -2565,7 +2567,7 @@ async function wpFetchThumbs(id,ids){
   await Promise.all([run(),run(),run()]);
 }
 const wpMe=()=>ROLE==="office"?"Office":(ME&&(ME.preferredName||ME.legalName))||"";
-const WP_GROUPS=[["inspo","Inspiration from the bride"],["look","Trial & look photos"],["preview","From the bridal preview"],["fav","Wedding Day Favorites"]];
+const WP_GROUPS=[["inspo","Inspiration from the bride"],["look","Trial & look photos"],["preview","From the bridal preview"],["fav","Wedding Day Photos"]];
 function wpShow(where,id){
   const box=$("#wp-"+where);if(!box)return;
   box.dataset.w=id||"";
@@ -2582,10 +2584,14 @@ function wpRender(where){
   const box=$("#wp-"+where),id=box.dataset.w,photos=wpCache[id]||[],me=wpMe();
   let h='<h2>Photos</h2><p class="hint">'+(ROLE==="office"?"Add new inspo the bride sends. The team on this wedding sees it here. Preview photos show up on their own.":"Inspo from the bride and photos from the trial. Add yours so the whole team sees the look.")+'</p>';
   WP_GROUPS.forEach(([k,label])=>{const n=photos.filter(p=>p.kind===k).length;if((k==="preview"||k==="fav")&&!n)return;h+='<h3>'+label+(n?' ('+n+')':'')+'</h3><div class="pv-photos" data-g="'+k+'"></div>'});
-  h+='<div class="wp-btns"><span class="btn ghost filebtn">Add inspo<input type="file" accept="image/*" multiple data-kind="inspo" aria-label="Add inspiration photos"></span>'
-   +'<span class="btn ghost filebtn">Add trial photos<input type="file" accept="image/*" multiple data-kind="look" aria-label="Add trial photos"></span>'
-   +'<span class="btn ghost filebtn">Add favorites<input type="file" accept="image/*,video/*" multiple data-kind="fav" aria-label="Add favorite photos and videos from the wedding"></span></div>'
-   +'<p class="hint" style="margin:6px 0 0">After the wedding, add your favorite photos and videos. They go to Alexandra and Dom in the wedding\'s album.</p><p class="status" data-st style="margin:6px 0 0"></p>';
+  /* one Add Photos dropdown instead of three buttons (Alexandra, Oct 30 2026): Lexi couldn't tell which one was for wedding day photos.
+     Each choice is the file picker itself, so a tap opens the phone's photos right away. Wedding day photos are the favorites album. */
+  h+='<div class="wp-btns"><details class="more wp-add"><summary class="btn">Add Photos</summary><div class="menu">'
+   +'<span class="btn ghost filebtn">Wedding Day Photos &amp; Videos<input type="file" accept="image/*,video/*" multiple data-kind="fav" aria-label="Add wedding day photos and videos"></span>'
+   +'<span class="btn ghost filebtn">Trial &amp; Look Photos<input type="file" accept="image/*" multiple data-kind="look" aria-label="Add trial and look photos"></span>'
+   +'<span class="btn ghost filebtn">Inspiration From the Bride<input type="file" accept="image/*" multiple data-kind="inspo" aria-label="Add inspiration photos from the bride"></span>'
+   +'</div></details></div>'
+   +'<p class="hint" style="margin:6px 0 0">After the wedding, add your wedding day photos and videos. They go to Alexandra and Dom in the wedding\'s album.</p><p class="status" data-st style="margin:6px 0 0"></p>';
   box.innerHTML=h;
   box.querySelectorAll("[data-g]").forEach(g=>{
     const list=photos.filter(p=>p.kind===g.dataset.g);
@@ -2601,7 +2607,7 @@ function wpRender(where){
       g.appendChild(d);
     });
   });
-  box.querySelectorAll('input[type="file"]').forEach(inp=>inp.onchange=()=>(inp.dataset.kind==="fav"?favUpload(id,[...inp.files]):wpUpload(id,inp.dataset.kind,[...inp.files],box.querySelector("[data-st]"))).finally(()=>{inp.value=""}));
+  box.querySelectorAll('input[type="file"]').forEach(inp=>inp.onchange=()=>{const dd=inp.closest("details");if(dd)dd.open=false;return(inp.dataset.kind==="fav"?favUpload(id,[...inp.files]):wpUpload(id,inp.dataset.kind,[...inp.files],box.querySelector("[data-st]"))).finally(()=>{inp.value=""})});
   const need=photos.filter(p=>wpThumbs[p.id]===undefined).map(p=>p.id);
   if(need.length)wpFetchThumbs(id,need);
 }
