@@ -76,6 +76,18 @@ body.tw-home header.top{display:none}
 .whois button{width:auto;flex:0 0 auto}
 .ao{display:flex;flex-direction:column;align-items:center;gap:16px;text-align:center;padding:8px 0 24px}
 .ao p{margin:0;font-family:"TaffetaJ",Georgia,serif;font-style:italic;color:#555250;font-size:16px;max-width:300px}
+.ask .askseg{display:flex;flex-direction:column;gap:6px;width:100%;max-width:360px}
+.ask .askseg button{text-align:left;border:1px solid var(--line);background:#fff;color:#121212;padding:9px 12px;font:400 15px var(--sans);cursor:pointer}
+.ask .askseg button small{display:block;font-size:12.5px;opacity:.75}
+.ask .askseg button[aria-pressed="true"]{background:#121212;color:#fff;border-color:#121212}
+.ask .askf{width:100%;max-width:360px;text-align:left;align-items:stretch}
+.ask .askf .pay{align-self:center;width:100%}
+.ask .askf textarea,.ask .askf select{font:inherit;font-size:15px;border:1px solid var(--line);padding:8px 10px;background:#fff;color:#121212;width:100%}
+.ask .asklist{width:100%;max-width:360px;text-align:left}
+.ask .askrow{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);font-size:15px}
+.ask .askrow small{display:block;color:var(--muted);font-size:12px}
+.ask .askst{font-size:12px;border:1px solid var(--line);border-radius:999px;padding:1px 10px;white-space:nowrap}
+.ask .askst.ok{background:#121212;color:#fff;border-color:#121212}
 .ao .qr{background:#fff;border:1px solid #2b2a28;outline:1px solid #2b2a28;outline-offset:-6px;padding:22px;line-height:0}
 .ao .qr svg{width:200px;height:200px;display:block}
 .ao .pay{display:flex;align-items:center;justify-content:center;width:260px;height:46px;border:1px solid #121212;background:#fff;font:400 12px var(--sans);letter-spacing:.16em;text-transform:uppercase;color:#121212;text-decoration:none;cursor:pointer}
@@ -349,6 +361,7 @@ input,select,textarea{background:#fff;border-radius:0}
       <button id="tab-prev" role="tab" aria-selected="false" hidden>Bridal preview</button>
       <button id="tab-info" role="tab" aria-selected="false" hidden>My info</button>
       <button id="tab-pay" role="tab" aria-selected="false" hidden>Payout form</button>
+      <button id="tab-ask" role="tab" aria-selected="false" hidden>Ask Alex</button>
       <button id="tab-admin" role="tab" aria-selected="false" hidden>Team records</button>
     </div>
   </header>
@@ -642,6 +655,7 @@ input,select,textarea{background:#fff;border-radius:0}
     </div>
   </section>
 
+  <section id="view-ask" hidden></section>
   <section id="view-pay" hidden>
     <div class="grid2">
       <div class="rail">
@@ -1756,11 +1770,11 @@ $("#txTeam").onclick=textTeam;
 $("#cf-text-team").onclick=textTeam;
 
 /* ---------- homepage (Alexandra, Oct 17 2026) ---------- */
-const PAGE_LABEL={booked:"Booked Weddings",build:"Timeline",team:"Schedule",cal:"Calendar",pipe:"Pipeline",coach:"Call Coach",todo:"To Do",tpl:"Texts",jobs:"Jobs",admin:"Team Records",pay:"Payout Form",prev:"Bridal Preview",addon:"Add-On Services",tip:"Gratuity",info:"My Info"};
+const PAGE_LABEL={booked:"Booked Weddings",build:"Timeline",team:"Schedule",cal:"Calendar",pipe:"Pipeline",coach:"Call Coach",todo:"To Do",tpl:"Texts",jobs:"Jobs",admin:"Team Records",pay:"Payout Form",prev:"Bridal Preview",ask:"Ask Alex",addon:"Add-On Services",tip:"Gratuity",info:"My Info"};
 function homeGroups(){
   if(ROLE==="office")return [["Weddings",["booked","build","team","cal"]],["Sales",["pipe","coach","todo","tpl"]],["Bridal Team",["jobs","admin","pay"]],["Preview & Add-Ons",["prev","addon"]]];   // always an even number of squares (Alexandra, Oct 17 2026)
   PAGE_LABEL.team="My Weddings";PAGE_LABEL.jobs="Job Offers";
-  return [["My Weddings",["team"]],["Job Offers",["jobs"]],["Add-Ons & Gratuity",["addon","tip"]],["Bridal Preview",["prev"]],["Get Paid",["pay"]],["My Profile",["info"]]];
+  return [["My Weddings",["team"]],["Job Offers",["jobs"]],["Add-Ons & Gratuity",["addon","tip"]],["Bridal Preview",["prev"]],["Ask Alex",["ask"]],["Get Paid & My Profile",["pay","info"]]];
 }
 const NAME_PICS=['adriana','alexandra','alyssa','amanda','angelina','ashley','carolyn','dominique','emily','isabella','jen','jennifer','joanna','kelly','lexi','mia','neva','sara'];
 const OFFICE_PEOPLE=["Alexandra","Dominique","Cherish"];   // Cherish runs payroll (Alexandra, Oct 17 2026)
@@ -1996,8 +2010,40 @@ function renderTip(){
   if(ti){say();ti.oninput=()=>{TIP_TOTAL=ti.value;box.querySelector(".qr").innerHTML=qrSvg(venmoTipUrl(v,tipOf(TIP_TOTAL)));say()}}const g=$("#tipGo");if(g)g.onclick=()=>goTab("info");const cs=$("#cardShare");if(cs)cs.onclick=shareCard;
 }
 
+/* ---------- Ask Alex (Alexandra, Oct 30 2026) ----------
+   An artist sends Alex a question, or asks her to order extensions from Easi Hair Pro. It goes on the same Requests
+   list as the salon team's Send To Alex (The Pretty Report and Pretty Life) and emails Alex; the answer shows here. */
+const ASK_K={ask:["Question Or Request","Anything you need from Alex"],easi:["Easi Hair Pro Order","Extensions you need Alex to order"]};
+const ASK_F={ask:[["note","Your question or request","area"]],
+  easi:[["for","For (bride or client)"],["link","Paste the Easi Hair Pro link"],["item","What to order","","Like Tape-In 20\" 3 packs"],["color","Color"],["length","Length"],
+    ["type","Type",["Tape-In","K-Tip","I-Tip","Clip-In","Halo","Wefts","Other"]],["qty","Packs"],["need","Need it by"],["note","Note","","Optional"]]};
+let ASKW={kind:"ask",f:{},asks:null,busy:false};
+function renderAsk(){
+  const box=$("#view-ask");if(!box)return;
+  if(ASKW.asks===null&&!ASKW.busy){ASKW.busy=true;api("myAsks").then(j=>{ASKW.asks=j.asks||[]}).catch(()=>{ASKW.asks=[]}).finally(()=>{ASKW.busy=false;if(!$("#view-ask").hidden)renderAsk()})}
+  const f=ASKW.f,K=ASK_K[ASKW.kind];
+  let h='<div class="ao ask"><div class="mhead">Ask Alex</div><p>Questions and order requests go straight to Alex.</p><div class="askseg">'
+    +Object.keys(ASK_K).map(k=>'<button type="button" data-k="'+k+'" aria-pressed="'+(ASKW.kind===k)+'">'+esc(ASK_K[k][0])+'<small>'+esc(ASK_K[k][1])+'</small></button>').join("")+'</div><div class="card askf">';
+  ASK_F[ASKW.kind].forEach(([k,l,t,ph])=>{
+    h+='<label class="f">'+esc(l)+(Array.isArray(t)?'<select data-f="'+k+'">'+t.map(o=>'<option'+((f[k]||t[0])===o?' selected':'')+'>'+esc(o)+'</option>').join("")+'</select>'
+      :t==="area"?'<textarea rows="5" data-f="'+k+'">'+esc(f[k]||"")+'</textarea>':'<input data-f="'+k+'" value="'+esc(f[k]||"")+'" placeholder="'+esc(ph||"")+'">')+'</label>'});
+  h+='<button type="button" class="pay" id="askSend">Send To Alex</button></div>';
+  const a=ASKW.asks||[];
+  if(a.length)h+='<div class="mhead" style="margin-top:8px">Your Requests</div><div class="asklist">'+a.map(x=>'<div class="askrow"><div><b>'+esc(x.kind==="ask"?x.note:(x.item||"Easi Hair Pro")+(x.qty?" ×"+x.qty:"")+(x.for?" · "+x.for:""))+'</b><small>Sent '
+    +new Date(x.sent).toLocaleDateString("en-US",{month:"short",day:"numeric"})+'</small></div><span class="askst'+(x.status==="Sent"?"":" ok")+'">'+esc(x.status)+'</span></div>').join("")+'</div>';
+  box.innerHTML=h+'</div>';
+  box.querySelectorAll("[data-k]").forEach(b=>b.onclick=()=>{ASKW.kind=b.dataset.k;renderAsk()});
+  box.querySelectorAll("[data-f]").forEach(el=>{if(el.tagName==="SELECT"&&!f[el.dataset.f])f[el.dataset.f]=el.value;el.oninput=el.onchange=()=>{f[el.dataset.f]=el.value}});
+  $("#askSend").onclick=async()=>{
+    const need=ASKW.kind==="ask"?["note"]:["item"];
+    if(need.some(k=>!(f[k]||"").trim())){toast(ASKW.kind==="ask"?"Write your question first.":"Write what to order first.");return}
+    const b=$("#askSend");b.disabled=true;b.textContent="Sending…";
+    try{const j=await api("askAlex",{ask:Object.assign({kind:ASKW.kind},f)});ASKW.asks=j.asks||[];ASKW.f={};toast("Sent. You’ll see Alex’s answer here.");renderAsk()}
+    catch(e){b.disabled=false;b.textContent="Send To Alex";toast(e.message&&e.message!=="error"?e.message:"That didn’t go through. Try again.")}};
+}
+
 /* ---------- tabs ---------- */
-const TABS=["home","addon","tip","build","team","cal","jobs","prev","booked","pipe","coach","todo","tpl","info","pay","admin"];
+const TABS=["home","addon","tip","build","team","cal","jobs","prev","booked","pipe","coach","todo","tpl","info","pay","ask","admin"];
 function showTab(t){if(!TABS.includes(t))t="home";document.body.classList.toggle("tw-home",t==="home");if(t==="home")renderHome();if(t==="addon")renderAddon();if(t==="tip"){delete ACT_DONE.tip;renderTip()}TABS.forEach(k=>{$("#tab-"+k).setAttribute("aria-selected",k===t);$("#view-"+k).hidden=k!==t});$("#pageTitle").textContent=$("#tab-"+t).textContent;try{localStorage.setItem("tt-tab",t)}catch(e){}}
 TABS.forEach(k=>$("#tab-"+k).onclick=()=>showTab(k));
 
@@ -3376,7 +3422,7 @@ async function start(){
   const j=await api("load");
   ROLE=j.role;canWrite=ROLE==="office";
   $("#view-signin").hidden=true;$("#signOut").hidden=false;
-  const tabs=ROLE==="office"?["home","booked","pipe","coach","todo","tpl","build","team","cal","jobs","prev","admin","pay","addon"]:["home","team","jobs","addon","tip","prev","info","pay"];
+  const tabs=ROLE==="office"?["home","booked","pipe","coach","todo","tpl","build","team","cal","jobs","prev","admin","pay","addon"]:["home","team","jobs","addon","tip","prev","info","pay","ask"];
   TABS.forEach(k=>$("#tab-"+k).hidden=!tabs.includes(k));
   $("#tab-team").textContent=ROLE==="office"?"Schedule":"My weddings";
   $("#tab-jobs").textContent=ROLE==="office"?"Jobs":"Job offers";
@@ -3472,9 +3518,9 @@ async function jbCheckNew(){
   }catch(e){}
 }
 showTab=function(t){
-  const allowed=ROLE==="office"?["home","booked","pipe","coach","todo","tpl","build","team","cal","jobs","prev","admin","pay","addon"]:["home","team","jobs","addon","tip","prev","info","pay"];
+  const allowed=ROLE==="office"?["home","booked","pipe","coach","todo","tpl","build","team","cal","jobs","prev","admin","pay","addon"]:["home","team","jobs","addon","tip","prev","info","pay","ask"];
   if(!allowed.includes(t))t="home";
-  document.body.classList.toggle("tw-home",t==="home");if(t==="home")renderHome();if(t==="addon")renderAddon();if(t==="tip")renderTip();
+  document.body.classList.toggle("tw-home",t==="home");if(t==="home")renderHome();if(t==="addon")renderAddon();if(t==="tip")renderTip();if(t==="ask")renderAsk();
   TABS.forEach(k=>{$("#tab-"+k).setAttribute("aria-selected",k===t);$("#view-"+k).hidden=k!==t});
   $("#pageTitle").textContent=$("#tab-"+t).textContent;
   if(t==="prev")loadPreviews();
