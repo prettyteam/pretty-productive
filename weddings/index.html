@@ -2049,6 +2049,7 @@ function save(){
       if(i>=0)allWeddings[i]={id:r.id,d:body};else allWeddings.push({id:r.id,d:body});
       refreshSavedSelect();renderTeam();
       setStatus("Saved");
+      autoPreview();
     }catch(e){
       if(e&&e.code==="signin"){signOut("Your office code changed. Please sign in again.")}
       else setStatus("Couldn't save. It will retry on your next change.");
@@ -2079,6 +2080,7 @@ $("#saved").onchange=e=>{
   docId=id;
   const dr=Array.isArray(w.d.people)?null:calDraft(w.d);
   S=Object.assign(starter(),JSON.parse(JSON.stringify(w.d)),dr||{});delete S.calDraft;fillForm();setStatus(dr?"Draft from Google Calendar. Check it, then tap Save.":"Opened");
+  pvSentSig=null;if(!dr)autoPreview(true);
 };
 
 /* ---------- team view ---------- */
@@ -2439,21 +2441,43 @@ $("#calSync").onclick=async()=>{
   finally{$("#calSync").disabled=false;renderArtists()}
 };
 /* the same invites Send Invites makes, for every artist on the open Timeline (anyone left out loses hers) */
-async function pushInvites(){
+async function pushInvites(onlyPreview){
     const plan=build(S);
     const brideId=(S.people.find(p=>p.role==="Bride")||{}).id;
     const events=[];
     for(const a of S.artists){
       const ap=artistPlan(a);
-      events.push({key:"w:"+a.id,email:a.email,summary:"Taffeta Wedding · "+S.bride+" · "+roleName(a.role),date:S.date,startMin:ap.start,endMin:ap.end,location:[S.location,S.room].filter(Boolean).join(", "),description:inviteText(a,ap,"wedding"),reminders:[1440,120]});
+      if(!onlyPreview)events.push({key:"w:"+a.id,email:a.email,summary:"Taffeta Wedding · "+S.bride+" · "+roleName(a.role),date:S.date,startMin:ap.start,endMin:ap.end,location:[S.location,S.room].filter(Boolean).join(", "),description:inviteText(a,ap,"wedding"),reminders:[1440,120]});
       const doesBride=plan.cols.some(c=>c.artist.id===a.id&&c.cells.includes(brideId));
       if(S.previewDate&&S.previewTime&&doesBride){
         const st=toMin(S.previewTime);
         events.push({key:"p:"+a.id,email:a.email,summary:"Taffeta Preview · "+S.bride+" · "+roleName(a.role),date:S.previewDate,startMin:st,endMin:st+(Number(S.previewLen)||120),location:(S.previewLoc||"").trim()||"Taffeta Salon & Spa, 219 Bellevue Ave, Hammonton, NJ 08037",description:inviteText(a,ap,"preview"),reminders:[1440,60]});
       }
     }
-    const r=await api("sendInvites",{weddingId:docId,events});
+    const r=await api("sendInvites",onlyPreview?{weddingId:docId,events,scope:"p"}:{weddingId:docId,events});
     S.cal=r.cal;
+}
+/* the bridal preview goes into her artists' Google Calendars as soon as it's on the Timeline, and moves when it changes
+   (Laura Frankenford's preview for Lexi and Dom, Oct 30 2026). Wedding invites still wait for Send Invites. */
+let pvSentSig=null,pvBusy=false;
+function previewSig(){
+  if(!S.previewDate||!S.previewTime||S.previewDate<new Date().toISOString().slice(0,10))return "";
+  const plan=build(S),brideId=(S.people.find(p=>p.role==="Bride")||{}).id;
+  const who=S.artists.filter(a=>plan.cols.some(c=>c.artist.id===a.id&&c.cells.includes(brideId))).map(a=>a.id+"/"+(a.email||""));
+  return who.length?JSON.stringify([S.bride,S.previewDate,S.previewTime,S.previewLen,S.previewLoc,who]):"";
+}
+async function autoPreview(onOpen){
+  if(!canWrite||!docId||pvBusy||!S.bride)return;
+  let sig="";try{sig=previewSig()}catch(e){return}
+  const cal=S.cal||{},hasAll=sig&&JSON.parse(sig)[5].every(x=>cal["p:"+x.split("/")[0]]);
+  if(onOpen){pvSentSig=hasAll?sig:null;if(hasAll)return}
+  if(!sig||sig===pvSentSig)return;
+  const ids=JSON.parse(sig)[5].map(x=>x.split("/")[0]),noEmail=S.artists.filter(a=>ids.includes(a.id)&&!a.email);
+  if(noEmail.length){toast("Add an email for "+noEmail.map(a=>a.name||"the artist").join(", ")+" so the preview goes in her calendar");return}
+  pvBusy=true;
+  try{await pushInvites(true);pvSentSig=sig;renderArtists();toast("Preview sent to "+S.artists.filter(a=>ids.includes(a.id)).map(a=>(a.name||"").trim()).filter(Boolean).join(" & ")+"'s calendar")}
+  catch(e){toast("Couldn't send the preview invite. Tap Send Invites.")}
+  finally{pvBusy=false}
 }
 /* an artist who says Yes to a job gets her invite from the server right away (Jobs.gs inviteYes_); Send Invites then updates it to her call time */
 $("#calCheck").onclick=async()=>{
@@ -3330,7 +3354,7 @@ function mergeNewArtists(){
     if(i>=0)S.artists[i]=c;else S.artists.push(c);
     seenUids.add(a.uid);have.add(a.uid);added++;
   });
-  if(added){renderArtists();renderSheet();toast(added===1?"An artist said Yes and was added to Team on Site":added+" artists said Yes and were added to Team on Site")}
+  if(added){renderArtists();renderSheet();toast(added===1?"An artist said Yes and was added to Team on Site":added+" artists said Yes and were added to Team on Site");autoPreview()}
 }
 async function start(){
   const j=await api("load");
