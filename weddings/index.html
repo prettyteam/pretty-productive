@@ -289,6 +289,11 @@ details.more .menu .btn:last-child{border-bottom:0}
 .toast{position:fixed;z-index:70;left:50%;bottom:calc(72px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--accent);color:var(--accent-ink);padding:8px 16px;font-size:13px;opacity:0;transition:opacity .2s;pointer-events:none}
 .toast.on{opacity:1}
 @media (prefers-reduced-motion:reduce){.toast{transition:none}}
+.pp-name{all:unset;cursor:pointer;border-bottom:1px dotted currentColor}.pp-name:focus-visible{outline:2px solid var(--ink,#000);outline-offset:2px}
+.pp-card{white-space:normal;background:var(--soft,#faf7f2);border:1px solid var(--line);border-radius:10px;padding:12px 14px;width:min(560px,calc(100vw - 64px));box-sizing:border-box;position:sticky;left:0;display:grid;gap:8px}
+.pp-head{display:flex;flex-wrap:wrap;gap:8px;align-items:baseline}.pp-head span{color:var(--muted);font-size:12px}
+.pp-line{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.pp-k{width:44px;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}.pp-v{font-weight:500;word-break:break-all}.pp-none{color:var(--muted);font-style:italic}
+.pp-edit summary{cursor:pointer;font-size:12px;color:var(--muted)}.pp-card textarea{width:100%;box-sizing:border-box;font:inherit}.pp-send{gap:8px;flex-wrap:wrap}
 table.adm{border-collapse:collapse;font-size:13px;min-width:100%}table.adm th,table.adm td{border-bottom:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top;white-space:nowrap}table.adm th{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:500}.stale{color:var(--warn)}
 .pv-photos{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px}
 .pv-ph{position:relative;aspect-ratio:1;background:var(--soft);border:1px solid var(--line);overflow:hidden}
@@ -2770,7 +2775,75 @@ $("#bk-copy").onclick=()=>{
 };
 
 /* ---------- pipeline (office) ---------- */
-let ppRows=[],ppOpen=null,vmOpen=null;
+let ppRows=[],ppOpen=null,vmOpen=null,ppCard=null;
+/* Tap a bride's name (Alexandra, Oct 30 2026): her cell and email to copy, and a ready message that opens in Messages or Mail.
+   The app never sends anything itself: she reads it over and taps Send. */
+const PP_MSGS={
+  "Inquiry":{subject:"Your Taffeta Wedding, {first}",text:"Hi {first}! This is {me} from Taffeta Weddings. Thank you so much for reaching out about your wedding{ondate}, and congratulations! I'd love to tell you all about our bridal hair and makeup. Do you have a few minutes for a quick call this week?"},
+  "Proposal Sent":{subject:"Your Taffeta Wedding Proposal, {first}",text:"Hi {first}! It's {me} from Taffeta Weddings. I wanted to make sure you got your proposal{fordate}. I'm happy to answer any questions or walk through it with you."},
+  "Follow-up":{subject:"Checking In, {first}",text:"Hi {first}! It's {me} from Taffeta Weddings, just checking in about your wedding{ondate}. Your date is still open and we'd love to be part of your day. Any questions I can answer?"},
+  "Final Follow Up":{subject:"Your Taffeta Wedding Date, {first}",text:"Hi {first}! It's {me} from Taffeta Weddings with one last check-in about your wedding{ondate}. Dates fill quickly, so if you'd like us, your $600 deposit holds your date and includes your bridal hair and makeup preview. If you've gone another way, no worries at all, and congratulations!"},
+  "Signed, waiting on payment":{subject:"Holding Your Wedding Date, {first}",text:"Hi {first}! It's {me} from Taffeta Weddings. Thank you so much for signing with us{fordate}! Just a reminder that your date isn't held until your $600 deposit comes in, and it includes your bridal hair and makeup preview. Let me know if you need the payment link again!"}
+};
+function ppStageKey(stage){
+  const s=String(stage||"").toLowerCase();
+  if(/signed|waiting on payment|booked/.test(s))return "Signed, waiting on payment";
+  if(/final/.test(s))return "Final Follow Up";
+  if(/follow/.test(s))return "Follow-up";
+  if(/proposal|contract/.test(s))return "Proposal Sent";
+  return "Inquiry";
+}
+function ppFill(t,r){
+  const first=String(r.bride||"").trim().split(/\s+/)[0]||"there",d=r.date?fullDateWords(r.date):"",me=(String(officeWho()||"Alexandra").trim().split(/\s+/)[0])||"Alexandra";
+  return String(t||"").replace(/\{first\}|\[first name\]|\[name\]/gi,first).replace(/\{me\}/g,me)
+    .replace(/\{ondate\}/g,d?" on "+d:"").replace(/\{fordate\}/g,d?" for "+d:"").replace(/\{date\}|\[wedding date\]/gi,d||"your wedding day");
+}
+function fullDateWords(iso){const d=new Date(iso+"T12:00:00");return isNaN(d)?iso:d.toLocaleDateString("en-US",{month:"long",day:"numeric",year:"numeric"})}
+function ppMsgChoices(r){
+  const k=ppStageKey(r.stage),out=[{id:"stage",label:"For "+k,subject:PP_MSGS[k].subject,text:PP_MSGS[k].text}];
+  Object.keys(PP_MSGS).filter(x=>x!==k).forEach(x=>out.push({id:"s:"+x,label:"For "+x,subject:PP_MSGS[x].subject,text:PP_MSGS[x].text}));
+  tpItems.forEach(t=>out.push({id:"t:"+t.id,label:"Texts: "+t.title,subject:PP_MSGS[k].subject,text:t.text}));
+  return out;
+}
+function ppCardHTML(r){
+  const ph=digits(r.phone),em=String(r.email||"").trim(),pretty=ph.replace(/^\+?1?(\d{3})(\d{3})(\d{4})$/,"($1) $2-$3"),ch=ppMsgChoices(r);
+  const line=(label,val,id,shown)=>'<div class="pp-line"><span class="pp-k">'+label+'</span>'+(val?'<b class="pp-v">'+esc(shown||val)+'</b><button class="btn ghost small" data-ppcopy="'+id+'">Copy</button>':'<span class="pp-none">None saved yet</span>')+'</div>';
+  return '<tr class="pp-card-row"><td colspan="7"><div class="pp-card">'+
+    '<div class="pp-head"><b>'+esc(r.bride)+'</b><span>'+esc(r.stage||"")+(r.date?' · '+esc(shortDate(r.date)):"")+'</span></div>'+
+    line("Cell",ph,"phone",pretty)+line("Email",em,"email")+
+    '<details class="pp-edit"'+(ph||em?'':' open')+'><summary>'+(ph||em?'Change Cell or Email':'Add Her Cell or Email')+'</summary><div class="row" style="align-items:flex-end">'+
+      '<label class="f" style="flex:0 1 160px">Cell<input id="ppc-phone" type="tel" inputmode="tel" value="'+esc(pretty)+'"></label>'+
+      '<label class="f" style="flex:1 1 200px">Email<input id="ppc-email" type="email" inputmode="email" value="'+esc(em)+'"></label>'+
+      '<button class="btn ghost" id="ppc-save" style="flex:0 0 auto">Save</button><span class="status" id="ppc-status"></span></div></details>'+
+    '<label class="f">Message<select id="ppc-pick">'+ch.map(c=>'<option value="'+esc(c.id)+'">'+esc(c.label)+'</option>').join("")+'</select></label>'+
+    '<label class="f">Subject (Email Only)<input id="ppc-subject" value="'+esc(ppFill(ch[0].subject,r))+'"></label>'+
+    '<label class="f">You Can Change the Words Before You Send<textarea id="ppc-text" rows="7">'+esc(ppFill(ch[0].text,r))+'</textarea></label>'+
+    '<div class="row pp-send">'+
+      '<button class="btn" id="ppc-sms"'+(ph?'':' disabled')+'>Text Her</button>'+
+      '<button class="btn" id="ppc-mail"'+(em?'':' disabled')+'>Email Her</button>'+
+      '<button class="btn ghost" id="ppc-copy">Copy Message</button>'+
+      '<button class="btn ghost" id="ppc-close">Close</button></div>'+
+    '<p class="hint" style="margin:6px 0 0">Text Her opens Messages and Email Her opens your email, with the message already filled in. Nothing sends until you tap Send.</p>'+
+  '</div></td></tr>';
+}
+function ppCardWire(j){
+  const r=ppRows[ppCard];if(!r||!$("#ppc-text"))return;
+  const ch=ppMsgChoices(r);
+  $("#ppc-pick").onchange=()=>{const c=ch.find(x=>x.id===$("#ppc-pick").value)||ch[0];$("#ppc-text").value=ppFill(c.text,r);$("#ppc-subject").value=ppFill(c.subject,r)};
+  document.querySelectorAll("[data-ppcopy]").forEach(b=>b.onclick=()=>copy(b.dataset.ppcopy==="phone"?digits(r.phone):String(r.email||"").trim()));
+  $("#ppc-copy").onclick=()=>copy($("#ppc-text").value);
+  $("#ppc-close").onclick=()=>{ppCard=null;renderPipeline(j)};
+  $("#ppc-sms").onclick=()=>{const ph=digits(r.phone);if(ph)location.href=smsHref([ph],$("#ppc-text").value)};
+  $("#ppc-mail").onclick=()=>{const em=String(r.email||"").trim();if(em)location.href="mailto:"+encodeURIComponent(em).replace(/%40/g,"@")+"?subject="+encodeURIComponent($("#ppc-subject").value)+"&body="+encodeURIComponent($("#ppc-text").value)};
+  $("#ppc-save").onclick=async()=>{
+    const st=$("#ppc-status");st.textContent="Saving…";$("#ppc-save").disabled=true;
+    try{
+      const res=await api("saveLeadContact",{contact:{bride:r.bride,phone:$("#ppc-phone").value,email:$("#ppc-email").value.trim()}});
+      if(res.ok===false){st.textContent=res.message||"That didn't save.";$("#ppc-save").disabled=false;return}
+      r.phone=res.phone;r.email=res.email;renderPipeline(j);toast("Saved")
+    }catch(e){st.textContent="That didn't save. Try again.";$("#ppc-save").disabled=false}
+  };
+}
 /* ---------- extensions (office only, saved with the wedding) ---------- */
 const EXT_TEXT={type:"ext-type",color:"ext-color",length:"ext-length",pieces:"ext-pieces",shipName:"ext-sname",shipPhone:"ext-sphone",shipStreet:"ext-sstreet",shipStreet2:"ext-sstreet2",shipCity:"ext-scity",shipState:"ext-sstate",shipZip:"ext-szip",shipBy:"ext-shipby",labelCost:"ext-label",tracking:"ext-track"};
 const EXT_CHECK={prepped:"ext-prepped",bought:"ext-bought",shipped:"ext-shipped",returned:"ext-returned"};
@@ -3040,7 +3113,8 @@ function renderPipeline(j){
   if(!n){t.innerHTML='<tr><td><div class="empty-state">No unpaid brides right now.</div></td></tr>'}
   else{
     t.innerHTML='<tr><th>Inquired</th><th>Bride</th><th>Wedding</th><th>Location</th><th>Stage</th><th>Next step</th><th></th></tr>'+ppRows.map((r,i)=>{
-      const row='<tr><td>'+esc(shortDate(r.inquired)||"–")+'</td><td><b>'+esc(r.bride)+'</b></td><td>'+esc(shortDate(r.date)||"–")+'</td><td>'+esc(r.location)+'</td><td>'+esc(r.stage)+'</td><td style="white-space:normal;min-width:180px">'+esc(r.nextStep)+'</td><td><button class="btn ghost small" data-pp="'+i+'">Mark paid</button></td></tr>';
+      const row='<tr><td>'+esc(shortDate(r.inquired)||"–")+'</td><td><button class="pp-name" data-ppc="'+i+'" aria-expanded="'+(ppCard===i)+'"><b>'+esc(r.bride)+'</b></button></td><td>'+esc(shortDate(r.date)||"–")+'</td><td>'+esc(r.location)+'</td><td>'+esc(r.stage)+'</td><td style="white-space:normal;min-width:180px">'+esc(r.nextStep)+'</td><td><button class="btn ghost small" data-pp="'+i+'">Mark paid</button></td></tr>';
+      if(ppCard===i)return row+ppCardHTML(r);
       if(ppOpen!==i)return row;
       const today=new Date().toISOString().slice(0,10);
       return row+'<tr><td colspan="7"><div class="row" style="align-items:flex-end">'+
@@ -3050,7 +3124,9 @@ function renderPipeline(j){
         '<button class="btn" id="pp-save" style="flex:0 0 auto">Save as paid</button><button class="btn ghost" id="pp-cancel" style="flex:0 0 auto">Cancel</button>'+
         '<span class="status" id="pp-status"></span></div></td></tr>';
     }).join("");
-    t.querySelectorAll("[data-pp]").forEach(b=>b.onclick=()=>{ppOpen=Number(b.dataset.pp);renderPipeline(j);const a=$("#pp-amt");if(a)a.focus()});
+    t.querySelectorAll("[data-ppc]").forEach(b=>b.onclick=async()=>{const i=Number(b.dataset.ppc);ppOpen=null;ppCard=ppCard===i?null:i;if(ppCard!==null&&!tpItems.length){try{const x=await api("templates");tpItems=x.templates||[]}catch(e){}}renderPipeline(j)});
+    ppCardWire(j);
+    t.querySelectorAll("[data-pp]").forEach(b=>b.onclick=()=>{ppCard=null;ppOpen=Number(b.dataset.pp);renderPipeline(j);const a=$("#pp-amt");if(a)a.focus()});
     if(ppOpen!==null&&$("#pp-save")){
       $("#pp-cancel").onclick=()=>{ppOpen=null;renderPipeline(j)};
       $("#pp-save").onclick=async()=>{
@@ -3110,7 +3186,7 @@ function renderPipeline(j){
   const m=(j&&j.marked)||[],mt=$("#pp-marked");
   mt.innerHTML=m.length?'<tr><th>Bride</th><th>Wedding</th><th>Amount</th><th>How</th><th>Paid on</th><th>In HoneyBook</th></tr>'+m.map(x=>'<tr><td><b>'+esc(x.bride)+'</b></td><td>'+esc(shortDate(x.date)||"–")+'</td><td>$'+esc(x.amount)+'</td><td>'+esc(x.method)+'</td><td>'+esc(shortDate(x.paidOn))+'</td><td>'+(x.inHoneyBook?"Done "+esc(shortDate(x.inHoneyBook)||x.inHoneyBook):"Waiting")+'</td></tr>').join(""):'<tr><td><div class="empty-state">Nothing marked paid in the app yet.</div></td></tr>';
 }
-$("#pp-refresh").onclick=()=>{ppOpen=null;vmOpen=null;loadPipeline()};
+$("#pp-refresh").onclick=()=>{ppOpen=null;vmOpen=null;ppCard=null;loadPipeline()};
 /* Call Coach (Coach.gs): sales calls graded from Granola, for Alexandra and Dom */
 let ccData=null;
 async function loadCoach(){
