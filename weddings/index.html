@@ -2079,6 +2079,7 @@ $("#saved").onchange=e=>{
   docId=id;
   const dr=Array.isArray(w.d.people)?null:calDraft(w.d);
   S=Object.assign(starter(),JSON.parse(JSON.stringify(w.d)),dr||{});delete S.calDraft;fillForm();setStatus(dr?"Draft from Google Calendar. Check it, then tap Save.":"Opened");
+  if(!dr)autoInvites();
 };
 
 /* ---------- team view ---------- */
@@ -2432,6 +2433,14 @@ $("#calSync").onclick=async()=>{
   try{
     clearTimeout(saveTimer);await save();
     if(!docId){out.textContent="Save the wedding first.";return}
+    await pushInvites();
+    const n=S.artists.length;
+    out.textContent="Invites sent or updated for "+n+" artist"+(n===1?"":"s")+".";
+  }catch(e){out.textContent=calErr(e)}
+  finally{$("#calSync").disabled=false;renderArtists()}
+};
+/* the same invites Send Invites makes, for every artist on the open Timeline (anyone left out loses hers) */
+async function pushInvites(){
     const plan=build(S);
     const brideId=(S.people.find(p=>p.role==="Bride")||{}).id;
     const events=[];
@@ -2445,11 +2454,21 @@ $("#calSync").onclick=async()=>{
       }
     }
     const r=await api("sendInvites",{weddingId:docId,events});
-    S.cal=r.cal;const n=S.artists.length;
-    out.textContent="Invites sent or updated for "+n+" artist"+(n===1?"":"s")+".";
-  }catch(e){out.textContent=calErr(e)}
-  finally{$("#calSync").disabled=false;renderArtists()}
-};
+    S.cal=r.cal;
+}
+/* once the office has sent this wedding's invites, an artist added later (like a job Yes) gets hers without a tap
+   (Lexi's 5/15 wedding, Oct 30 2026) */
+let autoInv=false;
+async function autoInvites(){
+  if(!canWrite||!docId||autoInv||!S.date||S.date<new Date().toISOString().slice(0,10)||!S.cal||!Object.keys(S.cal).some(k=>k.startsWith("w:")))return;
+  const need=S.artists.filter(a=>a.uid&&(a.name||"").trim()&&!S.cal["w:"+a.id]);
+  if(!need.length)return;
+  if(!S.bride||!S.date||S.mode==="tbd"||S.artists.some(a=>!a.email)){toast("Tap Send Invites so "+need.map(a=>a.name.trim()).join(", ")+" gets the calendar invite");return}
+  autoInv=true;
+  try{await pushInvites();renderArtists();toast("Calendar invite sent to "+need.map(a=>a.name.trim()).join(", "))}
+  catch(e){toast("Couldn't send the calendar invite. Tap Send Invites.")}
+  finally{autoInv=false}
+}
 $("#calCheck").onclick=async()=>{
   const out=$("#calStatus");
   if(!docId||!S.cal){out.textContent="Send invites first.";return}
@@ -3325,6 +3344,7 @@ function mergeNewArtists(){
     seenUids.add(a.uid);have.add(a.uid);added++;
   });
   if(added){renderArtists();renderSheet();toast(added===1?"An artist said Yes and was added to Team on Site":added+" artists said Yes and were added to Team on Site")}
+  autoInvites();
 }
 async function start(){
   const j=await api("load");
