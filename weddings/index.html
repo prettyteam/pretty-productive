@@ -2779,12 +2779,14 @@ let ppRows=[],ppOpen=null,vmOpen=null,ppCard=null;
 /* Tap a bride's name (Alexandra, Oct 30 2026): her cell and email to copy, and a ready message that opens in Messages or Mail.
    The app never sends anything itself: she reads it over and taps Send. */
 const PP_MSGS={
-  "Inquiry":{subject:"Your Taffeta Wedding, {first}",text:"Hi {first}! This is {me} from Taffeta Weddings. Thank you so much for reaching out about your wedding{ondate}, and congratulations! I'd love to tell you all about our bridal hair and makeup. Do you have a few minutes for a quick call this week?"},
-  "Proposal Sent":{subject:"Your Taffeta Wedding Proposal, {first}",text:"Hi {first}! It's {me} from Taffeta Weddings. I wanted to make sure you got your proposal{fordate}. I'm happy to answer any questions or walk through it with you."},
-  "Follow-up":{subject:"Checking In, {first}",text:"Hi {first}! It's {me} from Taffeta Weddings, just checking in about your wedding{ondate}. Your date is still open and we'd love to be part of your day. Any questions I can answer?"},
-  "Final Follow Up":{subject:"Your Taffeta Wedding Date, {first}",text:"Hi {first}! It's {me} from Taffeta Weddings with one last check-in about your wedding{ondate}. Dates fill quickly, so if you'd like us, your $600 deposit holds your date and includes your bridal hair and makeup preview. If you've gone another way, no worries at all, and congratulations!"},
-  "Signed, waiting on payment":{subject:"Holding Your Wedding Date, {first}",text:"Hi {first}! It's {me} from Taffeta Weddings. Thank you so much for signing with us{fordate}! Just a reminder that your date isn't held until your $600 deposit comes in, and it includes your bridal hair and makeup preview. Let me know if you need the payment link again!"}
+  "Inquiry":{subject:"Your Taffeta Wedding, [First Name]",text:"Hi [First Name]! This is [Your Name] from Taffeta Weddings. Thank you so much for reaching out about your wedding on [Wedding Date], and congratulations! I'd love to tell you all about our bridal hair and makeup. Do you have a few minutes for a quick call this week?"},
+  "Proposal Sent":{subject:"Your Taffeta Wedding Proposal, [First Name]",text:"Hi [First Name]! It's [Your Name] from Taffeta Weddings. I wanted to make sure you got your proposal for [Wedding Date]. I'm happy to answer any questions or walk through it with you."},
+  "Follow-up":{subject:"Checking In, [First Name]",text:"Hi [First Name]! It's [Your Name] from Taffeta Weddings, just checking in about your wedding on [Wedding Date]. Your date is still open and we'd love to be part of your day. Any questions I can answer?"},
+  "Final Follow Up":{subject:"Your Taffeta Wedding Date, [First Name]",text:"Hi [First Name]! It's [Your Name] from Taffeta Weddings with one last check-in about your wedding on [Wedding Date]. Dates fill quickly, so if you'd like us, your $600 deposit holds your date and includes your bridal hair and makeup preview. If you've gone another way, no worries at all, and congratulations!"},
+  "Signed, waiting on payment":{subject:"Holding Your Wedding Date, [First Name]",text:"Hi [First Name]! It's [Your Name] from Taffeta Weddings. Thank you so much for signing with us for [Wedding Date]! Just a reminder that your date isn't held until your $600 deposit comes in, and it includes your bridal hair and makeup preview. Let me know if you need the payment link again!"}
 };
+/* The stage messages also live on the Texts tab under "Pipeline" (one per stage, titled with the stage), so she can change them for good there. */
+const PP_CAT="Pipeline";
 function ppStageKey(stage){
   const s=String(stage||"").toLowerCase();
   if(/signed|waiting on payment|booked/.test(s))return "Signed, waiting on payment";
@@ -2793,17 +2795,25 @@ function ppStageKey(stage){
   if(/proposal|contract/.test(s))return "Proposal Sent";
   return "Inquiry";
 }
+function ppText(k){const t=tpItems.find(x=>x.category===PP_CAT&&x.title.trim().toLowerCase()===k.toLowerCase());return t?t.text:PP_MSGS[k].text}
 function ppFill(t,r){
   const first=String(r.bride||"").trim().split(/\s+/)[0]||"there",d=r.date?fullDateWords(r.date):"",me=(String(officeWho()||"Alexandra").trim().split(/\s+/)[0])||"Alexandra";
-  return String(t||"").replace(/\{first\}|\[first name\]|\[name\]/gi,first).replace(/\{me\}/g,me)
-    .replace(/\{ondate\}/g,d?" on "+d:"").replace(/\{fordate\}/g,d?" for "+d:"").replace(/\{date\}|\[wedding date\]/gi,d||"your wedding day");
+  t=String(t||"");
+  if(!d)t=t.replace(/ (on|for) \[wedding date\]/gi,"");
+  return t.replace(/\[first name\]|\{first\}/gi,first).replace(/\[your name\]/gi,me).replace(/\[wedding date\]/gi,d||"your wedding day");
 }
 function fullDateWords(iso){const d=new Date(iso+"T12:00:00");return isNaN(d)?iso:d.toLocaleDateString("en-US",{month:"long",day:"numeric",year:"numeric"})}
 function ppMsgChoices(r){
-  const k=ppStageKey(r.stage),out=[{id:"stage",label:"For "+k,subject:PP_MSGS[k].subject,text:PP_MSGS[k].text}];
-  Object.keys(PP_MSGS).filter(x=>x!==k).forEach(x=>out.push({id:"s:"+x,label:"For "+x,subject:PP_MSGS[x].subject,text:PP_MSGS[x].text}));
-  tpItems.forEach(t=>out.push({id:"t:"+t.id,label:"Texts: "+t.title,subject:PP_MSGS[k].subject,text:t.text}));
-  return out;
+  const k=ppStageKey(r.stage),keys=[k].concat(Object.keys(PP_MSGS).filter(x=>x!==k));
+  return keys.map((x,i)=>({id:i?"s:"+x:"stage",label:"For "+x,subject:PP_MSGS[x].subject,text:ppText(x)}))
+    .concat(tpItems.filter(t=>t.category!==PP_CAT).map(t=>({id:"t:"+t.id,label:"Texts: "+t.title,subject:PP_MSGS[k].subject,text:t.text})));
+}
+/* First time a card opens, put the five stage messages on the Texts tab so they can be edited there. */
+let ppSeeded=false;
+async function ppSeedTexts(){
+  if(ppSeeded||tpItems.some(t=>t.category===PP_CAT))return;
+  ppSeeded=true;
+  try{for(const [i,k] of Object.keys(PP_MSGS).entries()){const j=await api("saveTemplate",{template:{category:PP_CAT,title:k,text:PP_MSGS[k].text,order:i+1}});if(j&&j.templates)tpItems=j.templates}}catch(e){}
 }
 function ppCardHTML(r){
   const ph=digits(r.phone),em=String(r.email||"").trim(),pretty=ph.replace(/^\+?1?(\d{3})(\d{3})(\d{4})$/,"($1) $2-$3"),ch=ppMsgChoices(r);
@@ -2823,7 +2833,7 @@ function ppCardHTML(r){
       '<button class="btn" id="ppc-mail"'+(em?'':' disabled')+'>Email Her</button>'+
       '<button class="btn ghost" id="ppc-copy">Copy Message</button>'+
       '<button class="btn ghost" id="ppc-close">Close</button></div>'+
-    '<p class="hint" style="margin:6px 0 0">Text Her opens Messages and Email Her opens your email, with the message already filled in. Nothing sends until you tap Send.</p>'+
+    '<p class="hint" style="margin:6px 0 0">Text Her opens Messages and Email Her opens your email, with the message already filled in. Nothing sends until you tap Send. To change a stage message for good, edit it on the Texts tab under Pipeline.</p>'+
   '</div></td></tr>';
 }
 function ppCardWire(j){
@@ -3124,7 +3134,7 @@ function renderPipeline(j){
         '<button class="btn" id="pp-save" style="flex:0 0 auto">Save as paid</button><button class="btn ghost" id="pp-cancel" style="flex:0 0 auto">Cancel</button>'+
         '<span class="status" id="pp-status"></span></div></td></tr>';
     }).join("");
-    t.querySelectorAll("[data-ppc]").forEach(b=>b.onclick=async()=>{const i=Number(b.dataset.ppc);ppOpen=null;ppCard=ppCard===i?null:i;if(ppCard!==null&&!tpItems.length){try{const x=await api("templates");tpItems=x.templates||[]}catch(e){}}renderPipeline(j)});
+    t.querySelectorAll("[data-ppc]").forEach(b=>b.onclick=async()=>{const i=Number(b.dataset.ppc);ppOpen=null;ppCard=ppCard===i?null:i;let ok=tpItems.length>0;if(ppCard!==null&&!ok){try{const x=await api("templates");tpItems=x.templates||[];ok=Array.isArray(x.templates)}catch(e){}}renderPipeline(j);if(ppCard!==null&&ok)ppSeedTexts()});
     ppCardWire(j);
     t.querySelectorAll("[data-pp]").forEach(b=>b.onclick=()=>{ppCard=null;ppOpen=Number(b.dataset.pp);renderPipeline(j);const a=$("#pp-amt");if(a)a.focus()});
     if(ppOpen!==null&&$("#pp-save")){
