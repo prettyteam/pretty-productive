@@ -1244,7 +1244,12 @@ function tsvOf(s){
 
 /* ---------- form ---------- */
 const FIELDS=["bride","bridePhone","date","location","room","parking","contactName","contactPhone","notes","previewDate","previewTime","previewLen","previewLoc","start","finishBy","hairSlot","muSlot","bothSlot","arrival","touchups"];
+/* team members this Timeline has seen on the wedding, so a save can tell the server who the office took off on purpose
+   (anyone else, like an artist who just said Yes to the job, stays on; Lexi on Laura's wedding, Oct 30 2026) */
+let seenUids=new Set();
+const curUids=()=>new Set(S.artists.map(a=>a.uid).filter(Boolean));
 function fillForm(){
+  seenUids=curUids();
   FIELDS.forEach(f=>{const el=$("#"+f);if(el)el.value=S[f]??""});
   setMode(S.mode,false);
   renderArtists();renderPeople();renderSheet();renderExt();
@@ -2029,6 +2034,9 @@ function save(){
   saving=saving.then(async()=>{
     try{
       if(profiles.length)S.artists.forEach(a=>{const g=goBy(a);if(g)a.goBy=g});
+      const now=curUids(),gone=new Set((S.removedUids||[]).filter(u=>!now.has(u)));
+      seenUids.forEach(u=>{if(!now.has(u))gone.add(u)});seenUids=now;
+      S.removedUids=[...gone];if(!S.removedUids.length)delete S.removedUids;
       const body=JSON.parse(JSON.stringify(S));
       delete body.cal;
       const plan=build(S);
@@ -3301,8 +3309,22 @@ function applyData(j){
   if(ROLE==="office"){const al=j.alerts||[];profiles=(j.team||[]).map(m=>Object.assign({_id:m.id,alerts:al.includes(m.id)},m));renderAdmin();renderArtists()}
   else{myPayouts=j.payouts||[];renderMine()}
   if(docId&&S.cal){const w=allWeddings.find(x=>x.id===docId);if(w&&w.d.cal)S.cal=w.d.cal}
+  if(ROLE==="office"&&docId)mergeNewArtists();
   refreshSavedSelect();poBrides();renderTeam();renderTeamSheet();renderBooked();
   if(!$("#view-home").hidden)loadWx();
+}
+/* an artist who said Yes since this Timeline was opened shows up on Team on site without a reload */
+function mergeNewArtists(){
+  const w=allWeddings.find(x=>x.id===docId);if(!w||!Array.isArray(w.d.artists))return;
+  const have=curUids(),removed=new Set(S.removedUids||[]);let added=0;
+  w.d.artists.forEach(a=>{
+    if(!a.uid||have.has(a.uid)||removed.has(a.uid)||seenUids.has(a.uid))return;
+    const i=S.artists.findIndex(x=>x.id===a.id&&!x.uid&&!(x.name||"").trim());
+    const c=JSON.parse(JSON.stringify(a));
+    if(i>=0)S.artists[i]=c;else S.artists.push(c);
+    seenUids.add(a.uid);have.add(a.uid);added++;
+  });
+  if(added){renderArtists();renderSheet();toast(added===1?"An artist said Yes and was added to Team on Site":added+" artists said Yes and were added to Team on Site")}
 }
 async function start(){
   const j=await api("load");
