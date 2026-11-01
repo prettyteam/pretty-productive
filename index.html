@@ -490,6 +490,18 @@ details.days summary::-webkit-details-marker{display:none}
 .card2 .fld input[type=search]{height:44px}
 .obtn[disabled],.tab[disabled]{opacity:.45}
 
+.askseg{display:flex;flex-direction:column;gap:6px}
+.askseg button{text-align:left;border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:10px;padding:9px 12px;font:inherit;font-size:15px;cursor:pointer}
+.askseg button small{display:block;font-size:12.5px;opacity:.75}
+.askseg button[aria-pressed=true]{background:var(--brown);border-color:var(--brown);color:#fff}
+.hub textarea,.hub select{font:inherit;font-size:15px;border:1px solid var(--line);border-radius:6px;padding:8px 10px;background:#fff;width:100%;color:var(--ink)}
+.askreq{background:#fff;border:1px solid var(--line);border-radius:8px;padding:12px;display:flex;flex-direction:column;gap:4px;font-size:14px;margin-bottom:8px}
+.askreq .top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.askreq .tag{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#7a6a55}
+.askreq .acts{display:flex;flex-direction:row;flex-wrap:wrap;align-items:center;gap:6px;margin-top:6px}
+.askreq .acts .obtn{height:32px;padding:0 14px;font-size:11px;letter-spacing:.14em;align-self:auto;width:auto;margin:0;flex:0 0 auto;display:inline-flex;align-items:center}
+.askreq .acts .obtn[aria-pressed=true]{background:var(--brown);border-color:var(--brown);color:#fff}
+.askreq a{color:inherit}
 </style>
 
 <script src="g/config.js?v=3"></script>
@@ -844,6 +856,7 @@ function render(){
   else if(S.rtab==='home') parts=reportHome();
   else if(S.rtab==='payroll') parts=payrollView();
   else if(S.rtab==='off') parts=adminOffView();
+  else if(S.rtab==='reqs') parts=reqsView();
   else if(S.rtab==='month') parts=monthView();
   else if(S.rtab==='color') parts=colorRoomView();
   else if(S.rtab==='photos') parts=albumView();
@@ -1829,6 +1842,48 @@ function invSpa(){
 
 /* estheticians: Skincare stock (Biologique Recherche on-hand counts, no costs) */
 let SKIN={data:null,err:null,loading:false,key:null};
+/* Send To Alex (Alexandra, Oct 30 2026): a guest's retail product order (to Alex and Rose), an Easi Hair Pro extension order
+   (Alex only), or a question. It goes to The Pretty Report's Requests page and Alex's email; staff see Sent / Ordered / Arrived / Done here.
+   Rose and Alexandra also mark the customer orders here. The desk script keeps them (Requests.js). */
+const ASK_KINDS=[['retail','Customer Product Order','A guest wants a retail product ordered','Goes to Alexandra and Rose.'],
+  ['easi','Easi Hair Pro Order','Extensions you need Alex to order','Goes only to Alexandra.'],
+  ['ask','Question Or Request','Anything else for Alex','Goes only to Alexandra.']];
+const ASK_FIELDS={retail:[['for','Customer name'],['phone','Customer phone','tel'],['item','Product (brand, name, size)'],['qty','How many'],['paid','Paid?',['Not yet','Paid in full','Deposit']],['note','Note','','Optional']],
+  easi:[['for','For (client or bride)'],['link','Paste the Easi Hair Pro link','url'],['item','What to order','','Like Tape-In 20" 3 packs'],['color','Color'],['length','Length'],
+    ['type','Type',['Tape-In','K-Tip','I-Tip','Clip-In','Halo','Wefts','Other']],['qty','Packs'],['need','Need it by'],['note','Note','','Optional']],
+  ask:[['note','Your question or request','area']]};
+const ASK_NEED={retail:['for','item'],easi:['item'],ask:['note']};
+let ASK={kind:'retail',f:{}};
+const askWhat=x=>x.kind==='ask'?x.note:[x.item||(x.kind==='easi'?'Easi Hair Pro':''),x.qty?'×'+x.qty:''].join(' ').trim()+(x.for?' · '+x.for:'');
+function askView(){
+  const d=HUB.data||{}, out=[h('h1',{style:'font-size:28px;text-align:center'},'Send To Alex'),
+    h('p',{class:'soft',style:'text-align:center;margin:-14px 0 0'},'Order requests and questions go straight to The Pretty Report.')];
+  if(HUB.data&&!d.req){out.push(h('p',{class:'soft',style:'text-align:center'},'This switches on soon.'));return [h('div',{class:'hub'},out)]}
+  out.push(h('div',{class:'askseg'},ASK_KINDS.map(([k,t,sub])=>h('button',{type:'button','aria-pressed':String(ASK.kind===k),onclick:()=>{ASK.kind=k;render()}},t,h('small',{},sub)))));
+  const K=ASK_KINDS.find(x=>x[0]===ASK.kind), f=ASK.f;
+  const fld=([k,label,kind,ph])=>{const set=e=>{f[k]=e.target.value};
+    const el=Array.isArray(kind)?h('select',{onchange:set},kind.map(o=>h('option',{selected:(f[k]||kind[0])===o?'':null},o))):
+      kind==='area'?h('textarea',{rows:'5',oninput:set,placeholder:ph||''}):h('input',{type:kind==='tel'?'tel':kind==='url'?'url':'text',oninput:set,placeholder:ph||''});
+    if(Array.isArray(kind)){if(!f[k])f[k]=kind[0]}else el.value=f[k]||'';
+    return h('label',{class:'fld'},label,el)};
+  const send=()=>{const need=ASK_NEED[ASK.kind].filter(k=>!(f[k]||'').trim());
+    if(need.length){HUB.toast='Fill in '+need.map(k=>ASK_FIELDS[ASK.kind].find(x=>x[0]===k)[1].toLowerCase()).join(' and ')+' first.';render();setTimeout(()=>{HUB.toast='';render()},4000);return}
+    const body={type:'req',kind:ASK.kind,...f}; ASK.f={}; hubPost(body,'Sent. You’ll see Alex’s answer here.')};
+  out.push(h('div',{class:'card2'},h('span',{class:'lbl'},K[1]),ASK_FIELDS[ASK.kind].map(fld),
+    h('button',{class:'obtn',disabled:HUB.busy?'':null,onclick:send},'Send Request'),h('p',{class:'soft',style:'text-align:center;font-size:13px;margin:0'},K[3])));
+  if(HUB.toast) out.push(h('p',{class:'toast'},HUB.toast));
+  const st=s=>h('span',{class:'stat'+(s==='Sent'?'':' ok')},s);
+  const mine=d.myReqs||[];
+  if(mine.length) out.push(h('div',{class:'sec2'},h('span',{class:'lbl'},'Your Requests'),mine.map(x=>h('div',{class:'lrow'},
+    h('div',{},h('b',{},askWhat(x)),h('br'),h('small',{},(ASK_KINDS.find(k=>k[0]===x.kind)||[])[1]+' · Sent '+new Date(x.sent).toLocaleDateString('en-US',{month:'short',day:'numeric'}))),st(x.status)))));
+  const rr=d.retailReqs;
+  if(rr) out.push(h('div',{class:'sec2'},h('span',{class:'lbl'},'Customer Orders To Place'),rr.length?rr.map(x=>h('div',{class:'askreq'},
+      h('div',{class:'top'},h('b',{},(x.item||'')+(x.qty?' ×'+x.qty:'')),st(x.status)),
+      h('small',{},[x.name+' · for '+x.for,x.phone,x.paid].filter(Boolean).join(' · ')),x.note?h('small',{},x.note):null,
+      h('div',{class:'acts'},['Ordered','Arrived','Done'].map(s=>h('button',{type:'button',class:'obtn sm','aria-pressed':String(x.status===s),disabled:HUB.busy?'':null,
+        onclick:()=>hubPost({type:'reqset',id:x.id,status:s},'Marked '+s+'.')},s))))):h('p',{class:'soft'},'No customer orders waiting.')));
+  return [h('div',{class:'hub'},out)];
+}
 /* Ordering: the shared page from g/ordering.js, plus the color report's best prices for anyone who has the Inventory tab */
 function orderView(){
   const mode=orderMode(); if(mode==='full') invLoad();
@@ -1924,6 +1979,7 @@ function staffTabs(){
   if(st.slug) t.push(['off','Time Off']);
   if(st.slug) t.push(['prices','Prices']);
   if(orderMode()&&window.Ordering) t.push(['order','Ordering']);
+  if(st.slug) t.push(['ask','Send To Alex']);
   if(st.slug&&p.pk&&p.pk.groups&&p.pk.groups.length) t.push(['pk','PK Knowledge']);
   t.push(['guide','Culture']);
   const dc=p.docs||{}; if(dc.hb) t.push(['hb','Handbook']); if(dc.fg) t.push(['fg','Desk Guide']);
@@ -1935,7 +1991,7 @@ function staffTabs(){
 }
 /* One menu instead of a row of tabs (Alexandra, Oct 2026). Sections are grouped; Customer cards holds RX card and Home care. */
 const NAV_GROUPS=[['Appointments',['home','today','tomorrow','tip']],['Customer Cards',['rx','reg']],[MW_NAME,['mph']],['Goals',['growth','binder','cr']],
-  ['Salon & Spa',['prices','order','pk','inv','skin','cards','off']],['Taffeta',['guide','hb','fg']],['Self Promotion',['promo']],['Marketing Proofs',['mkt']],['My Profile',['me']]];
+  ['Salon & Spa',['prices','order','pk','inv','skin','cards','off']],['Taffeta',['guide','hb','fg']],['Send To Alex',['ask']],['Self Promotion',['promo']],['Marketing Proofs',['mkt']],['My Profile',['me']]];
 let NAV_OPEN=false;
 /* Disco ball = Home, Back arrow = the page before (Alexandra, Oct 15 2026). Each page change is a browser history step,
    so the Back arrow and the phone's own back swipe both work. */
@@ -1945,7 +2001,7 @@ function navGo(k,fromHistory){
   if(k==='mkt'){NAV_OPEN=false;HOME_OPEN='';openMkt();render();return}
   if(!fromHistory&&k!==S.tab){const d=((history.state&&history.state.d)||0)+1;try{history.pushState({pp:k,d},'',location.href)}catch(e){}}
   NAV_OPEN=false;S.tab=k;S.dayBack=false;store.set('pp-tab:'+ID,k);render();window.scrollTo(0,0);
-  if(k==='home'||k==='off'||k==='inv'||k==='skin'||k==='growth'||k==='mph'||k==='cards'||k==='me'||k==='prices'||k==='rx'||k==='tip'||k==='promo')hubGet();
+  if(k==='home'||k==='off'||k==='inv'||k==='skin'||k==='growth'||k==='mph'||k==='cards'||k==='me'||k==='prices'||k==='rx'||k==='tip'||k==='promo'||k==='ask')hubGet();
 }
 function navGroups(tabs){
   const label=Object.fromEntries(tabs);
@@ -2066,6 +2122,7 @@ function staffRender(){
   if(S.tab==='rx') return rxView();
   if(S.tab==='prices') return pricesView();
   if(S.tab==='order') return orderView();
+  if(S.tab==='ask') return askView();
   if(S.tab==='pk') return pkView();
   if(S.tab==='growth') return growthView();
   if(S.tab==='mph') return mphView();
@@ -2364,6 +2421,36 @@ function monthView(){
         h('td',{style:'text-align:left;min-width:160px'},h('div',{style:'display:flex;align-items:center;gap:8px'},h('div',{class:'bar',style:'flex:1;height:6px'},h('i',{style:`width:${Math.round(r.service/max*100)}%`})),h('span',{class:'num',style:'min-width:84px;text-align:right'},money(r.service)))),
         h('td',{class:rp(r.retail,r.service)>=15?'over':'under'},rp(r.retail,r.service)+'%'),h('td',{},r.addons==null?'–':String(r.addons)),h('td',{},r.rebook==null?'–':String(r.rebook))))))))];
 }
+/* The Pretty Report: Requests (Alexandra, Oct 30 2026). Everything the team sent from Send To Alex (staff app) and
+   Ask Alex (Weddings App), newest first. Ordered / Arrived / Done shows in the sender's app; Done ones stay two weeks. */
+let RQ={data:null,err:null,busy:false};
+async function rqLoad(extra){
+  if(!S.hubKey||!API()){RQ.err='setup';render();return}
+  RQ.busy=true;render();
+  try{const r=await fetch(API()+'?admin='+encodeURIComponent(S.hubKey)+'&reqs=1'+(extra||'')+'&_='+Date.now());const j=await r.json();if(!j.ok)throw 0;RQ.data=j;RQ.err=null}
+  catch(e){RQ.err='offline'}
+  RQ.busy=false;render();
+}
+const RQ_TAG={retail:'Customer Order',easi:'Easi Hair Pro',ask:'Question'};
+function reqsView(){
+  if(!RQ.data&&!RQ.err&&!RQ.busy) rqLoad();
+  const D=RQ.data, list=D?D.reqs:[], open=list.filter(x=>x.status!=='Done'), done=list.filter(x=>x.status==='Done');
+  const set=(x,st)=>rqLoad('&reqset='+encodeURIComponent(x.id)+'&s='+st+'&by='+encodeURIComponent(prWho()||'Alexandra'));
+  const card=x=>h('div',{class:'askreq'},
+    h('div',{class:'top'},h('span',{class:'tag'},RQ_TAG[x.kind]+(x.app==='Weddings'?' · Weddings':'')),h('span',{class:'stat'+(x.status==='Sent'?'':' ok')},x.status==='Sent'?'New':x.status)),
+    h('b',{},x.kind==='ask'?'“'+x.note+'”':(x.item||'Easi Hair Pro order')+(x.qty?' ×'+x.qty:'')),
+    h('small',{},[x.name+(x.for?' · for '+x.for:''),x.phone,x.paid,x.color&&'Color '+x.color,x.length,x.type,x.need&&'Need by '+x.need].filter(Boolean).join(' · ')),
+    x.kind!=='ask'&&x.note?h('small',{},x.note):null,
+    x.link?h('small',{},h('a',{href:/^https?:/i.test(x.link)?x.link:'https://'+x.link,target:'_blank',rel:'noopener'},'Open Easi Hair Pro link')):null,
+    h('small',{class:'soft'},'Sent '+new Date(x.sent).toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'})+(x.status!=='Sent'&&x.by?' · '+x.status+' by '+x.by:'')),
+    h('div',{class:'acts'},(x.kind==='ask'?['Done']:['Ordered','Arrived','Done']).map(st=>h('button',{type:'button',class:'obtn sm','aria-pressed':String(x.status===st),disabled:RQ.busy?'':null,onclick:()=>set(x,st)},st))));
+  const msg=RQ.err==='setup'?'Requests aren’t connected yet.':RQ.err?'Can’t reach the requests right now.':'Loading…';
+  return [h('div',{class:'hub'},h('h1',{style:'font-size:28px;text-align:center'},'Requests'),
+    D?h('p',{class:'soft',style:'text-align:center;margin:-14px 0 0'},open.length?open.length+' open · newest first':'Nothing waiting. You’re all caught up.'):h('p',{class:'soft',style:'text-align:center'},msg),
+    open.map(card),
+    done.length?h('div',{class:'sec2'},h('span',{class:'lbl'},'Finished'),done.map(x=>h('div',{class:'lrow'},h('span',{},x.name+' · '+(x.kind==='ask'?x.note:x.item||'Easi Hair Pro')),h('span',{class:'stat ok'},'Done')))):null,
+    h('p',{class:'soft',style:'text-align:center;font-size:13px'},'Customer orders also show in Rose’s app. Each request emails you when it comes in.'))];
+}
 /* The Pretty Report homepage, like the Employee Experience App (Alexandra, Oct 17 2026): the wreath with her photo,
    "Hello," and the reader's name, the date and a joke about running a business, then the menu squares.
    One passcode is shared, so each phone says who is reading (asked once, remembered on the phone). */
@@ -2373,15 +2460,16 @@ function prPhotoKey(){return 'pp-photo:'+ID+':'+prWho()}
 function reportGroups(){
   // always 6 squares (Alexandra, Oct 17 2026): Access sits under Team; without the Color Room, Payroll and Month & Trends share one
   return [['Today',['today']]].concat(S.inv?[['Payroll',['payroll']],['Month & Trends',['month']],['Color Room',['color']]]:[['Payroll & Trends',['payroll','month']]])
-    .concat([['Team',['off','photos','guide','sendguide','access']],['Marketing Proofs',['mkt']]]);
+    .concat([['Team',['reqs','off','photos','guide','sendguide','access']],['Marketing Proofs',['mkt']]]);
 }
-const PR_LABEL={mkt:'Marketing Proofs',photos:'Team Work',home:'Home',today:'Today',payroll:'Payroll',month:'Month & Trends',color:'Color Room',off:'Time Off',guide:'Culture',sendguide:'Send App Guide',access:'Access'};
+const PR_LABEL={reqs:'Requests',mkt:'Marketing Proofs',photos:'Team Work',home:'Home',today:'Today',payroll:'Payroll',month:'Month & Trends',color:'Color Room',off:'Time Off',guide:'Culture',sendguide:'Send App Guide',access:'Access'};
 let PR_OPEN='',PR_NAV=false;
 function prGo(k,fromHistory){
   if(k==='mkt'){PR_NAV=false;PR_OPEN='';openMkt();render();return}
   if(!fromHistory&&k!==S.rtab){const d=((history.state&&history.state.d)||0)+1;try{history.pushState({pr:k,d},'',location.href)}catch(e){}}
   PR_OPEN='';PR_NAV=false;S.rtab=k;S.open=null;render();window.scrollTo(0,0);
   if(k==='photos'&&!ALB.loading){ALB.err=null;albLoad()}
+  if(k==='reqs'&&!RQ.busy){RQ.err=null;rqLoad()}
 }
 addEventListener('popstate',e=>{const st=e.state;if(EDITION==='team'&&S.isAdmin){prGo(st&&st.pr?st.pr:'home',true)}});
 /* Refresh reopens the page you were on (refresh.js, Oct 23 2026): s:<tab> on a staff page, r:<tab>[:<person>] on The Pretty Report */
