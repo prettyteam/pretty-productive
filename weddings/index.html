@@ -323,7 +323,7 @@ table.adm{border-collapse:collapse;font-size:13px;min-width:100%}table.adm th,ta
 .wp-card details.wp-add .menu{left:0;right:auto;min-width:240px}
 .wp-card details.wp-add .menu .filebtn{justify-content:flex-start;text-align:left}
 #sheet.moving{touch-action:manipulation;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}   /* quick taps on a phone move people instead of zooming or selecting text */
-#sheet.moving td[data-pos]{cursor:pointer;-webkit-tap-highlight-color:transparent}
+#sheet.moving td[data-pos],#sheet.moving [data-dual]{cursor:pointer;-webkit-tap-highlight-color:transparent}
 .movehelp{position:sticky;top:52px;z-index:21;margin:0 0 10px;padding:10px 14px;background:var(--accent);color:var(--accent-ink);font:500 14px/1.35 var(--sans);text-align:center}
 /* Undo sits in the sticky step line while moving (Alexandra, Oct 23 2026) */
 .movehelp{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;min-height:29px}
@@ -909,6 +909,9 @@ const tm=(s,min)=>s.mode==="tbd"?"TBD":fmt(min);
 const moveSig=s=>s.people.map(p=>p.id+(p.hair?"h":"")+(p.mu?"m":"")+p.role).join(",")+"|"+s.artists.map(a=>a.id+a.role+(a.role==="both"?a.then||"":"")).join(",")+"|"+s.hairSlot+"/"+s.muSlot+"/"+(s.bothSlot||"");
 function build(s){
   const warnings=[];
+  /* moves belong to one team setup. A change (like an artist set to Party only) parks them instead of losing them, and
+     switching back brings them back (Alexandra, Nov 1 2026: her Laura Frankenfield moves vanished) */
+  const sigNow=moveSig(s), mv=s.movesSig===sigNow?s.moves:(s.movesStash&&s.movesStash[sigNow])||null;
   const hairSlot=Math.max(15,Number(s.hairSlot)||60), muSlot=Math.max(15,Number(s.muSlot)||60);
   const hairA=s.artists.filter(a=>a.role==="hair"), muA=s.artists.filter(a=>a.role==="mu"), bothA=s.artists.filter(a=>a.role==="both");
   const bride=s.people.find(p=>p.role==="Bride");
@@ -945,6 +948,14 @@ function build(s){
       take(p);
     }
   }
+  /* the office's own moves in and out of a Party Only column (Alexandra, Nov 1 2026): each pick sends a girl to that
+     artist for her hair and makeup, or back to the hair and makeup artists ("pool") */
+  if(duals.length&&mv)mv.filter(m=>m.svc==="dual").forEach(m=>(m.picks||[]).forEach(([pid,to])=>{
+    const p=s.people.find(q=>q.id===pid);if(!p||p===bride||!(p.hair||p.mu))return;
+    const i=to==="pool"?-1:duals.findIndex(a=>a.id===to);if(to!=="pool"&&i<0)return;
+    dGirls.forEach(g=>{const k=g.indexOf(p);if(k>=0)g.splice(k,1)});
+    if(i>=0)dGirls[i].push(p);
+  }));
   const isDual=p=>dGirls.some(g=>g.includes(p));
   const n=sv=>s.people.filter(p=>p[sv]&&p!==bride&&!isDual(p)).length;
   /* the bride's artist with her own girls: about half of them before the bride, the moms and MOH just before her */
@@ -1021,7 +1032,9 @@ function build(s){
     if(!changed)break;
   }
   // the office's own moves ("Move people", Alexandra Oct 23 2026): swap two boxes of the same service
-  if(s.moves&&s.moves.length&&s.movesSig===moveSig(s))s.moves.forEach(m=>{
+  const parked=(s.movesSig!==sigNow&&s.moves&&s.moves.length?1:0)+Object.keys(s.movesStash||{}).filter(k=>k!==sigNow&&s.movesStash[k].length).length;
+  if(parked)warnings.push("Some moves you made earlier were for a different team setup, so they're set aside. Switch the team back to see them.");
+  if(mv&&mv.length)mv.forEach(m=>{if(m.svc==="dual")return;
     const list=m.svc==="hair"?hair.cols:mu.cols,A=list[m.a[0]],B=list[m.b[0]];if(!A||!B||A.cells[m.a[1]]===BUSY||B.cells[m.b[1]]===BUSY)return;
     [[A,m.a[1]],[B,m.b[1]]].forEach(([c,r])=>{while(c.cells.length<=r)c.cells.push(null)});
     const t=A.cells[m.a[1]];A.cells[m.a[1]]=B.cells[m.b[1]];B.cells[m.b[1]]=t;
@@ -1154,7 +1167,7 @@ function sheetHTML(s,ver,editable){
   const timed=plan.cols.some(c=>c.service==="both");
   h+='<table class="tl"><thead><tr>'+(sameSlot||timed?'<th>Time</th>':'');
   // bride's copy shows artists by first name only (Alexandra, Oct 21 2026)
-  plan.cols.forEach(c=>{const n=goBy(c.artist);h+='<th>'+SVC[c.service]+(n?'<small>'+esc(n)+'</small>':'')+'</th>'});
+  plan.cols.forEach(c=>{const n=goBy(c.artist);h+='<th'+(editable&&moveOn&&c.service==="both"?' data-dual="dual:'+esc(c.artist.id)+':"':'')+'>'+SVC[c.service]+(n?'<small>'+esc(n)+'</small>':'')+'</th>'});
   h+='</tr></thead><tbody>';
   if(timed){h+=timedRows(s,plan,labels,ver,editable)+'</tbody></table><div class="brandline bottom">TAFFETA WEDDINGS</div></div>';return {html:h,plan}}
   for(let r=0;r<rows;r++){
@@ -1201,6 +1214,8 @@ function timedRows(s,plan,labels,ver,editable){
         if(r>=0){
           const pid=c.cells[r], sv=cellSvc(c,r), span=cellLen(c,r)/base;
           if(!pid){h+=box("c empty","",span,"");return}
+          if(editable&&moveOn){const pp=s.people.find(q=>q.id===pid);
+            h+=box("c"+(pp&&pp.role==="Bride"?" bride":""),esc((labels[pid+":"+sv]||{txt:sv==="both"?"Bride":""}).txt)+(c.parts[r]?'<small class="until">'+esc(c.parts[r])+'</small>':''),span,sv==="both"?' data-lock="1"':' data-dual="dual:'+esc(c.artist.id)+':'+esc(pid)+'"');return}
           const L=labels[pid+":"+sv]||{txt:sv==="both"?"Bride":""}, p=s.people.find(q=>q.id===pid);
           const ed=sv!=="both"&&editable&&ver==="team"&&!moveOn?' contenteditable="true" data-key="'+pid+":"+sv+'"':'';
           h+=box('c'+(p&&p.role==="Bride"?' bride':''),esc(L.txt)+(sv==="both"||c.parts[r]?'<small class="until">'+esc(c.parts[r]||"")+'</small>':'')+(sv!=="both"&&L.blank?'<span class="fill"></span>':''),span,ed);
@@ -1209,7 +1224,7 @@ function timedRows(s,plan,labels,ver,editable){
         if(at.some((a,i)=>t>a&&t<a+cellLen(c,i)))return;   // still inside a box above
         if(t===0||at.some((a,i)=>a+cellLen(c,i)===t)){   // a gap starts here: one blank box until her next box
           const next=Math.min(total,...at.filter(a=>a>t));
-          if(next>t)h+=box("c blank","",(next-t)/base,"");
+          if(next>t)h+=box("c blank","",(next-t)/base,editable&&moveOn?' data-dual="dual:'+esc(c.artist.id)+':"':"");
         }
         return;
       }
@@ -1330,7 +1345,7 @@ function teamSuggest(inp,onPick){
   const show=()=>{
     const q=inp.value.trim().toLowerCase();close();if(!q||!profiles.length)return;
     const nm=pr=>[pr.preferredName,pr.legalName].filter(Boolean).map(n=>n.toLowerCase());
-    hits=profiles.filter(pr=>nm(pr).some(n=>n.includes(q)))
+    hits=profiles.filter(pr=>pr.active!=="No"&&nm(pr).some(n=>n.includes(q)))   // turned-off people (Team tab) never pop up
       .sort((x,y)=>(nm(y).some(n=>n.split(/\s+/).some(w=>w.startsWith(q)))-nm(x).some(n=>n.split(/\s+/).some(w=>w.startsWith(q))))||(x.preferredName||x.legalName||"").localeCompare(y.preferredName||y.legalName||""))
       .slice(0,8);
     if(!hits.length||(hits.length===1&&nm(hits[0]).includes(q)&&(hits[0].preferredName||hits[0].legalName||"").toLowerCase()===q))return;
@@ -1469,11 +1484,12 @@ function renderSheet(){
   $("#sheet").innerHTML=html;renderConfirm();
   $("#sheet").classList.toggle("moving",moveOn);
   $("#moveMode").textContent=moveOn?"Done Moving":"Move People";$("#moveMode").setAttribute("aria-pressed",moveOn);
+  if(S.movesSig!==moveSig(S)&&S.movesStash&&S.movesStash[moveSig(S)])parkMoves(S,moveSig(S));
   const canUndo=!!(S.moves&&S.moves.length&&S.movesSig===moveSig(S));
   $("#moveReset").hidden=$("#moveUndoMenu").hidden=$("#moveUndo").hidden=!canUndo;
   const mh=$("#moveHelp");mh.hidden=!moveOn;   // the steps stay on screen while moving (a toast hides behind the Refresh bar on a phone)
-  if(moveOn)$("#moveHelpTxt").textContent=movePick?(movePick.startsWith("hair")?"Now Tap the Hair Box Where She Should Go":"Now Tap the Makeup Box Where She Should Go"):"Tap the Box You Want to Move";
-  if(moveOn)$("#sheet").querySelectorAll("[data-pos]").forEach(td=>{if(td.dataset.pos===movePick)td.classList.add("pick")});
+  if(moveOn)$("#moveHelpTxt").textContent=movePick?(movePick.startsWith("dual")?"Now Tap Where She Should Go":(movePick.startsWith("hair")?"Now Tap the Hair Box":"Now Tap the Makeup Box")+($("#sheet [data-dual]")?" or Party Only Column":"")+" Where She Should Go"):"Tap the Box You Want to Move";
+  if(moveOn)$("#sheet").querySelectorAll("[data-pos],[data-dual]").forEach(td=>{if((td.dataset.pos||td.dataset.dual)===movePick)td.classList.add("pick")});
   $("#warnings").textContent=plan.warnings?plan.warnings.join(" "):"";
   $("#sheet").querySelectorAll("[data-key]").forEach(td=>{
     td.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();td.blur()}});
@@ -1486,22 +1502,45 @@ let moveDown=null,moveTapAt=0;
 $("#sheet").addEventListener("pointerdown",e=>{moveDown=moveOn?{x:e.clientX,y:e.clientY}:null},{passive:true});
 $("#sheet").addEventListener("pointerup",e=>{
   if(!moveOn||!moveDown)return;const d=Math.hypot(e.clientX-moveDown.x,e.clientY-moveDown.y);moveDown=null;
-  if(d>12)return;const td=e.target.closest&&e.target.closest("[data-pos]");if(!td)return;moveTapAt=Date.now();moveTap(td.dataset.pos);
+  if(d>12)return;if(e.target.closest&&e.target.closest("[data-lock]")){moveTapAt=Date.now();toast("The bride stays with her artist");return}
+  const td=e.target.closest&&e.target.closest("[data-pos],[data-dual]");if(!td)return;moveTapAt=Date.now();moveTap(td.dataset.pos||td.dataset.dual);
 });
 $("#sheet").addEventListener("click",e=>{
-  if(!moveOn||Date.now()-moveTapAt<700)return;const td=e.target.closest&&e.target.closest("[data-pos]");if(td)moveTap(td.dataset.pos);
+  if(!moveOn||Date.now()-moveTapAt<700)return;const td=e.target.closest&&e.target.closest("[data-pos],[data-dual]");if(td)moveTap(td.dataset.pos||td.dataset.dual);
 });
 function moveTap(p){
   {
       if(!movePick||p===movePick){movePick=movePick?null:p;renderSheet();return}
       const a=movePick.split(":"),b=p.split(":");movePick=null;
+      if(a[0]==="dual"||b[0]==="dual"){dualMove(a,b);return}
       if(a[0]!==b[0]){movePick=p;toast("Hair boxes trade with hair boxes, makeup with makeup");renderSheet();return}   // start over from this box so the next tap still works
-      const sig=moveSig(S);if(S.movesSig!==sig){S.moves=[];S.movesSig=sig}
+      const sig=moveSig(S);if(S.movesSig!==sig){parkMoves(S,sig)}
       S.moves.push({svc:a[0],a:[+a[1],+a[2]],b:[+b[1],+b[2]]});changed();
       // show which two boxes traded; girls without a name keep their numbers in time order, so that swap looks the same
       const flash=[movedFrom(a),movedFrom(b)].filter(Boolean);flash.forEach(td=>td.classList.add("swapped"));setTimeout(()=>flash.forEach(td=>td.classList.remove("swapped")),1200);
       toast("Swapped");
   }
+}
+/* a Party Only column (Alexandra, Nov 1 2026): tap a girl there, then a box in another column, and the two girls trade
+   artists. Tap a girl, then the Party Only artist's name or an empty spot in her column, and the girl goes to her. */
+function dualMove(a,b){
+  const plan=build(S), bride=S.people.find(q=>q.role==="Bride");
+  const who=x=>{if(x[0]==="dual")return {aid:x[1],pid:x[2]||""};
+    const c=plan.cols.filter(y=>y.service===x[0])[+x[1]], pid=c&&c.cells[+x[2]];return {aid:"pool",pid:pid&&pid!==BUSY?pid:""}};
+  const A=who(a),B=who(b);
+  if(A.aid===B.aid){toast("Pick a box in a different column");renderSheet();return}
+  if(A.pid&&bride&&A.pid===bride.id||B.pid&&bride&&B.pid===bride.id){toast("The bride stays with her artist");renderSheet();return}
+  const picks=[];if(A.pid)picks.push([A.pid,B.aid]);if(B.pid)picks.push([B.pid,A.aid]);
+  if(!picks.length){renderSheet();return}
+  const sig=moveSig(S);if(S.movesSig!==sig){parkMoves(S,sig)}
+  S.moves.push({svc:"dual",picks});changed();
+  toast(picks.length>1?"Swapped":"Moved");
+}
+function parkMoves(s,sig){
+  s.movesStash=s.movesStash||{};
+  if(s.movesSig&&s.moves&&s.moves.length)s.movesStash[s.movesSig]=s.moves;
+  s.moves=s.movesStash[sig]||[];delete s.movesStash[sig];s.movesSig=sig;
+  if(!Object.keys(s.movesStash).length)delete s.movesStash;
 }
 function movedFrom(x){return $("#sheet").querySelector('[data-pos="'+x.join(":")+'"]')}
 function changed(skipSheet){if(!skipSheet)renderSheet();queueSave()}
@@ -1510,7 +1549,7 @@ $("#moveMode").onclick=()=>{moveOn=!moveOn;movePick=null;renderSheet();if(moveOn
 function undoMove(){
   if(!(S.moves&&S.moves.length&&S.movesSig===moveSig(S)))return;
   const m=S.moves.pop();if(!S.moves.length)delete S.movesSig;movePick=null;changed();
-  const flash=[movedFrom([m.svc,...m.a]),movedFrom([m.svc,...m.b])].filter(Boolean);flash.forEach(td=>td.classList.add("swapped"));setTimeout(()=>flash.forEach(td=>td.classList.remove("swapped")),1200);
+  const flash=m.a?[movedFrom([m.svc,...m.a]),movedFrom([m.svc,...m.b])].filter(Boolean):[];flash.forEach(td=>td.classList.add("swapped"));setTimeout(()=>flash.forEach(td=>td.classList.remove("swapped")),1200);
   toast(S.moves.length?"Undone. Tap Undo Again for the One Before":"Undone");
 }
 $("#moveUndo").onclick=undoMove;

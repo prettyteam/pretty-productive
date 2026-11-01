@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Send Us Your Glam Squad</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="../icon.png"><link rel="apple-touch-icon" href="../icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital@0;1&family=Libertinus+Sans:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#111;--soft:#7a6f66;--line:#d9d2ca;--bg:#fff;--display:'Playfair Display',serif;--body:'Libertinus Sans',sans-serif}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.55}
+main{max-width:460px;margin:0 auto;padding:40px 16px 56px;text-align:center}
+.eyebrow{font-size:11px;letter-spacing:.25em;text-transform:uppercase;color:var(--soft);margin:0 0 18px}
+h1{font-family:var(--display);font-weight:400;font-size:32px;line-height:1.15;margin:0 0 14px}
+p{margin:0 0 22px}
+form{text-align:left;margin:26px 0 0}
+label{display:block;font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--soft);margin:0 0 16px}
+input{display:block;width:100%;margin-top:6px;font:17px var(--body);color:var(--ink);border:0;border-bottom:1px solid var(--ink);padding:8px 0;background:transparent;border-radius:0}
+input:focus{outline:none;border-bottom-width:2px}
+.row{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.btn{display:block;width:100%;margin:26px 0 12px;border:0;background:var(--ink);color:#fff;font:13px var(--body);letter-spacing:.2em;text-transform:uppercase;padding:16px 20px;cursor:pointer;text-decoration:none;text-align:center}
+.small{font-size:13px;color:var(--soft);text-align:center}
+.small a{color:var(--ink)}
+.note{border:1px solid var(--ink);padding:14px 16px;font-size:14px;text-align:left;margin-top:30px}
+.foot{font-size:11px;letter-spacing:.25em;color:#999;margin-top:34px}
+</style>
+</head><body>
+<main>
+  <div class="eyebrow">Taffeta Weddings</div>
+  <h1>Send Us Your Glam Squad</h1>
+  <p>Fill this in and tap the button. Your email opens to Alexandra with Dominique copied, all filled in, so you just hit send.</p>
+  <form id="f">
+    <label>Your Name<input name="name" autocomplete="name" required></label>
+    <label>Wedding Date<input name="date" type="date" required></label>
+    <div class="row">
+      <label>Hair Only<input name="hair" type="number" min="0" inputmode="numeric" placeholder="0"></label>
+      <label>Makeup Only<input name="mu" type="number" min="0" inputmode="numeric" placeholder="0"></label>
+      <label>Hair &amp; Makeup<input name="both" type="number" min="0" inputmode="numeric" placeholder="0"></label>
+    </div>
+    <p class="small">Count everyone getting ready with you, including you.</p>
+    <button class="btn" type="submit">Open My Email</button>
+  </form>
+  <p class="small">Prefer to write it yourself? Email <a id="plain" href="mailto:alexandralee@taffetadesign.com?cc=sales@taffetadesign.com&amp;subject=Final%20Headcount">alexandralee@taffetadesign.com</a> and copy sales@taffetadesign.com.</p>
+  <div class="note"><b>A Little Note:</b> Once your headcount is confirmed at your preview, the number of services can't decrease. If someone in your party backs out, you're welcome to give their spot to someone else, but your invoice can't go down, because our team is booked and contracted for that number of services.</div>
+  <div class="foot">TAFFETA WEDDINGS</div>
+</main>
+<script>
+// The Flodesk "Send Us Your Glam Squad" button lands here, because Flodesk won't take a mailto link with a CC, subject or body.
+// The subject always starts "Final Headcount" so the Weddings script can find these emails.
+const TO = 'alexandralee@taffetadesign.com', CC = 'sales@taffetadesign.com';
+document.getElementById('f').addEventListener('submit', e => {
+  e.preventDefault();
+  const v = Object.fromEntries(new FormData(e.target)), n = k => String(Math.max(0, parseInt(v[k], 10) || 0));
+  const day = v.date ? new Date(v.date + 'T12:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : '';
+  const body = ['Hi Alexandra and Dominique,', '', 'Here is our final headcount.', '',
+    "Bride's name: " + v.name.trim(), 'Wedding date: ' + day,
+    'Hair only: ' + n('hair'), 'Makeup only: ' + n('mu'), 'Hair and makeup: ' + n('both'), '', 'Thank you!'].join('\r\n');
+  location.href = 'mailto:' + TO + '?cc=' + CC + '&subject=' + encodeURIComponent('Final Headcount: ' + v.name.trim()) + '&body=' + encodeURIComponent(body);
+});
+</script>
+</body></html>
