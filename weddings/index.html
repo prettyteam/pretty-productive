@@ -1007,7 +1007,12 @@ function build(s){
     if(!changed)break;
   }
   // the office's own moves ("Move people", Alexandra Oct 23 2026): swap two boxes of the same service
-  if(s.moves&&s.moves.length&&s.movesSig===moveSig(s))s.moves.forEach(m=>{
+  /* moves belong to one team setup. A change (like an artist set to Party only) parks them instead of losing them, and
+     switching back brings them back (Alexandra, Nov 1 2026: her Laura Frankenfield moves vanished) */
+  const sigNow=moveSig(s), mv=s.movesSig===sigNow?s.moves:(s.movesStash&&s.movesStash[sigNow])||null;
+  const parked=(s.movesSig!==sigNow&&s.moves&&s.moves.length?1:0)+Object.keys(s.movesStash||{}).filter(k=>k!==sigNow&&s.movesStash[k].length).length;
+  if(parked)warnings.push("Some moves you made earlier were for a different team setup, so they're set aside. Switch the team back to see them.");
+  if(mv&&mv.length)mv.forEach(m=>{
     const list=m.svc==="hair"?hair.cols:mu.cols,A=list[m.a[0]],B=list[m.b[0]];if(!A||!B||A.cells[m.a[1]]===BUSY||B.cells[m.b[1]]===BUSY)return;
     [[A,m.a[1]],[B,m.b[1]]].forEach(([c,r])=>{while(c.cells.length<=r)c.cells.push(null)});
     const t=A.cells[m.a[1]];A.cells[m.a[1]]=B.cells[m.b[1]];B.cells[m.b[1]]=t;
@@ -1187,6 +1192,7 @@ function timedRows(s,plan,labels,ver,editable){
         if(r>=0){
           const pid=c.cells[r], sv=cellSvc(c,r), span=cellLen(c,r)/base;
           if(!pid){h+=box("c empty","",span,"");return}
+          if(editable&&moveOn){h+=box("c"+(p0=>p0&&p0.role==="Bride"?" bride":"")(s.people.find(q=>q.id===pid)),'<span data-lock="1">'+esc((labels[pid+":"+sv]||{txt:sv==="both"?"Bride":""}).txt)+(c.parts[r]?'<small class="until">'+esc(c.parts[r])+'</small>':'')+'</span>',span,' data-lock="1"');return}
           const L=labels[pid+":"+sv]||{txt:sv==="both"?"Bride":""}, p=s.people.find(q=>q.id===pid);
           const ed=sv!=="both"&&editable&&ver==="team"&&!moveOn?' contenteditable="true" data-key="'+pid+":"+sv+'"':'';
           h+=box('c'+(p&&p.role==="Bride"?' bride':''),esc(L.txt)+(sv==="both"||c.parts[r]?'<small class="until">'+esc(c.parts[r]||"")+'</small>':'')+(sv!=="both"&&L.blank?'<span class="fill"></span>':''),span,ed);
@@ -1455,6 +1461,7 @@ function renderSheet(){
   $("#sheet").innerHTML=html;renderConfirm();
   $("#sheet").classList.toggle("moving",moveOn);
   $("#moveMode").textContent=moveOn?"Done Moving":"Move People";$("#moveMode").setAttribute("aria-pressed",moveOn);
+  if(S.movesSig!==moveSig(S)&&S.movesStash&&S.movesStash[moveSig(S)])parkMoves(S,moveSig(S));
   const canUndo=!!(S.moves&&S.moves.length&&S.movesSig===moveSig(S));
   $("#moveReset").hidden=$("#moveUndoMenu").hidden=$("#moveUndo").hidden=!canUndo;
   const mh=$("#moveHelp");mh.hidden=!moveOn;   // the steps stay on screen while moving (a toast hides behind the Refresh bar on a phone)
@@ -1472,7 +1479,8 @@ let moveDown=null,moveTapAt=0;
 $("#sheet").addEventListener("pointerdown",e=>{moveDown=moveOn?{x:e.clientX,y:e.clientY}:null},{passive:true});
 $("#sheet").addEventListener("pointerup",e=>{
   if(!moveOn||!moveDown)return;const d=Math.hypot(e.clientX-moveDown.x,e.clientY-moveDown.y);moveDown=null;
-  if(d>12)return;const td=e.target.closest&&e.target.closest("[data-pos]");if(!td)return;moveTapAt=Date.now();moveTap(td.dataset.pos);
+  if(d>12)return;if(e.target.closest&&e.target.closest("[data-lock]")&&!e.target.closest("[data-pos]")){moveTapAt=Date.now();toast("Boxes in a Party Only column can't be moved yet");return}
+  const td=e.target.closest&&e.target.closest("[data-pos]");if(!td)return;moveTapAt=Date.now();moveTap(td.dataset.pos);
 });
 $("#sheet").addEventListener("click",e=>{
   if(!moveOn||Date.now()-moveTapAt<700)return;const td=e.target.closest&&e.target.closest("[data-pos]");if(td)moveTap(td.dataset.pos);
@@ -1482,12 +1490,18 @@ function moveTap(p){
       if(!movePick||p===movePick){movePick=movePick?null:p;renderSheet();return}
       const a=movePick.split(":"),b=p.split(":");movePick=null;
       if(a[0]!==b[0]){movePick=p;toast("Hair boxes trade with hair boxes, makeup with makeup");renderSheet();return}   // start over from this box so the next tap still works
-      const sig=moveSig(S);if(S.movesSig!==sig){S.moves=[];S.movesSig=sig}
+      const sig=moveSig(S);if(S.movesSig!==sig){parkMoves(S,sig)}
       S.moves.push({svc:a[0],a:[+a[1],+a[2]],b:[+b[1],+b[2]]});changed();
       // show which two boxes traded; girls without a name keep their numbers in time order, so that swap looks the same
       const flash=[movedFrom(a),movedFrom(b)].filter(Boolean);flash.forEach(td=>td.classList.add("swapped"));setTimeout(()=>flash.forEach(td=>td.classList.remove("swapped")),1200);
       toast("Swapped");
   }
+}
+function parkMoves(s,sig){
+  s.movesStash=s.movesStash||{};
+  if(s.movesSig&&s.moves&&s.moves.length)s.movesStash[s.movesSig]=s.moves;
+  s.moves=s.movesStash[sig]||[];delete s.movesStash[sig];s.movesSig=sig;
+  if(!Object.keys(s.movesStash).length)delete s.movesStash;
 }
 function movedFrom(x){return $("#sheet").querySelector('[data-pos="'+x.join(":")+'"]')}
 function changed(skipSheet){if(!skipSheet)renderSheet();queueSave()}
