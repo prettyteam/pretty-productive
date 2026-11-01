@@ -1454,7 +1454,7 @@ function renderCalHead(){
   const el=$("#calHead");if(!el)return;
   const w=docId&&allWeddings.find(x=>x.id===docId);
   const d=w?Object.assign({},w.d,{people:S.people,headOk:S.headOk}):null;
-  el.innerHTML=d&&ROLE==="office"?headWarnHTML(d,"build"):"";
+  el.innerHTML=d?finalHeadHTML(d)+(ROLE==="office"?headWarnHTML(d,"build"):""):"";
   const b=$("#useCalHead");if(b)b.onclick=()=>{
     const c=calHead(d);if(!c)return;
     if(!confirm("Replace this party with the calendar headcount ("+headTxt(c.head)+")? Names you typed stay on the matching spots."))return;
@@ -2312,9 +2312,21 @@ function headWarnHTML(d,mode){   /* mode: "build" (office editing: button), "off
     +'<b>Headcount doesn’t match Google Calendar.</b> The calendar says '+esc(headTxt(x.cal))+'; this timeline has '+esc(headTxt(x.app))+'.'
     +(mode==="build"?' <button type="button" class="btn ghost small" id="useCalHead" style="margin-left:6px">Use calendar headcount</button> <button type="button" class="btn ghost small" id="keepAppHead" style="margin-left:6px">Keep app headcount</button>':mode==="office"?' Fix it on the Timeline tab.':' Check with the office before the wedding.')+'</div>';
 }
+/* Final headcount (Alexandra, Nov 1 2026): brides email it from the /headcount/ page; the Weddings script saves it as
+   d.finalHeadcount {hair, mu, both, total, at}. Shown to everyone on the wedding, so the team can check what's confirmed. */
+function finalHeadHTML(d){
+  const f=d&&d.finalHeadcount;if(!f)return "";
+  const parts=[f.hair?f.hair+" hair only":"",f.mu?f.mu+" makeup only":"",f.both?f.both+" hair & makeup":""].filter(Boolean).join(", ")||"no services";
+  const when=f.at?new Date(f.at).toLocaleDateString("en-US",{month:"short",day:"numeric"}):"";
+  const want={hair:(f.hair||0)+(f.both||0),mu:(f.mu||0)+(f.both||0)},a=Array.isArray(d.people)&&d.people.length?headOf(d.people):null;
+  const off=a&&(a.hair!==want.hair||a.mu!==want.mu);
+  return '<div class="finalhead" style="border:1px solid #111;padding:10px 12px;margin:0 0 12px;background:#fff">'
+    +'<b>Final Headcount Confirmed'+(when?' '+esc(when):'')+':</b> '+esc(parts)+' ('+(f.total||want.hair+want.mu)+' services). Can’t decrease from here.'
+    +(off?'<div style="color:#b3261e;margin-top:4px">This timeline has '+esc(headTxt(a))+'. Update the party to match.</div>':'')+'</div>';
+}
 function renderTeamSheet(){
   const w=allWeddings.find(x=>x.id===teamSel);
-  $("#teamCal").innerHTML=w?headWarnHTML(w.d,ROLE==="office"?"office":"artist")+gcalHTML(w.d.calInfo):"";
+  $("#teamCal").innerHTML=w?finalHeadHTML(w.d)+headWarnHTML(w.d,ROLE==="office"?"office":"artist")+gcalHTML(w.d.calInfo):"";
   if(!w){$("#teamSheet").innerHTML='<div class="empty-state">Pick a wedding to see the timeline.</div>';$("#teamCopy").disabled=true;$("#teamImg").disabled=true;$("#teamPdf").disabled=true;$("#teamPdfBride").disabled=true;return}
   // No timeline built yet (a job Yes or a Google Calendar wedding): never fill in made-up default times and people.
   if(w.d.startMin==null){
