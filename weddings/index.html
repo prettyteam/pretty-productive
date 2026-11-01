@@ -316,6 +316,14 @@ table.adm{border-collapse:collapse;font-size:13px;min-width:100%}table.adm th,ta
 .pv-ph small{position:absolute;left:0;right:0;bottom:0;background:rgba(255,255,255,.85);font-size:10px;padding:2px 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .filebtn{position:relative;overflow:hidden;display:inline-flex;align-items:center;justify-content:center}
 .filebtn input{position:absolute;inset:0;opacity:0;cursor:pointer}
+/* bride photo at the top of a bride's page (Alexandra, Nov 1 2026) */
+.bp-card{margin-bottom:14px;align-items:center;text-align:center}
+.bp-card.bp-min{flex-direction:row;justify-content:space-between;align-items:center;padding:8px 14px;text-align:left}
+.bp-card.bp-min .bp-k{font:500 11px var(--sans);letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.bp-card .bp-img{display:block;max-width:100%;max-height:440px;width:auto;height:auto;margin:0 auto;border:1px solid var(--line)}
+.bp-card .bp-wait{width:240px;max-width:100%;height:300px;background:var(--soft);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:12px}
+.bp-card .bp-name{font:400 22px var(--serif);margin:2px 0 0}
+.bp-card .bp-btns{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
 /* wedding photos card (Schedule + Timeline), Oct 22 2026 */
 .wp-card{margin-top:18px}
 .wp-card h3{font:500 11px var(--sans);letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:14px 0 8px}
@@ -381,6 +389,7 @@ input,select,textarea{background:#fff;border-radius:0}
 
   <section id="view-build" hidden>
     <div class="savebar" id="savebar" hidden><span id="saveState">Saved</span><button class="btn small" id="saveNow">Save</button></div>
+    <div class="card bp-card" id="bride-photo" hidden></div>
     <div class="grid2">
       <div class="rail">
         <div class="card">
@@ -2900,7 +2909,7 @@ async function favUpload(id,files){
    so they ride along in the Team PDF and Text team. They sit on top of the times. Small pictures on screen, full size in the PDF. */
 /* the photos sit in a row across the bottom, under the times (Alexandra, Oct 23 2026) */
 function wpLookHTML(id,src){
-  const ph=(wpCache[id]||[]).filter(p=>src[p.id]&&p.kind!=="fav");if(!ph.length)return"";
+  const ph=(wpCache[id]||[]).filter(p=>src[p.id]&&p.kind!=="fav"&&p.kind!=="bride");if(!ph.length)return"";
   const order=WP_GROUPS.map(g=>g[0]),list=ph.slice().sort((x,y)=>order.indexOf(x.kind)-order.indexOf(y.kind));
   return '<div class="look" style="grid-template-columns:repeat('+Math.min(list.length,5)+',1fr)">'+list.map(p=>'<div><img alt="" src="'+src[p.id]+'"><small>'+esc((p.ext?"Extensions · ":"")+(p.by||""))+'</small></div>').join("")+'</div>';
 }
@@ -2930,6 +2939,48 @@ async function wpTeamPages(s,id){
 /* show the card wherever a wedding is open: Schedule (everyone) and the office Timeline */
 {const rts=renderTeamSheet;renderTeamSheet=function(){rts();wpShow("team",allWeddings.some(x=>x.id===teamSel)?teamSel:null)}}
 {const so=$("#saved").onchange;$("#saved").onchange=e=>{so(e);wpShow("build",docId)}}
+
+/* ---------- bride photo (Alexandra, Nov 1 2026) ----------
+   At the top of a bride's page (tap her name on Booked Weddings). With no photo it's just a small Add Bride Photo line.
+   Once the office adds her photo it shows big at the top. One photo per bride: adding a new one replaces the old one.
+   Saved like the other wedding photos (kind "bride"), so it stays off the Photos card. */
+const bpFull={};
+function bpRender(){
+  const box=$("#bride-photo");if(!box)return;
+  const id=docId,photos=id?wpCache[id]:null,office=ROLE==="office";
+  if(!id||!ROLE||!photos){box.hidden=true;box.innerHTML="";return}
+  const ph=photos.filter(p=>p.kind==="bride").pop();
+  if(!ph){
+    if(!office){box.hidden=true;box.innerHTML="";return}
+    box.hidden=false;box.className="card bp-card bp-min";
+    box.innerHTML='<span class="bp-k">Bride Photo</span><span class="status" data-bpst></span><span class="btn ghost small filebtn">+ Add Bride Photo<input type="file" accept="image/*" aria-label="Add the bride\'s photo"></span>';
+  }else{
+    box.hidden=false;box.className="card bp-card";
+    const src=bpFull[ph.id]||wpThumbs[ph.id]||"";
+    box.innerHTML=(src?'<img class="bp-img" alt="'+esc(S.bride||"Bride")+'" src="'+src+'">':'<div class="bp-wait">Loading photo…</div>')
+      +'<div class="bp-name">'+esc(S.bride||"")+'</div>'
+      +(office?'<div class="bp-btns"><span class="btn ghost small filebtn">Change Photo<input type="file" accept="image/*" aria-label="Change the bride\'s photo"></span><button class="btn ghost small" type="button" data-bpx>Remove Photo</button></div>':'')
+      +'<span class="status" data-bpst></span>';
+    if(!bpFull[ph.id])api("wedPhotoData",{id,ids:[ph.id],full:true}).then(j=>{const u=(j.photos||{})[ph.id];if(u){bpFull[ph.id]=u;if(docId===id)bpRender()}}).catch(()=>{});
+    const x=box.querySelector("[data-bpx]");
+    if(x)x.onclick=async()=>{if(!confirm("Remove "+(S.bride?S.bride.split(/\s+/)[0]+"'s":"this")+" photo?"))return;
+      try{await api("delWedPhoto",{id,photoId:ph.id});wpCache[id]=(wpCache[id]||[]).filter(p=>p.id!==ph.id);bpRender()}catch(e){toast("Couldn't remove it. Try again.")}};
+  }
+  const inp=box.querySelector('input[type="file"]');
+  if(inp)inp.onchange=async()=>{
+    const f=inp.files[0];inp.value="";if(!f)return;
+    const st=box.querySelector("[data-bpst]");if(st)st.textContent="Uploading…";
+    try{
+      const data=await pvShrink(f,1600,.85),thumb=await pvShrink(f,320,.7);
+      const j=await apiRetry("addWedPhoto",{id,photo:{kind:"bride",data,thumb}});
+      bpFull[j.photo.id]="data:image/jpeg;base64,"+data;
+      wpCache[id]=(wpCache[id]||[]).filter(p=>p.kind!=="bride").concat([j.photo]);
+      bpRender();toast("Bride photo added.");
+    }catch(e){if(st)st.textContent="";toast("The photo didn't upload. Try again.")}
+  };
+}
+{const wr=wpRender;wpRender=function(w){wr(w);if(w==="build")bpRender()}}
+{const so=$("#saved").onchange;$("#saved").onchange=e=>{so(e);bpRender()}}
 
 /* ---------- booked weddings (office) ---------- */
 function bkRows(){
