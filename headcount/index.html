@@ -29,7 +29,7 @@ input:focus{outline:none;border-bottom-width:2px}
 <main>
   <div class="eyebrow">Taffeta Weddings</div>
   <h1>Send My Final Headcount</h1>
-  <p>Fill this in and tap the button. Your email opens to Alexandra with Dominique copied, all filled in, so you just hit send.</p>
+  <p>Fill this in and tap the button. Your email opens to our team, all filled in, so you just hit send.</p>
   <form id="f">
     <label>Your Name<input name="name" autocomplete="name" required></label>
     <label>Wedding Date<input name="date" type="date" required></label>
@@ -41,19 +41,19 @@ input:focus{outline:none;border-bottom-width:2px}
     <p class="small">Count everyone getting ready with you, including you.</p>
     <button class="btn" type="submit">Open My Email</button>
   </form>
-  <p class="small">Prefer to write it yourself? Email <a id="plain" href="mailto:alexandralee@taffetadesign.com?cc=sales@taffetadesign.com&amp;subject=Final%20Headcount">alexandralee@taffetadesign.com</a> and copy sales@taffetadesign.com.</p>
+  <p class="small">Prefer to write it yourself? Email <a id="plain" href="mailto:info@taffetadesign.com?cc=sales@taffetadesign.com&amp;subject=Final%20Headcount">info@taffetadesign.com</a> and copy sales@taffetadesign.com.</p>
   <div class="note"><b>A Gentle Reminder:</b> We kindly ask that your final headcount be shared around the time of your preview, as this is when we reserve your artists for your wedding day. Once your headcount is confirmed, we're unable to reduce the number of services. Should someone in your party need to step away, you're most welcome to offer her place to another guest. Your total will remain the same, as our team is committed to you for that number of services.</div>
   <div class="foot">TAFFETA WEDDINGS</div>
 </main>
 <script>
 // The Flodesk "Send My Final Headcount" button lands here, because Flodesk won't take a mailto link with a CC, subject or body.
 // The subject always starts "Final Headcount" so the Weddings script can find these emails.
-const TO = 'alexandralee@taffetadesign.com', CC = 'sales@taffetadesign.com';
+const TO = 'info@taffetadesign.com', CC = 'sales@taffetadesign.com';
 document.getElementById('f').addEventListener('submit', e => {
   e.preventDefault();
   const v = Object.fromEntries(new FormData(e.target)), n = k => String(Math.max(0, parseInt(v[k], 10) || 0));
   const day = v.date ? new Date(v.date + 'T12:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : '';
-  const body = ['Hi Alexandra and Dominique,', '', 'Here is our final headcount.', '',
+  const body = ['Hi Taffeta Weddings Team,', '', 'Here is our final headcount.', '',
     "Bride's name: " + v.name.trim(), 'Wedding date: ' + day,
     'Hair only: ' + n('hair'), 'Makeup only: ' + n('mu'), 'Hair and makeup: ' + n('both'), '', 'Thank you!'].join('\r\n');
   location.href = 'mailto:' + TO + '?cc=' + CC + '&subject=' + encodeURIComponent('Final Headcount: ' + v.name.trim()) + '&body=' + encodeURIComponent(body);
