@@ -171,7 +171,7 @@
     ]
   },
   "pk": {
-    "week": "Oct 17",
+    "week": "Nov 1",
     "groups": [
       {
         "name": "Hair Care",
@@ -186,11 +186,11 @@
           },
           {
             "name": "K18",
-            "title": "TripleBright purple shampoo",
-            "blurb": "K18’s new shampoo for blondes. Know it before your next blonde guest asks.",
-            "url": "https://behindthechair.com/articles/k18-triplebright-purple-shampoo-debuts-on-blonde-like-new-tour/",
+            "title": "GLP-1s and hair shedding",
+            "blurb": "Many guests on GLP-1s notice shedding. Know why, and how to help.",
+            "url": "https://www.k18hair.com/blogs/consumer/how-do-glp-1s-impact-hair",
             "cta": "Read",
-            "week": "Oct 17"
+            "week": "Nov 1"
           },
           {
             "name": "Brazilian Blowout",
@@ -260,6 +260,18 @@
           }
         ]
       }
+    ],
+    "history": [
+      "https://behindthechair.com/articles/3-curly-and-coily-hair-tips-we-learned-at-oribes-new-launch/",
+      "https://behindthechair.com/articles/k18-triplebright-purple-shampoo-debuts-on-blonde-like-new-tour/",
+      "https://behindthechair.com/articles/10-reasons-why-you-should-be-doing-brazilian-blowouts/",
+      "https://behindthechair.com/product-announcements/heart-of-glass-silkening-shampoo/",
+      "https://www.fourseasons.com/philadelphia/spa/rossano-ferretti-hair-care/",
+      "https://spacenk.com/us/brands/i/igk-hair",
+      "https://shop.advancedderm.com/collections/cool-as-a-cucumber",
+      "https://www.biologique-recherche.com/en-us/pages/choose-a-lotion-p50",
+      "https://www.whowhatwear.com/beauty/makeup/fall-makeup-trends-2026",
+      "https://www.k18hair.com/blogs/consumer/how-do-glp-1s-impact-hair"
     ]
   },
   "promo": {
