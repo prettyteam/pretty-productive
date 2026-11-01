@@ -875,6 +875,7 @@ function render(){
   else if(S.rtab==='off') parts=adminOffView();
   else if(S.rtab==='reqs') parts=reqsView();
   else if(S.rtab==='month') parts=monthView();
+  else if(S.rtab==='trends') parts=trendsView();
   else if(S.rtab==='color') parts=colorRoomView();
   else if(S.rtab==='photos') parts=albumView();
   else if(S.rtab==='guide') parts=leaderGuideView();
@@ -2491,6 +2492,52 @@ function monthView(){
         h('td',{style:'text-align:left;min-width:160px'},h('div',{style:'display:flex;align-items:center;gap:8px'},h('div',{class:'bar',style:'flex:1;height:6px'},h('i',{style:`width:${Math.round(r.service/max*100)}%`})),h('span',{class:'num',style:'min-width:84px;text-align:right'},money(r.service)))),
         h('td',{class:rp(r.retail,r.service)>=15?'over':'under'},rp(r.retail,r.service)+'%'),h('td',{},r.addons==null?'–':String(r.addons)),h('td',{},r.rebook==null?'–':String(r.rebook))))))))];
 }
+/* The Pretty Report: Sunday Trends (Rick asked, Nov 1 2026). A simple week-over-week list: hourly hours paid, new customers,
+   service vs retail, total revenue vs payroll. Weeks (Mon-Sun) come from board/team.trends, written every Sunday night from the
+   Paired Plus End of Day emails. Hours come live from the time clock (people in hoursList). Hourly pay = hours x team.trends.hourly rate. */
+let TR={hours:{},busy:{}};
+async function trHours(wk){
+  if(TR.busy[wk]||TR.hours[wk]!==undefined||!S.hubKey||!API())return;
+  TR.busy[wk]=true;
+  try{const r=await fetch(API()+'?admin='+encodeURIComponent(S.hubKey)+'&week='+wk+'&_='+Date.now());const j=await r.json();if(!j.ok)throw 0;
+    const sl=n=>String(n||'').toLowerCase().trim().replace(/[^a-z0-9]+/g,'-'),L=S.hoursList||[];
+    const ppl=(j.people||[]).filter(p=>!L.length||L.indexOf(sl(p.name))>=0);
+    TR.hours[wk]={min:ppl.reduce((a,p)=>a+(p.min||0),0),per:Object.fromEntries(ppl.map(p=>[sl(p.name),p.min||0]))}}
+  catch(e){TR.hours[wk]=null}
+  TR.busy[wk]=false;render();
+}
+function trendsView(){
+  const T=S.trends||{}, W=(T.weeks||[]).slice().sort((a,b)=>a.week<b.week?-1:1).slice(-8), rate=T.hourly||{};
+  if(!W.length) return [h('section',{class:'section'},h('h2',{},'Sunday Trends'),h('div',{class:'empty'},h('p',{},'The first weekly list fills in Sunday night.')))];
+  W.forEach(w=>trHours(w.week));
+  const dt=k=>(([y,m,d])=>new Date(y,m-1,d))(k.split('-').map(Number));
+  const lab=k=>dt(k).toLocaleDateString('en-US',{month:'short',day:'numeric'});
+  const usd=n=>n==null?'–':'$'+Math.round(n).toLocaleString('en-US');
+  const hasRates=Object.keys(rate).length>0;
+  const calc=w=>{const H=TR.hours[w.week];const min=H?H.min:(w.hours!=null?w.hours*60:null);
+    const hourlyPay=H&&hasRates?Object.entries(H.per).reduce((a,[k,m])=>a+(rate[k]||0)*m/60,0):(w.hourlyPay!=null?w.hourlyPay:null);
+    const total=(w.service||0)+(w.retail||0), payroll=(w.commission||0)+(hourlyPay||0);
+    return {min,hourlyPay,total,payroll,pct:total?Math.round(payroll/total*1000)/10:null,rp:total?Math.round((w.retail||0)/total*1000)/10:null}};
+  const C=W.map(calc), n=W.length-1, w=W[n], c=C[n], pw=n>0?W[n-1]:null, pc=n>0?C[n-1]:null;
+  const chg=(a,b,f)=>{if(a==null||b==null)return null;const d=a-b;if(Math.abs(d)<0.005)return h('span',{class:'soft'},'same as last week');
+    return h('span',{class:'soft'},(d>0?'▲ up ':'▼ down ')+f(Math.abs(d))+' vs last week')};
+  const row=(t,v,sub,ch)=>h('div',{class:'lrow',style:'display:block;padding:12px 0'},
+    h('div',{style:'display:flex;justify-content:space-between;gap:10px;align-items:baseline'},h('b',{},t),h('b',{class:'num'},v)),
+    h('div',{style:'display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:13px;margin-top:3px'},h('span',{class:'soft'},sub||''),ch||h('span',{})));
+  const H=x=>x==null?'–':hrs(x)+' h';
+  const out=[h('section',{class:'section'},
+    h('div',{style:'display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;align-items:baseline'},h('h2',{},'Sunday Trends'),h('span',{class:'soft'},'Week of '+lab(w.week)+' – '+lab(ymd(new Date(dt(w.week).getTime()+6*864e5))))),
+    row('Hourly Hours Paid',H(c.min),c.hourlyPay!=null?'Hourly pay '+usd(c.hourlyPay):'Time clock, people who clock in',pc&&chg(c.min,pc.min,x=>hrs(x)+' h')),
+    row('New Customers',String(w.newClients||0),(w.clients||0)+' clients in all',pw&&chg(w.newClients||0,pw.newClients||0,x=>String(x))),
+    row('Service vs Retail',usd(w.service)+' / '+usd(w.retail),'Retail is '+c.rp+'% of sales',pw&&chg(w.retail||0,pw.retail||0,usd)),
+    row('Total Revenue',usd(c.total),'Service + retail',pc&&chg(c.total,pc.total,usd)),
+    row('Payroll',usd(c.payroll),(c.pct==null?'':c.pct+'% of revenue · ')+'commission '+usd(w.commission)+(c.hourlyPay!=null?' + hourly '+usd(c.hourlyPay):hasRates?'':' (hourly pay not added yet)'),pc&&chg(c.payroll,pc.payroll,usd))),
+  h('section',{class:'section'},h('h2',{},'Week by Week'),h('div',{class:'tablewrap'},h('table',{class:'week'},
+    h('thead',{},h('tr',{},h('th',{},'Week'),h('th',{},'Hours'),h('th',{},'New'),h('th',{},'Service'),h('th',{},'Retail'),h('th',{},'Revenue'),h('th',{},'Payroll'),h('th',{},'Pay %'))),
+    h('tbody',{},W.map((x,i)=>h('tr',{},h('td',{style:'white-space:nowrap'},lab(x.week)),h('td',{},C[i].min==null?'–':hrs(C[i].min)),h('td',{},String(x.newClients||0)),h('td',{},usd(x.service)),h('td',{},usd(x.retail)),h('td',{},usd(C[i].total)),h('td',{},usd(C[i].payroll)),h('td',{},C[i].pct==null?'–':C[i].pct+'%'))).reverse()))),
+    h('p',{class:'soft',style:'font-size:13px'},'Weeks run Monday to Sunday and update every Sunday night. Sales and new customers come from the Paired Plus End of Day emails. Commission uses each artist’s real rate plus 10% on retail'+(w.commissionFinal?'':' (an estimate until the Monday payroll report; it doesn’t zero model services yet)')+'. Hours come from the time clock.'+(hasRates?'':' Hourly pay shows once hourly rates are added.')))];
+  return out;
+}
 /* The Pretty Report: Requests (Alexandra, Oct 30 2026). Everything the team sent from Send To Alex (staff app) and
    Ask Alex (Weddings App), newest first. Ordered / Arrived / Done shows in the sender's app; Done ones stay two weeks. */
 let RQ={data:null,err:null,busy:false};
@@ -2529,10 +2576,10 @@ function prWho(){return store.get('pr-who:'+ID)||''}
 function prPhotoKey(){return 'pp-photo:'+ID+':'+prWho()}
 function reportGroups(){
   // always 6 squares (Alexandra, Oct 17 2026): Access sits under Team; without the Color Room, Payroll and Month & Trends share one
-  return [['Today',['today']]].concat(S.inv?[['Payroll',['payroll']],['Month & Trends',['month']],['Color Room',['color']]]:[['Payroll & Trends',['payroll','month']]])
+  return [['Today',['today']]].concat(S.inv?[['Payroll',['payroll','trends']],['Month & Trends',['month']],['Color Room',['color']]]:[['Payroll & Trends',['payroll','trends','month']]])
     .concat([['Team',['reqs','off','photos','guide','sendguide','access']],['Marketing Proofs',['mkt']]]);
 }
-const PR_LABEL={reqs:'Requests',mkt:'Marketing Proofs',photos:'Team Work',home:'Home',today:'Today',payroll:'Payroll',month:'Month & Trends',color:'Color Room',off:'Time Off',guide:'Culture',sendguide:'Send App Guide',access:'Access'};
+const PR_LABEL={reqs:'Requests',mkt:'Marketing Proofs',photos:'Team Work',home:'Home',today:'Today',payroll:'Payroll',month:'Month & Trends',trends:'Sunday Trends',color:'Color Room',off:'Time Off',guide:'Culture',sendguide:'Send App Guide',access:'Access'};
 let PR_OPEN='',PR_NAV=false;
 function prGo(k,fromHistory){
   if(k==='mkt'){PR_NAV=false;PR_OPEN='';openMkt();render();return}
@@ -2587,7 +2634,7 @@ function reportNav(){
         h('span',{class:'navlbl'},PR_NAV?'Close ✕':'Menu ▾'))));
 }
 function leaderTabs(){
-  return h('div',{class:'tabs',role:'tablist'},[['today','Today'],['payroll','Payroll'],['month','Month & Trends']].concat(S.inv?[['color','Color Room']]:[]).concat([['off','Time Off'],['guide','Culture'],['access','Access']]).map(([k,l])=>
+  return h('div',{class:'tabs',role:'tablist'},[['today','Today'],['payroll','Payroll'],['trends','Sunday Trends'],['month','Month & Trends']].concat(S.inv?[['color','Color Room']]:[]).concat([['off','Time Off'],['guide','Culture'],['access','Access']]).map(([k,l])=>
     h('button',{class:'tab',role:'tab','aria-selected':String(S.rtab===k),onclick:()=>{S.rtab=k;S.open=null;render()}},l)));
 }
 
@@ -2619,7 +2666,7 @@ function setHead(name){
 }
 function apply(P){
   S.daily=P.daily||null;
-  if(EDITION==='team'){S.isAdmin=true;S.pages=(P.pages||[]).filter(isGoalsPerson);S.week=P.week||null;S.hubKey=P.hub&&P.hub.admin;S.payroll=P.payroll||[];S.rates=P.rates||{};S.hoursList=P.hoursList||[];S.retailRate=P.retailRate==null?10:P.retailRate;S.month=P.month||null;S.guideUrl=P.guideUrl||null;S.docs=P.docs||null;S.access=P.access||null;S.inv=P.inv||null;S.rtab=S.rtab||'home';setHead()}
+  if(EDITION==='team'){S.isAdmin=true;S.pages=(P.pages||[]).filter(isGoalsPerson);S.week=P.week||null;S.hubKey=P.hub&&P.hub.admin;S.payroll=P.payroll||[];S.rates=P.rates||{};S.hoursList=P.hoursList||[];S.retailRate=P.retailRate==null?10:P.retailRate;S.month=P.month||null;S.trends=P.trends||null;S.guideUrl=P.guideUrl||null;S.docs=P.docs||null;S.access=P.access||null;S.inv=P.inv||null;S.rtab=S.rtab||'home';setHead()}
   else{S.mine=P.mine||null;setHead(S.mine&&S.mine.name);
     if(S.mine&&!S.tab){const st=S.mine.staff||{}, ask=new URLSearchParams(location.search).get('tab');S.tab=(ask&&staffTabs().some(x=>x[0]===ask)?ask:'')||store.get('pp-tab:'+ID)||(st.clock?'home':isGoalsPerson(S.mine)?'today':'home')}
     if(S.mine&&!(history.state&&history.state.pp)){try{history.replaceState({pp:S.tab,d:0},'',location.href)}catch(e){}}
