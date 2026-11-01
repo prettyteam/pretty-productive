@@ -1316,7 +1316,7 @@ function teamSuggest(inp,onPick){
   const show=()=>{
     const q=inp.value.trim().toLowerCase();close();if(!q||!profiles.length)return;
     const nm=pr=>[pr.preferredName,pr.legalName].filter(Boolean).map(n=>n.toLowerCase());
-    hits=profiles.filter(pr=>nm(pr).some(n=>n.includes(q)))
+    hits=profiles.filter(pr=>pr.active!=="No"&&nm(pr).some(n=>n.includes(q)))   // turned-off people (Team tab) never pop up
       .sort((x,y)=>(nm(y).some(n=>n.split(/\s+/).some(w=>w.startsWith(q)))-nm(x).some(n=>n.split(/\s+/).some(w=>w.startsWith(q))))||(x.preferredName||x.legalName||"").localeCompare(y.preferredName||y.legalName||""))
       .slice(0,8);
     if(!hits.length||(hits.length===1&&nm(hits[0]).includes(q)&&(hits[0].preferredName||hits[0].legalName||"").toLowerCase()===q))return;
