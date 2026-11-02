@@ -57,6 +57,13 @@
     ((R&&R.order)||[]).forEach(([s,x])=>{const on=oo.filter(q=>String(q[1]).toLowerCase()===String(s).toLowerCase());
       back.push([String(s),row(x,on.length?'Already ordered '+day(on[0][0])+': '+on.map(q=>q[3]).join(', '):'',on.length?'Check On The Way':'To order',on.length?'g':'')]);});
     const prices=(R&&R.prices)||[];
+    /* Count These First (Alexandra, Nov 2 2026): the estimate is the last shelf count minus SureTint bowls, so unweighed bowls make it
+       read high. Each Monday Rose counts what the list says to order plus the fastest-used shades, and types it in Backbar counts. */
+    const fast=((R&&R.fastest)||[]).slice(0,8);
+    const countFirst=(back.length||fast.length)?'<div class="wst"><div class="top"><h2>Count These First</h2><span class="q b">Mondays</span></div>'
+      +'<p>These counts are estimates: the last shelf count minus every bowl weighed in SureTint. A bowl that wasn’t weighed never comes off, so check these on the shelf and type what you see in Inventory → Backbar counts.</p>'
+      +((R&&R.order)||[]).map(([s,x])=>row(x,'On this week’s order list · '+s,'Count','b')).join('')
+      +fast.map(([l,p,u])=>row(p,l+' · fastest used, about '+u+' a week','Count','b')).join('')+'</div>':'';
     const backCards=byStore(back).map(([s,rs])=>storeCard(s,rs.concat(prices.filter(p=>String(p[1]).toLowerCase()===s.toLowerCase()).map(([i,,p])=>row(i,'Best price here',p,'g')))));
     /* On The Way: one card per order */
     const ords={};oo.forEach(q=>(ords[q[1]+'|'+q[2]+'|'+q[0]]||=[]).push(q));
@@ -73,7 +80,7 @@
       +'<div class="wpick" role="group" aria-label="Choose a list">'+btn('retail','Retail',ret.length+cnt.length,'for the shelf')
       +(hasBack?btn('back','Color & Backbar',back.length,'color and supplies'):'')+btn('way','On The Way',Object.keys(ords).length,Object.keys(ords).length===1?'order':'orders')+'</div>'
       +v('retail',loading||(retailCards.length?'<p>Grouped by where we buy it. Open the store and order the amount shown.</p>'+retailCards.join(''):'<p>Nothing to reorder this week.</p>'))
-      +(hasBack?v('back',backCards.length?'<p>From this week’s color report.</p>'+backCards.join(''):'<p>Nothing to order for the color room this week.</p>'):'')
+      +(hasBack?v('back',backCards.length?countFirst+'<p>From this week’s color report.</p>'+backCards.join(''):'<p>Nothing to order for the color room this week.</p>'):'')
       +v('way',wayCards.length?'<p>From the order emails in info@. Don’t order these again. When a box comes in, receive it in Paired Plus.</p>'+wayCards.join(''):'<p>Nothing on the way right now.</p>')
       +(o.countsHint?'<p>'+esc(o.countsHint)+'</p>':'');
     if(window.Ordering) h+='<details class="wmore"><summary>All Stores, Logins &amp; Amazon Lists</summary><div>'+Ordering.html(o.mode||'full',prices,o.logins).replace(/<h1>Ordering<\/h1>/,'')+'</div></details>';
