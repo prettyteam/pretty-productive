@@ -530,7 +530,7 @@ details.days summary::-webkit-details-marker{display:none}
 <script src="g/prices.js?v=7"></script>
 <script src="g/ordering.js?v=3"></script>
 <script src="g/inventory.js?v=2"></script>
-<script src="g/whattoorder.js?v=6"></script>
+<script src="g/whattoorder.js?v=7"></script>
 <link rel="stylesheet" href="g/rx.css?v=9">
 <link rel="icon" href="icon.png">
 <link rel="apple-touch-icon" href="briefing/icons/employee-experience-180.png">
@@ -1908,10 +1908,14 @@ function askView(){
 function orderView(){
   const mode=orderMode(); if(mode==='full'){invLoad();wrepLoad()}
   const R=mode==='full'&&INV.data&&INV.data.report, box=h('div',{class:'hub'});
-  box.innerHTML=mode==='full'&&window.WhatToOrder?WhatToOrder.html({inv:WREP.d,err:WREP.err,report:R||null,mode,logins:S.mine.ordering,countsHint:S.mine.inv&&S.mine.inv.file?'Every shelf count is under Inventory.':''})
+  box.innerHTML=mode==='full'&&window.WhatToOrder?WhatToOrder.html({inv:WREP.d,err:WREP.err,report:R||null,mode,logins:S.mine.ordering,countsHint:S.mine.inv&&S.mine.inv.file?'Every shelf count is under Inventory.':'',counts:HUB.data&&HUB.data.stock||{},canCount:!!(HUB.data&&HUB.data.stockEdit)})
     :window.Ordering.html(mode,R&&R.prices,mode==='full'&&S.mine.ordering);
   return [box];
 }
+if(window.WhatToOrder)WhatToOrder.saveCount=async(id,item,n)=>{
+  const st=S.mine.staff, r=await fetch(API(),{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({type:'stock',id,item,n,slug:st.slug,t:st.t})});
+  const j=await r.json(); if(!j.ok) throw new Error('no'); (HUB.data.stock||={})[id]={n};
+};
 function skinView(){
   const p=S.mine.skin;
   if(p&&!(SKIN.key===p.file&&(SKIN.data||SKIN.loading))){SKIN={data:null,err:null,loading:true,key:p.file};

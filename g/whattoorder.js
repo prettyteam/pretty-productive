@@ -33,6 +33,9 @@
     +'.wto .q{flex:none;max-width:45%;text-align:center;white-space:normal;font-size:11px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;border-radius:12px;padding:4px 10px;background:#fbefdc;color:#8a5a12}.wto .q.r{background:#f7e3e1;color:#8a2a22}.wto .q.g{background:#e3efe6;color:#2f5d46}.wto .q.b{background:#e9edf5;color:#3e4f6e}'
     +'.wto details.wmore{border:1px solid var(--line,#e2ded5);border-radius:6px;background:var(--card,#fff);padding:0 14px}.wto details.wmore>summary{list-style:none;cursor:pointer;display:flex;align-items:center;padding:14px 0;font-size:12px;letter-spacing:.14em;text-transform:uppercase;font-weight:600}'
     +'.wto details.wmore>summary::-webkit-details-marker{display:none}.wto details.wmore>summary:after{content:"+";margin-left:auto;font-size:18px;font-weight:400}.wto details.wmore[open]>summary:after{content:"–"}.wto details.wmore>div{padding:0 0 14px}'
+    +'.wto .wcbtn{cursor:pointer;border:0;font-family:inherit;min-height:36px}.wto .wcin{display:flex;gap:6px;flex:none}.wto .wcin[hidden],.wto .cdone[hidden]{display:none}'
+    +'.wto .wcin input{width:72px;font:inherit;font-size:18px;padding:6px 8px;border:1px solid var(--ink,#121212);border-radius:6px}.wto .wcsave{font:inherit;font-size:12px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;background:var(--ink,#121212);color:#fff;border:0;border-radius:6px;padding:0 12px;cursor:pointer}'
+    +'.wto .cdone{color:#2f5d46!important;font-weight:600}.wto .wc.err .cdone{color:#8a2a22!important}'
     +'.wto .wpick button:focus-visible,.wto .wst a:focus-visible{outline:2px solid var(--gold,#4a3426);outline-offset:2px}</style>';
   const row=(name,detail,pill,kind)=>'<div class="wr"><span><b>'+esc(name)+'</b>'+(detail?'<small>'+esc(detail)+'</small>':'')+'</span>'+(pill?'<span class="q'+(kind?' '+kind:'')+'">'+esc(pill)+'</span>':'')+'</div>';
   /* The color report writes each store's order as one sentence, like "Topchic 6NN ×2, 7NN ×2; Colorance 7N ×1. Skip anything
@@ -84,10 +87,19 @@
     const fmt=v=>{const x=Math.round((+v||0)*10)/10;return String(x)};
     const norm=t=>String(t||'').toLowerCase().replace(/[^a-z0-9]/g,'');
     const ohOf=(l,p)=>((R&&R.onHand)||[]).find(r=>norm(r[1])===norm(p)&&(norm(l).includes(norm(r[0]).slice(0,6))||norm(r[0]).includes(norm(l).slice(0,6))));
+    /* Tap Count to type what's on the shelf (Alexandra, Nov 2 2026). Saved to the Stock Counts tab through the host app's
+       WhatToOrder.saveCount(id, item, n); o.counts = {id: {n, at}} shows the last count. */
+    const C=o.counts||{};
+    const crow=(name,detail)=>{const id='c:'+norm(name),c=C[id];
+      return '<div class="wr wc" data-cid="'+esc(id)+'" data-citem="'+esc(name)+'"><span><b>'+esc(name)+'</b><small>'+esc(detail)+'</small>'
+        +'<small class="cdone"'+(c?'':' hidden')+'>'+(c?'Counted '+esc(c.n)+(c.at?' · '+esc(c.at):''):'')+'</small></span>'
+        +'<button type="button" class="q b wcbtn"'+(o.canCount?'':' disabled')+'>'+(c?'Recount':'Count')+'</button>'
+        +'<span class="wcin" hidden><input type="number" inputmode="numeric" min="0" max="9999" aria-label="How many on the shelf"><button type="button" class="wcsave">Save</button></span></div>'};
+    const seen=new Set(), uniq=(nm)=>{const k=norm(nm);if(seen.has(k))return false;seen.add(k);return true};
     const countFirst=(back.length||fast.length)?'<div class="wst"><div class="top"><h2>Count These First</h2><span class="q b">Mondays</span></div>'
-      +'<p>These counts are estimates: the last shelf count minus every bowl weighed in SureTint. A bowl that wasn’t weighed never comes off, so check these on the shelf and type what you see in Inventory → Backbar counts.</p>'
-      +((R&&R.order)||[]).map(([s,x])=>parseList(x).items.map(it=>row(it.name,s+(it.qty?' · order '+it.qty:''),'Count','b')).join('')).join('')
-      +fast.map(([l,p,u])=>{const x=ohOf(l,p);return row(p,l+' · about '+u+' used a week'+(x?' · estimate '+fmt(x[4])+' on hand':''),'Count','b')}).join('')+'</div>':'';
+      +'<p>These counts are estimates: the last shelf count minus every bowl weighed in SureTint. A bowl that wasn’t weighed never comes off, so count these on the shelf. Tap Count, type how many are there, and tap Save.</p>'
+      +((R&&R.order)||[]).map(([s,x])=>parseList(x).items.filter(it=>uniq(it.name)).map(it=>crow(it.name,s+(it.qty?' · order '+it.qty:''))).join('')).join('')
+      +fast.filter(([l,p])=>uniq(l+' '+p)).map(([l,p,u])=>{const x=ohOf(l,p);return crow(l+' '+p,'About '+u+' used a week'+(x?' · estimate '+fmt(x[4])+' on hand':''))}).join('')+'</div>':'';
     /* Color on hand (R.onHand, Nov 2 2026): [line, shade, counted, used since, on hand, per week, weeks left] */
     const OH=(R&&R.onHand)||[];
     const ohCard=OH.length?'<details class="wmore"><summary>Color &amp; Backbar On Hand</summary><div><p>Estimates: Rose’s last count minus SureTint use since then.</p>'
@@ -115,6 +127,18 @@
     return h+'</div>';
   }
   document.addEventListener('click',e=>{
+    const t=e.target.closest&&e.target.closest('.wcbtn,.wcsave'); if(!t) return;
+    const r=t.closest('.wc'), inBox=r.querySelector('.wcin'), inp=inBox.querySelector('input'), done=r.querySelector('.cdone'), btn=r.querySelector('.wcbtn');
+    if(t.classList.contains('wcbtn')){btn.hidden=true;inBox.hidden=false;inp.focus();return}
+    const n=Number(inp.value); if(inp.value===''||!(n>=0&&n<=9999)||Math.floor(n)!==n){inp.focus();return}
+    t.disabled=true; t.textContent='Saving';
+    Promise.resolve(window.WhatToOrder.saveCount?window.WhatToOrder.saveCount(r.dataset.cid,r.dataset.citem,n):Promise.reject())
+      .then(()=>{r.classList.remove('err');done.textContent='Counted '+n+' · just now';done.hidden=false;inBox.hidden=true;btn.hidden=false;btn.textContent='Recount'})
+      .catch(()=>{r.classList.add('err');done.textContent='Didn’t save. Check the Wi-Fi and tap Save again.';done.hidden=false})
+      .then(()=>{t.disabled=false;t.textContent='Save'});
+  });
+  document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.closest&&e.target.closest('.wcin')){const b=e.target.closest('.wcin').querySelector('.wcsave');if(b)b.click()}});
+  document.addEventListener('click',e=>{
     const bk=e.target.closest&&e.target.closest('[data-wtoback]');
     if(bk){const box=bk.closest('.wto'),pk=box&&box.querySelector('.wpick');if(pk) pk.scrollIntoView({behavior:'smooth',block:'start'});return}
     const b=e.target.closest&&e.target.closest('[data-wto]'); if(!b) return;
@@ -123,5 +147,5 @@
     box.querySelectorAll('[data-wtov]').forEach(x=>{x.hidden=x.dataset.wtov!==view});
     const open=box.querySelector('[data-wtov="'+view+'"]'); if(open&&open.getBoundingClientRect().top>window.innerHeight*0.6) open.scrollIntoView({behavior:'smooth',block:'start'});
   });
-  window.WhatToOrder={html,storeOf,arrives};
+  window.WhatToOrder=Object.assign(window.WhatToOrder||{},{html,storeOf,arrives});
 })();

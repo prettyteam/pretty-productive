@@ -14,7 +14,7 @@
 <script src="../g/topnav.js?v=4"></script>
 <script src="../g/ordering.js?v=3"></script>
 <script src="../g/inventory.js?v=2"></script>
-<script src="../g/whattoorder.js?v=6"></script>
+<script src="../g/whattoorder.js?v=7"></script>
 <script src="../g/jokes.js?v=2"></script>
 <script src="../g/coach.js?v=1"></script>
 <link rel="stylesheet" href="../g/coach.css?v=1">
@@ -484,7 +484,7 @@ function render(){
   if(!g)guests();
   todoCount();
   if(home)deskHome();
-  const f=document.activeElement; if(f&&f.classList&&(f.classList.contains('tdaddr')||(f.classList.contains('rxq')&&!RX_TYPING))&&$('#body').contains(f)) return;   // don't wipe an address being typed
+  const f=document.activeElement; if(f&&f.classList&&(f.classList.contains('tdaddr')||(f.classList.contains('rxq')&&!RX_TYPING)||(f.closest&&f.closest('.wcin')))&&$('#body').contains(f)) return;   // don't wipe an address being typed
   $('#body').innerHTML=body;
   if(area==='K')deskCoach();
 }
@@ -492,9 +492,21 @@ function render(){
 function orderDesk(){
   if(!window.WhatToOrder)return window.Ordering?Ordering.html('full',null,GUIDE&&GUIDE.ordering):'';
   if(!DEMO)invDesk();
-  loadColor();
-  return WhatToOrder.html({inv:DEMO?invDemo():invD,err:invErr,report:DEMO?colorDemo():COLOR,mode:'full',logins:GUIDE&&GUIDE.ordering,countsHint:'Every shelf count is under Inventory.'});
+  loadColor(); loadDeskStock();
+  return WhatToOrder.html({inv:DEMO?invDemo():invD,err:invErr,report:DEMO?colorDemo():COLOR,mode:'full',logins:GUIDE&&GUIDE.ordering,countsHint:'Every shelf count is under Inventory.',counts:DESKSTOCK||{},canCount:true});
 }
+/* Count These First (Nov 2 2026): the desk types shelf counts right on the color list; saved to the same Stock Counts tab */
+let DESKSTOCK=null,dsAt=0,dsBusy=false;
+function loadDeskStock(){
+  if(DEMO||dsBusy||Date.now()-dsAt<5*60000||!window.TAFFETA_ENDPOINT||!KEY)return; dsBusy=true;
+  fetch(window.TAFFETA_ENDPOINT+'?key='+encodeURIComponent(KEY)+'&stock=1&t='+Date.now(),{cache:'no-store'}).then(r=>r.json())
+    .then(j=>{if(j.ok&&j.stock){DESKSTOCK=j.stock;dsAt=Date.now();if(area==='O')render()}}).catch(()=>{}).then(()=>{dsBusy=false});
+}
+if(window.WhatToOrder)WhatToOrder.saveCount=(id,item,n)=>{
+  if(DEMO){(DESKSTOCK||={})[id]={n,by:'Front Desk',at:'just now'};return Promise.resolve()}
+  return fetch(window.TAFFETA_ENDPOINT,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({type:'deskstock',key:KEY,id,item,n})})
+    .then(r=>r.json()).then(j=>{if(!j.ok)throw new Error('no');(DESKSTOCK||={})[id]={n,by:'Front Desk',at:'just now'}});
+};
 /* Inventory (Oct 29 2026): the weekly Retail Inventory Report, read by the desk script from Drive (g/inventory.js draws it) */
 let invD=null,invAt=0,invBusy=false,invErr=false;
 /* Color list (Nov 2 2026): the weekly color report's order list, fastest shades and on-hand estimates (no prices),
