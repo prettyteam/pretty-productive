@@ -25,6 +25,7 @@
     +'.wto .wpick button{font:inherit;text-align:left;cursor:pointer;background:var(--card,#fff);color:var(--ink,#121212);border:1px solid var(--line,#e2ded5);border-radius:6px;padding:14px 12px;display:grid;gap:2px}'
     +'.wto .wpick b{font-family:var(--display,Georgia,serif);font-size:30px;font-weight:400;line-height:1}.wto .wpick span{font-size:12px;letter-spacing:.12em;text-transform:uppercase;font-weight:600}'
     +'.wto .wpick small{color:var(--soft,#5f5b55);font-size:12.5px}.wto .wpick button[aria-pressed="true"]{background:var(--ink,#121212);color:#fff;border-color:var(--ink,#121212)}.wto .wpick button[aria-pressed="true"] small{color:#fff;opacity:.75}'
+    +'.wto .wback{font:inherit;font-size:12px;letter-spacing:.12em;text-transform:uppercase;font-weight:600;cursor:pointer;background:none;color:var(--ink,#121212);border:1px solid var(--ink,#121212);border-radius:6px;padding:12px;justify-self:start}'
     +'.wto .wv{display:grid;gap:12px}.wto .wv[hidden]{display:none}.wto .wst{background:var(--card,#fff);border:1px solid var(--line,#e2ded5);border-radius:6px;padding:14px;display:grid;gap:4px}'
     +'.wto .wst .top{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:4px}.wto h2{margin:0;font-family:var(--display,Georgia,serif);font-weight:500;font-size:19px;letter-spacing:0;text-transform:none}'
     +'.wto .wst a{text-decoration:none;font-size:12px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;background:var(--ink,#121212);color:#fff;border-radius:4px;padding:8px 12px;white-space:nowrap}'
@@ -77,23 +78,25 @@
     const wayCards=Object.keys(ords).map(k=>{const [st,num,d]=k.split('|'),its=ords[k],s=its[0][5]||'Ordered',a=arrives(s);
       return '<div class="wst"><div class="top"><h2>'+esc(st)+'</h2><span class="q '+(a?'g':'b')+'">'+esc(a?'Arrives '+a:/ship/i.test(s)?'Shipped':s)+'</span></div><p>Ordered '+esc(day(d))+(num?' · #'+esc(num):'')+'</p>'
         +its.map(q=>row(q[3],'',q[4]?'Qty '+q[4]:'','g')).join('')+'</div>'});
-    const hasBack=!!(R&&R.order);
-    if(view==='back'&&!hasBack) view='retail';
+    /* Nov 2 2026: the Color & Backbar button always shows, even when this week's report has no order list or this app has no color report */
+    const noColor=!R?'<p>The color list comes from the weekly color report, which opens in Rose’s app and Alex’s. Ask Rose what color to order this week.</p>':'';
     const btn=(k,label,count,sub)=>'<button type="button" data-wto="'+k+'" aria-pressed="'+(view===k)+'"><span>'+label+'</span><b>'+count+'</b><small>'+sub+'</small></button>';
-    const v=(k,body)=>'<div class="wv" data-wtov="'+k+'"'+(view===k?'':' hidden')+'>'+body+'</div>';
+    const v=(k,body)=>'<div class="wv" data-wtov="'+k+'"'+(view===k?'':' hidden')+'>'+body+'<button type="button" class="wback" data-wtoback>Back To All Lists</button></div>';
     const loading=!D?'<p>'+(o.err?'Couldn’t open the inventory report right now. Check the Wi-Fi and try again.':'Opening the inventory report…')+'</p>':'';
     let h=css+'<div class="wto"><div><h1>What To Order</h1><p>'+(D&&D.asOf?'Retail from the inventory report dated '+esc(String(D.asOf).replace(/,\s*\d{4}$/,''))+'. ':'')
       +(R&&R.week?'Color from the week of '+esc(R.week)+'. ':'')+'A new report comes in every week, so Monday is the day to order.</p></div>'
       +'<div class="wpick" role="group" aria-label="Choose a list">'+btn('retail','Retail',ret.length+cnt.length,'for the shelf')
-      +(hasBack?btn('back','Color & Backbar',back.length,'color and supplies'):'')+btn('way','On The Way',Object.keys(ords).length,Object.keys(ords).length===1?'order':'orders')+'</div>'
+      +btn('back','Color & Backbar',back.length,'color and supplies')+btn('way','On The Way',Object.keys(ords).length,Object.keys(ords).length===1?'order':'orders')+'</div>'
       +v('retail',loading||(retailCards.length?'<p>Grouped by where we buy it. Open the store and order the amount shown.</p>'+retailCards.join(''):'<p>Nothing to reorder this week.</p>'))
-      +(hasBack?v('back',(backCards.length?countFirst+'<p>From this week’s color report.</p>'+backCards.join(''):'<p>Nothing to order for the color room this week.</p>')+ohCard):'')
+      +v('back',noColor||(countFirst+(backCards.length?'<p>From this week’s color report.</p>'+backCards.join(''):'<p>Nothing on this week’s color order list.</p>')+ohCard))
       +v('way',wayCards.length?'<p>From the order emails in info@. Don’t order these again. When a box comes in, receive it in Paired Plus.</p>'+wayCards.join(''):'<p>Nothing on the way right now.</p>')
       +(o.countsHint?'<p>'+esc(o.countsHint)+'</p>':'');
     if(window.Ordering) h+='<details class="wmore"><summary>All Stores, Logins &amp; Amazon Lists</summary><div>'+Ordering.html(o.mode||'full',prices,o.logins).replace(/<h1>Ordering<\/h1>/,'')+'</div></details>';
     return h+'</div>';
   }
   document.addEventListener('click',e=>{
+    const bk=e.target.closest&&e.target.closest('[data-wtoback]');
+    if(bk){const box=bk.closest('.wto'),pk=box&&box.querySelector('.wpick');if(pk) pk.scrollIntoView({behavior:'smooth',block:'start'});return}
     const b=e.target.closest&&e.target.closest('[data-wto]'); if(!b) return;
     view=b.dataset.wto; const box=b.closest('.wto'); if(!box) return;
     box.querySelectorAll('[data-wto]').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));
