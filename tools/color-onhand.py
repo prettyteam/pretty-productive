@@ -49,30 +49,117 @@ def latest_counts(rows, year):
     return out
 
 
+def item_name(key):
+    """Name used on the order list and for its What To Order Count id ('c:' + norm(name))."""
+    b, l, s = key
+    tok = s.split(' ')[0] if re.search(r'\d', s.split(' ')[0]) else s
+    if l == 'Shades EQ' and par_of(key):
+        return 'Shades EQ ' + tok
+    if l.startswith('Colorance Canister'):
+        return 'Colorance ' + tok
+    if l.startswith('Topchic Canister') and par_of(key):
+        return 'Topchic ' + tok
+    if l == 'Fast Color 10':
+        return 'Alter Ego 10-minute ' + tok
+    if l == 'Technofruit' and par_of(key):
+        return 'Alter Ego Technofruit ' + tok
+    return s
+
+
 def start_count(key, counts):
     """Newest of the Backbar count and any What To Order count for this item: (n, datetime, source) or None."""
     b, l, s = key
     found = [(*counts['b:%s|%s|%s' % key], 'backbar')] if 'b:%s|%s|%s' % key in counts else []
     # desk names use the short shade ('Shades EQ 09V'); Backbar keys carry the full name ('09V Platinum Iced')
-    ids = {'c:' + norm(x + ' ' + y) for x in (l, b + ' ' + l, b) for y in {s, s.split(' ')[0]}}
+    ids = {'c:' + norm(x + ' ' + y) for x in (l, b + ' ' + l, b, l.split(' ')[0], '') for y in {s, s.split(' ')[0]}} | {'c:' + norm(item_name(key))}
     for cid in ids:
         if cid in counts:
             found.append((*counts[cid], 'desk'))
     return max(found, key=lambda x: x[1]) if found else None
 
 
+def is_alias(key):
+    """Colorance 6N@GB isn't carried (Nov 2 2026): SureTint bowls logged under it are really Colorance 6N."""
+    return key[1].startswith('Colorance Canister') and key[2].split(' ')[0].upper() == '6N@GB'
+
+
+def alias_target(key, keys):
+    return next((k for k in keys if k[1] == 'Colorance Canister' and k[2].split(' ')[0] == '6N'), None)
+
+
 def on_hand(keys, counts, used_since, pace):
-    """[line, shade, counted, used since, on hand, per week, weeks left, order] sorted by weeks left (same shape as before)."""
+    """[line, shade, counted, used since, on hand, per week, weeks left, order] sorted by weeks left (same shape as before).
+    Color Renew is left off; 6N@GB usage is added to Colorance 6N."""
+    keys = [k for k in keys if is_alias(k) or not unused(*k)]
+    extra = {}
+    for k in keys:
+        if is_alias(k):
+            t = alias_target(k, keys)
+            if t:
+                st = start_count(t, counts)
+                e = extra.setdefault(t, [0, 0])
+                e[0] += (used_since(k, st[1]) if st else 0) or 0
+                e[1] += pace(k) or 0
     rows = []
     for k in keys:
         st = start_count(k, counts)
-        if not st:
+        if not st or is_alias(k):
             continue
         c, d, _ = st
-        used = used_since(k, d) or 0
-        p = pace(k) or 0
+        used = (used_since(k, d) or 0) + extra.get(k, [0, 0])[0]
+        p = (pace(k) or 0) + extra.get(k, [0, 0])[1]
         oh = round(c - used, 2)
         wl = round(oh / p, 1) if p > 0 else None
         need = max(0, math.ceil(6 * p - oh)) if wl is not None and wl < 3 else 0
         rows.append([k[0] + ' ' + k[1], k[2], c, round(used, 2), oh, round(p, 2), wl, need])
     return sorted(rows, key=lambda r: r[6] if r[6] is not None else 999)
+
+
+# Color order rules (Alexandra, Nov 2 2026). Color shades: order par - on hand, rounded up, when above 0.
+# Developers and other backbar keep the weeks-of-pace rule (under 3 weeks left: order 6 weeks of pace - on hand).
+# Wella Color Renew and Colorance 6N@GB aren't carried: they stay off order, onHand and Count These First
+# (6N@GB usage counts toward Colorance 6N, see on_hand).
+PAR = [  # (line test, default par, {shade: par})
+    (lambda l, s: l == 'Shades EQ' and s != 'EQ Processing Solution' and not s.startswith('Bonder'), 3, {'09NB': 6, '09M': 6, '010VV': 6, '07M': 6}),
+    (lambda l, s: l.startswith('Colorance Canister'), 2, {'6A': 3, '2A': 3, '5NB': 3, '7NA': 3, '6N': 3}),
+    (lambda l, s: l.startswith('Topchic Canister') and l != 'Topchic Canister Blonding Cream', 2, {'4NN': 3, '5NN': 3, '6NN': 3, '7NN': 3, '4G': 3}),
+    (lambda l, s: l in ('Fast Color 10', 'Technofruit') and 'Coactivator' not in s, 3, {}),
+]
+STORE = {'Redken': 'SalonCentric', 'Goldwell': 'DePasquale', 'Alter Ego': 'DePasquale', 'Wella': 'CosmoProf'}
+unused = lambda *t: 'color renew' in ' '.join(map(str, t)).lower() or '6n@gb' in ' '.join(map(str, t)).lower()
+
+
+def par_of(key):
+    b, l, s = key
+    for test, dflt, ex in PAR:
+        if test(l, s):
+            return ex.get(s.split(' ')[0], dflt)
+    return None
+
+
+def order_qty(key, oh, pace, counted=None):
+    """Units to order, or None when the count needs a recount first (used more than was counted, so it was restocked).
+    A shade counted 0 and not used in 4 weeks isn't carried, so par doesn't apply to it."""
+    if oh < 0:
+        return None
+    par = par_of(key)
+    if par is not None and (counted or pace > 0):
+        return max(0, math.ceil(round(par - oh, 2)))
+    wl = oh / pace if pace > 0 else None
+    return max(0, math.ceil(round(6 * pace - oh, 2))) if par is None and wl is not None and wl < 3 else 0
+
+
+def order_lists(items):
+    """items = [(key, counted, on hand, pace)] -> ({store: [(name, qty)]}, [recount names]); Color Renew left off."""
+    stores, recount = {}, []
+    for key, counted, oh, pace in items:
+        if unused(*key):
+            continue
+        q = order_qty(key, oh, pace, counted)
+        if q is None:
+            recount.append(item_name(key))
+        elif q > 0:
+            stores.setdefault(STORE.get(key[0], 'Other'), []).append((item_name(key), q))
+    for v in stores.values():
+        v.sort(key=lambda x: x[0])
+    return stores, recount
