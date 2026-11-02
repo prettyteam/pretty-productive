@@ -530,6 +530,7 @@ details.days summary::-webkit-details-marker{display:none}
 <script src="g/prices.js?v=7"></script>
 <script src="g/ordering.js?v=3"></script>
 <script src="g/inventory.js?v=2"></script>
+<script src="g/whattoorder.js?v=1"></script>
 <link rel="stylesheet" href="g/rx.css?v=9">
 <link rel="icon" href="icon.png">
 <link rel="apple-touch-icon" href="briefing/icons/employee-experience-180.png">
@@ -1810,7 +1811,7 @@ function wrepLoad(){
   const st=S.mine.staff;
   if(st&&API()&&!WREP.busy&&Date.now()-WREP.at>10*60000){WREP.busy=true;
     fetch(API()+'?staff='+encodeURIComponent(st.slug)+'&t='+encodeURIComponent(st.t)+'&inv=1&_='+Date.now()).then(r=>r.json())
-      .then(j=>{WREP.d=j.error==='inv'?null:j;WREP.err=j.error==='inv';WREP.at=Date.now()}).catch(()=>{WREP.err=true}).then(()=>{WREP.busy=false;if(S.tab==='inv')render()})}
+      .then(j=>{WREP.d=j.error==='inv'?null:j;WREP.err=j.error==='inv';WREP.at=Date.now()}).catch(()=>{WREP.err=true}).then(()=>{WREP.busy=false;if(S.tab==='inv'||S.tab==='order')render()})}
 }
 function weekReport(){
   const box=h('div',{}); wrepLoad();
@@ -1903,10 +1904,12 @@ function askView(){
   return [h('div',{class:'hub'},out)];
 }
 /* Ordering: the shared page from g/ordering.js, plus the color report's best prices for anyone who has the Inventory tab */
+/* Nov 2 2026: Rose and Alexandra get What To Order (g/whattoorder.js): Retail, Color & Backbar and On The Way, grouped by store */
 function orderView(){
-  const mode=orderMode(); if(mode==='full') invLoad();
+  const mode=orderMode(); if(mode==='full'){invLoad();wrepLoad()}
   const R=mode==='full'&&INV.data&&INV.data.report, box=h('div',{class:'hub'});
-  box.innerHTML=window.Ordering.html(mode,R&&R.prices,mode==='full'&&S.mine.ordering);
+  box.innerHTML=mode==='full'&&window.WhatToOrder?WhatToOrder.html({inv:WREP.d,err:WREP.err,report:R||null,mode,logins:S.mine.ordering,countsHint:S.mine.inv&&S.mine.inv.file?'Every shelf count is under Inventory.':''})
+    :window.Ordering.html(mode,R&&R.prices,mode==='full'&&S.mine.ordering);
   return [box];
 }
 function skinView(){
@@ -1996,7 +1999,7 @@ function staffTabs(){
   if(p.cr&&p.cr.weeks&&p.cr.weeks.length) t.push(['cr','Weekly CR']);
   if(st.slug) t.push(['off','Time Off']);
   if(st.slug) t.push(['prices','Prices']);
-  if(orderMode()&&window.Ordering) t.push(['order','Ordering']);
+  if(orderMode()&&window.Ordering) t.push(['order',orderMode()==='full'?'What To Order':'Ordering']);
   if(st.slug) t.push(['ask','Send To Alex']);
   if(st.slug&&p.pk&&p.pk.groups&&p.pk.groups.length) t.push(['pk','PK Knowledge']);
   t.push(['guide','Culture']);
