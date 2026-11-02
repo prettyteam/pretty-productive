@@ -79,7 +79,8 @@
     ((R&&R.order)||[]).forEach(([s,x])=>{const on=oo.filter(q=>String(q[1]).toLowerCase()===String(s).toLowerCase()),L=parseList(x);backN+=L.items.length||1;
       if(on.length) back.push([String(s),note('Already ordered '+day(on[0][0])+': '+on.map(q=>q[3]).join(', ')+'. Check On The Way before ordering more.')]);
       L.notes.forEach(t=>back.push([String(s),note(t+'.')]));
-      L.items.forEach(it=>back.push([String(s),qrow(it.name,it.qty,'')]));});
+      /* Recount first card: each shade gets its own Count button too (Alexandra, Nov 2 2026) */
+      L.items.forEach(it=>back.push([String(s),/recount/i.test(s)?{cnt:it.name}:qrow(it.name,it.qty,'')]));});
     const prices=(R&&R.prices)||[];
     /* Count These First (Alexandra, Nov 2 2026): the estimate is the last shelf count minus SureTint bowls, so unweighed bowls make it
        read high. Each Monday Rose counts what the list says to order plus the fastest-used shades, and types it in Backbar counts. */
@@ -104,7 +105,7 @@
     const OH=(R&&R.onHand)||[];
     const ohCard=OH.length?'<details class="wmore"><summary>Color &amp; Backbar On Hand</summary><div><p>Estimates: Rose’s last count minus SureTint use since then.</p>'
       +OH.slice().sort((a,b)=>(+a[6]||99)-(+b[6]||99)).map(([l,sh,c,u,oh,pw,wl])=>row(l+' '+sh,'Counted '+fmt(c)+' · used '+fmt(u)+' since'+(+wl?' · about '+Math.round(+wl)+' wk left':''),fmt(oh)+' on hand',+oh<=0?'r':+wl&&+wl<3?'':'g')).join('')+'</div></details>':'';
-    const backCards=byStore(back).map(([s,rs])=>storeCard(s,rs.concat(prices.filter(p=>String(p[1]).toLowerCase()===s.toLowerCase()).map(([i,,p])=>row(i,'Best price here',p,'g')))));
+    const backCards=byStore(back).map(([s,rs])=>storeCard(s,rs.map(r=>typeof r==='string'?r:crow(r.cnt,'Count it on the shelf')).concat(prices.filter(p=>String(p[1]).toLowerCase()===s.toLowerCase()).map(([i,,p])=>row(i,'Best price here',p,'g')))));
     /* On The Way: one card per order */
     const ords={};oo.forEach(q=>(ords[q[1]+'|'+q[2]+'|'+q[0]]||=[]).push(q));
     const wayCards=Object.keys(ords).map(k=>{const [st,num,d]=k.split('|'),its=ords[k],s=its[0][5]||'Ordered',a=arrives(s);
