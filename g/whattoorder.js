@@ -20,7 +20,7 @@
   const day=d=>{const x=new Date(String(d)+'T12:00:00');return isNaN(x)?String(d):MON[x.getMonth()]+' '+x.getDate()};
   /* arrival date: the daily order-email job writes it into Status, like "Shipped · arrives Nov 5" or "Delivered" */
   const arrives=s=>{const m=/arriv\w*\s+(?:on\s+|by\s+)?([A-Z][a-z]{2,8}\.?\s+\d{1,2})/i.exec(s||'');return m?m[1].replace('.',''):''};
-  const css='<style>.wto{display:grid;gap:18px;max-width:640px}.wto h1{margin:0}.wto p{margin:0;font-size:13.5px;color:var(--soft,#5f5b55)}'
+  const css='<style>.wto{display:grid;gap:18px;max-width:640px;width:100%;min-width:0;overflow-wrap:anywhere}.wto *{box-sizing:border-box}.wto h1{margin:0}.wto p{margin:0;font-size:13.5px;color:var(--soft,#5f5b55)}'
     +'.wto .wpick{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px}'
     +'.wto .wpick button{font:inherit;text-align:left;cursor:pointer;background:var(--card,#fff);color:var(--ink,#121212);border:1px solid var(--line,#e2ded5);border-radius:6px;padding:14px 12px;display:grid;gap:2px}'
     +'.wto .wpick b{font-family:var(--display,Georgia,serif);font-size:30px;font-weight:400;line-height:1}.wto .wpick span{font-size:12px;letter-spacing:.12em;text-transform:uppercase;font-weight:600}'
@@ -29,12 +29,29 @@
     +'.wto .wv{display:grid;gap:12px}.wto .wv[hidden]{display:none}.wto .wst{background:var(--card,#fff);border:1px solid var(--line,#e2ded5);border-radius:6px;padding:14px;display:grid;gap:4px}'
     +'.wto .wst .top{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:4px}.wto h2{margin:0;font-family:var(--display,Georgia,serif);font-weight:500;font-size:19px;letter-spacing:0;text-transform:none}'
     +'.wto .wst a{text-decoration:none;font-size:12px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;background:var(--ink,#121212);color:#fff;border-radius:4px;padding:8px 12px;white-space:nowrap}'
-    +'.wto .wr{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:9px 0;border-top:1px solid var(--line,#e2ded5);font-size:14px}.wto .wr>span{min-width:0}.wto .wr small{display:block;color:var(--soft,#5f5b55);font-size:12.5px}'
-    +'.wto .q{white-space:nowrap;font-size:11px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;border-radius:12px;padding:4px 10px;background:#fbefdc;color:#8a5a12}.wto .q.r{background:#f7e3e1;color:#8a2a22}.wto .q.g{background:#e3efe6;color:#2f5d46}.wto .q.b{background:#e9edf5;color:#3e4f6e}'
+    +'.wto .wr{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:9px 0;border-top:1px solid var(--line,#e2ded5);font-size:14px}.wto .wr>span:first-child{flex:1;min-width:0}.wto .wr .qty{flex:none;font-family:var(--display,Georgia,serif);font-size:20px;line-height:1.1;min-width:34px;text-align:right}.wto .wnote{font-size:13px;color:var(--soft,#5f5b55);padding:8px 0;border-top:1px solid var(--line,#e2ded5)}.wto .wr small{display:block;color:var(--soft,#5f5b55);font-size:12.5px}'
+    +'.wto .q{flex:none;max-width:45%;text-align:center;white-space:normal;font-size:11px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;border-radius:12px;padding:4px 10px;background:#fbefdc;color:#8a5a12}.wto .q.r{background:#f7e3e1;color:#8a2a22}.wto .q.g{background:#e3efe6;color:#2f5d46}.wto .q.b{background:#e9edf5;color:#3e4f6e}'
     +'.wto details.wmore{border:1px solid var(--line,#e2ded5);border-radius:6px;background:var(--card,#fff);padding:0 14px}.wto details.wmore>summary{list-style:none;cursor:pointer;display:flex;align-items:center;padding:14px 0;font-size:12px;letter-spacing:.14em;text-transform:uppercase;font-weight:600}'
     +'.wto details.wmore>summary::-webkit-details-marker{display:none}.wto details.wmore>summary:after{content:"+";margin-left:auto;font-size:18px;font-weight:400}.wto details.wmore[open]>summary:after{content:"–"}.wto details.wmore>div{padding:0 0 14px}'
     +'.wto .wpick button:focus-visible,.wto .wst a:focus-visible{outline:2px solid var(--gold,#4a3426);outline-offset:2px}</style>';
   const row=(name,detail,pill,kind)=>'<div class="wr"><span><b>'+esc(name)+'</b>'+(detail?'<small>'+esc(detail)+'</small>':'')+'</span>'+(pill?'<span class="q'+(kind?' '+kind:'')+'">'+esc(pill)+'</span>':'')+'</div>';
+  /* The color report writes each store's order as one sentence, like "Topchic 6NN ×2, 7NN ×2; Colorance 7N ×1. Skip anything
+     already on order." (Nov 2 2026: Alexandra asked for one line per item instead of a paragraph.) parseList splits it into
+     items [{name, qty}] (a short name like "7NN" gets the brand from the item before it) and plain notes. */
+  const parseList=t=>{const items=[],notes=[];
+    String(t||'').split(/(?<=\.)\s+(?=[A-Z])/).forEach(sen=>{sen=sen.trim().replace(/\.$/,'');if(!sen)return;
+      let intro='',body=sen;const c=sen.indexOf(':');if(c>0){intro=sen.slice(0,c);body=sen.slice(c+1)}
+      const parts=body.split(/[;,]/).map(x=>x.trim()).filter(Boolean);
+      const listy=parts.length>1||/[×x]\s*\d+\s*$/.test(body.trim());
+      if(!listy){notes.push(sen);return}
+      if(intro)notes.push(intro);
+      let brand='';body.split(';').forEach(seg=>{brand='';seg.split(',').map(x=>x.trim()).filter(Boolean).forEach(it=>{
+        const m=/^(.*?)\s*[×x]\s*(\d+)$/.exec(it);let nm=m?m[1]:it;const q=m?m[2]:'';
+        const w=nm.split(/\s+/);if(w.length===1&&brand)nm=brand+' '+nm;else if(w.length>1)brand=w.slice(0,-1).join(' ');
+        items.push({name:nm,qty:q})})})});
+    return{items,notes}};
+  const qrow=(name,qty,detail)=>'<div class="wr"><span><b>'+esc(name)+'</b>'+(detail?'<small>'+esc(detail)+'</small>':'')+'</span>'+(qty?'<span class="qty">×'+esc(qty)+'</span>':'')+'</div>';
+  const note=t=>'<div class="wnote">'+esc(t)+'</div>';
   const storeCard=(st,rows,note)=>'<div class="wst"><div class="top"><h2>'+esc(st)+'</h2>'+(URL[st]?'<a href="'+esc(URL[st])+'" target="_blank" rel="noopener">Open Store</a>':'')+'</div>'+(note?'<p>'+esc(note)+'</p>':'')+rows.join('')+'</div>';
   const byStore=list=>{const g={};list.forEach(([st,r])=>(g[st]||=[]).push(r));
     const keys=Object.keys(g).sort((a,b)=>(a===ASK)-(b===ASK)||a.localeCompare(b));return keys.map(k=>[k,g[k]])};
@@ -55,8 +72,11 @@
       .concat(cnt.length?[storeCard('Count First',cnt.map(x=>x[1]),'Paired Plus shows a wrong count. Count the shelf, then order if it’s low.')]:[]);
     /* Color & Backbar: the color report's order list (store, what to order), minus stores already on order this week */
     const back=[];
-    ((R&&R.order)||[]).forEach(([s,x])=>{const on=oo.filter(q=>String(q[1]).toLowerCase()===String(s).toLowerCase());
-      back.push([String(s),row(x,on.length?'Already ordered '+day(on[0][0])+': '+on.map(q=>q[3]).join(', '):'',on.length?'Check On The Way':'To order',on.length?'g':'')]);});
+    let backN=0;
+    ((R&&R.order)||[]).forEach(([s,x])=>{const on=oo.filter(q=>String(q[1]).toLowerCase()===String(s).toLowerCase()),L=parseList(x);backN+=L.items.length||1;
+      if(on.length) back.push([String(s),note('Already ordered '+day(on[0][0])+': '+on.map(q=>q[3]).join(', ')+'. Check On The Way before ordering more.')]);
+      L.notes.forEach(t=>back.push([String(s),note(t+'.')]));
+      L.items.forEach(it=>back.push([String(s),qrow(it.name,it.qty,'')]));});
     const prices=(R&&R.prices)||[];
     /* Count These First (Alexandra, Nov 2 2026): the estimate is the last shelf count minus SureTint bowls, so unweighed bowls make it
        read high. Each Monday Rose counts what the list says to order plus the fastest-used shades, and types it in Backbar counts. */
@@ -66,7 +86,7 @@
     const ohOf=(l,p)=>((R&&R.onHand)||[]).find(r=>norm(r[1])===norm(p)&&(norm(l).includes(norm(r[0]).slice(0,6))||norm(r[0]).includes(norm(l).slice(0,6))));
     const countFirst=(back.length||fast.length)?'<div class="wst"><div class="top"><h2>Count These First</h2><span class="q b">Mondays</span></div>'
       +'<p>These counts are estimates: the last shelf count minus every bowl weighed in SureTint. A bowl that wasn’t weighed never comes off, so check these on the shelf and type what you see in Inventory → Backbar counts.</p>'
-      +((R&&R.order)||[]).map(([s,x])=>row(x,'On this week’s order list · '+s,'Count','b')).join('')
+      +((R&&R.order)||[]).map(([s,x])=>parseList(x).items.map(it=>row(it.name,s+(it.qty?' · order '+it.qty:''),'Count','b')).join('')).join('')
       +fast.map(([l,p,u])=>{const x=ohOf(l,p);return row(p,l+' · about '+u+' used a week'+(x?' · estimate '+fmt(x[4])+' on hand':''),'Count','b')}).join('')+'</div>':'';
     /* Color on hand (R.onHand, Nov 2 2026): [line, shade, counted, used since, on hand, per week, weeks left] */
     const OH=(R&&R.onHand)||[];
@@ -86,7 +106,7 @@
     let h=css+'<div class="wto"><div><h1>What To Order</h1><p>'+(D&&D.asOf?'Retail from the inventory report dated '+esc(String(D.asOf).replace(/,\s*\d{4}$/,''))+'. ':'')
       +(R&&R.week?'Color from the week of '+esc(R.week)+'. ':'')+'A new report comes in every week, so Monday is the day to order.</p></div>'
       +'<div class="wpick" role="group" aria-label="Choose a list">'+btn('retail','Retail',ret.length+cnt.length,'for the shelf')
-      +btn('back','Color & Backbar',back.length,'color and supplies')+btn('way','On The Way',Object.keys(ords).length,Object.keys(ords).length===1?'order':'orders')+'</div>'
+      +btn('back','Color & Backbar',backN,'color and supplies')+btn('way','On The Way',Object.keys(ords).length,Object.keys(ords).length===1?'order':'orders')+'</div>'
       +v('retail',loading||(retailCards.length?'<p>Grouped by where we buy it. Open the store and order the amount shown.</p>'+retailCards.join(''):'<p>Nothing to reorder this week.</p>'))
       +v('back',noColor||(countFirst+(backCards.length?'<p>From this week’s color report.</p>'+backCards.join(''):'<p>Nothing on this week’s color order list.</p>')+ohCard))
       +v('way',wayCards.length?'<p>From the order emails in info@. Don’t order these again. When a box comes in, receive it in Paired Plus.</p>'+wayCards.join(''):'<p>Nothing on the way right now.</p>')
