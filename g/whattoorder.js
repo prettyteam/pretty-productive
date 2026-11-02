@@ -37,6 +37,8 @@
     +'.wto .wcin input{width:72px;font:inherit;font-size:18px;padding:6px 8px;border:1px solid var(--ink,#121212);border-radius:6px}.wto .wcsave{font:inherit;font-size:12px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;background:var(--ink,#121212);color:#fff;border:0;border-radius:6px;padding:0 12px;cursor:pointer}'
     +'.wto .cdone{color:#2f5d46!important;font-weight:600}.wto .wc.err .cdone{color:#8a2a22!important}'
     +'.wto .wpick button:focus-visible,.wto .wst a:focus-visible{outline:2px solid var(--gold,#4a3426);outline-offset:2px}</style>';
+  /* not used at Taffeta, never on a list (Alexandra, Nov 2 2026) */
+  const NOUSE=/color\s*renew/i;
   const row=(name,detail,pill,kind)=>'<div class="wr"><span><b>'+esc(name)+'</b>'+(detail?'<small>'+esc(detail)+'</small>':'')+'</span>'+(pill?'<span class="q'+(kind?' '+kind:'')+'">'+esc(pill)+'</span>':'')+'</div>';
   /* The color report writes each store's order as one sentence, like "Topchic 6NN ×2, 7NN ×2; Colorance 7N ×1. Skip anything
      already on order." (Nov 2 2026: Alexandra asked for one line per item instead of a paragraph.) parseList splits it into
@@ -80,11 +82,11 @@
       if(on.length) back.push([String(s),note('Already ordered '+day(on[0][0])+': '+on.map(q=>q[3]).join(', ')+'. Check On The Way before ordering more.')]);
       L.notes.forEach(t=>back.push([String(s),note(t+'.')]));
       /* Recount first card: each shade gets its own Count button too (Alexandra, Nov 2 2026) */
-      L.items.forEach(it=>back.push([String(s),/recount/i.test(s)?{cnt:it.name}:qrow(it.name,it.qty,'')]));});
+      L.items.filter(it=>!NOUSE.test(it.name)).forEach(it=>back.push([String(s),/recount/i.test(s)?{cnt:it.name}:qrow(it.name,it.qty,'')]));});
     const prices=(R&&R.prices)||[];
     /* Count These First (Alexandra, Nov 2 2026): the estimate is the last shelf count minus SureTint bowls, so unweighed bowls make it
        read high. Each Monday Rose counts what the list says to order plus the fastest-used shades, and types it in Backbar counts. */
-    const fast=((R&&R.fastest)||[]).slice(0,8);
+    const fast=((R&&R.fastest)||[]).filter(f=>!NOUSE.test(f.join(' '))).slice(0,8);
     const fmt=v=>{const x=Math.round((+v||0)*10)/10;return String(x)};
     const norm=t=>String(t||'').toLowerCase().replace(/[^a-z0-9]/g,'');
     const ohOf=(l,p)=>((R&&R.onHand)||[]).find(r=>norm(r[1])===norm(p)&&(norm(l).includes(norm(r[0]).slice(0,6))||norm(r[0]).includes(norm(l).slice(0,6))));
@@ -104,10 +106,10 @@
       if(!it.k||seen.some(x=>same(x,it)))return false;seen.push(it);return true};
     const countFirst=(back.length||fast.length)?'<div class="wst"><div class="top"><h2>Count These First</h2><span class="q b">Mondays</span></div>'
       +'<p>These counts are estimates: the last shelf count minus every bowl weighed in SureTint. A bowl that wasn’t weighed never comes off, so count these on the shelf. Tap Count, type how many are there, and tap Save.</p>'
-      +((R&&R.order)||[]).map(([s,x])=>parseList(x).items.filter(it=>uniq(it.name)).map(it=>crow(it.name,s+(it.qty?' · order '+it.qty:''))).join('')).join('')
+      +((R&&R.order)||[]).map(([s,x])=>parseList(x).items.filter(it=>!NOUSE.test(it.name)&&uniq(it.name)).map(it=>crow(it.name,s+(it.qty?' · order '+it.qty:''))).join('')).join('')
       +fast.filter(([l,p])=>uniq(l+' '+p)).map(([l,p,u])=>{const x=ohOf(l,p);return crow(l+' '+p,'About '+u+' used a week'+(x?' · estimate '+fmt(x[4])+' on hand':''))}).join('')+'</div>':'';
     /* Color on hand (R.onHand, Nov 2 2026): [line, shade, counted, used since, on hand, per week, weeks left] */
-    const OH=(R&&R.onHand)||[];
+    const OH=((R&&R.onHand)||[]).filter(r=>!NOUSE.test(r.join(' ')));
     const ohCard=OH.length?'<details class="wmore"><summary>Color &amp; Backbar On Hand</summary><div><p>Estimates: Rose’s last count minus SureTint use since then.</p>'
       +OH.slice().sort((a,b)=>(+a[6]||99)-(+b[6]||99)).map(([l,sh,c,u,oh,pw,wl])=>row(l+' '+sh,'Counted '+fmt(c)+' · used '+fmt(u)+' since'+(+wl?' · about '+Math.round(+wl)+' wk left':''),fmt(oh)+' on hand',+oh<=0?'r':+wl&&+wl<3?'':'g')).join('')+'</div></details>':'';
     const backCards=byStore(back).filter(([s])=>!(countFirst&&/recount/i.test(s))).map(([s,rs])=>storeCard(s,rs.map(r=>typeof r==='string'?r:crow(r.cnt,'Count it on the shelf')).concat(prices.filter(p=>String(p[1]).toLowerCase()===s.toLowerCase()).map(([i,,p])=>row(i,'Best price here',p,'g')))));
