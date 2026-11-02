@@ -14,6 +14,7 @@
 <script src="../g/topnav.js?v=4"></script>
 <script src="../g/ordering.js?v=3"></script>
 <script src="../g/inventory.js?v=2"></script>
+<script src="../g/whattoorder.js?v=1"></script>
 <script src="../g/jokes.js?v=2"></script>
 <script src="../g/coach.js?v=1"></script>
 <link rel="stylesheet" href="../g/coach.css?v=1">
@@ -438,8 +439,8 @@ function guideView(){
 
 const DESK_PEOPLE=['Adriana','Alexandra','Amanda','Ashley','Carolyn','Flower'];   // Rose is listed as Flower   // who works the desk (Alexandra, Oct 17 2026)
 const NAME_PICS=['adriana','alexandra','amanda','ashley','carolyn'];
-const DESK_GROUPS=[['Guest Requests',['G|C']],['Consultations',['G|K']],['Profiles & Home Care',['G|P','G|R','G|H']],['To Do',['T|C']],['Send to a Guest',['S|C']],['Ordering',['O|C']],['Inventory',['I|C']],['Desk Guide',['D|C','K|C','C|C','B|C']]];
-const DESK_LABEL={'H|C':'Home','G|C':'Guest Requests','G|K':'Consultations','G|P':'Profiles','G|R':'RX Cards','G|H':'Home Care','T|C':'To Do','S|C':'Send a Link or Aftercare','O|C':'Ordering','I|C':'Inventory','D|C':'Desk Guide','K|C':'Call Coach','C|C':'Cleaning','B|C':'Keep Busy'};
+const DESK_GROUPS=[['Guest Requests',['G|C']],['Consultations',['G|K']],['Profiles & Home Care',['G|P','G|R','G|H']],['To Do',['T|C']],['Send to a Guest',['S|C']],['What To Order',['O|C']],['Inventory',['I|C']],['Desk Guide',['D|C','K|C','C|C','B|C']]];
+const DESK_LABEL={'H|C':'Home','G|C':'Guest Requests','G|K':'Consultations','G|P':'Profiles','G|R':'RX Cards','G|H':'Home Care','T|C':'To Do','S|C':'Send a Link or Aftercare','O|C':'What To Order','I|C':'Inventory','D|C':'Desk Guide','K|C':'Call Coach','C|C':'Cleaning','B|C':'Keep Busy'};
 let HOME_OPEN='';
 function deskGo(k){const [a,t]=k.split('|');area=a;if(a==='G')tab=t;store.set('desk-tab',tab);HOME_OPEN='';render();scrollTo(0,0);if(window.TopNav)TopNav.check()}
 function deskCount(k){const n=id=>Number(($('#'+id)||{}).textContent)||0;return {'G|C':n('nC'),'G|K':n('nK'),'G|P':n('nP'),'G|R':n('nR'),'G|H':n('nH'),'T|C':todoCount()}[k]||0}
@@ -479,13 +480,19 @@ function render(){
   ['.runbar','#alerts'].forEach(q=>{const el=$(q);if(el)el.style.display=home?'':'none'});
   ['#send','#after'].forEach(q=>{const el=$(q);if(el){el.style.display=send?'':'none';if(send){el.open=true;el.dataset.page='1'}else delete el.dataset.page}});
   $('#body').style.display=home||send?'none':'';
-  const body=g?guests():home||send?'':area==='T'?todoView():area==='D'?guideView():area==='K'?'<div id="ccDesk"></div>':area==='C'?cleanView():area==='O'?(window.Ordering?Ordering.html('full',null,GUIDE&&GUIDE.ordering):''):area==='I'?invDesk():busyView();
+  const body=g?guests():home||send?'':area==='T'?todoView():area==='D'?guideView():area==='K'?'<div id="ccDesk"></div>':area==='C'?cleanView():area==='O'?orderDesk():area==='I'?invDesk():busyView();
   if(!g)guests();
   todoCount();
   if(home)deskHome();
   const f=document.activeElement; if(f&&f.classList&&(f.classList.contains('tdaddr')||(f.classList.contains('rxq')&&!RX_TYPING))&&$('#body').contains(f)) return;   // don't wipe an address being typed
   $('#body').innerHTML=body;
   if(area==='K')deskCoach();
+}
+/* What To Order (Nov 2 2026): Retail and On The Way from the same weekly report as Inventory; the desk has no color report */
+function orderDesk(){
+  if(!window.WhatToOrder)return window.Ordering?Ordering.html('full',null,GUIDE&&GUIDE.ordering):'';
+  if(!DEMO)invDesk();
+  return WhatToOrder.html({inv:DEMO?invDemo():invD,err:invErr,mode:'full',logins:GUIDE&&GUIDE.ordering,countsHint:'Every shelf count is under Inventory.'});
 }
 /* Inventory (Oct 29 2026): the weekly Retail Inventory Report, read by the desk script from Drive (g/inventory.js draws it) */
 let invD=null,invAt=0,invBusy=false,invErr=false;
@@ -494,7 +501,7 @@ function invDesk(){
   if(DEMO)return Inventory.html(invDemo(),{desk:true});
   if(!invBusy&&Date.now()-invAt>10*60000&&window.TAFFETA_ENDPOINT&&KEY){invBusy=true;
     fetch(window.TAFFETA_ENDPOINT+'?key='+encodeURIComponent(KEY)+'&inv=1&t='+Date.now(),{cache:'no-store'}).then(r=>r.json())
-      .then(j=>{invD=j;invErr=false;invAt=Date.now()}).catch(()=>{invErr=true}).then(()=>{invBusy=false;if(area==='I')render()})}
+      .then(j=>{invD=j;invErr=false;invAt=Date.now()}).catch(()=>{invErr=true}).then(()=>{invBusy=false;if(area==='I'||area==='O')render()})}
   return Inventory.html(invD,{desk:true,err:invErr});
 }
 /* Call Coach (Coach.gs on the bridal app): front desk calls graded from Granola, read with the desk key */
