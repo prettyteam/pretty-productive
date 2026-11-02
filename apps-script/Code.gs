@@ -70,6 +70,7 @@ function doGet(e) {
   if (p.rgall) return json_({ ok: true, rgall: rows_(TABS.regimen, 3650).reverse().slice(0, 1500) });   // every saved home care card, searchable (Oct 20 2026)
   if (p.rxcard) return json_(rxDeskCard_(p.rxcard));
   if (p.inv) return json_(invReport_());   // weekly Inventory report (Inventory.gs)
+  if (p.stock) return json_({ ok: true, stock: stock_() });   // shelf counts (What To Order > Count These First)
   consultRemindEnsure_();   // switches on the 24-hour booking reminder (ConsultRemind.gs)
   return json_({ ok: true, now: Date.now(), concierge: rows_(TABS.concierge, 2), consult: rows_(TABS.consult, 60), profiles: rows_(TABS.profile, 60), todo: todoRows_(), regimen: rows_(TABS.regimen, 14), rx: rxDeskList_(21), seen: deskSeen_() });
 }
@@ -85,6 +86,7 @@ function doPost(e) {
     if (['rxpin', 'rxlogin', 'rxsync'].indexOf(d.type) >= 0) return rxPost_(d);
     if (d.type === 'rxdesk') return rxDeskSet_(d);
     if (d.type === 'deskseen') return deskSeenSet_(d);
+    if (d.type === 'deskstock') return deskStock_(d);
     if (d.type === 'rxopen') return rxOpened_(d);
     if (d.type === 'act') return actLog_(d);
     if (d.website) return json_({ ok: true });                       // spam trap
@@ -410,6 +412,17 @@ function myInfo_(slug) {
   return r ? { ecName: String(r[2]), ecPhone: String(r[3]), ecRel: String(r[4]), address: String(r[5]), email: String(r[6]), venmo: String(r[7]), instagram: String(r[8]) } : null;
 }
 /** Latest on-hand count per item, typed in the app by Alexandra or Rose: {itemId: {n, by, at}}. */
+/** Front Desk typed a shelf count on What To Order > Count These First (Alexandra, Nov 2 2026). Same Stock Counts tab as the staff app. */
+function deskStock_(d) {
+  if (d.key !== DESK_KEY) return json_({ ok: false, error: 'key' });
+  const id = clean_(d.id, 160), n = Number(d.n);
+  if (!id || !(n >= 0 && n <= 9999) || Math.floor(n) !== n) return json_({ ok: false, error: 'count' });
+  const row = [new Date(), 'Front Desk', 'desk', id, clean_(d.item, 160), n];
+  const sh = ttab_(TT.stock), i = tvals_(TT.stock).findIndex(r => String(r[3]) === id);
+  if (i >= 0) sh.getRange(i + 2, 1, 1, row.length).setValues([row]); else sh.appendRow(row);
+  sh.getRange('A2:A').setNumberFormat('ddd mmm d, h:mm am/pm');
+  return json_({ ok: true });
+}
 function stock_() {
   const o = {};
   tvals_(TT.stock).forEach(r => { if (r[3] !== '') o[String(r[3])] = { n: Number(r[5]), by: String(r[1]), at: r[0] instanceof Date ? day_(r[0]) : '' }; });
