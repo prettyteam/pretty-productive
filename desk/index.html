@@ -492,10 +492,27 @@ function render(){
 function orderDesk(){
   if(!window.WhatToOrder)return window.Ordering?Ordering.html('full',null,GUIDE&&GUIDE.ordering):'';
   if(!DEMO)invDesk();
-  return WhatToOrder.html({inv:DEMO?invDemo():invD,err:invErr,mode:'full',logins:GUIDE&&GUIDE.ordering,countsHint:'Every shelf count is under Inventory.'});
+  loadColor();
+  return WhatToOrder.html({inv:DEMO?invDemo():invD,err:invErr,report:DEMO?colorDemo():COLOR,mode:'full',logins:GUIDE&&GUIDE.ordering,countsHint:'Every shelf count is under Inventory.'});
 }
 /* Inventory (Oct 29 2026): the weekly Retail Inventory Report, read by the desk script from Drive (g/inventory.js draws it) */
 let invD=null,invAt=0,invBusy=false,invErr=false;
+/* Color list (Nov 2 2026): the weekly color report's order list, fastest shades and on-hand estimates (no prices),
+   sealed with the desk guide key by tools/publish.mjs into d/desk-color.dat */
+let COLOR=null, colorAt=0;
+async function loadColor(){
+  if(DEMO||!GKEY||Date.now()-colorAt<5*60000)return; colorAt=Date.now();
+  try{
+    const r=await fetch('../d/desk-color.dat?t='+Date.now(),{cache:'no-store'}); if(!r.ok)return;
+    const buf=new Uint8Array(await r.arrayBuffer());
+    const raw=Uint8Array.from(atob(GKEY.replace(/-/g,'+').replace(/_/g,'/')+'='.repeat((4-GKEY.length%4)%4)),c=>c.charCodeAt(0));
+    const k=await crypto.subtle.importKey('raw',raw,'AES-GCM',false,['decrypt']);
+    COLOR=JSON.parse(new TextDecoder().decode(await crypto.subtle.decrypt({name:'AES-GCM',iv:buf.slice(0,12)},k,buf.slice(12))));
+    if(area==='O')render();
+  }catch(e){}
+}
+function colorDemo(){return{week:'Oct 26 – Nov 1',order:[['DePasquale','Goldwell Topchic 6N ×2'],['CosmoProf','Blondor Freelights ×1']],
+  fastest:[['Shades EQ','09V',3.2],['Colorance','6N',2.1]],onHand:[['Shades EQ','09V',6,4,2,3.2,0.6],['Colorance','6N',5,2,3,2.1,1.4]]}}
 function invDesk(){
   if(!window.Inventory)return '';
   if(DEMO)return Inventory.html(invDemo(),{desk:true});

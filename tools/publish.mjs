@@ -346,6 +346,26 @@ if (!data.trends && trends) console.log('Sunday Trends: kept from the last publi
     console.log(`Consult first: ${today.length} today, ${tomorrow.length} tomorrow (d/desk-consult.dat).`);
   } else console.warn('Consult first: no desk link found, so the Front Desk list was not updated.');
 }
+// Color list for the Front Desk (Alexandra, Nov 2 2026: "you can let the desk see it"). What To Order > Color & Backbar on the desk
+// reads d/desk-color.dat, sealed with the desk guide key. Staff-safe: the order list, fastest shades and on-hand estimates only,
+// no prices, costs or sales.
+{
+  const gk = ((access && access.desk) || '').match(/[#&]g=([\w-]+)/);
+  if (gk && keys.inv && keys.inv.file && fs.existsSync(path.join(root, 'docs', keys.inv.file + '.enc'))) {
+    try {
+      const raw = fs.readFileSync(path.join(root, 'docs', keys.inv.file + '.enc'));
+      const k0 = await crypto.subtle.importKey('raw', Buffer.from(keys.inv.key, 'base64'), 'AES-GCM', false, ['decrypt']);
+      const R = (JSON.parse(new TextDecoder().decode(await crypto.subtle.decrypt({ name: 'AES-GCM', iv: raw.subarray(0, 12) }, k0, raw.subarray(12)))).report) || {};
+      const color = { updated: keys.inv.updated || '', week: R.week || '', order: R.order || [], fastest: R.fastest || [], onHand: R.onHand || [] };
+      const key = await crypto.subtle.importKey('raw', Buffer.from(gk[1], 'base64url'), 'AES-GCM', false, ['encrypt']);
+      const iv = crypto.getRandomValues(new Uint8Array(12));
+      const ct = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, enc.encode(JSON.stringify(color))));
+      const out = new Uint8Array(12 + ct.length); out.set(iv, 0); out.set(ct, 12);
+      fs.writeFileSync(path.join(outDir, 'desk-color.dat'), out);
+      console.log(`Desk color list: ${color.order.length} to order, ${color.onHand.length} on hand (d/desk-color.dat).`);
+    } catch (e) { console.warn('Desk color list: could not read the color report, so the Front Desk color list was not updated.'); }
+  }
+}
 const board = { access: access ? { ...access, stylists: pages.map((p) => ({ name: p.name, link: linkFor('s', keys.stylists[p.slug]), pin: keys.stylists[p.slug].pin })).sort((a, b) => a.name.localeCompare(b.name)) } : null, daily: data.daily || null, week: data.week || null, payroll: data.payroll || [], hoursList: (data.team && data.team.hoursList) || [], rates: (data.team && data.team.commission) || {}, retailRate: (data.team && data.team.retailRate) || 10, month: data.month || null, trends, hub: { admin: keys.team.admin }, guideUrl: guideUrl || null, docs: docsFor('', true), inv: keys.inv && keys.inv.file ? { k: keys.inv.key, file: keys.inv.file, updated: keys.inv.updated } : null, pages: pages.map((p) => ({ ...strip(p), link: linkFor('s', keys.stylists[p.slug]) })) };
 fs.writeFileSync(path.join(outDir, keys.leadership.id + '.json'), JSON.stringify(await seal(board, keys.leadership.secret, keys.leadership.pin)));
 fs.writeFileSync(args.keys, JSON.stringify(keys, null, 1));
