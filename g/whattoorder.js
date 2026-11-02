@@ -38,7 +38,7 @@
     +'.wto .cdone{color:#2f5d46!important;font-weight:600}.wto .wc.err .cdone{color:#8a2a22!important}'
     +'.wto .wpick button:focus-visible,.wto .wst a:focus-visible{outline:2px solid var(--gold,#4a3426);outline-offset:2px}</style>';
   /* not used at Taffeta, never on a list (Alexandra, Nov 2 2026) */
-  const NOUSE=/color\s*renew/i;
+  const NOUSE=/color\s*renew|6n\s*@\s*gb/i;
   const row=(name,detail,pill,kind)=>'<div class="wr"><span><b>'+esc(name)+'</b>'+(detail?'<small>'+esc(detail)+'</small>':'')+'</span>'+(pill?'<span class="q'+(kind?' '+kind:'')+'">'+esc(pill)+'</span>':'')+'</div>';
   /* The color report writes each store's order as one sentence, like "Topchic 6NN ×2, 7NN ×2; Colorance 7N ×1. Skip anything
      already on order." (Nov 2 2026: Alexandra asked for one line per item instead of a paragraph.) parseList splits it into
