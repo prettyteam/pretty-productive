@@ -96,7 +96,12 @@
         +'<small class="cdone"'+(c?'':' hidden')+'>'+(c?'Counted '+esc(c.n)+(c.at?' · '+esc(c.at):''):'')+'</small></span>'
         +'<button type="button" class="q b wcbtn"'+(o.canCount?'':' disabled')+'>'+(c?'Recount':'Count')+'</button>'
         +'<span class="wcin" hidden><input type="number" inputmode="numeric" min="0" max="9999" aria-label="How many on the shelf"><button type="button" class="wcsave">Save</button></span></div>'};
-    const seen=new Set(), uniq=(nm)=>{const k=norm(nm);if(seen.has(k))return false;seen.add(k);return true};
+    /* one row per product: also treats 'Redken Shades EQ 09V' and 'Shades EQ 09V' as the same (Nov 2 2026) */
+    const seen=[], same=(a,b)=>{if(a.k===b.k)return true;if(!a.sh||a.sh!==b.sh)return false;
+      const x=a.ln.slice(0,6),y=b.ln.slice(0,6);return !x||!y||a.ln.includes(y)||b.ln.includes(x)};
+    /* same shade code + same color line (first letters) = one row, e.g. 'Topchic 6NN' and 'Topchic Canister 6NN' (Nov 2 2026) */
+    const uniq=(nm)=>{const w=String(nm||'').trim().split(/\s+/),it={k:norm(nm),sh:norm(w.length>1?w[w.length-1]:''),ln:norm(w.slice(0,-1).join(''))};
+      if(!it.k||seen.some(x=>same(x,it)))return false;seen.push(it);return true};
     const countFirst=(back.length||fast.length)?'<div class="wst"><div class="top"><h2>Count These First</h2><span class="q b">Mondays</span></div>'
       +'<p>These counts are estimates: the last shelf count minus every bowl weighed in SureTint. A bowl that wasn’t weighed never comes off, so count these on the shelf. Tap Count, type how many are there, and tap Save.</p>'
       +((R&&R.order)||[]).map(([s,x])=>parseList(x).items.filter(it=>uniq(it.name)).map(it=>crow(it.name,s+(it.qty?' · order '+it.qty:''))).join('')).join('')
@@ -105,7 +110,7 @@
     const OH=(R&&R.onHand)||[];
     const ohCard=OH.length?'<details class="wmore"><summary>Color &amp; Backbar On Hand</summary><div><p>Estimates: Rose’s last count minus SureTint use since then.</p>'
       +OH.slice().sort((a,b)=>(+a[6]||99)-(+b[6]||99)).map(([l,sh,c,u,oh,pw,wl])=>row(l+' '+sh,'Counted '+fmt(c)+' · used '+fmt(u)+' since'+(+wl?' · about '+Math.round(+wl)+' wk left':''),fmt(oh)+' on hand',+oh<=0?'r':+wl&&+wl<3?'':'g')).join('')+'</div></details>':'';
-    const backCards=byStore(back).map(([s,rs])=>storeCard(s,rs.map(r=>typeof r==='string'?r:crow(r.cnt,'Count it on the shelf')).concat(prices.filter(p=>String(p[1]).toLowerCase()===s.toLowerCase()).map(([i,,p])=>row(i,'Best price here',p,'g')))));
+    const backCards=byStore(back).filter(([s])=>!(countFirst&&/recount/i.test(s))).map(([s,rs])=>storeCard(s,rs.map(r=>typeof r==='string'?r:crow(r.cnt,'Count it on the shelf')).concat(prices.filter(p=>String(p[1]).toLowerCase()===s.toLowerCase()).map(([i,,p])=>row(i,'Best price here',p,'g')))));
     /* On The Way: one card per order */
     const ords={};oo.forEach(q=>(ords[q[1]+'|'+q[2]+'|'+q[0]]||=[]).push(q));
     const wayCards=Object.keys(ords).map(k=>{const [st,num,d]=k.split('|'),its=ords[k],s=its[0][5]||'Ordered',a=arrives(s);
