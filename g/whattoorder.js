@@ -47,7 +47,8 @@
   const BRANDS=[[/shades\s*eq/i,'Redken Shades EQ'],[/colorance/i,'Goldwell Colorance'],[/topchic/i,'Goldwell Topchic'],[/alter\s*ego/i,'Alter Ego'],
     [/blondor/i,'Wella Blondor'],[/developer|\bvol\b/i,'Developer']];
   /* brand found last-to-first, so "Topchic 20 vol developer" lands under Developer */
-  const SHADE_DIR=1;   /* 1 = lightest to darkest (level 10 first), -1 = darkest to lightest */
+  /* Alexandra, Nov 3 2026: Shades EQ lightest to darkest (level 10 first); the other color lines darkest to lightest */
+  const SHADE_DIR=b=>b==='Redken Shades EQ'?1:-1;
   const shadeOf=nm=>{const t=String(nm||'').trim(),b=BRANDS.slice().reverse().find(([re])=>re.test(t)),brand=b?b[1]:(t.split(/\s+/)[0]||'Other');
     if(brand==='Wella Blondor')return{brand,key:brand,lvl:0,code:'',name:'Wella Blondor'};
     const m=/(?:^|\s)0*(\d{1,2})(\/\d+|[A-Z@]*[A-Z])?(?=\s|$)/.exec(t.replace(/\b(redken|goldwell|wella)\b/ig,''));
@@ -127,7 +128,7 @@
     merged.forEach(m=>{const k='c:'+norm(m.name);m.ids=[k].concat(m.ids.filter(x=>x!==k))});
     const bOrder=b=>{const i=BRANDS.findIndex(x=>x[1]===b);return i<0?BRANDS.length:i};
     merged.sort((a,b)=>bOrder(a.brand)-bOrder(b.brand)||a.brand.localeCompare(b.brand)
-      ||(a.brand==='Developer'?a.lvl-b.lvl:SHADE_DIR*(b.lvl-a.lvl))||a.code.localeCompare(b.code));
+      ||(a.brand==='Developer'?a.lvl-b.lvl:SHADE_DIR(a.brand)*(b.lvl-a.lvl))||a.code.localeCompare(b.code));
     let lastB='';
     const cfRows=merged.map(m=>{const head=m.brand!==lastB?'<h3 class="wbr">'+esc(m.brand)+'</h3>':'';lastB=m.brand;return head+crow(m.name,m.det,m.ids)}).join('');
     const countFirst=merged.length?'<div class="wst"><div class="top"><h2>Count These First</h2><span class="q b">Mondays</span></div>'
