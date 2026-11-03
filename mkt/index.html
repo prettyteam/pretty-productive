@@ -188,7 +188,7 @@ function addSwap(){
     if(v==='e:'+im.dataset.oe||im.dataset.od&&v==='d:'+im.dataset.od)v='';
     // an email's main photo is never the same as another email's (Alexandra, Nov 3 2026)
     // (Nov 3 2026: every photo in an email can be swapped, so check them all, not just the main one)
-    if(post.closest('#mk-fdx')){const w=v||'d:'+im.dataset.od,o=[...document.querySelectorAll('#mk-fdx .post')].find(x=>x!==post&&pics(x).some(y=>y.dataset.sw===w));
+    if(v&&post.closest('#mk-fdx')){const w=v,o=[...document.querySelectorAll('#mk-fdx .post')].find(x=>x!==post&&pics(x).some(y=>y.dataset.sw===w));
       if(o){msg('That photo is already on \u201c'+o.querySelector('h4').textContent+'\u201d. Pick a different one.');return}}
     busy=true;msg('Saving…');
     try{const s=await MK.api('save',{text:{[key(post,idx)]:v},ok:{}});MK.applyState(s);msg('Done. Photo changed and saved.');setTimeout(()=>d.close(),900)}
