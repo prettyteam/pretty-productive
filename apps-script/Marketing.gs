@@ -60,6 +60,11 @@ function mkt_(d) {
         const name = String(d.name || '').trim().slice(0, 60);
         if (!name) return { ok: false, error: 'name' };
         const a = { id: 'a' + Utilities.getUuid().replace(/-/g, '').slice(0, 10), name: name, createdAt: Date.now() };
+        if (d.parent) {   // Sub Album (Alexandra, Nov 3 2026): one level inside an album someone made (not a wedding or My Work album)
+          const par = s.albums.find(x => x.id === String(d.parent));
+          if (!par || par.parent || par.model || par.wid) return { ok: false, error: 'bad_request' };
+          a.parent = par.id;
+        }
         s.albums.push(a); mktWrite_(s);
         return Object.assign(mktPublic_(s), { id: a.id });
       }
