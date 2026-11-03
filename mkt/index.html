@@ -208,15 +208,17 @@ function addSwap(){
   posts.forEach(p=>{if(!pics(p).length)return;const b=document.createElement('button');b.type='button';b.className='copy mk-chg';b.textContent='Change photo';b.onclick=()=>open(p);
     if(p.classList.contains('story'))p.append(b);else{const s=p.querySelector('.strip');(p.querySelector('.mk-save')||s).after(b)}});
 }
-function inject(html){
+// The Photos tab code isn't private, so it loads from tools/mkt-photos.js and a fix there goes live without a rebuild (Nov 3 2026).
+function photosCode(t,ph){return ph&&t.trimStart().startsWith('/* Photos tab')?ph:t}
+function inject(html,ph){
   const doc=new DOMParser().parseFromString(html,'text/html');
   document.getElementById('lock').remove();document.querySelectorAll('head style').forEach(s=>s.remove());
   doc.head.querySelectorAll('style,link[rel=stylesheet]').forEach(s=>document.head.append(s));
   const t=doc.querySelector('title');if(t)document.title=t.textContent;
   [...doc.body.childNodes].forEach(n=>{
-    if(n.nodeType===1&&n.tagName==='SCRIPT'){const s=document.createElement('script');s.textContent=n.textContent;document.body.append(s)}
+    if(n.nodeType===1&&n.tagName==='SCRIPT'){const s=document.createElement('script');s.textContent=photosCode(n.textContent,ph);document.body.append(s)}
     else if(n.nodeType===1&&n.tagName==='TITLE'){document.title=n.textContent}
-    else{n.querySelectorAll&&[...n.querySelectorAll('script')].forEach(x=>{const s=document.createElement('script');s.textContent=x.textContent;x.replaceWith(s)});document.body.append(n)}
+    else{n.querySelectorAll&&[...n.querySelectorAll('script')].forEach(x=>{const s=document.createElement('script');s.textContent=photosCode(x.textContent,ph);x.replaceWith(s)});document.body.append(n)}
   });
 }
 async function open(code,remember){
@@ -226,7 +228,8 @@ async function open(code,remember){
   let P;try{P=JSON.parse(new TextDecoder().decode(await dec(await r.arrayBuffer())))}catch(e){throw new Error('code')}
   MK.code=code;MK.files=P.files||{};MK.migrated=P.migrated||[];
   try{localStorage.setItem('mkt-code',remember?code:'')}catch(e){}
-  inject(P.html);MK.scan(document);addSave();addSwap();
+  const ph=await fetch('../tools/mkt-photos.js?t='+Date.now(),{cache:'no-store'}).then(x=>x.ok?x.text():'').catch(()=>'');
+  inject(P.html,ph);MK.scan(document);addSave();addSwap();
   const s=await MK.api('state').catch(()=>null);
   if(s&&!s.rev&&P.seed){const t=await MK.api('seed',{edits:P.seed}).catch(()=>null);MK.applyState(t||s)}else if(s)MK.applyState(s);
   document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')MK.refresh()});
