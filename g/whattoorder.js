@@ -35,10 +35,24 @@
     +'.wto details.wmore>summary::-webkit-details-marker{display:none}.wto details.wmore>summary:after{content:"+";margin-left:auto;font-size:18px;font-weight:400}.wto details.wmore[open]>summary:after{content:"–"}.wto details.wmore>div{padding:0 0 14px}'
     +'.wto .wcbtn{cursor:pointer;border:0;font-family:inherit;min-height:36px}.wto .wcin{display:flex;gap:6px;flex:none}.wto .wcin[hidden],.wto .cdone[hidden]{display:none}'
     +'.wto .wcin input{width:72px;font:inherit;font-size:18px;padding:6px 8px;border:1px solid var(--ink,#121212);border-radius:6px}.wto .wcsave{font:inherit;font-size:12px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;background:var(--ink,#121212);color:#fff;border:0;border-radius:6px;padding:0 12px;cursor:pointer}'
-    +'.wto .cdone{color:#2f5d46!important;font-weight:600}.wto .wc.err .cdone{color:#8a2a22!important}'
+    +'.wto .cdone{color:#2f5d46!important;font-weight:600}.wto .wbr{margin:12px 0 0;font-size:12px;letter-spacing:.14em;text-transform:uppercase;font-weight:600;color:var(--green,#2f5d46)}.wto .wc.err .cdone{color:#8a2a22!important}'
     +'.wto .wpick button:focus-visible,.wto .wst a:focus-visible{outline:2px solid var(--gold,#4a3426);outline-offset:2px}</style>';
   /* not used at Taffeta, never on a list (Alexandra, Nov 2 2026) */
   const NOUSE=/color\s*renew|6n\s*@\s*gb/i;
+  /* Rose, Nov 3 2026: no "used more than was counted Oct 12–14 ... so these were restocked" lines on the lists */
+  const DROPNOTE=/used more|restocked|counted 0 or 1/i;
+  /* Count These First, Rose, Nov 3 2026: each brand in its own section, shades in level order, one row per shade.
+     "Shades EQ 06N Moroccan Sand" and "Shades EQ 6N" are the same shade (leading zero and the color's name don't count),
+     and every Blondor item (Free Lites powder and so on) is one row, "Wella Blondor". */
+  const BRANDS=[[/shades\s*eq/i,'Redken Shades EQ'],[/colorance/i,'Goldwell Colorance'],[/topchic/i,'Goldwell Topchic'],[/alter\s*ego/i,'Alter Ego'],
+    [/blondor/i,'Wella Blondor'],[/developer|\bvol\b/i,'Developer']];
+  /* brand found last-to-first, so "Topchic 20 vol developer" lands under Developer */
+  const SHADE_DIR=1;   /* 1 = lightest to darkest (level 10 first), -1 = darkest to lightest */
+  const shadeOf=nm=>{const t=String(nm||'').trim(),b=BRANDS.slice().reverse().find(([re])=>re.test(t)),brand=b?b[1]:(t.split(/\s+/)[0]||'Other');
+    if(brand==='Wella Blondor')return{brand,key:brand,lvl:0,code:'',name:'Wella Blondor'};
+    const m=/(?:^|\s)0*(\d{1,2})(\/\d+|[A-Z@]*[A-Z])?(?=\s|$)/.exec(t.replace(/\b(redken|goldwell|wella)\b/ig,''));
+    const code=m?(m[1]+(m[2]||'')).toUpperCase():'',lvl=m?+m[1]:0;
+    return{brand,key:brand+'|'+(code||t.toLowerCase()),lvl,code,name:t}};
   const row=(name,detail,pill,kind)=>'<div class="wr"><span><b>'+esc(name)+'</b>'+(detail?'<small>'+esc(detail)+'</small>':'')+'</span>'+(pill?'<span class="q'+(kind?' '+kind:'')+'">'+esc(pill)+'</span>':'')+'</div>';
   /* The color report writes each store's order as one sentence, like "Topchic 6NN ×2, 7NN ×2; Colorance 7N ×1. Skip anything
      already on order." (Nov 2 2026: Alexandra asked for one line per item instead of a paragraph.) parseList splits it into
@@ -80,9 +94,11 @@
     let backN=0;
     ((R&&R.order)||[]).forEach(([s,x])=>{const on=oo.filter(q=>String(q[1]).toLowerCase()===String(s).toLowerCase()),L=parseList(x);backN+=L.items.length||1;
       if(on.length) back.push([String(s),note('Already ordered '+day(on[0][0])+': '+on.map(q=>q[3]).join(', ')+'. Check On The Way before ordering more.')]);
-      L.notes.forEach(t=>back.push([String(s),note(t+'.')]));
+      L.notes.filter(t=>!DROPNOTE.test(t)).forEach(t=>back.push([String(s),note(t+'.')]));
       /* Recount first card: each shade gets its own Count button too (Alexandra, Nov 2 2026) */
-      L.items.filter(it=>!NOUSE.test(it.name)).forEach(it=>back.push([String(s),/recount/i.test(s)?{cnt:it.name}:qrow(it.name,it.qty,'')]));});
+      const inStore=[];
+      L.items.filter(it=>!NOUSE.test(it.name)).forEach(it=>{const sh=shadeOf(it.name);if(inStore.includes(sh.key))return;inStore.push(sh.key);   /* one row per shade, one Wella Blondor (Nov 3 2026) */
+        const nm=sh.brand==='Wella Blondor'?sh.name:it.name;back.push([String(s),/recount/i.test(s)?{cnt:nm}:qrow(nm,it.qty,'')])});});
     const prices=(R&&R.prices)||[];
     /* Count These First (Alexandra, Nov 2 2026): the estimate is the last shelf count minus SureTint bowls, so unweighed bowls make it
        read high. Each Monday Rose counts what the list says to order plus the fastest-used shades, and types it in Backbar counts. */
@@ -93,21 +109,30 @@
     /* Tap Count to type what's on the shelf (Alexandra, Nov 2 2026). Saved to the Stock Counts tab through the host app's
        WhatToOrder.saveCount(id, item, n); o.counts = {id: {n, at}} shows the last count. */
     const C=o.counts||{};
-    const crow=(name,detail)=>{const id='c:'+norm(name),c=C[id];
+    const crow=(name,detail,ids)=>{const id='c:'+norm(name),c=(ids||[id]).map(k=>C[k]).filter(Boolean)[0];
       return '<div class="wr wc" data-cid="'+esc(id)+'" data-citem="'+esc(name)+'"><span><b>'+esc(name)+'</b><small>'+esc(detail)+'</small>'
         +'<small class="cdone"'+(c?'':' hidden')+'>'+(c?'Counted '+esc(c.n)+(c.at?' · '+esc(c.at):''):'')+'</small></span>'
         +'<button type="button" class="q b wcbtn"'+(o.canCount?'':' disabled')+'>'+(c?'Recount':'Count')+'</button>'
         +'<span class="wcin" hidden><input type="number" inputmode="numeric" min="0" max="9999" aria-label="How many on the shelf"><button type="button" class="wcsave">Save</button></span></div>'};
-    /* one row per product: also treats 'Redken Shades EQ 09V' and 'Shades EQ 09V' as the same (Nov 2 2026) */
-    const seen=[], same=(a,b)=>{if(a.k===b.k)return true;if(!a.sh||a.sh!==b.sh)return false;
-      const x=a.ln.slice(0,6),y=b.ln.slice(0,6);return !x||!y||a.ln.includes(y)||b.ln.includes(x)};
-    /* same shade code + same color line (first letters) = one row, e.g. 'Topchic 6NN' and 'Topchic Canister 6NN' (Nov 2 2026) */
-    const uniq=(nm)=>{const w=String(nm||'').trim().split(/\s+/),it={k:norm(nm),sh:norm(w.length>1?w[w.length-1]:''),ln:norm(w.slice(0,-1).join(''))};
-      if(!it.k||seen.some(x=>same(x,it)))return false;seen.push(it);return true};
-    const countFirst=(back.length||fast.length)?'<div class="wst"><div class="top"><h2>Count These First</h2><span class="q b">Mondays</span></div>'
+    /* every shade to count (order list + fastest-used), merged by brand and shade code, then grouped and sorted */
+    const toCount=[];
+    ((R&&R.order)||[]).forEach(([s,x])=>parseList(x).items.filter(it=>!NOUSE.test(it.name)).forEach(it=>toCount.push({nm:it.name,det:(/recount/i.test(s)?'Recount':s)+(it.qty?' · order '+it.qty:'')})));
+    fast.forEach(([l,p,u])=>{const x=ohOf(l,p);toCount.push({nm:l+' '+p,det:'About '+u+' used a week'+(x?' · estimate '+fmt(x[4])+' on hand':'')})});
+    const merged=[];
+    toCount.forEach(t=>{const sh=shadeOf(t.nm),had=merged.find(m=>m.key===sh.key);
+      if(!had){merged.push({...sh,ids:['c:'+norm(t.nm)],det:t.det});return}
+      had.ids.push('c:'+norm(t.nm));
+      if(sh.brand!=='Wella Blondor'&&sh.name.length<had.name.length)had.name=sh.name;   /* keep the plain "6N" name, not "6N Moroccan Sand" */
+      if(!/order/.test(had.det)&&/order/.test(t.det))had.det=t.det});
+    merged.forEach(m=>{const k='c:'+norm(m.name);m.ids=[k].concat(m.ids.filter(x=>x!==k))});
+    const bOrder=b=>{const i=BRANDS.findIndex(x=>x[1]===b);return i<0?BRANDS.length:i};
+    merged.sort((a,b)=>bOrder(a.brand)-bOrder(b.brand)||a.brand.localeCompare(b.brand)
+      ||(a.brand==='Developer'?a.lvl-b.lvl:SHADE_DIR*(b.lvl-a.lvl))||a.code.localeCompare(b.code));
+    let lastB='';
+    const cfRows=merged.map(m=>{const head=m.brand!==lastB?'<h3 class="wbr">'+esc(m.brand)+'</h3>':'';lastB=m.brand;return head+crow(m.name,m.det,m.ids)}).join('');
+    const countFirst=merged.length?'<div class="wst"><div class="top"><h2>Count These First</h2><span class="q b">Mondays</span></div>'
       +'<p>These counts are estimates: the last shelf count minus every bowl weighed in SureTint. A bowl that wasn’t weighed never comes off, so count these on the shelf. Tap Count, type how many are there, and tap Save.</p>'
-      +((R&&R.order)||[]).map(([s,x])=>parseList(x).items.filter(it=>!NOUSE.test(it.name)&&uniq(it.name)).map(it=>crow(it.name,s+(it.qty?' · order '+it.qty:''))).join('')).join('')
-      +fast.filter(([l,p])=>uniq(l+' '+p)).map(([l,p,u])=>{const x=ohOf(l,p);return crow(l+' '+p,'About '+u+' used a week'+(x?' · estimate '+fmt(x[4])+' on hand':''))}).join('')+'</div>':'';
+      +cfRows+'</div>':'';
     /* Color on hand (R.onHand, Nov 2 2026): [line, shade, counted, used since, on hand, per week, weeks left] */
     const OH=((R&&R.onHand)||[]).filter(r=>!NOUSE.test(r.join(' ')));
     const ohCard=OH.length?'<details class="wmore"><summary>Color &amp; Backbar On Hand</summary><div><p>Estimates: Rose’s last count minus SureTint use since then.</p>'

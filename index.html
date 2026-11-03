@@ -1653,7 +1653,7 @@ function invReport(R){
         h('div',{class:'sec2'},rows.map(([d,a,c,m,ch,g,v])=>h('div',{class:'lrow'},h('span',{},h('b',{},c),h('small',{},d+' · '+a+(m&&m!=='—'?' · mixed '+m:'')+(ch&&ch!=='—'?' · charged '+ch:''))),g?h('span',{class:'soft',style:'font-size:13px;white-space:nowrap'},g+' g'+(v!=null?' · '+invPct(v):'')):null)))))),
     invOnOrderSec(),
     h('section',{class:'section'},h('h2',{},'What to order'),h('div',{class:'sec2'},R.order.map(([s,x])=>{const oo=invOO().filter(o=>o[1].toLowerCase()===String(s).toLowerCase());
-      return h('div',{class:'lrow'},h('span',{},h('b',{},s),h('small',{},x),oo.length?h('small',{style:'color:var(--green,#2f5d46)'},'Already on order since '+invDay(oo[oo.length-1][0])+': '+oo.map(o=>o[3]+(o[4]?' ('+o[4]+')':'')).join(', ')):null))}))),
+      return h('div',{class:'lrow'},h('span',{},h('b',{},s),h('small',{},String(x).split(/(?<=\.)\s+/).map(t=>t.replace(/^[^:]*(used more|restocked|counted 0 or 1)[^:]*:\s*/i,'')).join(' ')),oo.length?h('small',{style:'color:var(--green,#2f5d46)'},'Already on order since '+invDay(oo[oo.length-1][0])+': '+oo.map(o=>o[3]+(o[4]?' ('+o[4]+')':'')).join(', ')):null))}))),
     h('section',{class:'section'},h('h2',{},'Best price right now'),h('div',{class:'sec2'},R.prices.map(([i,s,p])=>h('div',{class:'lrow'},h('span',{},h('b',{},i),h('small',{},s)),h('b',{},p))))),
     h('section',{class:'section'},h('h2',{},'Fastest-used'),h('div',{class:'sec2'},R.fastest.map(([l,p,u])=>h('div',{class:'lrow'},h('span',{},h('b',{},p),h('small',{},l)),h('span',{class:'soft',style:'font-size:13px'},u+' / wk'))))),
     R.missing&&R.missing.length?h('p',{class:'soft',style:'font-size:12.5px;margin:0'},'No price yet: '+R.missing.join(' · ')):null];
