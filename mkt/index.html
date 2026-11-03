@@ -187,7 +187,8 @@ function addSwap(){
   async function use(v){if(!post||busy)return;const im=pics(post)[idx];if(!im)return;
     if(v==='e:'+im.dataset.oe||im.dataset.od&&v==='d:'+im.dataset.od)v='';
     // an email's main photo is never the same as another email's (Alexandra, Nov 3 2026)
-    if(post.closest('#mk-fdx')){const w=v||'d:'+im.dataset.od,o=[...document.querySelectorAll('#mk-fdx .post')].find(x=>x!==post&&pics(x)[0]&&pics(x)[0].dataset.sw===w);
+    // (Nov 3 2026: every photo in an email can be swapped, so check them all, not just the main one)
+    if(post.closest('#mk-fdx')){const w=v||'d:'+im.dataset.od,o=[...document.querySelectorAll('#mk-fdx .post')].find(x=>x!==post&&pics(x).some(y=>y.dataset.sw===w));
       if(o){msg('That photo is already on \u201c'+o.querySelector('h4').textContent+'\u201d. Pick a different one.');return}}
     busy=true;msg('Saving…');
     try{const s=await MK.api('save',{text:{[key(post,idx)]:v},ok:{}});MK.applyState(s);msg('Done. Photo changed and saved.');setTimeout(()=>d.close(),900)}
@@ -219,30 +220,46 @@ function addSwap(){
   // Posts drawn after the page opens (the email main photos below) get the same button.
   MK.swapAdd=p=>{posts.push(p);addBtn(p);pics(p).forEach((im,i)=>{const v=cur[key(p,i)];if(v)show(im,v)})};
 }
-/* Email main photos (Alexandra, Nov 3 2026): one card per scheduled Flodesk email at the top of the Email tab, with the
-   main photo it uses. Change photo saves her pick (text key img:fdx-<email>:0) and Claude then puts it in Flodesk.
-   The list itself lives in the saved edits (fdx:list), so nothing about the emails is in this public file. */
+/* Email proofs (Alexandra, Nov 3 2026): one card per scheduled Flodesk email at the top of the Email tab. Each card shows
+   the whole email (a full-length screenshot) and every photo in it; Change photo swaps any of them. Picks save as
+   img:fdx-<email>:<n> (n = the photo's place in the email, 0 = the main photo) and Claude then puts them in Flodesk.
+   The list lives in the saved edits (fdx:list: k, list, t, when, fd, a, p = main photo, ps = every photo top to bottom,
+   pr = the proof screenshot), so nothing about the emails is in this public file. */
 function addFdx(){
   let built='';
-  const st=document.createElement('style');st.textContent='#mk-fdx{margin:0 0 40px}#mk-fdx .fdg{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:18px}'
-    +'#mk-fdx .post{display:flex;flex-direction:column;gap:8px;min-width:0}#mk-fdx .strip img{width:100%;aspect-ratio:3/4;object-fit:cover;display:block;background:var(--line,#ddd)}'
+  const st=document.createElement('style');st.textContent='#mk-fdx{margin:0 0 40px}#mk-fdx .fdg{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:18px}'
+    +'#mk-fdx .post{display:flex;flex-direction:column;gap:8px;min-width:0}'
+    +'#mk-fdx .fdp{max-height:72vh;overflow-y:auto;border:1px solid var(--line,#ddd);background:var(--line,#ddd)}#mk-fdx .fdp img{width:100%;display:block}'
+    +'#mk-fdx .strip{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px}#mk-fdx .strip img{width:100%;aspect-ratio:1/1;object-fit:cover;display:block;background:var(--line,#ddd)}'
     +'#mk-fdx .fdl{font-size:11px;letter-spacing:.14em;text-transform:uppercase;margin:0}#mk-fdx h4{margin:0;font-weight:500;font-size:16px}#mk-fdx .fdw{margin:0;font-size:13px;color:var(--soft,#5c5c5c)}'
-    +'#mk-fdx .fdo{font-size:13px}';
+    +'#mk-fdx .fdn{margin:0;font-size:13px;color:var(--gold,#8b6b4c)}#mk-fdx .fdn:empty{display:none}#mk-fdx .fdo{font-size:13px}';
   document.head.append(st);
+  // the whole-email screenshot is tall, so its small copy is too blurry to read: get the full one once the card is on screen
+  const big=im=>{const go=()=>MK.driveFull(im.dataset.pr).then(u=>{if(u)im.src=u}).catch(()=>{});
+    if('IntersectionObserver' in window){const o=new IntersectionObserver(es=>{if(es.some(e=>e.isIntersecting)){o.disconnect();go()}},{rootMargin:'300px 0px'});o.observe(im)}else go()};
+  // how many picks are waiting to go into Flodesk, on each card
+  function waiting(){document.querySelectorAll('#mk-fdx .post').forEach(p=>{const n=[...p.querySelectorAll('.strip img')].filter(im=>im.dataset.sw&&im.dataset.sw!=='d:'+im.dataset.od).length;
+    const el=p.querySelector('.fdn');if(el)el.textContent=n?(n===1?'1 new photo picked. ':n+' new photos picked. ')+'Claude puts it into Flodesk when you say \u201cswaps ready\u201d.':''})}
   MK.onState(s=>{
-    const raw=(s.edits.text||{})['fdx:list'];if(!raw||raw===built)return;let list;try{list=JSON.parse(raw)}catch(e){return}
-    const panel=document.getElementById('p-email');if(!panel)return;built=raw;
-    let sec=document.getElementById('mk-fdx');if(sec)sec.remove();
-    sec=document.createElement('section');sec.id='mk-fdx';
-    sec.innerHTML='<h3 class="pfh">Email main photos</h3><p class="fdw">Each scheduled email and its main photo. Tap Change photo to pick a different one, and Claude will swap it in Flodesk and send you a new test.</p><div class="fdg"></div>';
-    const g=sec.querySelector('.fdg');
-    list.forEach(e=>{const p=document.createElement('article');p.className='post';p.id='post-fdx-'+e.k;
-      p.innerHTML='<p class="fdl"></p><h4></h4><p class="fdw"></p><div class="strip"><img alt=""></div><a class="fdo" target="_blank" rel="noopener">See the whole email</a>';
-      p.querySelector('.fdl').textContent=e.list;p.querySelector('h4').textContent=e.t;p.querySelector('.fdw').textContent=e.when;
-      const im=p.querySelector('img');im.dataset.d=e.p;im.dataset.od=e.p;im.dataset.sw='d:'+e.p;
-      p.querySelector('a').href='https://view.flodesk.com/emails/'+e.fd;
-      if(e.a)p.dataset.album=e.a;g.append(p)});
-    panel.prepend(sec);MK.scan(sec);sec.querySelectorAll('.post').forEach(p=>MK.swapAdd&&MK.swapAdd(p));
+    const raw=(s.edits.text||{})['fdx:list'];
+    if(raw&&raw!==built){let list=null;try{list=JSON.parse(raw)}catch(e){}
+      const panel=document.getElementById('p-email');
+      if(list&&panel){built=raw;
+        let sec=document.getElementById('mk-fdx');if(sec)sec.remove();
+        sec=document.createElement('section');sec.id='mk-fdx';
+        sec.innerHTML='<h3 class="pfh">Email Proofs</h3><p class="fdw">Every scheduled email, start to finish, with the photos in it. Tap Change photo to swap any of them. When you\u2019re done, tell Claude \u201cswaps ready\u201d and it puts your picks into Flodesk and sends you new tests.</p><div class="fdg"></div>';
+        const g=sec.querySelector('.fdg');
+        list.forEach(e=>{const p=document.createElement('article');p.className='post';p.id='post-fdx-'+e.k;
+          p.innerHTML='<p class="fdl"></p><h4></h4><p class="fdw"></p><div class="fdp" hidden><img alt=""></div><p class="lbl">Photos in this email</p><div class="strip"></div><p class="fdn" role="status"></p><a class="fdo" target="_blank" rel="noopener">Open the email in Flodesk</a>';
+          p.querySelector('.fdl').textContent=e.list||'';p.querySelector('h4').textContent=e.t||'';p.querySelector('.fdw').textContent=e.when||'';
+          if(e.pr){const w=p.querySelector('.fdp'),im=w.querySelector('img');w.hidden=false;im.alt='The whole email: '+(e.t||'');im.dataset.d=e.pr;im.dataset.pr=e.pr;big(im)}
+          const ids=(Array.isArray(e.ps)&&e.ps.length?e.ps:[e.p]).filter(Boolean),strip=p.querySelector('.strip');
+          ids.forEach((id,i)=>{const im=document.createElement('img');im.alt=i?'Photo '+(i+1):'Main photo';im.dataset.d=id;im.dataset.od=id;im.dataset.sw='d:'+id;strip.append(im)});
+          const a=p.querySelector('a');if(e.fd)a.href='https://view.flodesk.com/emails/'+e.fd;else a.remove();
+          if(e.a)p.dataset.album=e.a;g.append(p)});
+        panel.prepend(sec);MK.scan(sec);sec.querySelectorAll('.post').forEach(p=>MK.swapAdd&&MK.swapAdd(p));
+      }}
+    waiting();
   });
 }
 // The Photos tab code isn't private, so it loads from tools/mkt-photos.js and a fix there goes live without a rebuild (Nov 3 2026).
