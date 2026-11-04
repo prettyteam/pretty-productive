@@ -304,6 +304,13 @@ details.more .menu .btn:last-child{border-bottom:0}
 .wed .d small{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
 .wed .who{font-weight:600}
 .wed .sub{font-size:12px;color:var(--muted)}
+.ask-row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px 0;border-top:1px solid var(--line)}
+.ask-row:first-child{border-top:0}.ask-nm{font-weight:600;font-size:15px}.ask-meta{color:var(--muted);font-size:12px;margin-top:2px}
+.ask-chip{font-size:12px;font-weight:600;padding:4px 10px;border-radius:999px;white-space:nowrap;border:1px solid transparent}
+.ask-chip.yes{background:#423327;color:#fff}.ask-chip.no{background:#fff;color:var(--muted);border-color:var(--line);text-decoration:line-through}
+.ask-chip.wait{background:#eee9e0;color:#423327}.ask-chip.seen{background:#f2f1ec;color:#423327;border-color:#d9d2c5}
+.ask-acts{display:flex;gap:6px;margin-top:6px}.ask-acts button{font-size:12px;padding:3px 10px}
+.ask-add{width:100%;margin-top:10px}
 .pill{display:inline-block;font-size:11px;padding:1px 8px;border:1px solid var(--line);color:var(--ink);margin:2px 4px 0 0}
 .empty-state{padding:28px;text-align:center;color:var(--muted);border:1px dashed var(--line)}
 .toast{position:fixed;z-index:70;left:50%;bottom:calc(72px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--accent);color:var(--accent-ink);padding:8px 16px;font-size:13px;opacity:0;transition:opacity .2s;pointer-events:none}
@@ -461,6 +468,22 @@ input,select,textarea{background:#fff;border-radius:0}
           <h2>Team on site</h2>
           <div class="list" id="artists"></div>
           <div class="row"><button class="btn ghost small" id="addHair">+ Hair artist</button><button class="btn ghost small" id="addMu">+ Makeup artist</button><button class="btn ghost small" id="addBoth">+ Hair &amp; makeup artist</button></div>
+        </div>
+
+        <!-- Who we asked: every job offer for this bride, who asked and her answer, so Alexandra and Dom don't ask twice (Nov 4 2026) -->
+        <div class="card" id="askedCard" data-ck="asked" hidden>
+          <h2 data-open>Who we asked</h2>
+          <div id="asked"></div>
+          <div id="askedForm" hidden style="display:flex;flex-direction:column;gap:8px;margin-top:10px">
+            <div class="row">
+              <label class="f">Who did you ask?<select id="askedWho"></select></label>
+              <label class="f" style="flex:0 1 150px">For<select id="askedRole"><option value="hair">Hair</option><option value="mu">Makeup</option><option value="both">Hair &amp; makeup</option></select></label>
+            </div>
+            <label class="f">Did she answer?<select id="askedAns"><option value="Waiting">Not yet</option><option value="Yes">Yes</option><option value="No">No</option></select></label>
+            <div class="row"><button class="btn small" id="askedSave">Save</button><button class="btn ghost small" id="askedCancel">Cancel</button></div>
+          </div>
+          <button class="btn ghost ask-add" id="askedBtn">+ I asked someone by text</button>
+          <p class="hint" id="askedNote" style="margin:6px 0 0"></p>
         </div>
 
         <div class="card" id="extCard">
@@ -1392,6 +1415,7 @@ function fillForm(){
   FIELDS.forEach(f=>{const el=$("#"+f);if(el)el.value=S[f]??""});
   setMode(S.mode,false);
   renderArtists();renderPeople();renderSheet();renderExt();
+  $("#askedForm").hidden=true;$("#askedNote").textContent="";renderAsked();
 }
 /* an artist's answer: the invite the app sent, else her answer on the wedding's own Google Calendar event
    (artists added straight from the calendar, like Kat on Katie Leyden, Oct 15 2026) */
@@ -3316,6 +3340,59 @@ Object.entries(EXT_TEXT).forEach(([k,id])=>$("#"+id).addEventListener("change",e
 Object.entries(EXT_CHECK).forEach(([k,id])=>$("#"+id).onchange=e=>extSet(k,e.target.checked));
 
 /* ---------- job offers ---------- */
+let jbLoaded=false;
+/* "Who we asked" on the bride's page: offers from the Jobs tab (with who sent them) plus asks made by text (Nov 4 2026) */
+const ASK_TRACK_FROM="2026-11-05";   // offers sent before opens were tracked just say Waiting
+function askState(j){
+  if(j.status==="Yes")return["yes","Yes"];
+  if(j.status==="No")return["no","No"];
+  if(j.how==="Text")return["wait","Waiting"];
+  if(j.openedAt)return["seen","Opened, no answer"];
+  return (j.sentAt||"")<ASK_TRACK_FROM?["wait","Waiting"]:["wait","Not opened yet"];
+}
+const askDay=t=>{const d=t?new Date(t):null;return d&&!isNaN(d)?d.toLocaleDateString("en-US",{month:"short",day:"numeric"}):""};
+const askFirst=n=>{const f=String(n||"").trim().split(/\s+/)[0]||"";return f==="Dominique"?"Dom":f};
+function askMeta(j){return["Asked by "+(askFirst(j.askedBy)||"the office"),askDay(j.sentAt),j.how==="Text"?"by text":"in the app"].filter(Boolean).join(" · ")}
+async function renderAsked(){
+  const card=$("#askedCard");
+  if(ROLE!=="office"){card.hidden=true;return}
+  card.hidden=false;
+  const box=$("#asked");
+  if(!docId){box.innerHTML='<p class="hint" style="margin:0">Save this wedding first. Then everyone you ask shows up here.</p>';$("#askedBtn").hidden=true;$("#askedForm").hidden=true;return}
+  $("#askedBtn").hidden=!$("#askedForm").hidden;
+  if(!jbLoaded){box.innerHTML='<p class="hint" style="margin:0">Loading…</p>';try{const j=await api("jobs");jbJobs=j.jobs||[];jbTop=j.top||jbTop;jbLoaded=true}catch(e){box.innerHTML='<p class="hint" style="margin:0">Couldn\'t load who was asked. Try again in a minute.</p>';return}}
+  const id=docId,list=jbJobs.filter(j=>j.weddingId===id).sort((a,b)=>(a.sentAt||"").localeCompare(b.sentAt||""));
+  if(id!==docId)return;
+  box.innerHTML=list.length?list.map(j=>{const[c,t]=askState(j);
+    return '<div class="ask-row"><div><div class="ask-nm">'+esc(askFirst(j.artist)||j.artist)+' · '+esc(j.role)+'</div><div class="ask-meta">'+esc(askMeta(j))+'</div>'
+      +(j.how==="Text"?'<div class="ask-acts">'+(j.status!=="Yes"?'<button class="btn ghost small" data-ask="Yes" data-id="'+esc(j.id)+'">She said yes</button>':'')
+        +(j.status!=="No"?'<button class="btn ghost small" data-ask="No" data-id="'+esc(j.id)+'">She said no</button>':'')
+        +'<button class="btn ghost small" data-ask="Remove" data-id="'+esc(j.id)+'">Remove</button></div>':'')
+      +'</div><span class="ask-chip '+c+'">'+t+'</span></div>'}).join(""):'<p class="hint" style="margin:0">Nobody yet. Job offers sent from the Jobs tab show up here by themselves.</p>';
+  box.querySelectorAll("[data-ask]").forEach(b=>b.onclick=async()=>{
+    const st=b.dataset.ask;if(st==="Remove"&&!confirm("Take this off the list?"))return;
+    b.disabled=true;
+    try{const r=await api("setAsk",{id:b.dataset.id,status:st});jbJobs=r.jobs||jbJobs;if(st==="Yes")toast("Saved. She's on this wedding's team now.");renderAsked();if(typeof renderJobs==="function")renderJobs()}
+    catch(e){b.disabled=false;toast("That didn't save. Try again.")}
+  });
+}
+$("#askedBtn").onclick=()=>{
+  const nm=p=>p.preferredName||p.legalName||"";
+  const team=profiles.filter(p=>String(p.active).toLowerCase()!=="false"&&!/team member \(salon\/office\)/i.test(p.notes||""));
+  const top=jbTop.map(i=>team.find(p=>p._id===i)).filter(Boolean),rest=team.filter(p=>!jbTop.includes(p._id)).sort((a,b)=>nm(a).localeCompare(nm(b)));
+  $("#askedWho").innerHTML='<option value="">Choose her name</option>'+top.concat(rest).map(p=>'<option value="'+esc(p._id)+'">'+esc(nm(p))+'</option>').join("");
+  $("#askedAns").value="Waiting";$("#askedForm").hidden=false;$("#askedBtn").hidden=true;$("#askedNote").textContent="";
+};
+$("#askedCancel").onclick=()=>{$("#askedForm").hidden=true;$("#askedBtn").hidden=false};
+$("#askedSave").onclick=async()=>{
+  if(!$("#askedWho").value){$("#askedNote").textContent="Choose who you asked.";return}
+  if(!officeWho()){$("#askedNote").textContent="Pick your name on the Home page first, so Dom and Alexandra know who asked.";return}
+  const b=$("#askedSave");b.disabled=true;$("#askedNote").textContent="Saving…";
+  try{const r=await api("logAsk",{ask:{weddingId:docId,memberId:$("#askedWho").value,role:$("#askedRole").value,status:$("#askedAns").value,askedBy:officeWho()}});
+    jbJobs=r.jobs||jbJobs;jbLoaded=true;$("#askedForm").hidden=true;$("#askedNote").textContent="Saved.";renderAsked();if(typeof renderJobs==="function")renderJobs()}
+  catch(e){$("#askedNote").textContent=e.message&&e.message!=="server"?e.message:"That didn't save. Try again."}
+  finally{b.disabled=false}
+};
 let jbJobs=[],jbTop=[];   // jbTop: go-to artists pinned to the top, in order (member ids, kept on the server)
 const jbRange=j=>[j.headcount&&("Headcount: "+j.headcount),j.travel&&("Travel minimum: "+j.travel),j.payout&&("Payout: "+j.payout)].filter(Boolean);
 async function loadJobs(){
@@ -3325,7 +3402,7 @@ async function loadJobs(){
     sel.innerHTML='<option value="">Choose a wedding</option>'+allWeddings.filter(w=>(w.d.date||"")>=today).sort((a,b)=>(a.d.date||"").localeCompare(b.d.date||""))
       .map(w=>'<option value="'+w.id+'">'+esc((w.d.date?shortDate(w.d.date)+" · ":"")+(w.d.bride||"Untitled"))+'</option>').join("");
     sel.value=cur;
-    try{const j=await api("jobs");jbJobs=j.jobs||[];jbTop=j.top||[];renderJobTeam();renderJobs()}catch(e){$("#jb-note2").textContent="Couldn't load offers. Try Refresh."}
+    try{const j=await api("jobs");jbJobs=j.jobs||[];jbTop=j.top||[];jbLoaded=true;renderJobTeam();renderJobs()}catch(e){$("#jb-note2").textContent="Couldn't load offers. Try Refresh."}
   }else{
     $("#jb-mine-note").textContent="Loading…";
     try{const j=await api("myJobs");jbJobs=j.jobs||[];renderMyJobs()}catch(e){$("#jb-mine-note").textContent="Couldn't load your offers. Try Refresh."}
@@ -3357,7 +3434,8 @@ function renderJobs(){
   t.innerHTML=groups.map(g=>'<div class="job"><div><b>'+esc(shortDate(g.j.date)||"Date TBD")+' · '+esc(g.j.bride||"Bride")+'</b></div>'
     +(g.j.location?'<div class="meta">'+esc(g.j.location)+'</div>':'')
     +g.list.map(j=>'<div style="border-top:1px solid var(--line);padding-top:6px"><div><b>'+esc(j.artist)+'</b> · '+esc(j.role)+' · '
-      +(j.status==="Yes"?'<span class="pill">Said yes</span>':j.status==="No"?'<span class="pill">Said no</span>':'<span class="hint">Waiting on her answer</span>')+'</div>'
+      +(j.status==="Yes"?'<span class="pill">Said yes</span>':j.status==="No"?'<span class="pill">Said no</span>':'<span class="hint">'+esc(askState(j)[1])+'</span>')+'</div>'
+      +'<div class="meta">'+esc(askMeta(j))+'</div>'
       +(jbRange(j).length?'<div class="meta">'+esc(jbRange(j).join(" · "))+'</div>':'')
       +(j.status==="Yes"?'<div class="meta">She&rsquo;s on this wedding&rsquo;s team now.</div>':'')+'</div>').join("")+'</div>').join("");
 }
@@ -3379,9 +3457,9 @@ $("#jb-send").onclick=async()=>{
   if(!ids.length){out.textContent="Tick at least one artist.";return}
   $("#jb-send").disabled=true;out.textContent="Creating…";
   try{
-    const j=await api("offerJob",{offer:{weddingId:$("#jb-wedding").value,memberIds:ids,role:$("#jb-role").value,headcount:$("#jb-head").value,travel:$("#jb-travel").value,payout:$("#jb-pay").value,note:$("#jb-note").value}});
+    const j=await api("offerJob",{offer:{weddingId:$("#jb-wedding").value,memberIds:ids,role:$("#jb-role").value,headcount:$("#jb-head").value,travel:$("#jb-travel").value,payout:$("#jb-pay").value,note:$("#jb-note").value,askedBy:officeWho()}});
     if(j.ok===false){out.textContent=j.message||"That didn't save.";return}
-    jbJobs=j.jobs||jbJobs;renderJobs();
+    jbJobs=j.jobs||jbJobs;jbLoaded=true;renderJobs();if(docId)renderAsked();
     // the app doesn't text anyone: give the office one button per artist, with her private link in the message
     const sent=ids.map(id=>profiles.find(p=>p._id===id)).filter(Boolean);
     jbOut=sent.map(p=>({p,text:jbText(linkFor(p))}));
@@ -3605,7 +3683,10 @@ async function loadCoach(){
 $("#cc-refresh").onclick=()=>loadCoach();
 
 /* ---------- collapsible cards ---------- */
-document.querySelectorAll(".card").forEach((card,i)=>{
+/* a card with data-ck keeps its open/closed under its own name, so adding it doesn't shift the numbered ones (Nov 4 2026) */
+let ckN=0;
+document.querySelectorAll(".card").forEach(card=>{
+  const i=card.dataset.ck||ckN++;
   const h=card.querySelector(":scope > h2");if(!h)return;
   const body=document.createElement("div");body.className="cbody";
   while(h.nextSibling)body.appendChild(h.nextSibling);
@@ -3795,7 +3876,7 @@ async function liveRefresh(){
   try{applyData(await api("load"))}catch(e){}
   try{
     if(ROLE==="artist"){const r=await api("myJobs");jbJobs=r.jobs||[];renderMyJobs()}
-    else{const r=await api("jobs");jbJobs=r.jobs||[];renderJobs()}
+    else{const r=await api("jobs");jbJobs=r.jobs||[];jbLoaded=true;renderJobs();if(docId)renderAsked()}
   }catch(e){}
   if(pvLoaded&&!$("#view-prev").hidden)loadPreviews(true);
   liveBusy=false;
