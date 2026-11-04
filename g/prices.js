@@ -9,7 +9,7 @@ const PR_MENU=[
     ['K18 bond protection','$45+']]],
   ['Lived-in color packages',[['Full balayage · 3–4 hrs, 1–3x a year','$320+'],['Maintenance balayage · 2–3 hrs, every 6–12 weeks','$220+'],
     ['Refresh balayage · 45 min–1.5 hrs, every 6–8 weeks','$120+'],['Babylight technique, per package','+$50']],'Packages include shadow root and gloss. Price varies with length and thickness.'],
-  ['Hair treatments',[['Brazilian Blowout smoothing','$285+'],['Keratin smoothing','$275+'],['Goldwell leave-in treatment (backbar)','$20; $10–15 for half a bottle']]],
+  ['Hair treatments',[['Brazilian Blowout smoothing','$285+'],['Keratin smoothing','$275+'],['Oribe Mirror Glass Shine','$35'],['Goldwell leave-in treatment (backbar)','$20; $10–15 for half a bottle']]],
   ['Extensions',[['Clip-in extensions','$45+'],['Tape-in extensions','Upon consultation'],['Invisible bead / hand-tied','Upon consultation'],['Extension removal','$75+']]],
   ['Styling',[['Wash & blow dry','$50+'],['Formal style','$105']]],
   ['Makeup & lashes',[['Full face, traditional foundation','$85'],['Full face, airbrush foundation','$95'],['Just eyes (shadow & strip lash)','$70'],
