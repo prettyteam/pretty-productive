@@ -1,21 +1,21 @@
 /* Prices tab (Alexandra, Oct 2026): every artist can look up our starting service prices and retail prices,
    so they know what things cost before they build a budget with a guest. Services are the starting prices on
-   taffetadesign.com/salon-and-spa-menu (read Oct 15 2026), updated Oct 20 2026 from Alexandra's marked-up menu card; Nov 4 2026 Brazilian Blowout, Formal style, Signature and Gel manicure set to the website prices (Alexandra: the website prices are right); Nov 4 2026: matches taffetadesign.com menu, except Gentleman's facial $160 per Alexandra; retail is the home care list in g/rx.js (RX_PRICES).
+   taffetadesign.com/salon-and-spa-menu (read Oct 15 2026), updated Oct 20 2026 from Alexandra's marked-up menu card; Nov 4 2026 Brazilian Blowout, Formal style, Signature and Gel manicure set to the website prices (Alexandra: the website prices are right); Nov 4 2026: matches taffetadesign.com menu, except Gentleman's facial $160 per Alexandra; Nov 4 2026 menu cleanup: strip lash, specialty waxing, clip-in and keratin removed, one Refresh balayage $220+, Color Lock $20 added; retail is the home care list in g/rx.js (RX_PRICES).
    Uses the host page's h() and render(). No costs here, only what the guest pays. */
 const PR_MENU=[
   ['Hair cutting',[['Female haircut','$65+'],['Female haircut, leaving wet','$45+'],['Male haircut','$45+'],['Child haircut','$35+']]],
   ['Hair color',[['Single process','$70+'],['Gloss','$45+'],['Base break','$55+'],['Shadow root','$55+'],['Face frame highlight','$100+'],
     ['Minimal highlight','$125+'],['Half highlight','$200+'],['Full highlight','$250+'],['Double process','$100+'],
     ['K18 bond protection','$45']]],
-  ['Lived-in color packages',[['Full balayage · 3–4 hrs, 1–3x a year','$325+'],['Maintenance balayage · 2–3 hrs, every 6–12 weeks','$220+'],
-    ['Refresh balayage · 45 min–1.5 hrs, every 6–8 weeks','$120+'],['Babylight technique, per package','+$50']],'Packages include shadow root and gloss. Price varies with length and thickness.'],
-  ['Hair treatments',[['Brazilian Blowout smoothing','$285+'],['Keratin smoothing','$275+'],['Oribe Mirror Glass Shine','$35'],['Goldwell leave-in treatment (backbar)','$20; $10–15 for half a bottle']]],
-  ['Extensions',[['Clip-in extensions','$45+'],['Tape-in extensions','Upon consultation'],['Invisible bead / hand-tied','Upon consultation'],['Extension removal','$75']]],
+  ['Lived-in color packages',[['Full balayage · 3–4 hrs, 1–3x a year','$325+'],['Refresh balayage · 2–3 hrs, every 6–12 weeks','$220+'],
+    ['Babylight technique, per package','+$50']],'Packages include shadow root and gloss. Price varies with length and thickness.'],
+  ['Hair treatments',[['Brazilian Blowout smoothing','$285+'],['Oribe Mirror Glass Shine','$35'],['Color Lock','$20'],['Goldwell leave-in treatment (backbar)','$20; $10–15 for half a bottle']]],
+  ['Extensions',[['Tape-in extensions','Upon consultation'],['Invisible bead / hand-tied','Upon consultation'],['Extension removal','$75']]],
   ['Styling',[['Wash & blow dry','$50+'],['Formal style','$105']]],
   ['Makeup & lashes',[['Full face, traditional foundation','$85'],['Full face, airbrush foundation','$95'],['Just eyes (shadow & strip lash)','$70'],
-    ['Individual false lashes','$25'],['Strip lash application','$15'],['Lash lift & tint','$125'],['Eyelash extensions','Upon consultation']]],
+    ['Individual false lashes','$25'],['Lash lift & tint','$125'],['Eyelash extensions','Upon consultation']]],
   ['Brows & waxing',[['Brow mapping & sculpt','$25'],['Maintenance brow sculpt','$25'],['Brow tint','$25'],['Brow lamination (with kit)','$85'],
-    ['Lamination package (tint, sculpt, laminate)','$150'],['Lip or chin','$15'],['Arm','$40'],['Leg','$70'],['Bikini','$50'],['Specialty areas','$68']]],
+    ['Lamination package (tint, sculpt, laminate)','$150'],['Lip or chin','$15'],['Arm','$40'],['Leg','$70'],['Bikini','$50']]],
   ['Facials',[['New guest treatment & take-home regimen · 30 min','$130'],['Taffeta Facial · 60 min','$130'],['Taffeta HydroDiamond Facial · 60 min','$225'],['Taffeta HydroDiamond Express · 30 min','$99'],['Brightening · 75 min','$160'],
     ['Anti-aging · 75 min','$160'],['Acne · 60 min','$160'],['Gentleman’s · 60 min','$160'],
     ['Express Targeted Treatment · 30–35 min','$99'],['Biologique Recherche Lift & Remodel · 90 min','$200'],['Biologique Recherche Cure All · 90 min','$250']]],
