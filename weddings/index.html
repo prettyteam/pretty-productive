@@ -1630,9 +1630,11 @@ function dualMove(a,b){
   if(A.pid&&bride&&A.pid===bride.id||B.pid&&bride&&B.pid===bride.id){toast("The bride stays with her artist");renderSheet();return}
   /* with a Hair or a Makeup column, only that one service moves: tap Lon's girl, then a box in Alexa's hair column, and
      Alexa does her hair while Lon keeps her makeup (Alexandra, Nov 4 2026). Between two hair & makeup artists she moves whole. */
-  const sv=A.svc||B.svc||"", D=A.aid==="pool"?B:A, word=sv==="hair"?"hair":"makeup";
+  const sv=A.svc||B.svc||"", D=A.aid==="pool"?B:A;
+  /* the girl tapped in the Hair & Makeup column has no such box there (her makeup box, or the same girl): there's no
+     one to trade, so the other girl just goes to that artist (Alexandra, Nov 4 2026: MOB's hair from Alexa to Lon) */
   if(sv&&D.pid){const dc=plan.cols.find(c=>c.service==="both"&&c.artist.id===D.aid);
-    if(!(dc&&dc.cells.some((x,r)=>x===D.pid&&dc.svcs[r]===sv))){toast("She doesn't have "+word+" with that artist");renderSheet();return}}
+    if(!(dc&&dc.cells.some((x,r)=>x===D.pid&&dc.svcs[r]===sv))){if(D===A)A.pid="";else B.pid=""}}
   const picks=[];if(A.pid)picks.push(sv?[A.pid,B.aid,sv]:[A.pid,B.aid]);if(B.pid)picks.push(sv?[B.pid,A.aid,sv]:[B.pid,A.aid]);
   if(!picks.length){renderSheet();return}
   const sig=moveSig(S);if(S.movesSig!==sig){parkMoves(S,sig)}
