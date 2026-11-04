@@ -327,6 +327,35 @@ if (!access) {
 // Sunday Trends (Nov 1 2026): data.trends (from board/trends) when given, otherwise kept from the last publish.
 const trends = data.trends || (data.team && data.team.trends) || (prevBoard && prevBoard.trends) || null;
 if (!data.trends && trends) console.log('Sunday Trends: kept from the last publish.');
+// Payroll tab (Nov 4 2026): a week the Weekly CR task finished but the Monday payroll report never stored in board/team.payroll
+// used to show nothing for Rick. Fill it from the Weekly CR totals (real rates, model services and 40/80 ML mixes already $0),
+// and fill a missing take-home on a stored row when that row's service and retail match the Weekly CR.
+const payroll = (() => {
+  const out = JSON.parse(JSON.stringify(data.payroll || []));
+  const RATES = (data.team && data.team.commission) || {};
+  const slugOf = (n) => String(n || '').toLowerCase().trim().replace(/[^a-z0-9]+/g, '-');
+  const nameOf = (slug) => { const pg = pages.find((x) => x.slug === slug); return pg && pg.name ? pg.name : slug.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()); };
+  const byWeek = {};
+  for (const [slug, c] of Object.entries(keys.cr || {})) for (const w of c.weeks || []) (byWeek[w.week] ||= {})[slug] = w;
+  const added = [];
+  for (const [week, people] of Object.entries(byWeek)) {
+    const have = out.find((w) => w.week === week);
+    if (have) {
+      for (const r of have.rows || []) {
+        const cw = people[slugOf(r.name)];
+        if (r.comm == null && cw && Number(cw.service) === Number(r.service) && Number(cw.retail || 0) === Number(r.retail || 0)) r.comm = cw.comm;
+      }
+      continue;
+    }
+    const rows = Object.entries(people).filter(([, w]) => w.service || w.retail || w.comm)
+      .map(([slug, w]) => ({ name: nameOf(slug), service: w.service || 0, retail: w.retail || 0, rate: RATES[slug] != null ? Number(RATES[slug]) : undefined, comm: w.comm }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+    if (rows.length) { out.push({ week, label: Object.values(people)[0].label || undefined, rows, note: 'From the Weekly CR (Paired Plus Comm Sales Analysis with Taffeta rates).' }); added.push(week); }
+  }
+  out.sort((a, b) => String(a.week).localeCompare(String(b.week)));
+  if (added.length) console.log('Payroll: filled from Weekly CR for ' + added.join(', ') + '.');
+  return out.slice(-12);
+})();
 // Consult first (Alexandra, Oct 17 2026): new guests booked for color or a treatment must get a consultation and RX card.
 // The list is sealed for the Front Desk with the desk guide key (the g= part of the desk link), into d/desk-consult.dat.
 {
@@ -366,7 +395,7 @@ if (!data.trends && trends) console.log('Sunday Trends: kept from the last publi
     } catch (e) { console.warn('Desk color list: could not read the color report, so the Front Desk color list was not updated.'); }
   }
 }
-const board = { access: access ? { ...access, stylists: pages.map((p) => ({ name: p.name, link: linkFor('s', keys.stylists[p.slug]), pin: keys.stylists[p.slug].pin })).sort((a, b) => a.name.localeCompare(b.name)) } : null, daily: data.daily || null, week: data.week || null, payroll: data.payroll || [], hoursList: (data.team && data.team.hoursList) || [], rates: (data.team && data.team.commission) || {}, retailRate: (data.team && data.team.retailRate) || 10, month: data.month || null, trends, hub: { admin: keys.team.admin }, guideUrl: guideUrl || null, docs: docsFor('', true), inv: keys.inv && keys.inv.file ? { k: keys.inv.key, file: keys.inv.file, updated: keys.inv.updated } : null, pages: pages.map((p) => ({ ...strip(p), link: linkFor('s', keys.stylists[p.slug]) })) };
+const board = { access: access ? { ...access, stylists: pages.map((p) => ({ name: p.name, link: linkFor('s', keys.stylists[p.slug]), pin: keys.stylists[p.slug].pin })).sort((a, b) => a.name.localeCompare(b.name)) } : null, daily: data.daily || null, week: data.week || null, payroll, hoursList: (data.team && data.team.hoursList) || [], rates: (data.team && data.team.commission) || {}, retailRate: (data.team && data.team.retailRate) || 10, month: data.month || null, trends, hub: { admin: keys.team.admin }, guideUrl: guideUrl || null, docs: docsFor('', true), inv: keys.inv && keys.inv.file ? { k: keys.inv.key, file: keys.inv.file, updated: keys.inv.updated } : null, pages: pages.map((p) => ({ ...strip(p), link: linkFor('s', keys.stylists[p.slug]) })) };
 fs.writeFileSync(path.join(outDir, keys.leadership.id + '.json'), JSON.stringify(await seal(board, keys.leadership.secret, keys.leadership.pin)));
 fs.writeFileSync(args.keys, JSON.stringify(keys, null, 1));
 console.log(`Sealed ${n} stylist files + The Pretty Report into d/.`);
