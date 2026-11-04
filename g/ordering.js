@@ -17,6 +17,9 @@
     body:'Hi Valentina,\n\nPlease see our attached order form for Taffeta Salon & Spa, 219 Bellevue Ave, Hammonton, NJ 08037.\n\nPlease send the draft order and payment link when ready.\n\nThank you!\nTaffeta Salon & Spa\n(609) 383-5504',
     form:'https://docs.google.com/spreadsheets/d/1GKdP_sT8BY3r9iGj6uDuZadvpmedPnJg/edit',
     formName:'January 2026 Non RF US SALONS ONLY Standard Pricelist'};
+  const UNI='https://www.universalcompanies.com', BC='https://browcode.us';
+  const UNIP=[['Intensive Lash & Brow Tint',UNI+'/products/intensive-colorant?variant=18684290334777'],['Intensive Cream Developer',UNI+'/products/intensive-cream-developer-oxidant'],
+    ['Intensive Tint Remover',UNI+'/products/intensive-tint-remover'],['ESS Meditation Oil Blend',UNI+'/products/ess-meditation-essential-oil-blend-10ml']];
   const AMZ='https://www.amazon.com/shop/taffetaweddings';
   const LISTS=[
     ['Spa Supplies',AMZ+'/list/1ZINQ9LH8C90O','spa'],
@@ -50,7 +53,9 @@
   function html(mode,prices,logins){
     const full=mode!=='spa', lists=full?LISTS:LISTS.filter(l=>l[2]==='spa');
     const amazon='<section class="osec"><h2>Hi Pretty Amazon Lists</h2><p>Tap a list to open it on Amazon.</p><div class="ordbs">'+lists.map(l=>btn(l[0],l[1])).join('')+'</div></section>';
-    if(!full) return css+'<div class="ord"><h1>Ordering</h1>'+amazon+'</div>';
+    const spa='<section class="osec"><h2>Spa Backbar</h2><p>Tap to order. Each store opens its own sign-in.</p><div class="ordbs">'+btn('Order · Universal',UNI,true)+btn('Brow Code',BC,true)+'</div>'
+      +'<p>Universal products we reorder:</p><div class="ordbs">'+UNIP.map(u=>btn(u[0],u[1])).join('')+'</div></section>';
+    if(!full) return css+'<div class="ord"><h1>Ordering</h1>'+spa+amazon+'</div>';
     const mail='mailto:'+RF.to+'?cc='+encodeURIComponent(RF.cc)+'&subject='+encodeURIComponent(RF.subject)+'&body='+encodeURIComponent(RF.body);
     const best=prices&&prices.length?'<section class="osec"><h2>Best Price Right Now</h2><p>From this week’s color report.</p><div>'
       +prices.map(([i,s,p])=>'<div class="orow"><span><b>'+esc(i)+'</b><small>'+esc(s)+'</small></span><b>'+esc(p)+'</b></div>').join('')+'</div></section>':'';
