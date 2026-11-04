@@ -1477,15 +1477,18 @@ $("#contactName").setAttribute("autocomplete","off");
    nearest Hammonton first. Tapping one fills the box with the venue and its full street address. If the lookup is down, the
    box still works as a plain text box. */
 const US_ST={Alabama:"AL",Alaska:"AK",Arizona:"AZ",Arkansas:"AR",California:"CA",Colorado:"CO",Connecticut:"CT",Delaware:"DE","District of Columbia":"DC",Florida:"FL",Georgia:"GA",Hawaii:"HI",Idaho:"ID",Illinois:"IL",Indiana:"IN",Iowa:"IA",Kansas:"KS",Kentucky:"KY",Louisiana:"LA",Maine:"ME",Maryland:"MD",Massachusetts:"MA",Michigan:"MI",Minnesota:"MN",Mississippi:"MS",Missouri:"MO",Montana:"MT",Nebraska:"NE",Nevada:"NV","New Hampshire":"NH","New Jersey":"NJ","New Mexico":"NM","New York":"NY","North Carolina":"NC","North Dakota":"ND",Ohio:"OH",Oklahoma:"OK",Oregon:"OR",Pennsylvania:"PA","Rhode Island":"RI","South Carolina":"SC","South Dakota":"SD",Tennessee:"TN",Texas:"TX",Utah:"UT",Vermont:"VT",Virginia:"VA",Washington:"WA","West Virginia":"WV",Wisconsin:"WI",Wyoming:"WY"};
+/* places the map knows by name but with no street number (Alexandra, Nov 4 2026: Congress Hall came up without its 200).
+   Keyed by the map's id for the place. */
+const VENUE_NO={"W261176066":"200"};   // Congress Hall, 200 Congress Place, Cape May
 function addrParts(f){
   const p=f.properties||{},st=US_ST[p.state]||p.state||"";
-  const street=[p.housenumber,p.street].filter(Boolean).join(" ");
+  const street=[p.housenumber||VENUE_NO[(p.osm_type||"")+p.osm_id],p.street].filter(Boolean).join(" ");
   const town=p.city||p.town||p.village||p.district||p.county||"";
   const place=p.name&&p.name!==street&&p.name!==town?p.name:"";
   const line=[street,town,[st,p.postcode].filter(Boolean).join(" ")].filter(Boolean).join(", ");
   return {place,street:street||(place&&!p.housenumber?"":p.name||""),city:town,state:st,zip:p.postcode||"",line,full:[place,line].filter(Boolean).join(", ")};
 }
-function addrSuggest(inp,onPick){
+function addrSuggest(inp,onPick,usePast){
   let box=null,hits=[],at=-1,timer=0,ask=0,quiet=false;
   inp.setAttribute("autocomplete","off");
   const close=()=>{if(box){box.remove();box=null}at=-1};
@@ -1506,7 +1509,11 @@ function addrSuggest(inp,onPick){
       const r=await fetch("https://photon.komoot.io/api/?limit=6&lang=en&lat=39.636&lon=-74.802&q="+encodeURIComponent(q));
       const j=await r.json();if(n!==ask)return;
       const seen=new Set();
-      hits=(j.features||[]).filter(f=>(f.properties||{}).countrycode==="US").map(addrParts).filter(h=>h.line&&!seen.has(h.full)&&seen.add(h.full));
+      /* full addresses already typed on other weddings come first, so a venue is only typed out once (Nov 4 2026) */
+      const ql=q.toLowerCase(), past=usePast?[...new Set(allWeddings.map(w=>(w.d.location||"").trim()))].filter(l=>/\d/.test(l)&&l.toLowerCase().includes(ql)).slice(0,3)
+        .map(l=>{const k=l.indexOf(","),pl=k>0&&!/^\d/.test(l)?l.slice(0,k):"";return {place:pl,line:pl?l.slice(k+1).trim():l,full:l}}):[];
+      past.forEach(h=>seen.add(h.full.toLowerCase()));
+      hits=past.concat((j.features||[]).filter(f=>(f.properties||{}).countrycode==="US").map(addrParts).filter(h=>h.line&&!seen.has(h.full.toLowerCase())&&seen.add(h.full.toLowerCase())));
       draw();
     }catch(e){hits=[];close()}
   };
@@ -1520,8 +1527,8 @@ function addrSuggest(inp,onPick){
   });
 }
 const setField=(id,v)=>{const el=$("#"+id);if(!el)return;el.value=v;el.dispatchEvent(new Event("input",{bubbles:true}));el.dispatchEvent(new Event("change",{bubbles:true}))};
-addrSuggest($("#location"),h=>setField("location",h.full));
-addrSuggest($("#previewLoc"),h=>setField("previewLoc",h.full));
+addrSuggest($("#location"),h=>setField("location",h.full),true);
+addrSuggest($("#previewLoc"),h=>setField("previewLoc",h.full),true);
 addrSuggest($("#ext-sstreet"),h=>{setField("ext-sstreet",h.street||h.line);if(h.city)setField("ext-scity",h.city);if(h.state)setField("ext-sstate",h.state);if(h.zip)setField("ext-szip",h.zip)});
 /* ---------- calendar tab ---------- */
 function renderCalPicker(){
