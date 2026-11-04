@@ -929,7 +929,7 @@ const tm=(s,min)=>s.mode==="tbd"?"TBD":fmt(min);
 /* ---------- scheduling ---------- */
 /* moves only count for the party they were made on; adding or removing people or artists goes back to the auto order */
 const moveSig=s=>s.people.map(p=>p.id+(p.hair?(isBlow(p)?"b":"h"):"")+(p.mu?(isLash(p)?"l":"m"):"")+p.role).join(",")+"|"+s.artists.map(a=>a.id+a.role+(a.role==="both"?a.then||"":"")).join(",")+"|"+s.hairSlot+"/"+s.muSlot+"/"+(s.bothSlot||"");
-function build(s){
+function build(s,opt){
   const warnings=[];
   /* moves belong to one team setup. A change (like an artist set to Party only) parks them instead of losing them, and
      switching back brings them back (Alexandra, Nov 1 2026: her Laura Frankenfield moves vanished) */
@@ -956,6 +956,13 @@ function build(s){
      "Bride, then hair & makeup for the party" (Alexandra, Oct 30 2026). They take girls who need both while
      that keeps the day from running longer, and any girl the hair or makeup artists can't do. */
   const duals=[...dualA,...(then==="both"?[brideA[0]]:[])], dGirls=duals.map(()=>[]);
+  const whole=(opt&&opt.whole)||[], autoSplit=[];
+  /* which of these artists has each girl's hair and each girl's makeup (-1 = the hair or makeup artists). A girl's two
+     services can sit with different artists, e.g. Lon does her makeup and Alexa her hair (Alexandra, Nov 4 2026). */
+  const dOf=new Map(), dGet=p=>{if(!dOf.has(p.id))dOf.set(p.id,{hair:-1,mu:-1});return dOf.get(p.id)};
+  const inDual=(p,sv)=>!!p[sv]&&dOf.has(p.id)&&dOf.get(p.id)[sv]>=0;
+  const dSet=(p,i,sv)=>{dGet(p)[sv]=i;if(i>=0&&!dGirls[i].includes(p))dGirls[i].push(p)};
+  const lenIn=(p,i)=>["hair","mu"].reduce((t,sv)=>t+(p[sv]&&dOf.has(p.id)&&dOf.get(p.id)[sv]===i?boxLen(p,sv):0),0);
   if(duals.length){
     const girls=s.people.filter(p=>p!==bride&&(p.hair||p.mu));
     const hairN=hairA.length+(then==="hair"?1:0), muN=muA.length+(then==="mu"?1:0);
@@ -963,32 +970,39 @@ function build(s){
     let hN=girls.filter(p=>p.hair).length, mN=girls.filter(p=>p.mu).length;
     const len=p=>(p.hair?boxLen(p,"hair"):0)+(p.mu?boxLen(p,"mu"):0);
     const poolEnd=(h,m)=>Math.max(hairN?Math.ceil(h/hairN)*hairSlot:0,muN?Math.ceil(m/muN)*muSlot:0);
-    const take=p=>{const i=dLoad.indexOf(Math.min(...dLoad));dGirls[i].push(p);dLoad[i]+=len(p);if(p.hair)hN--;if(p.mu)mN--};
-    girls.filter(p=>p.hair&&!hairN||p.mu&&!muN).forEach(take);
-    const cand=girls.filter(p=>p.hair&&p.mu&&!dGirls.some(g=>g.includes(p))).sort((a,b)=>HELPERS.includes(a.role)-HELPERS.includes(b.role));
+    const take=(p,svs)=>{const i=dLoad.indexOf(Math.min(...dLoad));svs.forEach(sv=>{dSet(p,i,sv);dLoad[i]+=boxLen(p,sv);if(sv==="hair")hN--;else mN--})};
+    /* a service nobody else on the team does goes to these artists, and only that one: with no makeup artist, a girl's
+       makeup goes to the hair & makeup artist while the hair artist still does her hair (Alexandra, Nov 4 2026) */
+    girls.forEach(p=>{let svs=[p.hair&&!hairN&&"hair",p.mu&&!muN&&"mu"].filter(Boolean);if(!svs.length)return;
+      if(p.hair&&p.mu&&svs.length<2){if(whole.includes(p.id))svs=["hair","mu"];else autoSplit.push(p.id)}   // split could clash: see the end
+      take(p,svs)});
+    const cand=girls.filter(p=>p.hair&&p.mu&&!dOf.has(p.id)).sort((a,b)=>HELPERS.includes(a.role)-HELPERS.includes(b.role));
     for(const p of cand){
       const now=Math.max(poolEnd(hN,mN),...dLoad), lo=Math.min(...dLoad);
       if(Math.max(poolEnd(hN-1,mN-1),lo+len(p),...dLoad)>now)break;
-      take(p);
+      take(p,["hair","mu"]);
     }
   }
   /* the office's own moves in and out of a Party Only column (Alexandra, Nov 1 2026): each pick sends a girl to that
-     artist for her hair and makeup, or back to the hair and makeup artists ("pool") */
-  if(duals.length&&mv)mv.filter(m=>m.svc==="dual").forEach(m=>(m.picks||[]).forEach(([pid,to])=>{
+     artist, or back to the hair and makeup artists ("pool"). A pick with a service (Nov 4 2026) moves only her hair or
+     only her makeup; an older pick without one moves both. */
+  if(duals.length&&mv)mv.filter(m=>m.svc==="dual").forEach(m=>(m.picks||[]).forEach(([pid,to,sv])=>{
     const p=s.people.find(q=>q.id===pid);if(!p||p===bride||!(p.hair||p.mu))return;
     const i=to==="pool"?-1:duals.findIndex(a=>a.id===to);if(to!=="pool"&&i<0)return;
-    dGirls.forEach(g=>{const k=g.indexOf(p);if(k>=0)g.splice(k,1)});
-    if(i>=0)dGirls[i].push(p);
+    const poolHas=x=>(x==="hair"?hairA:muA).length+(then===x?1:0)>0;
+    const svs=(sv?[sv]:["hair","mu"]).filter(x=>i>=0||poolHas(x));   // nobody else does it: that service stays put
+    if(!sv&&i>=0)dGirls.forEach((g,k)=>{if(k!==i){const j=g.indexOf(p);if(j>=0)g.splice(j,1)}});   // a whole move goes to the end of her new artist's list
+    svs.filter(x=>p[x]).forEach(x=>dSet(p,i,x));
   }));
-  const isDual=p=>dGirls.some(g=>g.includes(p));
-  const n=sv=>s.people.filter(p=>p[sv]&&p!==bride&&!isDual(p)).length;
+  dGirls.forEach((g,i)=>{for(let k=g.length-1;k>=0;k--)if(!lenIn(g[k],i))g.splice(k,1)});
+  const n=sv=>s.people.filter(p=>p[sv]&&p!==bride&&!inDual(p,sv)).length;
   /* the bride's artist with her own girls: about half of them before the bride, the moms and MOH just before her */
   let dBefore=[],dAfter=[];
   if(then==="both"){
     const g=dGirls[duals.length-1], h=g.filter(p=>HELPERS.includes(p.role)), o=g.filter(p=>!HELPERS.includes(p.role));
     const k=Math.max(0,Math.ceil(g.length/2)-h.length);
     dBefore=[...o.slice(0,k),...h];dAfter=o.slice(k);
-    bothT=dBefore.reduce((t,p)=>t+(p.hair?boxLen(p,"hair"):0)+(p.mu?boxLen(p,"mu"):0),0);
+    bothT=dBefore.reduce((t,p)=>t+lenIn(p,duals.length-1),0);
   }else if(then){
     const sl=then==="hair"?hairSlot:muSlot, A=(then==="hair"?hairA:muA).length+1, bk=Math.ceil(bothLen/sl);
     bothT=Math.floor((Math.ceil((n(then)+bk)/A)-bk)/2)*sl;   // her own column: about as many girls before the bride as after
@@ -999,8 +1013,10 @@ function build(s){
   if(brideA.length&&!brideBoth)warnings.push("The hair & makeup artist does the bride. Check Hair or MU for the bride, or set her to Party only.");
   if(brideA.length>1)warnings.push("Only one hair & makeup artist does the bride. Set the others to Party only, or change them to Hair or Makeup.");
   function pool(service,artists,slot,brideRowFn){
-    const people=s.people.filter(p=>p[service]&&!(brideBoth&&p===bride)&&!isDual(p));
-    if(!people.length)return {cols:[],slot};
+    const people=s.people.filter(p=>p[service]&&!(brideBoth&&p===bride)&&!inDual(p,service));
+    /* an artist with nobody yet still gets her column, so a girl's hair or makeup can be moved to her (Alexandra,
+       Nov 4 2026). The empty column only shows while moving. */
+    if(!people.length)return {cols:artists.map(a=>({artist:a,service,slot,cells:[],none:true})),slot};
     if(!artists.length){warnings.push((service==="hair"?"Hair":"Makeup")+" services need at least one "+(service==="hair"?"hair":"makeup")+" artist.");return {cols:[],slot}}
     const A=artists.length, rows=Math.ceil(people.length/A);
     const grid=artists.map(()=>Array(rows).fill(null));
@@ -1055,25 +1071,45 @@ function build(s){
     }));
   }
   retime();
-  // resolve same-person overlaps by swapping makeup cells
+  /* the hair & makeup artist's one column: the bride's Hair and Makeup boxes, plus her hair (or makeup) girls around them.
+     Each box keeps its own start (at), length (lens) and service (svcs). */
+  const dualCol=a=>({artist:a,service:"both",slot:bothBox,cells:[],at:[],lens:[],svcs:[],parts:[]});
+  const add=(c,pid,t,len,sv,part)=>{c.cells.push(pid);c.at.push(t);c.lens.push(len);c.svcs.push(sv);c.parts.push(part)};
+  // a girl's hair box then her makeup box; named girls get "hair"/"makeup" after their name (unnamed ones already say H / MU)
+  // only the services she has with this artist (i); her other one sits in a hair or makeup column
+  const addGirls=(c,list,t,i)=>{list.forEach(p=>{const nm=!!(p.name||"").trim()||HELPERS.includes(p.role), d=dOf.get(p.id)||{};
+    if(p.hair&&d.hair===i){const l=boxLen(p,"hair");add(c,p.id,t,l,"hair",nm&&!isBlow(p)?"Hair":"");t+=l}
+    if(p.mu&&d.mu===i){const l=boxLen(p,"mu");add(c,p.id,t,l,"mu",nm&&!isLash(p)?"Makeup":"");t+=l}});return t};
+  const sortCol=c=>{const ord=c.at.map((_,i)=>i).sort((a,b)=>c.at[a]-c.at[b]);["cells","at","lens","svcs","parts"].forEach(k=>c[k]=ord.map(i=>c[k][i]));return c};
+  const dualCols=dualA.map((a,i)=>{const c=dualCol(a);addGirls(c,dGirls[i],0,i);return c}).filter(c=>c.cells.length);
+  let brideCol=null;
+  if(dualA.length>dualCols.length)warnings.push("A Party only artist has no girls who need both hair and makeup.");
+  if(brideBoth&&bothLen){
+    const c=dualCol(brideA[0]);
+    {let t=bothT;bothParts.forEach(p=>{add(c,bride.id,t,partLen(p),"both",p);t+=partLen(p)})}
+    if(then==="both"){addGirls(c,dBefore,0,duals.length-1);addGirls(c,dAfter,bothT+bothLen,duals.length-1)}
+    brideCol=c;dualCols.unshift(c);
+  }
+  // resolve same-person overlaps by swapping makeup cells (and hair cells, for a girl whose makeup is with a hair & makeup artist)
   const iv=(col,r)=>[cellT(col,r),cellT(col,r)+cellLen(col,r)];
   const overl=(a,b)=>a[0]<b[1]&&b[0]<a[1];
-  function slotsOf(pid,service){const out=[];cols.forEach(c=>{if(c.service===service)c.cells.forEach((x,r)=>{if(x===pid)out.push(iv(c,r))})});return out}
+  function slotsOf(pid,service){const out=[];cols.forEach(c=>{if(c.service===service)c.cells.forEach((x,r)=>{if(x===pid)out.push(iv(c,r))})});
+    dualCols.forEach(c=>c.cells.forEach((x,r)=>{if(x===pid&&c.svcs[r]===service)out.push(iv(c,r))}));return out}
   function clash(pid,interval,service){const other=service==="hair"?"mu":"hair";return slotsOf(pid,other).some(o=>overl(o,interval))}
-  for(let pass=0;pass<4;pass++){
+  [["mu",mu.cols],["hair",hair.cols]].forEach(([sv,list])=>{for(let pass=0;pass<4;pass++){
     let changed=false;
-    mu.cols.forEach(c=>c.cells.forEach((pid,r)=>{
-      if(!pid||(bride&&pid===bride.id))return;
-      if(!clash(pid,iv(c,r),"mu"))return;
-      outer: for(const c2 of mu.cols)for(let r2=0;r2<c2.cells.length;r2++){
+    list.forEach(c=>c.cells.forEach((pid,r)=>{
+      if(!pid||pid===BUSY||(bride&&pid===bride.id))return;
+      if(!clash(pid,iv(c,r),sv))return;
+      outer: for(const c2 of list)for(let r2=0;r2<c2.cells.length;r2++){
         const q=c2.cells[r2]; if(c2===c&&r2===r)continue; if(bride&&q===bride.id||q===BUSY)continue;
-        if(clash(pid,iv(c2,r2),"mu"))continue;
-        if(q&&clash(q,iv(c,r),"mu"))continue;
+        if(clash(pid,iv(c2,r2),sv))continue;
+        if(q&&clash(q,iv(c,r),sv))continue;
         c2.cells[r2]=pid;c.cells[r]=q;retime();changed=true;break outer;
       }
     }));
     if(!changed)break;
-  }
+  }});
   // the office's own moves ("Move people", Alexandra Oct 23 2026): swap two boxes of the same service
   const parked=(s.movesSig!==sigNow&&s.moves&&s.moves.length?1:0)+Object.keys(s.movesStash||{}).filter(k=>k!==sigNow&&s.movesStash[k].length).length;
   if(parked)warnings.push("Some moves you made earlier were for a different team setup, so they're set aside. Switch the team back to see them.");
@@ -1102,26 +1138,15 @@ function build(s){
   cols.forEach(c=>{while(c.cells.length&&c.cells[c.cells.length-1]==null)c.cells.pop();if(c.at){c.at.length=c.lens.length=c.cells.length}});
   // leftover same-person clashes
   const both={};s.people.forEach(p=>{if(p.hair&&p.mu){const h=slotsOf(p.id,"hair"),m=slotsOf(p.id,"mu");if(h.some(a=>m.some(b=>overl(a,b)))){const n=p.name||p.role;both[n]=(both[n]||0)+1}}});
+  /* a girl the app split on its own whose hair and makeup still land at the same time goes back to one artist for both */
+  const redo=autoSplit.filter(id=>{const h=slotsOf(id,"hair"),m=slotsOf(id,"mu");return h.some(x=>m.some(y=>overl(x,y)))});
+  if(redo.length)return build(s,Object.assign({},opt,{whole:whole.concat(redo)}));
   Object.keys(both).forEach(n=>warnings.push((both[n]>1?both[n]+" "+n+"s have":n+" has")+" hair and makeup at the same time. Add an artist or move "+(both[n]>1?"them":"her")+" by hand."));
-  /* the hair & makeup artist's one column: the bride's Hair and Makeup boxes, plus her hair (or makeup) girls around them.
-     Each box keeps its own start (at), length (lens) and service (svcs). */
-  const dualCol=a=>({artist:a,service:"both",slot:bothBox,cells:[],at:[],lens:[],svcs:[],parts:[]});
-  const add=(c,pid,t,len,sv,part)=>{c.cells.push(pid);c.at.push(t);c.lens.push(len);c.svcs.push(sv);c.parts.push(part)};
-  // a girl's hair box then her makeup box; named girls get "hair"/"makeup" after their name (unnamed ones already say H / MU)
-  const addGirls=(c,list,t)=>{list.forEach(p=>{const nm=!!(p.name||"").trim()||HELPERS.includes(p.role);
-    if(p.hair){const l=boxLen(p,"hair");add(c,p.id,t,l,"hair",nm&&!isBlow(p)?"Hair":"");t+=l}
-    if(p.mu){const l=boxLen(p,"mu");add(c,p.id,t,l,"mu",nm&&!isLash(p)?"Makeup":"");t+=l}});return t};
-  const sortCol=c=>{const ord=c.at.map((_,i)=>i).sort((a,b)=>c.at[a]-c.at[b]);["cells","at","lens","svcs","parts"].forEach(k=>c[k]=ord.map(i=>c[k][i]));return c};
-  const dualCols=dualA.map((a,i)=>{const c=dualCol(a);addGirls(c,dGirls[i],0);return c}).filter(c=>c.cells.length);
-  if(dualA.length>dualCols.length)warnings.push("A Party only artist has no girls who need both hair and makeup.");
-  if(brideBoth&&bothLen){
-    const c=dualCol(brideA[0]);
-    {let t=bothT;bothParts.forEach(p=>{add(c,bride.id,t,partLen(p),"both",p);t+=partLen(p)})}
-    if(then==="both"){addGirls(c,dBefore,0);addGirls(c,dAfter,bothT+bothLen)}
-    const own=then==="hair"||then==="mu"?cols.find(x=>x.artist===brideA[0]&&x.service===then):null;
+  if(brideCol){
+    const c=brideCol, own=then==="hair"||then==="mu"?cols.find(x=>x.artist===brideA[0]&&x.service===then):null;
     if(own){own.cells.forEach((pid,r)=>{if(pid!==BUSY)add(c,pid,cellT(own,r),cellLen(own,r),then,"")});cols.splice(cols.indexOf(own),1)}
-    dualCols.unshift(c);
   }
+  if(!(opt&&opt.keepEmpty))for(let k=cols.length-1;k>=0;k--)if(cols[k].none)cols.splice(k,1);   // an artist with nobody shows only while moving
   cols.unshift(...dualCols.map(sortCol));
   let span=0;cols.forEach(c=>c.cells.forEach((_,r)=>span=Math.max(span,cellT(c,r)+cellLen(c,r))));
   let start=s.mode==="finish"?toMin(s.finishBy)-span:toMin(s.start);
@@ -1195,7 +1220,7 @@ function goBy(a){
 }
 let moveOn=false,movePick=null;   // "Move people" on the office Timeline
 function sheetHTML(s,ver,editable){
-  const plan=build(s), labels=labelMap(s,plan,ver);
+  const plan=build(s,{keepEmpty:editable&&moveOn}), labels=labelMap(s,plan,ver);
   const sameSlot=plan.cols.every(c=>c.slot===(plan.cols[0]||{}).slot);
   const rows=Math.max(0,...plan.cols.map(c=>c.cells.length));
   const loc=[s.location,s.room].filter(Boolean);
@@ -1597,13 +1622,18 @@ function moveTap(p){
 /* a Party Only column (Alexandra, Nov 1 2026): tap a girl there, then a box in another column, and the two girls trade
    artists. Tap a girl, then the Party Only artist's name or an empty spot in her column, and the girl goes to her. */
 function dualMove(a,b){
-  const plan=build(S), bride=S.people.find(q=>q.role==="Bride");
+  const plan=build(S,{keepEmpty:true}), bride=S.people.find(q=>q.role==="Bride");
   const who=x=>{if(x[0]==="dual")return {aid:x[1],pid:x[2]||""};
-    const c=plan.cols.filter(y=>y.service===x[0])[+x[1]], pid=c&&c.cells[+x[2]];return {aid:"pool",pid:pid&&pid!==BUSY?pid:""}};
+    const c=plan.cols.filter(y=>y.service===x[0])[+x[1]], pid=c&&c.cells[+x[2]];return {aid:"pool",pid:pid&&pid!==BUSY?pid:"",svc:x[0]}};
   const A=who(a),B=who(b);
   if(A.aid===B.aid){toast("Pick a box in a different column");renderSheet();return}
   if(A.pid&&bride&&A.pid===bride.id||B.pid&&bride&&B.pid===bride.id){toast("The bride stays with her artist");renderSheet();return}
-  const picks=[];if(A.pid)picks.push([A.pid,B.aid]);if(B.pid)picks.push([B.pid,A.aid]);
+  /* with a Hair or a Makeup column, only that one service moves: tap Lon's girl, then a box in Alexa's hair column, and
+     Alexa does her hair while Lon keeps her makeup (Alexandra, Nov 4 2026). Between two hair & makeup artists she moves whole. */
+  const sv=A.svc||B.svc||"", D=A.aid==="pool"?B:A, word=sv==="hair"?"hair":"makeup";
+  if(sv&&D.pid){const dc=plan.cols.find(c=>c.service==="both"&&c.artist.id===D.aid);
+    if(!(dc&&dc.cells.some((x,r)=>x===D.pid&&dc.svcs[r]===sv))){toast("She doesn't have "+word+" with that artist");renderSheet();return}}
+  const picks=[];if(A.pid)picks.push(sv?[A.pid,B.aid,sv]:[A.pid,B.aid]);if(B.pid)picks.push(sv?[B.pid,A.aid,sv]:[B.pid,A.aid]);
   if(!picks.length){renderSheet();return}
   const sig=moveSig(S);if(S.movesSig!==sig){parkMoves(S,sig)}
   S.moves.push({svc:"dual",picks});changed();
