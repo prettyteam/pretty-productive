@@ -150,6 +150,8 @@ function doPost(e) {
       case 'doneTodo': return json_(doneTodo_(d.id, !!d.done));
       case 'jobs': return json_(jobs_());
       case 'offerJob': return json_(offerJob_(d.offer));
+      case 'logAsk': return json_(logAsk_(d.ask));
+      case 'setAsk': return json_(setAsk_(d.id, d.status));
       case 'setJobTop': return json_(setJobTop_(d.ids));
       case 'templates': return json_(templates_());
       case 'saveTemplate': return json_(saveTemplate_(d.template));

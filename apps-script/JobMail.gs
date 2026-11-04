@@ -105,7 +105,7 @@ function remindJobOffers() {
   if (+Utilities.formatDate(new Date(), TZ, 'u') > 5) return;
   const now = new Date(), today = Utilities.formatDate(now, TZ, 'yyyy-MM-dd');
   const sent = j => j.remindedAt ? j.remindedAt.split(',').length : 0;
-  const due = jobRows_().filter(j => j.status === 'Waiting' && (!j.date || j.date >= today) && sent(j) < JOB_REMIND_AFTER.length
+  const due = jobRows_().filter(j => j.status === 'Waiting' && j.how !== 'Text' && (!j.date || j.date >= today) && sent(j) < JOB_REMIND_AFTER.length
     && (businessDaysAfter_(j.sentAt, JOB_REMIND_AFTER[sent(j)]) || '9') <= today);
   if (!due.length) return;
   const team = members_(), sh = jobsSheet_(), done = [];

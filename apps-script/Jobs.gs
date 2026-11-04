@@ -6,7 +6,7 @@
  */
 const JOBS_TAB = 'Job offers';
 const JOBS_HEADERS = ['Id', 'Wedding id', 'Bride', 'Date', 'Location', 'Artist id', 'Artist', 'Role', 'Headcount', 'Travel minimum',
-                      'Payout', 'Note', 'Status', 'Sent at', 'Answered at', 'Reminded at'];
+                      'Payout', 'Note', 'Status', 'Sent at', 'Answered at', 'Reminded at', 'Asked by', 'How', 'Opened at'];
 
 function jobsSheet_() {
   const ss = ss_();
@@ -15,10 +15,11 @@ function jobsSheet_() {
     sh = ss.insertSheet(JOBS_TAB);
     sh.getRange(1, 1, 1, JOBS_HEADERS.length).setValues([JOBS_HEADERS]).setFontWeight('bold').setBackground('#000000').setFontColor('#ffffff');
     sh.setFrozenRows(1);
-    sh.getRange('A:P').setNumberFormat('@');
+    sh.getRange('A:S').setNumberFormat('@');
   }
-  if (sh.getRange(1, JOBS_HEADERS.length).getValue() !== JOBS_HEADERS[JOBS_HEADERS.length - 1])   // tabs made before "Reminded at"
-    sh.getRange(1, JOBS_HEADERS.length).setValue(JOBS_HEADERS[JOBS_HEADERS.length - 1]).setFontWeight('bold').setBackground('#000000').setFontColor('#ffffff');
+  /* tabs made before "Reminded at" / "Asked by, How, Opened at" (Nov 4 2026) get the new headings */
+  const have = sh.getRange(1, 1, 1, JOBS_HEADERS.length).getValues()[0];
+  JOBS_HEADERS.forEach((h, i) => { if (have[i] !== h) sh.getRange(1, i + 1).setValue(h).setFontWeight('bold').setBackground('#000000').setFontColor('#ffffff').offset(1, 0, Math.max(sh.getMaxRows() - 1, 1)).setNumberFormat('@'); });
   return sh;
 }
 
@@ -28,11 +29,12 @@ function jobRows_() {
   return sh.getRange(2, 1, sh.getLastRow() - 1, JOBS_HEADERS.length).getValues().map((r, i) => ({
     row: i + 2, id: String(r[0]), weddingId: String(r[1]), bride: String(r[2]), date: r[3] instanceof Date ? Utilities.formatDate(r[3], TZ, 'yyyy-MM-dd') : String(r[3]), location: String(r[4]),
     artistId: String(r[5]), artist: String(r[6]), role: String(r[7]), headcount: String(r[8]), travel: String(r[9]),
-    payout: String(r[10]), note: String(r[11]), status: String(r[12]) || 'Waiting', sentAt: String(r[13]), answeredAt: String(r[14]), remindedAt: String(r[15])
+    payout: String(r[10]), note: String(r[11]), status: String(r[12]) || 'Waiting', sentAt: String(r[13]), answeredAt: String(r[14]), remindedAt: String(r[15]),
+    askedBy: String(r[16] || ''), how: String(r[17] || '') || 'App', openedAt: String(r[18] || '')
   })).filter(j => j.id);
 }
 
-const jobPublic_ = j => { const o = Object.assign({}, j); delete o.row; delete o.remindedAt; return o; };
+const jobPublic_ = j => { const o = Object.assign({}, j); delete o.row; delete o.remindedAt; return o; };   // askedBy, how, openedAt go to the office's "Who we asked"
 
 /** Office: every offer for weddings from 30 days ago on. */
 function jobs_() {
@@ -53,7 +55,7 @@ function offerJob_(o) {
   const sh = jobsSheet_(), now = new Date().toISOString();
   team.forEach(m => sh.appendRow(['j' + code_(10).toLowerCase(), w.d.id, clean_(w.d.bride, 120), w.d.date || '',
     clean_([w.d.location, w.d.room].filter(Boolean).join(', '), 200), m.id, clean_(m.preferredName || m.legalName, 120), role,
-    clean_(o.headcount, 60), clean_(o.travel, 60), clean_(o.payout, 60), clean_(o.note, 500), 'Waiting', now, '', '']));
+    clean_(o.headcount, 60), clean_(o.travel, 60), clean_(o.payout, 60), clean_(o.note, 500), 'Waiting', now, '', '', clean_(o.askedBy, 40), 'App', '']));
   pushJobOffer_(team.map(m => m.id), w.d.date, role);
   mailJobOffer_(team, w, role, o);
   return jobs_();
@@ -62,8 +64,12 @@ function offerJob_(o) {
 /** Artist: her own offers, upcoming only. */
 function myJobs_(member) {
   const today = Utilities.formatDate(new Date(), TZ, 'yyyy-MM-dd');
+  /* the first time her waiting offer reaches her phone, note it, so the office sees "Opened, no answer" vs "Not opened yet" (Nov 4 2026) */
+  const sh = jobsSheet_(), now = new Date().toISOString();
+  jobRows_().filter(j => j.artistId === member.id && j.how !== 'Text' && j.status === 'Waiting' && !j.openedAt && (!j.date || j.date >= today))
+    .forEach(j => sh.getRange(j.row, 19).setValue(now));
   const ct = calTimes_();
-  return { ok: true, jobs: jobRows_().filter(j => j.artistId === member.id && (!j.date || j.date >= today)).map(j => {
+  return { ok: true, jobs: jobRows_().filter(j => j.artistId === member.id && j.how !== 'Text' && (!j.date || j.date >= today)).map(j => {
     const o = jobPublic_(j); delete o.artistId; o.calTime = ct[j.weddingId] || ''; return o;
   }) };
 }
@@ -77,6 +83,36 @@ function answerJob_(member, id, yes) {
   if (yes) addToWedding_(j, member);
   mailJobAnswer_(j, yes);
   return myJobs_(member);
+}
+
+/* ---------- "Who we asked" on each bride's page (Alexandra and Dom, Nov 4 2026) ----------
+   Offers sent from the Jobs tab land here by themselves. An ask made outside the app (a text or call) is logged by hand,
+   with no email, alert or reminder to the artist, and the office marks her answer. */
+function logAsk_(o) {
+  o = o || {};
+  const w = weddings_().find(x => x.d.id === o.weddingId);
+  if (!w) return { ok: false, error: 'bad_request', message: 'Open a saved wedding first.' };
+  const m = members_().find(x => x.id === String(o.memberId || ''));
+  if (!m) return { ok: false, error: 'bad_request', message: 'Pick who you asked.' };
+  const role = o.role === 'mu' ? 'Makeup' : o.role === 'both' ? 'Hair & makeup' : 'Hair';
+  const status = o.status === 'Yes' || o.status === 'No' ? o.status : 'Waiting', now = new Date().toISOString();
+  jobsSheet_().appendRow(['j' + code_(10).toLowerCase(), w.d.id, clean_(w.d.bride, 120), w.d.date || '',
+    clean_([w.d.location, w.d.room].filter(Boolean).join(', '), 200), m.id, clean_(m.preferredName || m.legalName, 120), role,
+    '', '', '', '', status, now, status === 'Waiting' ? '' : now, '', clean_(o.askedBy, 40), 'Text', '']);
+  if (status === 'Yes') addToWedding_({ weddingId: w.d.id, role: role, artist: m.preferredName || m.legalName }, m);
+  return jobs_();
+}
+
+/** Office: mark the answer she gave by text (Yes / No / Waiting), or take off an ask logged by mistake. */
+function setAsk_(id, status) {
+  const j = jobRows_().find(x => x.id === String(id || ''));
+  if (!j) return { ok: false, error: 'not_found' };
+  const sh = jobsSheet_();
+  if (status === 'Remove') { if (j.how === 'Text') sh.deleteRow(j.row); return jobs_(); }
+  if (['Yes', 'No', 'Waiting'].indexOf(status) < 0) return { ok: false, error: 'bad_request' };
+  sh.getRange(j.row, 13, 1, 3).setValues([[status, j.sentAt, status === 'Waiting' ? '' : new Date().toISOString()]]);
+  if (status === 'Yes') { const m = members_().find(x => x.id === j.artistId); if (m) addToWedding_(j, m); }
+  return jobs_();
 }
 
 /** A Yes puts her on the wedding's Team on site (filling an empty Hair or Makeup slot first), so the office
