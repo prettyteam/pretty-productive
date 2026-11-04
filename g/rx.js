@@ -11,7 +11,7 @@ const RX_MQ='Masque: ', RX_MASQUES=['Cold Seaweed','LED Light Mask','Cryo Stick 
 const RX_SVC={
   hair:[['Female Haircut',75],['Male Haircut',45],['Haircut Leaving Wet',50],['Leave Wet (no haircut)',0],['Blow Dry',50],['Blowdry Plus',65],
     ['Single Process',65],['Shadow Root',60],['Glaze',45],['Additional Mix',25],['Face Frame/Spot Highlight',100],['Minimum Foil',85],
-    ['Half Foil',150],['Full Foil',175],['Minimum Balayage',125],['Half Head Balayage',185],['Full Head Balayage',325],
+    ['Half Foil',150],['Full Foil',175],['Refresh Balayage',220],['Half Head Balayage',225],['Full Head Balayage',325],
     ['Base Lightener',55],['K18 Bond Protection',25],['Goldwell Leave-In Treatment',20],['Permanent Wave',100],['Formal Style',105]],
   skin:[['Taffeta Facial',130],['Taffeta HydroDiamond Facial',225],['Taffeta HydroDiamond Express',99],['Express Acne Treatment',99],['Hydration Boost',99],['Brightening Mini Facial',99],
     ['Mini Redness Reversal',99],['Anti-Aging Express',99],['Dermaplaning',60],['Dermaplaning Add-On',40],
@@ -24,14 +24,14 @@ function rxSetCut(me){const f=String(me||'').trim().split(/\s+/)[0]||'', r=RX_SV
 /* Single process: each artist picks her own price, $65, $70, $80 or $100, and the card remembers it on her device (Alexandra, Oct 20 2026) */
 const RX_SP=[65,70,80,100], rxSpKey=()=>'pp-rxsp:'+rxSlug();
 function rxSetSP(){const v=Number(store.get(rxSpKey())), p=RX_SP.includes(v)?v:65, r=RX_SVC.hair.find(x=>x[0]==='Single Process'); if(r) r[1]=p; return p}
-const rxRegPrice=(k,n)=>{const r=RX_SVC[k].find(x=>x[0]===n);return r?r[1]:0};
+const rxRegPrice=(k,n)=>{if(n==='Minimum Balayage') n='Refresh Balayage'; const r=RX_SVC[k].find(x=>x[0]===n);return r?r[1]:0}; /* cards saved before Nov 4 2026 still say Minimum Balayage */
 /* VIP family pricing (Alexandra, Oct 16 2026): a VIP service covers the artist's commission and the cost of the
    service, plus 10% for the house. VIP = (full price x her commission rate + $25 per color bowl) x 1.10, never more
    than the full price. Each artist's rate comes from her own sealed app data; 45% when it isn't there (salon iPad).
    Product charges (K18, Goldwell leave-in, Additional Mix) stay at their regular price. Home care is always regular price. */
 const RX_BOWL=25;
 const RX_BOWLS={'Single Process':1,'Shadow Root':1,'Glaze':1,'Face Frame/Spot Highlight':1,'Minimum Foil':1,'Half Foil':2,'Full Foil':2,
-  'Minimum Balayage':1,'Half Head Balayage':2,'Full Head Balayage':2,'Base Lightener':1};
+  'Refresh Balayage':1,'Half Head Balayage':2,'Full Head Balayage':2,'Base Lightener':1};
 const RX_VIP_REG=['K18 Bond Protection','Goldwell Leave-In Treatment','Additional Mix','Leave Wet (no haircut)'];
 let RX_VIPON=false, RX_RATE=45;
 const rxVipPrice=(k,n)=>{const reg=rxRegPrice(k,n); if(!reg||RX_VIP_REG.includes(n)) return reg;
@@ -160,9 +160,9 @@ async function rxPull(){
    maintenance for her, so the artist doesn't pick products while building it. */
 
 /* Balayage (Alexandra, Oct 15 2026): the glaze is already in the balayage price, so it is never added on top (Additional
-   Mix $25 is the add-on instead), and anyone getting a balayage comes back for a balayage: Minimum Balayage. */
+   Mix $25 is the add-on instead), and anyone getting a balayage comes back for a balayage: Refresh Balayage (Nov 4 2026: Minimum renamed Refresh, $220, to match the website menu). */
 const RX_BAL=/balayage/i;
-const RX_BAL_M=[['Minimum Balayage','Female Haircut'],'8–10 weeks','A minimum balayage and a trim. Your glaze is included.'];
+const RX_BAL_M=[['Refresh Balayage','Female Haircut'],'8–10 weeks','A refresh balayage and a trim. Your glaze is included.'];
 /* Guests who come every 4 to 8 weeks don't need a cut every visit: the next visit after a cut can be "Leave Wet" to save
    on cost (Alexandra, Oct 15 2026). Balayage guests keep the trim.
    Color never goes longer than 10 weeks: 8–10 weeks for balayage, foils and soft root color; single process and gray
@@ -170,13 +170,13 @@ const RX_BAL_M=[['Minimum Balayage','Female Haircut'],'8–10 weeks','A minimum 
 /* What she's hoping for → service packages, fullest first. */
 const RX_GOAL={
   hair:{
-    'Lived-In Blonde (Balayage)':{p:[['Full Head Balayage','Female Haircut'],['Half Head Balayage','Female Haircut'],['Minimum Balayage','Female Haircut'],['Minimum Balayage']],
+    'Lived-In Blonde (Balayage)':{p:[['Full Head Balayage','Female Haircut'],['Half Head Balayage','Female Haircut'],['Refresh Balayage','Female Haircut'],['Refresh Balayage']],
       m:RX_BAL_M},
     /* foils are their own color choice; foil prices don't include the glaze, so it's its own line (Alexandra, Oct 17 2026) */
     'Foils (Highlights)':{p:[['Full Foil','Glaze','Female Haircut'],['Half Foil','Glaze','Female Haircut'],['Minimum Foil','Glaze','Female Haircut'],['Face Frame/Spot Highlight','Glaze'],['Minimum Foil','Glaze']],
       m:[['Minimum Foil','Glaze','Leave Wet (no haircut)'],'8–10 weeks','Foils around the part and hairline and a glaze. If you get your cut today, skip it next time to save: leave wet, or add a $50 blow dry. Need a trim? A haircut leaving wet is $50.']},
     /* soft, grown-out color so she can go longer between visits (Alexandra, Oct 15 2026); balayage already includes shadow root and glaze */
-    'Lower Maintenance Hair Color':{p:[['Half Head Balayage','Female Haircut'],['Minimum Balayage','Female Haircut'],['Shadow Root','Glaze','Female Haircut'],['Shadow Root','Glaze']],
+    'Lower Maintenance Hair Color':{p:[['Half Head Balayage','Female Haircut'],['Refresh Balayage','Female Haircut'],['Shadow Root','Glaze','Female Haircut'],['Shadow Root','Glaze']],
       m:[['Shadow Root','Glaze'],'8–10 weeks','A soft root melt and a glaze. It grows out softly, so you can go up to 10 weeks between visits.']},
     /* a Female Haircut already includes the blow dry, so the two are never listed together; with no cut she leaves wet,
        no extra service (Alexandra, Oct 16 2026) */
