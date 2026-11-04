@@ -854,15 +854,6 @@ input,select,textarea{background:#fff;border-radius:0}
 
   <section id="view-admin" hidden>
     <div class="card" style="margin-bottom:16px">
-      <h2 data-open>Send the App Guide</h2>
-      <div class="row"><label class="f" style="flex:0 1 220px">Guide<select id="gd-which"><option value="artists">Artist Guide</option><option value="office">Office Guide</option></select></label>
-        <a class="btn ghost small" id="gd-view" target="_blank" rel="noopener" style="flex:0 0 auto;align-self:flex-end;text-decoration:none">View Guide</a></div>
-      <label class="f">Message<textarea id="gd-text" rows="10"></textarea></label>
-      <div class="row" style="align-items:center"><button class="btn ghost small" id="gd-reset" type="button" style="flex:0 0 auto">Refill Message</button><span class="hint">[Name] turns into each person's go-by name. The guide link goes right after the line about reading the guide.</span></div>
-      <p class="hint" style="margin-top:10px">Tap <b>Text</b> next to anyone. Messages opens to her with your note and the guide link. Tap <b>Send</b>.</p>
-      <div id="gd-list" class="gd-list"></div>
-    </div>
-    <div class="card" style="margin-bottom:16px">
       <h2 data-open>Add a team member</h2>
       <div class="row">
         <label class="f">Name she goes by<input id="am-name"></label>
@@ -872,6 +863,15 @@ input,select,textarea{background:#fff;border-radius:0}
       </div>
       <div class="row" style="align-items:center"><button class="btn" id="am-add" style="flex:0 0 auto">Add and copy her link</button><span class="status" id="am-status"></span></div>
       <p class="hint">Text her the link. It's her private key to her weddings, her info and the payout form, so she shouldn't share it.</p>
+    </div>
+    <div class="card" style="margin-bottom:16px">
+      <h2 data-open>Send the App Guide</h2>
+      <div class="row"><label class="f" style="flex:0 1 220px">Guide<select id="gd-which"><option value="artists">Artist Guide</option><option value="office">Office Guide</option></select></label>
+        <a class="btn ghost small" id="gd-view" target="_blank" rel="noopener" style="flex:0 0 auto;align-self:flex-end;text-decoration:none">View Guide</a></div>
+      <label class="f">Message<textarea id="gd-text" rows="10"></textarea></label>
+      <div class="row" style="align-items:center"><button class="btn ghost small" id="gd-reset" type="button" style="flex:0 0 auto">Refill Message</button><span class="hint">[Name] turns into each person's go-by name. The guide link goes right after the line about reading the guide.</span></div>
+      <p class="hint" style="margin-top:10px">Tap <b>Text</b> next to anyone. Messages opens to her with your note and the guide link. Tap <b>Send</b>.</p>
+      <div id="gd-list" class="gd-list"></div>
     </div>
     <div class="toolbar">
       <div class="status" id="adm-note">Team info, newest updates first.</div>
@@ -2256,24 +2256,34 @@ function save(){
   });
   return saving;
 }
-function refreshSavedSelect(){
-  const sel=$("#saved"), cur=docId||"";
-  sel.innerHTML='<option value="">New wedding</option>'+allWeddings.slice().sort((a,b)=>(a.d.date||"").localeCompare(b.d.date||"")).map(w=>'<option value="'+w.id+'">'+esc((w.d.date?shortDate(w.d.date)+" · ":"")+(w.d.bride||"Untitled"))+'</option>').join("");
-  sel.value=cur;
-  // completed = the party and the team are both filled in
-  const done=allWeddings.filter(w=>(w.d.people||[]).length&&(w.d.artists||[]).some(a=>(a.name||"").trim()))
-    .sort((a,b)=>(a.d.date||"").localeCompare(b.d.date||""));
+/* Wedding dropdowns: upcoming weddings first, soonest on top. Past weddings are archived out of sight
+   until "Show past weddings" is picked (Alexandra, Nov 4 2026). The open wedding always stays listed. */
+let SHOW_PAST=false;
+function wedPickHTML(list,cur,first){
   const today=new Date().toISOString().slice(0,10);
   const opt=w=>'<option value="'+w.id+'">'+esc((w.d.date?shortDate(w.d.date)+" · ":"")+(w.d.bride||"Untitled"))+'</option>';
-  const up=done.filter(w=>(w.d.date||"")>=today), past=done.filter(w=>(w.d.date||"")<today).reverse();
-  $("#done").innerHTML='<option value="">'+(done.length?"Choose a finished timeline":"No finished timelines yet")+'</option>'
-    +(up.length?'<optgroup label="Upcoming">'+up.map(opt).join("")+'</optgroup>':"")
-    +(past.length?'<optgroup label="Past">'+past.map(opt).join("")+'</optgroup>':"");
+  const up=list.filter(w=>(w.d.date||"")>=today).sort((a,b)=>(a.d.date||"").localeCompare(b.d.date||""));
+  const noDate=list.filter(w=>!w.d.date);
+  const past=list.filter(w=>w.d.date&&w.d.date<today).sort((a,b)=>b.d.date.localeCompare(a.d.date));
+  const shown=SHOW_PAST?past:past.filter(w=>w.id===cur);
+  return first+up.map(opt).join("")+noDate.map(opt).join("")
+    +(shown.length?'<optgroup label="Past weddings">'+shown.map(opt).join("")+'</optgroup>':"")
+    +(past.length?'<option value="__past">'+(SHOW_PAST?"Hide past weddings":"Show past weddings ("+past.length+")")+'</option>':"");
+}
+function refreshSavedSelect(){
+  const sel=$("#saved"), cur=docId||"";
+  sel.innerHTML=wedPickHTML(allWeddings,cur,'<option value="">New wedding</option>');
+  sel.value=cur;
+  // completed = the party and the team are both filled in
+  const done=allWeddings.filter(w=>(w.d.people||[]).length&&(w.d.artists||[]).some(a=>(a.name||"").trim()));
+  $("#done").innerHTML=wedPickHTML(done,cur,'<option value="">'+(done.length?"Choose a finished timeline":"No finished timelines yet")+'</option>');
   $("#done").value=done.some(w=>w.id===cur)?cur:"";
 }
-$("#done").onchange=e=>{const id=e.target.value;if(!id)return;const s=$("#saved");s.value=id;s.onchange({target:s})};
+function togglePast(){SHOW_PAST=!SHOW_PAST;refreshSavedSelect()}
+$("#done").onchange=e=>{const id=e.target.value;if(!id)return;if(id==="__past"){togglePast();return}const s=$("#saved");s.value=id;s.onchange({target:s})};
 $("#saved").onchange=e=>{
   const id=e.target.value;
+  if(id==="__past"){togglePast();return}
   if(!id){docId=null;S=starter();fillForm();setStatus("New wedding");return}
   const w=allWeddings.find(x=>x.id===id);if(!w)return;
   docId=id;
