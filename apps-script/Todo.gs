@@ -49,3 +49,19 @@ function doneTodo_(id, done) {
   if (i >= 0) sh.getRange(i + 2, 7).setValue(done ? new Date().toISOString() : '');
   return todos_();
 }
+
+/** Change a task that was already added: its words, due date, who it's from, or whose list it's on. */
+function editTodo_(t) {
+  t = t || {};
+  const sh = todoSheet_();
+  if (sh.getLastRow() < 2) return todos_();
+  const ids = sh.getRange(2, 1, sh.getLastRow() - 1, 1).getValues().map(r => String(r[0]));
+  const i = ids.indexOf(String(t.id || ''));
+  if (i < 0) return { ok: false, error: 'not_found', message: "That task isn't on the list anymore. Tap Refresh." };
+  const list = TODO_LISTS.indexOf(t.list) >= 0 ? t.list : '';
+  const task = clean_(t.task, 500), from = TODO_LISTS.indexOf(t.from) >= 0 ? t.from : '';
+  const due = /^\d{4}-\d{2}-\d{2}$/.test(t.due || '') ? t.due : '';
+  if (!list || !task) return { ok: false, error: 'bad_request', message: 'Write the task first.' };
+  sh.getRange(i + 2, 2, 1, 4).setValues([[list, task, due, from]]);
+  return todos_();
+}
