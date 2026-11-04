@@ -1,6 +1,6 @@
 /* Prices tab (Alexandra, Oct 2026): every artist can look up our starting service prices and retail prices,
    so they know what things cost before they build a budget with a guest. Services are the starting prices on
-   taffetadesign.com/salon-and-spa-menu (read Oct 15 2026), updated Oct 20 2026 from Alexandra's marked-up menu card; retail is the home care list in g/rx.js (RX_PRICES).
+   taffetadesign.com/salon-and-spa-menu (read Oct 15 2026), updated Oct 20 2026 from Alexandra's marked-up menu card; Nov 4 2026 Brazilian Blowout, Formal style, Signature and Gel manicure set to the website prices (Alexandra: the website prices are right); retail is the home care list in g/rx.js (RX_PRICES).
    Uses the host page's h() and render(). No costs here, only what the guest pays. */
 const PR_MENU=[
   ['Hair cutting',[['Female haircut','$65+'],['Female haircut, leaving wet','$50+'],['Male haircut','$45+'],['Child haircut','$35+']]],
@@ -9,9 +9,9 @@ const PR_MENU=[
     ['K18 bond protection','$45+']]],
   ['Lived-in color packages',[['Full balayage · 3–4 hrs, 1–3x a year','$320+'],['Maintenance balayage · 2–3 hrs, every 6–12 weeks','$220+'],
     ['Refresh balayage · 45 min–1.5 hrs, every 6–8 weeks','$120+'],['Babylight technique, per package','+$50']],'Packages include shadow root and gloss. Price varies with length and thickness.'],
-  ['Hair treatments',[['Brazilian Blowout smoothing','$275+'],['Keratin smoothing','$275+'],['Goldwell leave-in treatment (backbar)','$20; $10–15 for half a bottle']]],
+  ['Hair treatments',[['Brazilian Blowout smoothing','$285+'],['Keratin smoothing','$275+'],['Oribe Mirror Glass Shine','$35'],['Goldwell leave-in treatment (backbar)','$20; $10–15 for half a bottle']]],
   ['Extensions',[['Clip-in extensions','$45+'],['Tape-in extensions','Upon consultation'],['Invisible bead / hand-tied','Upon consultation'],['Extension removal','$75+']]],
-  ['Styling',[['Wash & blow dry','$50+'],['Formal style','$100+']]],
+  ['Styling',[['Wash & blow dry','$50+'],['Formal style','$105']]],
   ['Makeup & lashes',[['Full face, traditional foundation','$85'],['Full face, airbrush foundation','$95'],['Just eyes (shadow & strip lash)','$70'],
     ['Individual false lashes','$25'],['Strip lash application','$15'],['Lash lift & tint','$125'],['Eyelash extensions','Upon consultation']]],
   ['Brows & waxing',[['First-time brow sculpt','$40'],['Maintenance brow sculpt','$25'],['Brow tint','$25'],['Brow lamination (with kit)','$85'],
@@ -22,7 +22,7 @@ const PR_MENU=[
   ['Facial enhancements',[['Microdermabrasion','$50'],['Dermaplaning','$50'],['Cold seaweed masque','$50'],['Cryo stick therapy','$50'],
     ['High frequency','$25'],['LED light therapy','$50'],['Peel','$50']]],
   ['Nails',[['Taffeta Signature Pedicure','$55+'],['Signature Pedicure with gel','$65+'],['Express pedicure, polish / gel','$35 / $45+'],
-    ['Festive pedicure','$70+'],['Festive pedicure with gel','$80+'],['Taffeta Signature Manicure','$25'],['Gel manicure','$40'],
+    ['Festive pedicure','$70+'],['Festive pedicure with gel','$80+'],['Taffeta Signature Manicure','$35'],['Gel manicure','$55'],
     ['Express manicure, polish / gel','$15 / $25'],['Gel removal with polish','$30'],['French tip','$5+'],['Nail enhancements','$10+'],
     ['Full set acrylic','$65+'],['Acrylic rebalance','$45+'],['Soft gel overlay','$90+'],['Soft gel rebalance','$70+'],['Add gel polish','$10']]]
 ];
