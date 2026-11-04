@@ -2379,6 +2379,24 @@ async function ocalLoad(k){
 }
 function ocalGo(k,ask){OCAL.month=k;OCAL.pick=null;OCAL.ask=ask||null;if(!OCAL.data[k])ocalLoad(k);render();
   setTimeout(()=>{const el=document.getElementById('ocal');if(el)el.scrollIntoView({behavior:'smooth',block:'start'})},60)}
+/* Approve / Decline time off right in the app (Rick, Nov 4 2026). Saves to the Team Hub Time Off tab and sends the same emails as the email links. */
+let OFFSET={busy:null,msg:null};
+async function offDecide(o,st){
+  if(!o||!o.row||OFFSET.busy)return;
+  const fn=String(o.name).split(' ')[0];
+  if(!confirm((st==='Approved'?'Approve ':'Decline ')+fn+'’s time off?'))return;
+  OFFSET.busy=o.row;OFFSET.msg=null;render();
+  try{const r=await fetch(API()+'?admin='+encodeURIComponent(S.hubKey)+'&offset='+o.row+'&s='+st+'&by='+encodeURIComponent(prWho()||'Alexandra')+'&_='+Date.now());const j=await r.json();
+    OFFSET.msg=j.ok?(st==='Approved'?'Approved. ':'Declined. ')+fn+' will see it in her app.':j.error==='done'?'Already '+String(j.status).toLowerCase()+' by '+(j.by||'someone')+'.':'That didn’t go through. Try again.'}
+  catch(e){OFFSET.msg='That didn’t go through. Try again.'}
+  OFFSET.busy=null;if(OCAL.ask&&OCAL.ask.row===o.row)OCAL.ask=null;OCAL.data={};ocalLoad(OCAL.month);admLoad();
+}
+function offButtons(o){
+  if(!o||!o.row)return null;const b=OFFSET.busy===o.row;
+  return h('div',{style:'display:flex;gap:6px;flex-wrap:wrap'},
+    h('button',{type:'button',class:'obtn sm',disabled:OFFSET.busy?'':null,onclick:()=>offDecide(o,'Approved')},b?'Saving…':'Approve'),
+    h('button',{type:'button',class:'obtn sm',disabled:OFFSET.busy?'':null,onclick:()=>offDecide(o,'Declined')},'Decline'));
+}
 function offCalendarSection(){
   if(!OCAL.month){OCAL.month=ocalKey(new Date());ocalLoad(OCAL.month)}
   const k=OCAL.month,[y,m]=k.split('-').map(Number),first=new Date(y,m-1,1),days=new Date(y,m,0).getDate();
@@ -2409,7 +2427,7 @@ function offCalendarSection(){
     ask?h('div',{class:'oday',style:'border-color:#a3322a'},h('b',{style:'font-weight:400;font-family:var(--display)'},fn(ask.name)+' is asking for '+rng(ask)),
       h('span',{class:'soft',style:'display:block;margin-top:4px'},(()=>{const others=new Set();for(let t=new Date(ask.from+'T12:00');ymd(t)<=ask.to;t=new Date(t.getTime()+864e5))offOn(ymd(t)).forEach(o=>{if(o.row!==ask.row)others.add(fn(o.name))});
         return others.size?'Already off during those days: '+[...others].join(', ')+'.':'Nobody else is off during those days.'})()),
-      h('button',{type:'button',class:'obtn sm',style:'margin-top:8px',onclick:()=>{OCAL.ask=null;render()}},'Clear')):null,
+      h('div',{style:'display:flex;gap:6px;flex-wrap:wrap;margin-top:8px'},offButtons(ask),h('button',{type:'button',class:'obtn sm',onclick:()=>{OCAL.ask=null;render()}},'Clear'))):null,
     list?h('div',{class:'ocal'},cells):h('p',{class:'soft'},OCAL.err==='setup'?'The time clock isn’t connected yet.':OCAL.err?'Can’t reach the time off list right now.':'Loading…'),
     h('div',{class:'okey'},h('span',{},h('i',{style:'background:#e8d3cf'}),'Approved'),h('span',{},h('i',{style:'border:1px dashed #5f5b55;background:#fff'}),'Waiting for a yes'),h('span',{},h('i',{style:'background:#f4f2ec;border:1px solid var(--line)'}),'Sunday, closed'),h('span',{},'Tap a day to see everyone')),
     pickWho?h('div',{class:'oday'},h('b',{style:'font-weight:400;font-family:var(--display)'},dLab(OCAL.pick)),
@@ -2426,8 +2444,9 @@ function adminOffView(){
   const rng=o=>o.from===o.to?niceDay(o.from):niceDay(o.from)+' – '+niceDay(o.to);
   const msg=ADM.err==='setup'?'The time clock isn’t connected yet.':ADM.err?'Can’t reach the time clock right now.':'Loading…';
   return [h('section',{class:'section'},h('h2',{},'Time off waiting for a yes'),
-      D?(D.pendingOff&&D.pendingOff.length?D.pendingOff.map(o=>h('div',{class:'lrow'},h('div',{},h('b',{},o.name),h('small',{},rng(o))),h('button',{type:'button',class:'obtn sm',onclick:()=>ocalGo(o.from.slice(0,7),o)},'See Calendar'))):h('p',{class:'soft'},'Nothing waiting. You’re all caught up.')):h('p',{class:'soft'},msg),
-      h('p',{class:'soft',style:'font-size:13px'},'Requests also land in your email with one-tap Approve and Decline. Approved and declined requests are in the Time Off tab of the ',
+      D?(D.pendingOff&&D.pendingOff.length?D.pendingOff.map(o=>h('div',{class:'lrow',style:'flex-wrap:wrap;gap:8px'},h('div',{},h('b',{},o.name),h('small',{},rng(o)+(o.note?' · '+o.note:''))),h('div',{style:'display:flex;gap:6px;flex-wrap:wrap'},h('button',{type:'button',class:'obtn sm',onclick:()=>ocalGo(o.from.slice(0,7),o)},'See Calendar'),offButtons(o)))):h('p',{class:'soft'},'Nothing waiting. You’re all caught up.')):h('p',{class:'soft'},msg),
+      OFFSET.msg?h('p',{class:'soft',role:'status',style:'color:var(--ink,#121212)'},OFFSET.msg):null,
+      h('p',{class:'soft',style:'font-size:13px'},'Tap Approve or Decline here, or use the links in your email. Either way it saves to the Time Off tab of the ',
         D&&D.sheet?h('a',{href:D.sheet,target:'_blank',rel:'noopener',style:'color:inherit'},'Team Hub sheet'):'Team Hub sheet','.')),
     offCalendarSection(),
     h('section',{class:'section'},
