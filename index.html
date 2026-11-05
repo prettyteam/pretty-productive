@@ -208,6 +208,12 @@ details.invg>summary h2{margin:0;flex:1;min-width:0;font-size:20px}
 details.invg>summary .invc{font-size:12.5px;white-space:nowrap}
 details.invg[open]>summary .tplus{transform:rotate(45deg)}
 details.invg>.sec2{padding-bottom:12px}
+.ordv{padding:4px 0 10px;border-bottom:1px solid var(--line)}
+.ordv:last-child{border-bottom:0}
+.ordv>.lrow{border-bottom:0}
+details.ordg{border-top:1px solid var(--line)}
+.ordchips{display:flex;flex-wrap:wrap;gap:6px;padding:4px 0 10px}
+.ordchips .chip{white-space:nowrap}
 .shelf{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);padding:12px 0 2px;border-bottom:1px solid var(--line)}
 .invall{display:flex;gap:8px;justify-content:flex-end;margin:-6px 0 0}
 .invall button{padding:4px 12px;font-size:12px;flex:none}
@@ -1639,6 +1645,23 @@ function invOnOrderSec(){
   return h('section',{class:'section'},h('h2',{},'On order'),h('small',{class:'soft',style:'margin-top:-8px'},'From the order emails in info@. Receive each box in Paired Plus when it comes in.'),
     h('div',{class:'sec2'},Object.entries(by).map(([k,its])=>h('div',{class:'lrow'},h('span',{},h('b',{},k),h('small',{},its.map(o=>o[3]+(o[4]?' ('+o[4]+')':'')).join(', ')))))));
 }
+/* split a vendor's order text ("Topchic 6N ×2, Topchic 7N ×1. Skip anything already on order.") into product lines */
+const ORD_LINES=['Alter Ego 10-minute','Alter Ego Technofruit','Alter Ego','Shades EQ','Colorance','Topchic','Color Touch','Koleston','Illumina'];
+function invOrderParse(x){
+  const groups=[],by={},notes=[];
+  String(x||'').split(/(?<=\.)\s+/).forEach(t=>{
+    t=t.replace(/^[^:]*(used more|restocked|counted 0 or 1)[^:]*:\s*/i,'');
+    if(!/×\d/.test(t)){if(t.trim())notes.push(t.trim());return;}
+    t.replace(/\.$/,'').split(/,\s+(?=[^,]*×\d)/).forEach(it=>{
+      const m=it.trim().match(/^(.*?)\s*×\s*(\d+)$/); if(!m){notes.push(it.trim());return;}
+      const name=m[1].trim(); let line=ORD_LINES.find(l=>name.toLowerCase().startsWith(l.toLowerCase()+' ')), shade;
+      if(line)shade=name.slice(line.length).trim(); else{line='Other Items';shade=name;}
+      if(!by[line]){by[line]={line,items:[]};groups.push(by[line]);} by[line].items.push([shade,+m[2]]);
+    });
+  });
+  groups.sort((a,b)=>(a.line==='Other Items')-(b.line==='Other Items'));
+  return {groups,notes};
+}
 function invReport(R){
   const t=R.tiles, stat=(l,v,sub)=>h('div',{class:'cell tcell'},h('span',{class:'label',style:'font-size:11px'},l),h('span',{class:'num',style:'font-family:var(--display);font-size:24px'},v),sub?h('small',{class:'soft',style:'font-size:12px'},sub):null);
   const KIND={'Color charged, no bowl weighed':'Charged, never weighed','Color mixed, no ticket found':'Mixed, no ticket found','Color mixed, no color service charged':'Mixed, no color charged','Charged under another artist':'Rung up under another artist','Extra bowl (2 bowls for a 1-bowl service)':'Extra bowl','Mixed 20%+ over recommended':'20%+ over the recipe','Date differs (mixed vs. charged)':'Different day','Charged differs from what was mixed':'Charged for something else'};
@@ -1653,7 +1676,13 @@ function invReport(R){
         h('div',{class:'sec2'},rows.map(([d,a,c,m,ch,g,v])=>h('div',{class:'lrow'},h('span',{},h('b',{},c),h('small',{},d+' · '+a+(m&&m!=='—'?' · mixed '+m:'')+(ch&&ch!=='—'?' · charged '+ch:''))),g?h('span',{class:'soft',style:'font-size:13px;white-space:nowrap'},g+' g'+(v!=null?' · '+invPct(v):'')):null)))))),
     invOnOrderSec(),
     h('section',{class:'section'},h('h2',{},'What to order'),h('div',{class:'sec2'},R.order.map(([s,x])=>{const oo=invOO().filter(o=>o[1].toLowerCase()===String(s).toLowerCase());
-      return h('div',{class:'lrow'},h('span',{},h('b',{},s),h('small',{},String(x).split(/(?<=\.)\s+/).map(t=>t.replace(/^[^:]*(used more|restocked|counted 0 or 1)[^:]*:\s*/i,'')).join(' ')),oo.length?h('small',{style:'color:var(--green,#2f5d46)'},'Already on order since '+invDay(oo[oo.length-1][0])+': '+oo.map(o=>o[3]+(o[4]?' ('+o[4]+')':'')).join(', ')):null))}))),
+      const P=invOrderParse(x), units=P.groups.reduce((a,g)=>a+g.items.reduce((b,i)=>b+i[1],0),0), n=P.groups.reduce((a,g)=>a+g.items.length,0);
+      /* grouped by product line, one tidy chip per shade (Alexandra, Nov 5 2026: the long comma list was overwhelming) */
+      return h('div',{class:'ordv'},h('div',{class:'lrow'},h('span',{},h('b',{},s),h('small',{},n?n+' items · '+units+' units':'')),null),
+        P.groups.map(g=>h('details',{class:'tryd ordg'},h('summary',{},h('span',{class:'tlabel'},g.line+' · '+g.items.length),h('span',{class:'tplus','aria-hidden':'true'},'+')),
+          h('div',{class:'ordchips'},g.items.map(([sh,q])=>h('span',{class:'chip'},sh+(q>1?' ×'+q:' ×1')))))),
+        P.notes.length?h('small',{class:'soft',style:'display:block;padding-top:6px'},P.notes.join(' ')):null,
+        oo.length?h('small',{style:'display:block;color:var(--green,#2f5d46)'},'Already on order since '+invDay(oo[oo.length-1][0])+': '+oo.map(o=>o[3]+(o[4]?' ('+o[4]+')':'')).join(', ')):null)}))),
     h('section',{class:'section'},h('h2',{},'Best price right now'),h('div',{class:'sec2'},R.prices.map(([i,s,p])=>h('div',{class:'lrow'},h('span',{},h('b',{},i),h('small',{},s)),h('b',{},p))))),
     h('section',{class:'section'},h('h2',{},'Fastest-used'),h('div',{class:'sec2'},R.fastest.map(([l,p,u])=>h('div',{class:'lrow'},h('span',{},h('b',{},p),h('small',{},l)),h('span',{class:'soft',style:'font-size:13px'},u+' / wk'))))),
     R.missing&&R.missing.length?h('p',{class:'soft',style:'font-size:12.5px;margin:0'},'No price yet: '+R.missing.join(' · ')):null];
