@@ -1118,13 +1118,15 @@ function accessView(){
   const A=S.access;
   if(!A) return [h('div',{class:'empty'},h('h3',{},'Nothing here yet'),h('p',{},'Links and logins appear after the next publish.'))];
   const copy=(txt,b)=>()=>{try{navigator.clipboard.writeText(txt).then(()=>{b.textContent='Copied';setTimeout(()=>{b.textContent='Copy'},1400)})}catch(e){}};
-  const row=(label,val,sub)=>{const b=h('button',{class:'tab',style:'padding:4px 12px;font-size:12px;flex:none'},'Copy');b.addEventListener('click',copy(val,b));
+  const row=(label,val,sub,open)=>{const b=h('button',{class:'tab',style:'padding:4px 12px;font-size:12px;flex:none'},'Copy');b.addEventListener('click',copy(val,b));
+    /* Open (Nov 5 2026): the Front Desk row opens the keyed desk link here, so she never needs the bare /desk/ link */
+    const o=open?h('a',{class:'tab',href:val,style:'padding:4px 12px;font-size:12px;flex:none;text-decoration:none'},'Open'):null;
     return h('div',{style:'display:flex;gap:10px;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--line)'},
-      h('div',{style:'min-width:0'},h('div',{style:'font-family:var(--display);font-size:16px'},label),h('div',{class:'soft',style:'font-size:12.5px;word-break:break-all'},sub||val)),b)};
+      h('div',{style:'min-width:0'},h('div',{style:'font-family:var(--display);font-size:16px'},label),h('div',{class:'soft',style:'font-size:12.5px;word-break:break-all'},sub||val)),h('div',{style:'display:flex;gap:6px;flex:none'},o,b))};
   return [h('section',{class:'section'},h('div',{class:'hub'},h('h2',{},'Access'),
     h('p',{class:'soft',style:'font-size:13px'},'Only you and Rick see this page. Please don’t share or screenshot it.'),
     h('div',{class:'gcard'},h('span',{class:'lbl'},'Apps & forms'),
-      A.desk?row('Front Desk app',A.desk,'Private desk link (includes the desk guide key)'):null,
+      A.desk?row('Front Desk app',A.desk,'Private desk link (includes the desk guide key)',true):null,
       A.form?row('Guest profile form',A.form):null),
     h('div',{class:'gcard'},h('span',{class:'lbl'},'Team app · private link and PIN'),
       (A.stylists||[]).map(s=>row(s.name,s.link,'PIN '+s.pin))),
@@ -2721,7 +2723,7 @@ function setHead(name){
 }
 function apply(P){
   S.daily=P.daily||null;
-  if(EDITION==='team'){S.isAdmin=true;S.pages=(P.pages||[]).filter(isGoalsPerson);S.week=P.week||null;S.hubKey=P.hub&&P.hub.admin;S.payroll=P.payroll||[];S.rates=P.rates||{};S.hoursList=P.hoursList||[];S.retailRate=P.retailRate==null?10:P.retailRate;S.month=P.month||null;S.trends=P.trends||null;S.guideUrl=P.guideUrl||null;S.docs=P.docs||null;S.access=P.access||null;S.inv=P.inv||null;S.rtab=S.rtab||'home';setHead()}
+  if(EDITION==='team'){S.isAdmin=true;S.pages=(P.pages||[]).filter(isGoalsPerson);S.week=P.week||null;S.hubKey=P.hub&&P.hub.admin;S.payroll=P.payroll||[];S.rates=P.rates||{};S.hoursList=P.hoursList||[];S.retailRate=P.retailRate==null?10:P.retailRate;S.month=P.month||null;S.trends=P.trends||null;S.guideUrl=P.guideUrl||null;S.docs=P.docs||null;S.access=P.access||null;if(!window.__goDesk&&new URLSearchParams(location.search).get('go')==='desk'&&S.access&&S.access.desk){window.__goDesk=1;location.replace(S.access.desk);return};S.inv=P.inv||null;S.rtab=S.rtab||'home';setHead()}
   else{S.mine=P.mine||null;setHead(S.mine&&S.mine.name);
     if(S.mine&&!S.tab){const st=S.mine.staff||{}, ask=new URLSearchParams(location.search).get('tab');S.tab=(ask&&staffTabs().some(x=>x[0]===ask)?ask:'')||store.get('pp-tab:'+ID)||(st.clock?'home':isGoalsPerson(S.mine)?'today':'home')}
     if(S.mine&&!(history.state&&history.state.pp)){try{history.replaceState({pp:S.tab,d:0},'',location.href)}catch(e){}}
