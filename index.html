@@ -1675,7 +1675,7 @@ function invReport(R){
       Object.entries(R.flags).map(([k,rows])=>h('details',{class:'tryd'},h('summary',{},h('span',{class:'tlabel'},(KIND[k]||k)+' · '+rows.length),h('span',{class:'tplus','aria-hidden':'true'},'+')),
         h('div',{class:'sec2'},rows.map(([d,a,c,m,ch,g,v])=>h('div',{class:'lrow'},h('span',{},h('b',{},c),h('small',{},d+' · '+a+(m&&m!=='—'?' · mixed '+m:'')+(ch&&ch!=='—'?' · charged '+ch:''))),g?h('span',{class:'soft',style:'font-size:13px;white-space:nowrap'},g+' g'+(v!=null?' · '+invPct(v):'')):null)))))),
     invOnOrderSec(),
-    h('section',{class:'section'},h('h2',{},'What to order'),h('div',{class:'sec2'},R.order.map(([s,x])=>{const oo=invOO().filter(o=>o[1].toLowerCase()===String(s).toLowerCase());
+    h('section',{class:'section'},h('h2',{},'What to order'),h('p',{class:'soft',style:'font-size:13px;margin:0'},'This is what to buy, not what is on the shelf. "6N ×2" means order 2 tubes of 6N.'),h('div',{class:'sec2'},R.order.map(([s,x])=>{const oo=invOO().filter(o=>o[1].toLowerCase()===String(s).toLowerCase());
       const P=invOrderParse(x), units=P.groups.reduce((a,g)=>a+g.items.reduce((b,i)=>b+i[1],0),0), n=P.groups.reduce((a,g)=>a+g.items.length,0);
       /* grouped by product line, one tidy chip per shade (Alexandra, Nov 5 2026: the long comma list was overwhelming) */
       return h('div',{class:'ordv'},h('div',{class:'lrow'},h('span',{},h('b',{},s),h('small',{},n?n+' items · '+units+' units':'')),null),
