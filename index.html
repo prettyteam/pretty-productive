@@ -518,6 +518,22 @@ details.days summary::-webkit-details-marker{display:none}
 .askseg button small{display:block;font-size:12.5px;opacity:.75}
 .askseg button[aria-pressed=true]{background:var(--brown);border-color:var(--brown);color:#fff}
 .hub textarea,.hub select{font:inherit;font-size:15px;border:1px solid var(--line);border-radius:6px;padding:8px 10px;background:#fff;width:100%;color:var(--ink)}
+.vidtext{background:#fff;border:1px solid var(--line);border-radius:8px;padding:14px 16px;font-size:14.5px;line-height:1.5}
+.vidtext h2{font-family:var(--display);font-weight:400;font-size:19px;margin:12px 0 4px}
+.vidtext h2:first-child{margin-top:0}
+.vidtext ul{margin:4px 0;padding-left:20px}
+.vidtext li{margin:3px 0}
+.vidq{display:flex;flex-direction:column;gap:6px;padding:10px 0;border-bottom:1px solid var(--line)}
+.vidq:last-of-type{border-bottom:0}
+.vidq b{font-size:15px}
+.vidq small{font-size:13px;opacity:.8}
+.vidpad{width:100%;height:150px;background:#fff;border:1px solid var(--ink);border-radius:6px;touch-action:none;display:block}
+.vidbar{display:flex;justify-content:space-between;align-items:center;font-size:13px}
+.vidbar button{background:none;border:0;text-decoration:underline;font:inherit;color:var(--ink);cursor:pointer;padding:4px}
+.vidnote{background:#fff;border:1px solid var(--ink);border-radius:8px;padding:12px 14px;display:flex;gap:12px;align-items:center;justify-content:space-between;font-size:14.5px}
+.vidtbl{width:100%;border-collapse:collapse;font-size:14px;background:#fff}
+.vidtbl th,.vidtbl td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line)}
+.vidtbl th{font-size:11px;letter-spacing:.1em;text-transform:uppercase;font-weight:400;color:#555250}
 .askreq{background:#fff;border:1px solid var(--line);border-radius:8px;padding:12px;display:flex;flex-direction:column;gap:4px;font-size:14px;margin-bottom:8px}
 .askreq .top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
 .askreq .tag{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#7a6a55}
@@ -881,6 +897,7 @@ function render(){
   else if(S.rtab==='payroll') parts=payrollView();
   else if(S.rtab==='off') parts=adminOffView();
   else if(S.rtab==='reqs') parts=reqsView();
+  else if(S.rtab==='vids') parts=vidsView();
   else if(S.rtab==='month') parts=monthView();
   else if(S.rtab==='trends') parts=trendsView();
   else if(S.rtab==='color') parts=colorRoomView();
@@ -989,6 +1006,7 @@ function homeView(){
   const out=[hello()];
   const jk=S.daily&&S.daily.joke, today=new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
   out.push(h('div',{class:'hgig'},h('span',{class:'lbl'},today),jk?h('p',{},jk):null));
+  if(d&&d.vidOn&&!d.vid) out.push(vidNotice());   // until she signs the Video Agreement (Nov 5 2026)
   const hm=homeMenu(); if(hm) out.push(hm);
   if(st.clock) out.push(clockCard());
   if(st.clock&&HUB.fx) out.push(fixCard());
@@ -1934,6 +1952,109 @@ function askView(){
         onclick:()=>hubPost({type:'reqset',id:x.id,status:s},'Marked '+s+'.')},s))))):h('p',{class:'soft'},'No customer orders waiting.')));
   return [h('div',{class:'hub'},out)];
 }
+
+/* Break Room And Color Room Video Agreement (Alexandra, Nov 5 2026): read it, pick Yes or No three times, type your name,
+   sign with your finger. The desk script keeps every signing (VideoAgree.js) and emails Alexandra a signed PDF.
+   The newest signing counts, so anyone can change her answers later. Same words as the printed form. */
+const VID_TEXT=[
+  ['How The Cameras Work',[
+    '<b>Video only. No sound.</b> The cameras never record or send what people say. The microphones are turned off.',
+    '<b>Color room camera:</b> may be shown live online (for example on YouTube or our website) during open hours. It points at the color bar, not at faces.',
+    '<b>Break room camera:</b> private for safety. Only the owner can watch it. It is shown live online <b>only if every staff member says yes</b> below. One no means it stays private.',
+    '<b>A no-camera spot.</b> One seat or corner of the break room is always out of view.',
+    '<b>Never</b> in a bathroom, a changing spot, or anywhere people change clothes.',
+    '<b>Off switch.</b> You may turn a camera off for a short time for a private moment, like a phone call or an upset client. Turn it back on after.',
+    '<b>Video is kept 14 days</b>, then it deletes on its own. A clip is saved only for a safety or theft problem.',
+    '<b>Not used to listen in</b> on talk about pay, hours or working conditions. That talk is protected by law.',
+    '<b>Signs</b> on each door tell everyone a camera is on.']],
+  ['Your Rights',[
+    '<b>Saying no is OK.</b> You will not lose hours, pay, clients or your job for saying no.',
+    '<b>You can change your mind.</b> Come back to this page and sign again with new answers. We will fix it within 7 days.',
+    '<b>You can ask questions</b> any time before or after you sign.']]];
+const VID_Q=[['cams','1. Private Safety Cameras','Color room and break room, owner only, video only.','Yes, I understand these cameras are on while I work.','No, I have questions or concerns. Please talk with me first.'],
+  ['color','2. Color Room Shown Live To The Public','Video only, open hours.','Yes, I am OK being seen working on the live color room stream.','No, please keep me off the live stream.'],
+  ['brk','3. Break Room Shown Live To The Public','Video only, only if everyone says yes.','Yes, I am OK with the break room being shown live.','No, please keep the break room private.']];
+let VID={pick:{},name:'',redo:false,ink:false};
+Object.assign(FIX_ERR,{vidpick:'Pick Yes or No for all three.',vidsig:'Sign in the box with your finger first.',vidbig:'That signature is too big. Tap Clear and sign a little smaller.',name:'Type your full name.'});
+function vidNotice(){
+  return h('div',{class:'vidnote'},h('span',{},h('b',{},'Please Sign The Video Agreement'),h('br'),h('small',{},'It takes 2 minutes.')),
+    h('button',{class:'obtn sm',style:'white-space:nowrap;flex:none',onclick:()=>{HOME_OPEN='';navGo('vid')}},'Read & Sign'));
+}
+function vidPad(){
+  if(VID.pad) return VID.pad;   // the same box across redraws, so tapping an answer never wipes the signature
+  const c=h('canvas',{class:'vidpad','aria-label':'Sign here with your finger'});
+  let x=null,y=null;
+  const pos=e=>{const r=c.getBoundingClientRect();return [(e.clientX-r.left)*c.width/r.width,(e.clientY-r.top)*c.height/r.height]};
+  const ctx=()=>{const g=c.getContext('2d');g.lineWidth=2.4;g.lineCap='round';g.lineJoin='round';g.strokeStyle='#121212';return g};
+  c.addEventListener('pointerdown',e=>{e.preventDefault();c.setPointerCapture(e.pointerId);[x,y]=pos(e)});
+  c.addEventListener('pointermove',e=>{if(x==null)return;const [a,b]=pos(e),g=ctx();g.beginPath();g.moveTo(x,y);g.lineTo(a,b);g.stroke();x=a;y=b;VID.ink=true});
+  const up=()=>{x=null};c.addEventListener('pointerup',up);c.addEventListener('pointercancel',up);
+  requestAnimationFrame(()=>{const w=c.clientWidth||320;c.width=Math.min(600,Math.round(w*1.5));c.height=Math.round(c.width*150/(w||320))});
+  VID.pad=c; return c;
+}
+function vidSigData(){
+  const c=VID.pad; if(!c||!VID.ink) return '';
+  // shrink to a small black-and-white picture so it fits in one sheet cell
+  const w=360,hh=Math.round(w*c.height/c.width),o=document.createElement('canvas');o.width=w;o.height=hh;
+  const g=o.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,w,hh);g.drawImage(c,0,0,w,hh);return o.toDataURL('image/png');
+}
+function vidView(){
+  const d=HUB.data, mine=d&&d.vid;
+  const head=[h('span',{class:'lbl',style:'text-align:center;display:block'},'Read, then sign'),h('h1',{style:'font-size:26px;text-align:center;margin:2px 0 0'},'Break Room And Color Room Video Agreement')];
+  if(!d) return [h('div',{class:'hub'},...head,h('p',{class:'dmsg'},HUB.err?'Can’t reach the signing form right now. Check your signal.':'Loading…'))];
+  if(!d.vidOn) return [h('div',{class:'hub'},...head,h('p',{class:'soft',style:'text-align:center'},'This switches on soon.'))];
+  const text=h('div',{class:'vidtext'});
+  text.innerHTML='<p style="margin:0 0 6px">We want to put video cameras in the <b>color room</b> and the <b>break room</b>. This explains how they work. Please read it, pick your answers, and sign at the bottom.</p>'+
+    VID_TEXT.map(([t,li])=>'<h2>'+t+'</h2><ul>'+li.map(x=>'<li>'+x+'</li>').join('')+'</ul>').join('');
+  if(mine&&!VID.redo) return [h('div',{class:'hub'},...head,
+    h('div',{class:'gdress'},h('b',{},'Signed ✓'),mine.typed+' · '+niceDate(mine.at)),
+    h('div',{class:'card2'},h('span',{class:'lbl'},'Your Answers'),VID_Q.map(([k,t])=>h('div',{class:'lrow'},h('span',{},t.replace(/^\d\. /,'')),h('span',{class:'stat'+(mine[k]==='Yes'?' ok':'')},mine[k])))),
+    h('button',{class:'obtn',style:'background:#fff;color:var(--ink)',onclick:()=>{VID={pick:{cams:mine.cams,color:mine.color,brk:mine.brk},name:'',redo:true,ink:false};render()}},'Change My Answers'),
+    text,HUB.toast?h('p',{class:'toast'},HUB.toast):null)];
+  const P=VID.pick;
+  const qs=VID_Q.map(([k,t,sub,yes,no])=>h('div',{class:'vidq'},h('b',{},t),h('small',{},sub),
+    h('div',{class:'askseg'},[['Yes',yes],['No',no]].map(([v,l])=>h('button',{type:'button','aria-pressed':String(P[k]===v),onclick:()=>{P[k]=v;render()}},l)))));
+  const nm=h('input',{type:'text',placeholder:'Type your full name',autocomplete:'name',value:VID.name,oninput:e=>{VID.name=e.target.value}});
+  const pad=vidPad();
+  const send=()=>{
+    if(VID_Q.some(([k])=>!P[k])){HUB.toast=FIX_ERR.vidpick;render();return}
+    if(VID.name.trim().length<3){HUB.toast=FIX_ERR.name;render();return}
+    const sig=vidSigData(); if(!sig){HUB.toast=FIX_ERR.vidsig;render();return}
+    VID.redo=false; VID.pad=null; VID.ink=false; hubPost({type:'vid',cams:P.cams,color:P.color,brk:P.brk,name:VID.name.trim(),sig},'Signed. Thank you! A copy is on its way to your email.')};
+  return [h('div',{class:'hub'},...head,text,
+    h('div',{class:'card2'},h('span',{class:'lbl'},'Your Choices'),...qs),
+    h('div',{class:'card2 sigbox'},h('span',{class:'lbl'},'Sign'),
+      h('p',{class:'soft',style:'margin:0;font-size:13.5px'},'I read this agreement. I had a chance to ask questions.'),
+      h('label',{class:'fld'},'Type your full name',nm),
+      h('div',{class:'vidbar'},h('span',{},'Sign with your finger'),h('button',{type:'button',onclick:()=>{const c=VID.pad;c.getContext('2d').clearRect(0,0,c.width,c.height);VID.ink=false}},'Clear')),
+      pad,
+      h('button',{class:'obtn',disabled:HUB.busy?'':null,onclick:send},HUB.busy?'One moment…':'Sign'),
+      mine?h('button',{class:'obtn',style:'background:#fff;color:var(--ink)',onclick:()=>{VID.redo=false;render()}},'Cancel'):null,
+      HUB.toast?h('p',{class:'toast'},HUB.toast):null))];
+}
+
+/* The Pretty Report: Team > Video Agreements (Nov 5 2026): who signed, and their three answers. */
+let VA={data:null,err:null,busy:false};
+async function vaLoad(){
+  if(!S.hubKey||!API()){VA.err='setup';render();return}
+  VA.busy=true;render();
+  try{const r=await fetch(API()+'?admin='+encodeURIComponent(S.hubKey)+'&vids=1&_='+Date.now());const j=await r.json();if(!j.ok)throw 0;VA.data=j;VA.err=null}
+  catch(e){VA.err='offline'}
+  VA.busy=false;render();
+}
+function vidsView(){
+  if(!VA.data&&!VA.err&&!VA.busy) vaLoad();
+  const D=VA.data, yn=v=>v?h('span',{class:'stat'+(v==='Yes'?' ok':'')},v):h('span',{class:'soft'},'–');
+  const msg=VA.err==='setup'?'Video Agreements aren’t connected yet.':VA.err?'Can’t reach the agreements right now.':'Loading…';
+  if(!D) return [h('div',{class:'hub'},h('h1',{style:'font-size:28px;text-align:center'},'Video Agreements'),h('p',{class:'soft',style:'text-align:center'},msg))];
+  const ppl=D.people.slice().sort((a,b)=>(!!b.at)-(!!a.at)||a.name.localeCompare(b.name));
+  return [h('div',{class:'hub'},h('h1',{style:'font-size:28px;text-align:center'},'Video Agreements'),
+    h('p',{class:'soft',style:'text-align:center;margin:-14px 0 0'},D.signed+' of '+D.total+' signed'),
+    h('div',{class:'gdress'},h('b',{},D.breakLive?'Break Room Can Go Live':'Break Room Stays Private'),D.breakLive?'Everyone said yes.':'It needs a yes from every person.'),
+    h('div',{class:'tablewrap'},h('table',{class:'vidtbl'},h('thead',{},h('tr',{},h('th',{},'Name'),h('th',{},'Safety cams'),h('th',{},'Color live'),h('th',{},'Break live'),h('th',{},'Signed'))),
+      h('tbody',{},ppl.map(p=>h('tr',{},h('td',{},h('b',{},p.name)),h('td',{},yn(p.cams)),h('td',{},yn(p.color)),h('td',{},yn(p.brk)),h('td',{},p.at?niceDate(p.at):h('span',{class:'soft'},'Not yet'))))))),
+    h('p',{class:'soft',style:'text-align:center;font-size:13px'},'Each signing emails you a signed PDF. Staff sign under Taffeta > Video Agreement in their app.'))];
+}
 /* Ordering: the shared page from g/ordering.js, plus the color report's best prices for anyone who has the Inventory tab */
 /* Nov 2 2026: Rose and Alexandra get What To Order (g/whattoorder.js): Retail, Color & Backbar and On The Way, grouped by store */
 function orderView(){
@@ -2036,6 +2157,7 @@ function staffTabs(){
   if(st.slug) t.push(['prices','Prices']);
   if(orderMode()&&window.Ordering) t.push(['order',orderMode()==='full'?'What To Order':'Ordering']);
   if(st.slug) t.push(['ask','Send To Alex']);
+  if(st.slug) t.push(['vid','Video Agreement']);
   if(st.slug&&p.pk&&p.pk.groups&&p.pk.groups.length) t.push(['pk','PK Knowledge']);
   t.push(['guide','Culture']);
   const dc=p.docs||{}; if(dc.hb) t.push(['hb','Handbook']); if(dc.fg) t.push(['fg','Desk Guide']);
@@ -2047,7 +2169,7 @@ function staffTabs(){
 }
 /* One menu instead of a row of tabs (Alexandra, Oct 2026). Sections are grouped; Customer cards holds RX card and Home care. */
 const NAV_GROUPS=[['Appointments',['home','today','tomorrow','tip']],['Customer Cards',['rx','reg']],[MW_NAME,['mph']],['Goals',['growth','binder','cr']],
-  ['Salon & Spa',['prices','order','pk','inv','skin','cards','off']],['Taffeta',['guide','hb','fg']],['Send To Alex',['ask']],['Self Promotion',['promo']],['Marketing Proofs',['mkt']],['My Profile',['me']]];
+  ['Salon & Spa',['prices','order','pk','inv','skin','cards','off']],['Taffeta',['guide','hb','fg','vid']],['Send To Alex',['ask']],['Self Promotion',['promo']],['Marketing Proofs',['mkt']],['My Profile',['me']]];
 let NAV_OPEN=false;
 /* Disco ball = Home, Back arrow = the page before (Alexandra, Oct 15 2026). Each page change is a browser history step,
    so the Back arrow and the phone's own back swipe both work. */
@@ -2057,7 +2179,7 @@ function navGo(k,fromHistory){
   if(k==='mkt'){NAV_OPEN=false;HOME_OPEN='';openMkt();render();return}
   if(!fromHistory&&k!==S.tab){const d=((history.state&&history.state.d)||0)+1;try{history.pushState({pp:k,d},'',location.href)}catch(e){}}
   NAV_OPEN=false;S.tab=k;S.dayBack=false;store.set('pp-tab:'+ID,k);render();window.scrollTo(0,0);
-  if(k==='home'||k==='off'||k==='inv'||k==='skin'||k==='growth'||k==='mph'||k==='cards'||k==='me'||k==='prices'||k==='rx'||k==='tip'||k==='promo'||k==='ask')hubGet();
+  if(k==='home'||k==='off'||k==='inv'||k==='skin'||k==='growth'||k==='mph'||k==='cards'||k==='me'||k==='prices'||k==='rx'||k==='tip'||k==='promo'||k==='ask'||k==='vid')hubGet();
 }
 function navGroups(tabs){
   const label=Object.fromEntries(tabs);
@@ -2179,6 +2301,7 @@ function staffRender(){
   if(S.tab==='prices') return pricesView();
   if(S.tab==='order') return orderView();
   if(S.tab==='ask') return askView();
+  if(S.tab==='vid') return vidView();
   if(S.tab==='pk') return pkView();
   if(S.tab==='growth') return growthView();
   if(S.tab==='mph') return mphView();
@@ -2634,9 +2757,9 @@ function prPhotoKey(){return 'pp-photo:'+ID+':'+prWho()}
 function reportGroups(){
   // always 6 squares (Alexandra, Oct 17 2026): Access sits under Team; without the Color Room, Payroll and Month & Trends share one
   return [['Today',['today']]].concat(S.inv?[['Payroll',['payroll','trends']],['Month & Trends',['month']],['Color Room',['color']]]:[['Payroll & Trends',['payroll','trends','month']]])
-    .concat([['Team',['reqs','off','photos','guide','sendguide','access']],['Marketing Proofs',['mkt']]]);
+    .concat([['Team',['reqs','vids','off','photos','guide','sendguide','access']],['Marketing Proofs',['mkt']]]);
 }
-const PR_LABEL={reqs:'Requests',mkt:'Marketing Proofs',photos:'Team Work',home:'Home',today:'Today',payroll:'Payroll',month:'Month & Trends',trends:'Sunday Trends',color:'Color Room',off:'Time Off',guide:'Culture',sendguide:'Send App Guide',access:'Access'};
+const PR_LABEL={reqs:'Requests',vids:'Video Agreements',mkt:'Marketing Proofs',photos:'Team Work',home:'Home',today:'Today',payroll:'Payroll',month:'Month & Trends',trends:'Sunday Trends',color:'Color Room',off:'Time Off',guide:'Culture',sendguide:'Send App Guide',access:'Access'};
 let PR_OPEN='',PR_NAV=false;
 function prGo(k,fromHistory){
   if(k==='mkt'){PR_NAV=false;PR_OPEN='';openMkt();render();return}
@@ -2644,6 +2767,7 @@ function prGo(k,fromHistory){
   PR_OPEN='';PR_NAV=false;S.rtab=k;S.open=null;render();window.scrollTo(0,0);
   if(k==='photos'&&!ALB.loading){ALB.err=null;albLoad()}
   if(k==='reqs'&&!RQ.busy){RQ.err=null;rqLoad()}
+  if(k==='vids'&&!VA.busy){VA.err=null;vaLoad()}
 }
 addEventListener('popstate',e=>{const st=e.state;if(EDITION==='team'&&S.isAdmin){prGo(st&&st.pr?st.pr:'home',true)}});
 /* Refresh reopens the page you were on (refresh.js, Oct 23 2026): s:<tab> on a staff page, r:<tab>[:<person>] on The Pretty Report */
