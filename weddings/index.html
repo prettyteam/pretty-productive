@@ -270,6 +270,11 @@ details.more .menu .btn:last-child{border-bottom:0}
 .ao .aol input{font:400 16px var(--sans);padding:10px;border:1px solid #c9c4bc;letter-spacing:0;text-transform:none;color:#121212}
 .ao .aol .done{width:100%;font:400 14px var(--sans);text-align:left}
 .ao .aol .done div{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid #eee}
+.ao .aoo .done{margin-bottom:6px}
+.ao .aoo .aod{display:block;border:0;padding:12px 0 4px;font:400 11px var(--sans);letter-spacing:.16em;text-transform:uppercase;color:#555250}
+.ao .aoo .done small{color:#555250}
+.ao .aoo .done .aodue{color:#121212;font-weight:700}
+.ao .aoo .linkbtn{background:none;border:0;font:400 12px var(--sans);letter-spacing:.14em;text-transform:uppercase;text-decoration:underline;color:#121212;cursor:pointer;padding:6px}
 .ao .aol .done button{border:1px solid #121212;background:#fff;font:400 11px var(--sans);letter-spacing:.1em;text-transform:uppercase;padding:6px 8px;cursor:pointer}
 .paper .aop{width:100%;max-width:440px;margin:0 auto;border-collapse:collapse}
 .paper .aop td{padding:11px 4px;border-bottom:1px solid var(--line);font-family:var(--serif);font-size:15px;color:var(--paper-ink);text-align:left;vertical-align:top}
@@ -2112,10 +2117,12 @@ function renderAddon(){
   if(L.venmo)h+='<button type="button" class="pay" data-s="venmo" aria-pressed="'+(AO_SHOW==="venmo")+'">Pay with Venmo</button>';
   if(L.card)h+='<button type="button" class="pay" data-s="card" aria-pressed="'+(AO_SHOW==="card")+'">Card or Apple Pay</button>';
   if(L.venmo&&L.card)h+='<p style="font-size:14px">Tap a button to show that code.</p>';
-  h+=aoLogHTML()+'</div>';
+  h+=aoLogHTML()+(ROLE==="office"?aoOfficeHTML():"")+'</div>';
   box.innerHTML=h;box.querySelectorAll(".pay[data-s]").forEach(b=>b.onclick=()=>{AO_SHOW=b.dataset.s;renderAddon()});
   const sh=$("#aoShare");if(sh)sh.onclick=e=>sendPdf(e.currentTarget,[aoPriceHTML()],"wedding-day-add-ons.jpg","",true);
+  box.querySelectorAll("#aoRetry,#aoRefresh").forEach(b=>b.onclick=()=>{AO_LIST=null;renderAddon()});
   aoLogWire(box);
+  if(ROLE==="office"&&!AO_LIST&&!AO_LOADING)aoLoadOffice();
 }
 /* Log an Add-On (Alexandra, Oct 28 2026): the artist records each add-on as she does it: the service, the guest's first
    name and whether she paid. It goes to the Team Activity tab, so Pretty Life and Cherish can see who owed what and match
@@ -2138,6 +2145,27 @@ function aoLogHTML(){
     +(mine.length?'<div class="done"><div class="mhead" style="border:0">Logged Today</div>'+mine.map((x,i)=>'<div><span>'+esc(x.svc)+' '+esc(x.amt)+' · '+esc(x.guest)+'<br><small>'+esc(x.paid)+'</small></span>'
       +(x.paid==="Not Paid Yet"?'<button type="button" data-mark="'+i+'">Mark Paid</button>':'')+'</div>').join("")+'</div>':'')
     +'</div>';
+}
+/* Add-Ons Logged (Alexandra, Nov 7 2026): the office (Cherish) sees every add-on the artists log, newest wedding day
+   first, so she can match it to the Taffeta Weddings Venmo and card payments. She also gets an email for each one. */
+let AO_LIST=null,AO_LOADING=false,AO_ERR=false;
+async function aoLoadOffice(){AO_LOADING=true;AO_ERR=false;
+  try{AO_LIST=(await api("addons")).addons||[]}catch(e){AO_ERR=true}
+  AO_LOADING=false;if(!$("#view-addon").hidden)renderAddon()}
+function aoOfficeHTML(){
+  let h='<div class="aol aoo"><div class="mhead">Add-Ons Logged</div>';
+  if(AO_ERR)return h+'<p>Could not load the add-ons. <button type="button" class="linkbtn" id="aoRetry">Try again</button></p></div>';
+  if(!AO_LIST)return h+'<p>Loading…</p></div>';
+  if(!AO_LIST.length)return h+'<p>No add-ons logged yet. When an artist logs one, it shows here.</p></div>';
+  const day=t=>new Date(t).toLocaleDateString("en-US",{weekday:"long",month:"long",day:"numeric"});
+  let last="",total=0;
+  AO_LIST.forEach(x=>{const d=day(x.at);
+    if(d!==last){h+=(last?'</div>':'')+'<div class="done"><span class="aod">'+esc(d)+'</span>';last=d}
+    const due=x.paid==="Not Paid Yet";
+    h+='<div><span>'+esc(x.svc)+(x.amt?' '+esc(x.amt):'')+' · '+esc(x.guest)
+      +'<br><small>'+(x.bride?'Bride: '+esc(x.bride)+' · ':'')+'Logged by '+esc(String(x.by).split(" ")[0])+'</small></span>'
+      +'<small class="'+(due?'aodue':'')+'">'+esc(x.paid)+'</small></div>'});
+  return h+'</div><button type="button" class="linkbtn" id="aoRefresh">Refresh</button></div>';
 }
 function aoSend(x,note){actLog("addon",true,x.svc+" "+x.amt+" · "+x.guest+(x.bride?" · Bride: "+x.bride:"")+" · "+(note||x.paid))}
 function aoLogWire(box){
