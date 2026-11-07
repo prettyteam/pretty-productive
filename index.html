@@ -1528,7 +1528,8 @@ function avatarEl(size,tap){
 }
 function meView(){
   const info=(HUB.data&&HUB.data.info)||{};
-  const F=[['ecName','Emergency contact name'],['ecRel','Relationship'],['ecPhone','Emergency contact phone','tel'],['address','Current home address'],['email','Email','email'],['venmo','Venmo username (the @ name)'],['instagram','Instagram page name']];
+  /* My Cell Phone (Alexandra, Nov 7 2026): staff were typing their own cell in the emergency spot. Shows once the Team Hub script says cell:true. */
+  const F=[...(HUB.data&&HUB.data.cell?[['cell','My cell phone','tel']]:[]),['ecName','Emergency contact name'],['ecRel','Relationship'],['ecPhone','Emergency contact phone','tel'],['address','Current home address'],['email','Email','email'],['venmo','Venmo username (the @ name)'],['instagram','Instagram page name']];
   const ins=F.map(([k,l,ty])=>[k,l,h('input',{type:ty||'text',value:info[k]||'',autocomplete:'off'})]);
   const st0=(HUB.data&&HUB.data.me&&HUB.data.me.start)||'';
   ins.push(['start','Taffeta start date',h('input',{type:'date',value:/^\d{4}-\d{2}-\d{2}$/.test(st0)?st0:'',autocomplete:'off'})]);
