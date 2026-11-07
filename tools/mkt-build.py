@@ -64,6 +64,10 @@ head = [re.sub(r'<button type="button" role="tab" id="t-create"[^>]*>Create</but
 html = '\n'.join(head) + '\n' + '\n'.join(lines[sA[0]:sA[1] + 1]) + '\n<script>\n' + open(os.path.join(REPO, 'tools', 'mkt-edits.js'), encoding='utf-8').read() + '\n</script>\n' \
     + '\n'.join(lines[sR[1] + 1:sP[0]]) + '\n<script>\n' + open(os.path.join(REPO, 'tools', 'mkt-photos.js'), encoding='utf-8').read() + '\n</script>\n' + '\n'.join(lines[sP[1] + 1:])
 
+# the Auto-post tab only works inside claude.ai (it saves OKs to the artifact's database), so the live page leaves it out
+html = re.sub(r'<button type="button" role="tab" id="t-auto"[^>]*>Auto-post</button>', '', html)
+html = re.sub(r'<div class="panel" id="p-auto".*?</script>', '', html, count=1, flags=re.S)
+
 # pictures the artifact keeps in its asset store (/_blob/<id>, the November plan on) are saved as blobs/<id>.<ext>
 def blob(m):
     f = glob.glob(os.path.join(SRC_DIR, 'blobs', m.group(2) + '.*'))
