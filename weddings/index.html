@@ -2171,7 +2171,8 @@ function venmoTipUrl(v,amt){return amt?"https://venmo.com/"+encodeURIComponent(v
 /* Salon artists are matched on the first name of her preferred name OR her legal name, so a profile that goes by a
    nickname ("Dom", "Kat") or a different spelling still gets her salon box (Alexandra, Oct 21 2026). */
 const SALON_K={carolyn:"skin",kat:"mh",katherine:"mh",kathryn:"mh",ashley:"mcce",dominique:"mcce",dom:"mcce",domenique:"mcce",dominque:"mcce",
-  amanda:"cce",lexi:"cce",alexis:"cce",joanna:"cce",neva:"cce"};   // her salon services line on the card (hello/)
+  amanda:"cce",lexi:"cce",alexis:"cce",joanna:"cce",neva:"cce",
+  adriana:"cce",sara:"cce",sarah:"cce"};   // Adriana and Sara added Nov 7 2026 (Alexandra)   // her salon services line on the card (hello/)
 function myCardUrl(){
   const full=String(myName()).trim(),first=full.split(/\s+/)[0]||"",legal=String((ME&&ME.legalName)||"").trim(),role=String((ME&&ME.role)||"").toLowerCase();
   const keys=[first,legal.split(/\s+/)[0]].map(n=>String(n||"").toLowerCase().replace(/[^a-z]/g,""));
