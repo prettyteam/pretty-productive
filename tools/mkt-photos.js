@@ -85,7 +85,11 @@
       var em=$('o-empty');if(!em.dataset.t)em.dataset.t=em.textContent;
       em.textContent=cur==='team'?'Each person gets their own album here as soon as they add a before and after in My Work in the team app.':mode==='videos'?'No videos in this album yet.':em.dataset.t;
       em.hidden=mine.length>0||kids.length>0;}
-    $('upbar').hidden=!ready||cur==='team'||mode==='videos';var vn=box('o-vnote','pdrophint','p',$('upbar'));vn.hidden=mode!=='videos';vn.textContent='Adding videos from this page is coming next. For now, videos from My Work in the team app show here.';if($('mk-sub'))$('mk-sub').hidden=!canSub();
+    $('upbar').hidden=!ready||cur==='team'||mode==='videos';var canV=!!(MK._state&&MK._state.vid);var vb=box('o-vbar','pupbar','div',$('upbar'));
+    if(!vb.dataset.on){vb.dataset.on=1;vb.innerHTML='<label class="pupbtn">Add Videos<input type="file" id="vpick" accept="video/*" multiple></label><p id="vmsg" role="status" aria-live="polite"></p>';
+      $('vpick').addEventListener('change',function(){var f=[].slice.call(this.files||[]);this.value='';if(f.length)uploadVids(f)});}
+    vb.hidden=!(ready&&mode==='videos'&&canV&&cur!=='team');
+    var vn=box('o-vnote','pdrophint','p',$('upbar'));vn.hidden=!(mode==='videos'&&(!canV||cur==='team'));vn.textContent=cur==='team'?'Videos from My Work in the team app show here.':'Adding videos from this page is coming next. For now, videos from My Work in the team app show here.';if($('mk-sub'))$('mk-sub').hidden=!canSub();
     MK.scan(grid);
   }
   function go(id,back){if(!back&&id!==cur)remember();cur=id;try{localStorage.setItem('album',id)}catch(e){}
@@ -291,6 +295,29 @@
     if(!fs.length){msg('Those were not photos. Drag pictures from the Photos app, your Desktop or a folder.');return;}
     var pp=document.getElementById('p-photos');if(pp&&pp.hidden){msg('Open Photos first, then drag them in.');return;}
     uploadAll(fs);});
+  // Add Videos (Alexandra, Nov 9 2026): each video goes straight to Drive (the way Wedding Day Favorites does it), then into
+  // the album that's open. One at a time, with the percent showing; keep the page open until it says done.
+  function vCover(file){return new Promise(function(res){var v=document.createElement('video'),u=URL.createObjectURL(file),done=false;
+    function fin(r){if(done)return;done=true;URL.revokeObjectURL(u);res(r)}v.muted=true;v.playsInline=true;v.preload='auto';
+    v.onloadeddata=function(){try{v.currentTime=Math.min(.5,(v.duration||1)/2)}catch(e){fin(null)}};
+    v.onseeked=function(){try{var k=Math.min(1,480/Math.max(v.videoWidth,v.videoHeight)),c=document.createElement('canvas');c.width=Math.round(v.videoWidth*k);c.height=Math.round(v.videoHeight*k);
+      c.getContext('2d').drawImage(v,0,0,c.width,c.height);fin({thumb:c.toDataURL('image/jpeg',.8).split(',')[1],w:v.videoWidth,h:v.videoHeight})}catch(e){fin(null)}};
+    v.onerror=function(){fin(null)};setTimeout(function(){fin(null)},8000);v.src=u;})}
+  function vSend(url,file,pct){return new Promise(function(res){try{var x=new XMLHttpRequest();x.open('PUT',url);x.setRequestHeader('Content-Type',file.type||'video/mp4');
+    x.upload.onprogress=function(e){if(e.lengthComputable)pct(Math.floor(100*e.loaded/e.total))};x.onload=x.onerror=x.onabort=x.ontimeout=function(){res()};x.send(file)}catch(e){res()}})}
+  function vB64(b){return new Promise(function(res,rej){var r=new FileReader();r.onload=function(){res(String(r.result).split(',')[1])};r.onerror=rej;r.readAsDataURL(b)})}
+  function uploadVids(files){
+    var album=cur,total=files.length,i=0,ok=0,say=function(t){var m=$('vmsg');if(m)m.textContent=t};busy=true;awake(true);
+    function one(f){var lead='Video '+(i+1)+' of '+total;say(lead+': getting it ready\u2026');var c0;
+      return vCover(f).then(function(c){c0=c||{};return MK.api('vidStart',{album:album,by:MK.who||'',video:{name:f.name,type:f.type||'video/mp4',size:f.size,thumb:c0.thumb||'',w:c0.w||0,h:c0.h||0}})})
+        .then(function(st){return vSend(st.url,f,function(p){say(lead+': '+p+'%. Keep this page open.')}).then(function(){return MK.api('vidCheck',{token:st.token})})
+          .then(function loop(r){if(r.done)return r;var off=r.next||0;say(lead+': '+Math.round(100*off/f.size)+'%. Keep this page open.');
+            var piece=f.slice(off,Math.min(f.size,off+16*1048576));return vB64(piece).then(function(d){return MK.api('vidChunk',{token:st.token,offset:off,data:d})}).then(loop)})})
+        .then(function(r){ok++;if(c0&&c0.thumb&&r.photo)MK._thumbs.set(r.photo.id,'data:image/jpeg;base64,'+c0.thumb)})
+        .catch(function(e){say(lead+' did not upload'+(e&&e.message==='too_big'?' because it is over 1 GB':'')+'. Try that one again.');return new Promise(function(r){setTimeout(r,2500)})});}
+    files.reduce(function(pr,f){return pr.then(function(){return one(f)}).then(function(){i++})},Promise.resolve())
+      .then(function(){busy=false;awake(false);say(ok+' video'+(ok===1?'':'s')+' added'+(ok<total?'. '+(total-ok)+' did not go through.':'.'));MK.refresh()});
+  }
   renderTabs();renderPhotos();
 
   MK.onState(function(s){
