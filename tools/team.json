@@ -171,26 +171,26 @@
     ]
   },
   "pk": {
-    "week": "Nov 1",
+    "week": "Nov 9",
     "groups": [
       {
         "name": "Hair Care",
         "brands": [
           {
             "name": "Oribe",
-            "title": "New for curly and coily hair",
-            "blurb": "Four new Moisture & Control products, plus three tips from the launch.",
-            "url": "https://behindthechair.com/articles/3-curly-and-coily-hair-tips-we-learned-at-oribes-new-launch/",
+            "title": "Bond Building, Oribe Style",
+            "blurb": "See the Hair Alchemy Elixir routine for stronger, more resilient strands.",
+            "url": "https://www.oribe.com/blogs/community/bond-building-in-the-big-apple",
             "cta": "Read",
-            "week": "Oct 17"
+            "week": "Nov 9"
           },
           {
             "name": "K18",
-            "title": "GLP-1s and hair shedding",
-            "blurb": "Many guests on GLP-1s notice shedding. Know why, and how to help.",
-            "url": "https://www.k18hair.com/blogs/consumer/how-do-glp-1s-impact-hair",
+            "title": "Using the K18 Mask Right",
+            "blurb": "Step-by-step mask tips so every guest gets the full repair.",
+            "url": "https://www.k18hair.com/blogs/consumer/how-to-use-the-k18-mask-correctly-step-by-step",
             "cta": "Read",
-            "week": "Nov 1"
+            "week": "Nov 9"
           },
           {
             "name": "Brazilian Blowout",
@@ -202,11 +202,11 @@
           },
           {
             "name": "Davines",
-            "title": "Heart of Glass Silkening Shampoo",
-            "blurb": "Brightens blonde and adds shine. A perfect pick after a glaze.",
-            "url": "https://behindthechair.com/product-announcements/heart-of-glass-silkening-shampoo/",
+            "title": "Naturaltech Overnight Scalp Serum",
+            "blurb": "Works while guests sleep for fuller-looking hair and less breakage.",
+            "url": "https://davinespro.com/en/international/blog/discover-our-new-naturaltech-energizing-overnight-serum",
             "cta": "Read",
-            "week": "Oct 17"
+            "week": "Nov 9"
           },
           {
             "name": "Rossano Ferretti",
@@ -252,11 +252,11 @@
         "brands": [
           {
             "name": "Taffeta Makeup",
-            "title": "7 looks guests want this fall",
-            "blurb": "Toasted monochrome and smudgy shadow are easy with our palettes.",
-            "url": "https://www.whowhatwear.com/beauty/makeup/fall-makeup-trends-2026",
+            "title": "10 Winter Makeup Trends",
+            "blurb": "Renaissance blush to icicle eyes: the looks guests will ask for.",
+            "url": "https://coveteur.com/winter-2026-makeup-trends",
             "cta": "Read",
-            "week": "Oct 17"
+            "week": "Nov 9"
           }
         ]
       }
@@ -271,7 +271,11 @@
       "https://shop.advancedderm.com/collections/cool-as-a-cucumber",
       "https://www.biologique-recherche.com/en-us/pages/choose-a-lotion-p50",
       "https://www.whowhatwear.com/beauty/makeup/fall-makeup-trends-2026",
-      "https://www.k18hair.com/blogs/consumer/how-do-glp-1s-impact-hair"
+      "https://www.k18hair.com/blogs/consumer/how-do-glp-1s-impact-hair",
+      "https://www.oribe.com/blogs/community/bond-building-in-the-big-apple",
+      "https://www.k18hair.com/blogs/consumer/how-to-use-the-k18-mask-correctly-step-by-step",
+      "https://davinespro.com/en/international/blog/discover-our-new-naturaltech-energizing-overnight-serum",
+      "https://coveteur.com/winter-2026-makeup-trends"
     ]
   },
   "promo": {
