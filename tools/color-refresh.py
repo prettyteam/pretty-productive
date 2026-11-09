@@ -14,7 +14,8 @@ Then the order list is rebuilt with Rose's par levels (tools/color-onhand.py ord
 
   python3 tools/color-refresh.py --inv inv.json --stock stock.json --orders orders.json [--now 2026-11-09T14:00]
     inv.json    the decrypted inventory doc ({updated, report:{ran, onHand, order, ...}, ...}); rewritten in place
-    stock.json  Stock Counts rows [[Updated, Name, App ID, Item ID, Item, On hand], ...] (header row is fine)
+    stock.json  Stock Counts rows [[Updated, Name, App ID, Item ID, Item, On hand], ...] (header row is fine),
+                or the desk script's ?stock=1 reply saved as-is
     orders.json On Order rows [[Ordered, Store, Order #, Item, Qty, Status, Updated, Email ID], ...]
 Prints a short summary. Seal and publish afterwards with tools/publish.mjs --inv inv.json (see the scheduled task).
 """
@@ -122,6 +123,10 @@ if __name__ == '__main__':
     o = a.parse_args()
     inv = json.load(open(o.inv))
     stock = json.load(open(o.stock))
+    if isinstance(stock, dict):   # the desk script's ?stock=1 reply: {ok, stock: {id: {n, by, at, ts}}}
+        st = stock.get('stock', stock)
+        stock = [[datetime.fromtimestamp(v['ts'] / 1000).strftime('%Y-%m-%dT%H:%M:%S') if v.get('ts') else v.get('at', ''),
+                  v.get('by', ''), '', k, '', v.get('n')] for k, v in st.items()]
     orders = json.load(open(o.orders)) if o.orders and os.path.exists(o.orders) else []
     now = datetime.fromisoformat(o.now) if o.now else None
     print(json.dumps(refresh(inv, stock, orders, now)))
