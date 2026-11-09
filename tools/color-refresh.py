@@ -17,7 +17,8 @@ Then the order list is rebuilt with Rose's par levels (tools/color-onhand.py ord
     stock.json  Stock Counts rows [[Updated, Name, App ID, Item ID, Item, On hand], ...] (header row is fine),
                 or the desk script's ?stock=1 reply saved as-is
     orders.json On Order rows [[Ordered, Store, Order #, Item, Qty, Status, Updated, Email ID], ...]
-Prints a short summary. Seal and publish afterwards with tools/publish.mjs --inv inv.json (see the scheduled task).
+Prints a short summary. Open the doc first with tools/inv-open.mjs and seal it again with tools/publish.mjs --inv inv.json.
+Safe to run any number of times: it always starts from the weekly report rows saved in report.base.
 """
 import argparse, json, math, os, re
 from datetime import datetime, timedelta
@@ -76,7 +77,11 @@ def refresh(inv, stock_rows, order_rows, now=None, year=2026):
     ran = co.when(str(R.get('ran', '')).replace(', %d' % year, ''), year) or co.when(R.get('ran', ''), year)
     ran = (ran or now).replace(hour=12, minute=0)
     counts = co.latest_counts(stock_rows, year)
-    rows = R.get('onHand') or []
+    # Always start from the weekly report's own rows (kept in R.base on the first refresh), so running daily never
+    # subtracts the same use twice or adds the same delivery twice. A new weekly report has a new 'ran' and resets it.
+    if not (R.get('base') or {}).get('ran') == R.get('ran'):
+        R['base'] = {'ran': R.get('ran'), 'onHand': R.get('onHand') or [], 'order': R.get('order') or []}
+    rows = R['base']['onHand']
     keys = [(*key_of(r[0]), r[1]) for r in rows]
     way, got = on_order(order_rows, keys, year, now)
     new_rows, items, fresh, added = [], [], 0, 0
@@ -102,7 +107,7 @@ def refresh(inv, stock_rows, order_rows, now=None, year=2026):
     for s in ('DePasquale', 'SalonCentric', 'CosmoProf'):
         if stores.get(s):
             order.append([s, ', '.join('%s ×%d' % (n, q) for n, q in stores[s]) + '. Skip anything already on order.'])
-    for s, x in R.get('order') or []:
+    for s, x in R['base']['order']:
         if s not in COLOR_STORES or (s == 'CosmoProf' and not stores.get('CosmoProf')):
             order.append([s, x])
     if recount:
