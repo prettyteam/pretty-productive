@@ -3736,11 +3736,20 @@ document.querySelectorAll(".card").forEach(card=>{
 });
 /* ---------- boot ---------- */
 const SKEY="tw-auth";
+/* Office and artist sign-ins live side by side (Alexandra, Nov 9 2026): Dom is in the office AND a bridal makeup artist.
+   ?as=office or ?as=artist picks which one opens (her team app's Taffeta Weddings and Freelance squares). */
+const SKEYS={office:"tw-auth:office",artist:"tw-auth:artist"};
+const AS=(new URLSearchParams(location.search).get("as")||"").toLowerCase();
+function authKind(a){return a&&a.member&&a.secret?"artist":a&&a.code?"office":""}
+function keepAuth(a){const k=authKind(a);try{if(k)localStorage.setItem(SKEYS[k],JSON.stringify(a));localStorage.setItem(SKEY,JSON.stringify(a))}catch(e){}}
 function readAuth(){
   const h=location.hash.match(/^#a\.([a-z0-9]+)\.([A-Z0-9]+)$/i);
-  if(h){const a={member:h[1],secret:h[2]};try{localStorage.setItem(SKEY,JSON.stringify(a))}catch(e){}return a}
+  if(h){const a={member:h[1],secret:h[2]};keepAuth(a);return a}
+  const get=k=>{try{return JSON.parse(localStorage.getItem(k)||"null")}catch(e){return null}};
+  let a=get(SKEY);
+  if(authKind(a)){try{if(!localStorage.getItem(SKEYS[authKind(a)]))localStorage.setItem(SKEYS[authKind(a)],JSON.stringify(a))}catch(e){}}
+  if(SKEYS[AS]){a=get(SKEYS[AS]);if(authKind(a)!==AS)a=null;else keepAuth(a)}
   // an artist's link stays in the address bar, so Add to Home Screen saves an app that opens signed in
-  let a=null;try{a=JSON.parse(localStorage.getItem(SKEY)||"null")}catch(e){}
   if(a&&a.member&&a.secret)history.replaceState(null,"",location.pathname+location.search+"#a."+a.member+"."+a.secret);
   return a
 }
@@ -3749,13 +3758,13 @@ function showSignIn(msg){
   $("#view-signin").hidden=false;$("#signOut").hidden=true;setStatus("");
   if(msg)$("#si-msg").textContent=msg;
 }
-function signOut(msg){AUTH=null;ROLE=null;document.body.classList.remove("tw-in","tw-home");canWrite=false;previews=[];pvSel=null;pvLoaded=false;pvThumbs={};$("#pv-detail").innerHTML="";try{localStorage.removeItem(SKEY)}catch(e){}showSignIn(msg)}
+function signOut(msg){ROLE=null;document.body.classList.remove("tw-in","tw-home");canWrite=false;previews=[];pvSel=null;pvLoaded=false;pvThumbs={};$("#pv-detail").innerHTML="";try{const k=authKind(AUTH);localStorage.removeItem(SKEY);if(k)localStorage.removeItem(SKEYS[k])}catch(e){}AUTH=null;showSignIn(msg)}
 $("#signOut").onclick=()=>{if(confirm(ROLE==="artist"?"Sign out? You'll need your link to get back in.":"Sign out? You'll need the office code to get back in."))signOut()};
 $("#si-go").onclick=async()=>{
   const code=$("#si-code").value.trim().toUpperCase();if(!code)return;
   $("#si-status").textContent="Checking…";
   AUTH={code};
-  try{await start();try{localStorage.setItem(SKEY,JSON.stringify(AUTH))}catch(e){}$("#si-status").textContent=""}
+  try{await start();keepAuth(AUTH);$("#si-status").textContent=""}
   catch(e){AUTH=null;$("#si-status").textContent=e&&e.code==="signin"?"That code didn't work.":"Couldn't reach the office. Try again."}
 };
 $("#si-code").addEventListener("keydown",e=>{if(e.key==="Enter")$("#si-go").click()});
@@ -3919,7 +3928,7 @@ fillForm();
 (async()=>{
   if(!API){showSignIn("This app isn't connected to the office sheet yet.");$("#si-go").disabled=true;return}
   AUTH=readAuth();
-  if(!AUTH){showSignIn();return}
+  if(!AUTH){showSignIn(AS==="artist"?"To open your artist side, open the private link the office texted you one time. After that, it opens right up.":AS==="office"?"Enter the office code one time. After that, it opens right up.":"");return}
   try{await start()}
   catch(e){
     if(e&&e.code==="signin")signOut(AUTH&&AUTH.member?"This link no longer works. Ask the office for a new one.":"Please sign in again.");

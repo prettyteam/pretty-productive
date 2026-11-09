@@ -312,6 +312,11 @@ body{padding-bottom:110px}
 /* white squares, charcoal thin inner line and titles (Alexandra, Oct 15 2026) */
 .hmenu .cgrid>button{background:#fff;color:#121212;border:1px solid #2b2a28;outline:1px solid #2b2a28;outline-offset:-6px;border-radius:0;aspect-ratio:1/1;font-family:var(--display);font-size:15.5px;line-height:1.2;padding:8px;letter-spacing:-.01em;cursor:pointer;display:flex;align-items:center;justify-content:center;text-align:center}
 .hmenu .cgrid>button[aria-expanded="true"]{outline-width:2px}
+/* My Apps squares (Dom, Nov 9 2026): bigger, a title and a small line of what is inside */
+.hmenu.hub .cgrid{grid-template-columns:repeat(2,minmax(0,160px));gap:10px}
+.hmenu.hub .cgrid>button{flex-direction:column;gap:10px;padding:14px}
+.hmenu.hub .ht{font-size:20px;line-height:1.15;text-wrap:balance}
+.hmenu.hub .hs{display:flex;flex-direction:column;gap:2px;font-family:var(--body);font-size:10px;letter-spacing:.14em;text-transform:uppercase;line-height:1.4;color:#555250}
 .hpages{grid-column:1/-1;display:flex;flex-direction:column;align-items:center;gap:2px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:8px 0;max-width:300px;width:100%;margin:0 auto}
 .hpages button{border:0;background:none;font-family:var(--display);font-size:17px;color:#555250;padding:8px;cursor:pointer}
 .navgrp button{flex-direction:row!important;justify-content:flex-start!important;font-family:var(--display);font-size:19px!important;letter-spacing:0!important;text-transform:none!important;color:var(--ink)!important;padding:8px 4px!important;text-align:left}
@@ -989,6 +994,7 @@ function homeView(){
   const out=[hello()];
   const jk=S.daily&&S.daily.joke, today=new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
   out.push(h('div',{class:'hgig'},h('span',{class:'lbl'},today),jk?h('p',{},jk):null));
+  if(isHub()&&HUB_OPEN!=='salon'){out.push(HUB_OPEN==='social'?hubSocial():hubMenu());return out}
   const hm=homeMenu(); if(hm) out.push(hm);
   if(st.clock) out.push(clockCard());
   if(st.clock&&HUB.fx) out.push(fixCard());
@@ -2018,6 +2024,31 @@ const ORDER_FULL=['rose','alexandra'], ORDER_SPA=['carolyn'];
 function orderMode(){const sl=((S.mine||{}).staff||{}).slug;return ORDER_FULL.includes(sl)?'full':ORDER_SPA.includes(sl)?'spa':''}
 /* Customer Cards (RX card + Home care) for people without daily goals (Alexandra, Oct 22-23 2026: every associate). */
 const CC_SLUGS=['adriana','kat','rose','ashley-b','amanda','isabella'];
+/* My Apps home (Alexandra, Nov 9 2026): Dom works in four places, so her Home opens on four big squares.
+   Salon & Spa = her usual team app Home. Taffeta Weddings = the Weddings App office side she shares with Alexandra.
+   Freelance = the Weddings App artist side (she is a bridal makeup artist too). Social Media = Marketing Proofs + Self Promotion. */
+const HUB_SLUGS=['dominique'], WED_URL='https://prettyteam.taffetadesign.com/weddings/';
+const HUB_SOCIAL=['mkt','promo'];
+function isHub(){return HUB_SLUGS.includes(((S.mine||{}).staff||{}).slug)}
+function openUrl(u){const w=window.open(u,'_blank','noopener');if(!w)location.href=u}
+function hubGo(x){HUB_OPEN=x;const d=((history.state&&history.state.d)||0)+1;try{history.pushState({pp:'home',d,hub:x},'',location.href)}catch(e){}
+  NAV_OPEN=false;S.tab='home';render();window.scrollTo(0,0)}
+let HUB_OPEN='';
+const HUB_TILES=[
+  ['salon','Salon & Spa',['Appointments','Time Off'],()=>hubGo('salon')],
+  ['wed','Taffeta Weddings',['Office','Pipeline'],()=>openUrl(WED_URL+'?as=office')],
+  ['free','Freelance',['My Weddings','Job Offers'],()=>openUrl(WED_URL+'?as=artist')],
+  ['social','Social Media',['Marketing Proofs','Self Promotion'],()=>hubGo('social')]];
+function hubMenu(){
+  return h('div',{class:'hmenu hub'},h('div',{class:'mhead'},'My Apps'),
+    h('div',{class:'cgrid'},HUB_TILES.map(([k,t,sub,go])=>h('button',{type:'button',onclick:go},
+      h('span',{class:'ht'},t),h('span',{class:'hs'},sub.map(x=>h('span',{},x)))))));
+}
+function hubSocial(){
+  const label=Object.fromEntries(staffTabs());
+  return h('div',{class:'hmenu'},h('div',{class:'mhead'},'Social Media'),
+    h('div',{class:'cgrid'},HUB_SOCIAL.filter(k=>label[k]).map(k=>h('button',{type:'button',onclick:()=>navGo(k)},label[k]))));
+}
 function openMkt(){const w=window.open(MKT_URL,'_blank','noopener');if(!w)location.href=MKT_URL}
 function staffTabs(){
   const p=S.mine||{}, st=p.staff||{}, t=[];
@@ -2056,7 +2087,8 @@ const DISCO="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBo
 function homeKey(){const t=staffTabs().map(x=>x[0]);return t.includes('home')?'home':t[0]}
 function navGo(k,fromHistory){
   if(k==='mkt'){NAV_OPEN=false;HOME_OPEN='';openMkt();render();return}
-  if(!fromHistory&&k!==S.tab){const d=((history.state&&history.state.d)||0)+1;try{history.pushState({pp:k,d},'',location.href)}catch(e){}}
+  const hubHome=!fromHistory&&k==='home'&&isHub()&&HUB_OPEN; if(hubHome) HUB_OPEN='';
+  if(!fromHistory&&(k!==S.tab||hubHome)){const d=((history.state&&history.state.d)||0)+1;try{history.pushState({pp:k,d,hub:HUB_OPEN},'',location.href)}catch(e){}}
   NAV_OPEN=false;S.tab=k;S.dayBack=false;store.set('pp-tab:'+ID,k);render();window.scrollTo(0,0);
   if(k==='home'||k==='off'||k==='inv'||k==='skin'||k==='growth'||k==='mph'||k==='cards'||k==='me'||k==='prices'||k==='rx'||k==='tip'||k==='promo'||k==='ask')hubGet();
 }
@@ -2072,7 +2104,7 @@ let HOME_OPEN='';
 function homeMenu(){
   const tabs=staffTabs(); if(tabs.length<2) return null;
   const {label,groups}=navGroups(tabs);
-  const gs=groups.map(([g,keys])=>[g,keys.filter(k=>k!=='home')]).filter(([,k])=>k.length);
+  const gs=groups.map(([g,keys])=>[g,keys.filter(k=>k!=='home'&&!(isHub()&&HUB_SOCIAL.includes(k)))]).filter(([,k])=>k.length);
   const pages=g=>{const o=gs.find(([x])=>x===g);return h('div',{class:'hpages'},o[1].map(k=>h('button',{type:'button',onclick:()=>{HOME_OPEN='';navGo(k)}},label[k])))};
   /* the pages open right under the row you tapped, and scroll into view (Alexandra, Oct 15 2026: "nothing happens") */
   const cells=[];
@@ -2085,19 +2117,19 @@ function homeMenu(){
   });
   return h('div',{class:'hmenu'},h('div',{class:'mhead'},'Menu'),h('div',{class:'cgrid'},cells));
 }
-addEventListener('popstate',e=>{const st=e.state;if(st&&st.pp&&EDITION==='stylist'&&S.mine){HOME_OPEN='';navGo(st.pp,true)}});
+addEventListener('popstate',e=>{const st=e.state;if(st&&st.pp&&EDITION==='stylist'&&S.mine){HOME_OPEN='';HUB_OPEN=st.hub||'';navGo(st.pp,true)}});
 /* Back on Home leaves for Pretty Life when she came from there; the logo goes Home (g/life.js, Oct 24 2026) */
 const ppOut=()=>!!(window.PPLife&&PPLife.canOut());
 function staffNav(){
   const tabs=staffTabs(); if(tabs.length<2) return null;
-  if(window.PPLife)PPLife.app={atHome:()=>S.tab===homeKey(),home:()=>{HOME_OPEN='';navGo(homeKey())}};
+  if(window.PPLife)PPLife.app={atHome:()=>S.tab===homeKey()&&!(isHub()&&HUB_OPEN),home:()=>{HOME_OPEN='';navGo(homeKey())}};
   const {label,groups}=navGroups(tabs), cur=label[S.tab]||'';
   const sheet=NAV_OPEN?h('div',{class:'navsheet',id:'navsheet',role:'menu'},groups.map(([g,keys])=>h('div',{class:'navgrp'},
     h('span',{class:'lbl'},g),keys.map(k=>h('button',{type:'button',role:'menuitem','aria-current':S.tab===k?'page':null,onclick:()=>navGo(k)},label[k]))))):null;
   const scrim=NAV_OPEN?h('div',{class:'navscrim',onclick:()=>{NAV_OPEN=false;render()}}):null;
   return h('nav',{class:'nav menu','aria-label':'Sections'},scrim,sheet,
     h('div',{class:'navrow'},
-      (S.tab!==homeKey()||(history.state&&history.state.d>0)||ppOut())?h('button',{type:'button',class:'navback',onclick:()=>{if(history.state&&history.state.d>0)history.back();else if(S.tab!==homeKey())navGo(homeKey());else PPLife.out()}},'‹ Back'):h('span',{class:'navback'}),
+      (S.tab!==homeKey()||(history.state&&history.state.d>0)||ppOut()||(isHub()&&HUB_OPEN))?h('button',{type:'button',class:'navback',onclick:()=>{if(history.state&&history.state.d>0)history.back();else if(S.tab!==homeKey())navGo(homeKey());else if(isHub()&&HUB_OPEN){HUB_OPEN='';render()}else PPLife.out()}},'‹ Back'):h('span',{class:'navback'}),
       h('button',{type:'button',class:'navhome','aria-label':'Home',title:'Home','aria-current':S.tab===homeKey()?'page':null,onclick:()=>{HOME_OPEN='';navGo(homeKey())}},h('img',{src:DISCO,alt:''})),
       h('button',{type:'button',class:'navbtn','aria-expanded':String(NAV_OPEN),'aria-controls':'navsheet',onclick:()=>{NAV_OPEN=!NAV_OPEN;render()}},
         h('span',{class:'navlbl'},NAV_OPEN?'Close ✕':'Menu ▾'))));
