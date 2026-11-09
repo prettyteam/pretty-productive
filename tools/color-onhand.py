@@ -29,7 +29,7 @@ norm = lambda t: re.sub(r'[^a-z0-9]', '', str(t or '').lower())
 
 def when(s, year):
     s = str(s or '').strip()
-    for f in ('%a %b %d, %I:%M %p', '%a %b %d %Y, %I:%M %p', '%Y-%m-%dT%H:%M:%S', '%Y-%m-%d %H:%M:%S', '%Y-%m-%d', '%m/%d/%Y %H:%M:%S', '%m/%d/%Y'):
+    for f in ('%a %b %d, %I:%M %p', '%a %b %d %Y, %I:%M %p', '%Y-%m-%dT%H:%M:%S', '%Y-%m-%d %H:%M:%S', '%Y-%m-%d', '%m/%d/%Y %H:%M:%S', '%m/%d/%Y', '%b %d, %Y', '%B %d, %Y', '%b %d'):
         try:
             d = datetime.strptime(s[:19] if 'T' in s else s, f)
             return d.replace(year=year) if '%Y' not in f else d
