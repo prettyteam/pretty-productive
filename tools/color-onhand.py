@@ -15,6 +15,11 @@ R.order and R.prices are not touched here.
     keys       = (brand, line, shade) tuples from SureTint
     used_since = f(key, datetime) -> units weighed after that time
     pace       = f(key) -> units per week (last 4 weeks)
+  Deliveries (Alexandra, Nov 9 2026: "the deliveries were already made a rule"): color that came in AFTER the count is
+  added back, so restocked shades stop showing on the order list:
+    got = co.received_from_orders(order_rows, keys, year=2026)   # order_rows = On Order sheet or the info@ order emails:
+                                                                  # [Ordered, Store, Order #, Item, Qty, Status, Updated, ...]
+    R['onHand'] = co.on_hand(keys, counts, used_since, pace, got)
 """
 import math, re
 from datetime import datetime
@@ -87,7 +92,47 @@ def alias_target(key, keys):
     return next((k for k in keys if k[1] == 'Colorance Canister' and k[2].split(' ')[0] == '6N'), None)
 
 
-def on_hand(keys, counts, used_since, pace):
+def received_from_orders(rows, keys, year=2026):
+    """f(key, datetime) -> units delivered after that time.
+    A row counts once its Status says Delivered/Received, or 'arrives <date>' with that date passed; it is dated by
+    the arrival date, else Updated, else Ordered. Items match a key by the order-list name ('Shades EQ 09V') or the
+    full shade name, letters and digits only. Cancelled rows are skipped."""
+    names = {}
+    for k in keys:
+        for nm in (item_name(k), k[1] + ' ' + k[2], k[0] + ' ' + k[1] + ' ' + k[2]):
+            names.setdefault(norm(nm), k)
+    now = datetime.now()
+    got = []
+    for r in rows or []:
+        r = list(r) + [''] * 8
+        st = str(r[5])
+        if re.search(r'cancel', st, re.I):
+            continue
+        m = re.search(r'arrive[sd]?\s+(\w{3}\w*\s+\d{1,2})', st, re.I)
+        arr = None
+        if m:
+            for f in ('%b %d', '%B %d'):
+                try:
+                    arr = datetime.strptime(m.group(1), f).replace(year=year)
+                    break
+                except ValueError:
+                    pass
+        done = re.search(r'deliver|receiv', st, re.I) or (arr and arr <= now)
+        if not done:
+            continue
+        d = arr or when(r[6], year) or when(r[0], year)
+        it = norm(r[3])
+        k = names.get(it) or next((v for n, v in names.items() if len(n) > 6 and (n in it or it in n)), None)
+        try:
+            q = float(r[4] or 1)
+        except ValueError:
+            q = 1
+        if k and d:
+            got.append((k, d, q))
+    return lambda key, since: sum(q for k, d, q in got if k == key and d > since)
+
+
+def on_hand(keys, counts, used_since, pace, received_since=None):
     """[line, shade, counted, used since, on hand, per week, weeks left, order] sorted by weeks left (same shape as before).
     Color Renew is left off; 6N@GB usage is added to Colorance 6N."""
     keys = [k for k in keys if is_alias(k) or not unused(*k)]
@@ -108,7 +153,7 @@ def on_hand(keys, counts, used_since, pace):
         c, d, _ = st
         used = (used_since(k, d) or 0) + extra.get(k, [0, 0])[0]
         p = (pace(k) or 0) + extra.get(k, [0, 0])[1]
-        oh = round(c - used, 2)
+        oh = round(c - used + ((received_since(k, d) or 0) if received_since else 0), 2)
         wl = round(oh / p, 1) if p > 0 else None
         need = max(0, math.ceil(6 * p - oh)) if wl is not None and wl < 3 else 0
         rows.append([k[0] + ' ' + k[1], k[2], c, round(used, 2), oh, round(p, 2), wl, need])
