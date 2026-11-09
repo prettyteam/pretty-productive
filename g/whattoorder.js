@@ -110,7 +110,12 @@
     /* Tap Count to type what's on the shelf (Alexandra, Nov 2 2026). Saved to the Stock Counts tab through the host app's
        WhatToOrder.saveCount(id, item, n); o.counts = {id: {n, at}} shows the last count. */
     const C=o.counts||{};
-    const crow=(name,detail,ids)=>{const id='c:'+norm(name),c=(ids||[id]).map(k=>C[k]).filter(Boolean)[0];
+    /* Nov 9 2026: Rose's Backbar counts ('b:Brand|Line|Shade', from her Inventory tab) count here too, and the newest count wins (ts from the script) */
+    const BLBL=(b,l)=>b==='Redken'?'Shades EQ':/^Colorance Canister$/.test(l)?'Colorance':/^Topchic Canister/.test(l)?'Topchic':l==='Fast Color 10'?'Alter Ego 10-minute':/blondor/i.test(l+b)?'Wella Blondor':'';
+    const bIds={};Object.keys(C).forEach(k=>{if(k.slice(0,2)!=='b:')return;const [b,l,sh]=k.slice(2).split('|');const lb=BLBL(b,l||'');if(!lb||!sh)return;
+      const key=shadeOf(lb==='Wella Blondor'?'Wella Blondor':lb+' '+sh.split(' ')[0]).key;(bIds[key]||=[]).push(k)});
+    const crow=(name,detail,ids)=>{const id='c:'+norm(name),all=(ids||[id]).concat(bIds[shadeOf(name).key]||[]),
+      c=all.map(k=>C[k]).filter(Boolean).sort((a,b)=>(+b.ts||0)-(+a.ts||0))[0];
       return '<div class="wr wc" data-cid="'+esc(id)+'" data-citem="'+esc(name)+'"><span><b>'+esc(name)+'</b><small>'+esc(detail)+'</small>'
         +'<small class="cdone"'+(c?'':' hidden')+'>'+(c?'Counted '+esc(c.n)+(c.at?' · '+esc(c.at):''):'')+'</small></span>'
         +'<button type="button" class="q b wcbtn"'+(o.canCount?'':' disabled')+'>'+(c?'Recount':'Count')+'</button>'
