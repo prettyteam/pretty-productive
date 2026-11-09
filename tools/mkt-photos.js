@@ -1,4 +1,4 @@
-/* Photos tab (prettyteam version, Oct 17 2026): albums and photos added from phones are saved in Google Drive;
+/* Photos tab (prettyteam version, Oct 17 2026; brand albums Nov 9): albums and photos added from phones are saved in Google Drive;
    the photos added on the Claude version came along and stay in their albums. */
 (function(){
   var BUILT=[{id:'branding',name:'Hi Pretty Branding Shoot'},{id:'bridal',name:'Taffeta Bridal'},{id:'salon',name:'Taffeta Salon & Spa'},{id:'team',name:'Employee Content'}];
