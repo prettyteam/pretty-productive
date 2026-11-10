@@ -86,8 +86,8 @@
       em.textContent=cur==='team'?'Each person gets their own album here as soon as they add a before and after in My Work in the team app.':mode==='videos'?'No videos in this album yet.':em.dataset.t;
       em.hidden=mine.length>0||kids.length>0;}
     $('upbar').hidden=!ready||cur==='team'||mode==='videos';var canV=!!(MK._state&&MK._state.vid);var vb=box('o-vbar','pupbar','div',$('upbar'));
-    if(!vb.dataset.on){vb.dataset.on=1;vb.innerHTML='<label class="pupbtn">Add Videos<input type="file" id="vpick" accept="video/*" multiple></label><p id="vmsg" role="status" aria-live="polite"></p>';
-      $('vpick').addEventListener('change',function(){var f=[].slice.call(this.files||[]);this.value='';if(f.length)uploadVids(f)});}
+    if(!vb.dataset.on){vb.dataset.on=1;vb.innerHTML='<label class="pupbtn">Add Photos &amp; Videos<input type="file" id="vpick" accept="image/*,video/*" multiple></label><p class="pdrophint">Pick as many as you want at once. On a computer, you can also drag a whole group of photos and videos onto this page. Videos show here. Photos go to this album on the Photos tab.</p><p id="vmsg" role="status" aria-live="polite"></p>';
+      $('vpick').addEventListener('change',function(){var f=[].slice.call(this.files||[]);this.value='';if(f.length)addMixed(f)});}
     vb.hidden=!(ready&&mode==='videos'&&canV&&cur!=='team');
     var vn=box('o-vnote','pdrophint','p',$('upbar'));vn.hidden=!(mode==='videos'&&(!canV||cur==='team'));vn.textContent=cur==='team'?'Videos from My Work in the team app show here.':'Adding videos from this page is coming next. For now, videos from My Work in the team app show here.';if($('mk-sub'))$('mk-sub').hidden=!canSub();
     MK.scan(grid);
@@ -103,7 +103,7 @@
     var par=albumOf(cur);if(!par)return;var name=(prompt('Name for the new album inside '+par.name+' (for example: Weddings)')||'').trim();if(!name)return;
     MK.api('album',{name:name.slice(0,60),parent:par.id}).then(function(r){MK.applyState(r);msg('Added '+name.slice(0,60)+' inside '+par.name+'.')}).catch(function(){msg('Could not add that album. Try again.')});
   }
-  function msg(t){$('upmsg').textContent=t}
+  function msg(t){$('upmsg').textContent=t;var m=$('vmsg');if(m&&mode==='videos')m.textContent=t}
 
   // Photo prep: normal keeps up to 2048px (Instagram tops out at 1440, and smaller goes up faster over a phone's data, Oct 24 2026);
   // full size keeps the original when it can.
@@ -187,7 +187,16 @@
       flushLand();msg(said);$('pick').value='';
       if(MK._state&&MK._state.sort&&added.length&&!isKid(album))autoSort(added,said);else{MK.refresh();next()}});
   }
-  function next(){if(!busy&&waiting.length)uploadAll(waiting.splice(0))
+  // Photos and videos together (Alexandra, Nov 10 2026): one pick or one drag can hold both. Photos go up first (they are quick),
+  // then the videos one by one, all into the album that's open. More added while it works wait their turn.
+  var vwait=[];
+  function isVid(f){return /^video\//.test(f.type)||/\.(mov|mp4|m4v|webm|avi)$/i.test(f.name)}
+  function isImg(f){return /^image\//.test(f.type)||/\.(jpe?g|png|webp|heic|heif)$/i.test(f.name)}
+  function addMixed(files){var im=files.filter(function(f){return !isVid(f)&&isImg(f)}),vd=files.filter(isVid);
+    if(!im.length&&!vd.length){msg('Those were not photos or videos.');return}
+    if(vd.length){vwait=vwait.concat(vd);if(busy)msg('Got '+vd.length+' more video'+(vd.length===1?'':'s')+'. They go up as soon as this batch is done.')}
+    if(im.length)uploadAll(im);else next();}
+  function next(){if(busy)return;if(waiting.length)uploadAll(waiting.splice(0));else if(vwait.length)uploadVids(vwait.splice(0))
   }
 
   // Lightbox works on whichever album is showing, always at full size.
@@ -241,7 +250,7 @@
     for(var i=0;i<ids.length;i+=12)b.push(ids.slice(i,i+12));
     b.reduce(function(pr,x){return pr.then(function(){return MK.api('sort',{ids:x}).then(function(r){moves=moves.concat(r.moves||[]);MK.applyState(r)}).catch(function(e){console.warn(e)})
       .then(function(){n+=x.length;if(b.length>1)msg(said+' Sorting: '+n+' of '+ids.length+' checked, '+moves.length+' moved so far. Keep this page open.')})})},Promise.resolve())
-      .then(function(){busy=false;awake(false);if(waiting.length){msg(said+(moves.length?' Moved '+moves.length+' to a better album.':''));next();return}
+      .then(function(){busy=false;awake(false);setTimeout(next,0);if(waiting.length){msg(said+(moves.length?' Moved '+moves.length+' to a better album.':''));next();return}
         if(!moves.length){msg(said+' They all look like they belong here.');return}
         var by={};moves.forEach(function(m){by[m.to]=(by[m.to]||0)+1});
         msg(said+' Moved '+Object.keys(by).map(function(k){var a=albumOf(k);return by[k]+' to '+(a?a.name:'another album')}).join(', ')+'. ');
@@ -291,9 +300,11 @@
   document.addEventListener('dragleave',function(e){if(!onPhotos())return;depth=Math.max(0,depth-1);if(!depth)drop.hidden=true;});
   document.addEventListener('drop',function(e){if(!onPhotos())return;e.preventDefault();depth=0;drop.hidden=true;
     if(!hasFiles(e)||!(e.dataTransfer.files||[]).length){msg('Chrome could not take those straight from Photos. Drag them to your Desktop first, then from the Desktop onto this page.');return;}
-    var fs=[].filter.call(e.dataTransfer.files||[],function(f){return /^image\//.test(f.type)||/\.(jpe?g|png|webp|heic|heif)$/i.test(f.name)});
+    var all=[].slice.call(e.dataTransfer.files||[]),canV=!!(MK._state&&MK._state.vid);
+    if(cur==='team'){msg('Open one of the brand albums first, then drag them in.');return;}
+    if(canV){addMixed(all);return;}
+    var fs=all.filter(isImg);
     if(!fs.length){msg('Those were not photos. Drag pictures from the Photos app, your Desktop or a folder.');return;}
-    var pp=document.getElementById('p-photos');if(pp&&pp.hidden){msg('Open Photos first, then drag them in.');return;}
     uploadAll(fs);});
   // Add Videos (Alexandra, Nov 9 2026): each video goes straight to Drive (the way Wedding Day Favorites does it), then into
   // the album that's open. One at a time, with the percent showing; keep the page open until it says done.
@@ -307,7 +318,8 @@
     x.upload.onprogress=function(e){if(e.lengthComputable)pct(Math.floor(100*e.loaded/e.total))};x.onload=x.onerror=x.onabort=x.ontimeout=function(){res()};x.send(file)}catch(e){res()}})}
   function vB64(b){return new Promise(function(res,rej){var r=new FileReader();r.onload=function(){res(String(r.result).split(',')[1])};r.onerror=rej;r.readAsDataURL(b)})}
   function uploadVids(files){
-    var album=cur,total=files.length,i=0,ok=0,say=function(t){var m=$('vmsg');if(m)m.textContent=t};busy=true;awake(true);
+    if(busy){vwait=vwait.concat(files);return}
+    var album=cur,total=files.length,i=0,ok=0,say=function(t){var m=$('vmsg');if(m)m.textContent=t;if(mode!=='videos')$('upmsg').textContent=t};busy=true;awake(true);
     function one(f){var lead='Video '+(i+1)+' of '+total;say(lead+': getting it ready\u2026');var c0;
       return vCover(f).then(function(c){c0=c||{};return MK.api('vidStart',{album:album,by:MK.who||'',video:{name:f.name,type:f.type||'video/mp4',size:f.size,thumb:c0.thumb||'',w:c0.w||0,h:c0.h||0}})})
         .then(function(st){return vSend(st.url,f,function(p){say(lead+': '+p+'%. Keep this page open.')}).then(function(){return MK.api('vidCheck',{token:st.token})})
@@ -316,7 +328,7 @@
         .then(function(r){ok++;if(c0&&c0.thumb&&r.photo)MK._thumbs.set(r.photo.id,'data:image/jpeg;base64,'+c0.thumb)})
         .catch(function(e){say(lead+' did not upload'+(e&&e.message==='too_big'?' because it is over 1 GB':'')+'. Try that one again.');return new Promise(function(r){setTimeout(r,2500)})});}
     files.reduce(function(pr,f){return pr.then(function(){return one(f)}).then(function(){i++})},Promise.resolve())
-      .then(function(){busy=false;awake(false);say(ok+' video'+(ok===1?'':'s')+' added'+(ok<total?'. '+(total-ok)+' did not go through.':'.'));MK.refresh()});
+      .then(function(){busy=false;awake(false);say(ok+' video'+(ok===1?'':'s')+' added'+(ok<total?'. '+(total-ok)+' did not go through.':'.'));MK.refresh();next()});
   }
   renderTabs();renderPhotos();
 
