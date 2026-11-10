@@ -302,6 +302,9 @@
     if(!hasFiles(e)||!(e.dataTransfer.files||[]).length){msg('Chrome could not take those straight from Photos. Drag them to your Desktop first, then from the Desktop onto this page.');return;}
     var all=[].slice.call(e.dataTransfer.files||[]),canV=!!(MK._state&&MK._state.vid);
     if(cur==='team'){msg('Open one of the brand albums first, then drag them in.');return;}
+    // Mac Photos app (Nov 10 2026): dragging videos out of it hands over a still picture of each one, not the video.
+    // On the Videos tab, a drop with no videos in it is stopped so stills don't fill the Photos tab by mistake.
+    if(canV&&mode==='videos'&&all.length&&!all.some(isVid)){var vm=$('vmsg');if(vm)vm.textContent='Those came in as pictures, not videos. The Photos app does that when you drag videos out of it. Drag the videos to your Desktop first, then from the Desktop onto this page. Nothing was added.';return;}
     if(canV){addMixed(all);return;}
     var fs=all.filter(isImg);
     if(!fs.length){msg('Those were not photos. Drag pictures from the Photos app, your Desktop or a folder.');return;}
