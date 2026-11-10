@@ -189,7 +189,9 @@ def order_qty(key, oh, pace, counted=None):
         return None
     par = par_of(key)
     if par is not None and (counted or pace > 0):
-        return max(0, math.ceil(round(par - oh, 2)))
+        # less than a quarter can used since the count doesn't buy another can (Nov 10 2026: Rose counted 1 of a
+        # par-2 shade and the list said order 2 because a sliver had been used since)
+        return max(0, math.ceil(round(par - oh - 0.25, 2)))
     wl = oh / pace if pace > 0 else None
     return max(0, math.ceil(round(6 * pace - oh, 2))) if par is None and wl is not None and wl < 3 else 0
 

@@ -56,7 +56,7 @@ def on_order(rows, keys, year, now):
         m = re.search(r'arrive[sd]?\s+(\w{3}\w*\s+\d{1,2})', st, re.I)
         if m:
             try:
-                if datetime.strptime(m.group(1)[:3] + ' ' + m.group(1).split()[-1], '%b %d').replace(year=year) <= now:
+                if datetime.strptime('%d %s %s' % (year, m.group(1)[:3], m.group(1).split()[-1]), '%Y %b %d') <= now:
                     continue   # past its arrival date: counted as received instead
             except ValueError:
                 pass
