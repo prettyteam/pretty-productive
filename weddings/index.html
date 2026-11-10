@@ -2045,15 +2045,13 @@ async function wxPlace(loc){
   const key="tw-geo2:"+loc.toLowerCase();try{const c=JSON.parse(lsGet(key)||"null");if(c)return c}catch(e){}
   const low=wxNorm(loc),parts=loc.split(",").map(x=>x.trim()).filter(Boolean),qs=[loc];
   for(let i=1;i<parts.length;i++)qs.push(parts.slice(i).join(", "));
-  let first=null;
   for(const q of [...new Set(qs)]){
     try{const j=await (await fetch("https://photon.komoot.io/api/?limit=8&lang=en&lat=39.636&lon=-74.802&q="+encodeURIComponent(q))).json();
-      const us=(j.features||[]).filter(f=>(f.properties||{}).countrycode==="US");first=first||us[0]||null;
+      const us=(j.features||[]).filter(f=>(f.properties||{}).countrycode==="US");
       const f=us.find(f=>wxInTown(f,low,q!==loc));   // on the town-only searches, the town itself counts
       if(f){const g={lat:f.geometry.coordinates[1],lon:f.geometry.coordinates[0],town:addrParts(f).city||(f.properties||{}).name};lsSet(key,JSON.stringify(g));return g}}catch(e){}
   }
-  if(first&&parts.length===1){const g={lat:first.geometry.coordinates[1],lon:first.geometry.coordinates[0],town:addrParts(first).city};lsSet(key,JSON.stringify(g));return g}   // no town written: best match
-  return null;
+  return null;   // no town written, or nothing in that town: no forecast rather than another town's weather (Alexandra, Nov 10 2026)
 }
 let wxBusy=null;
 async function loadWx(){
