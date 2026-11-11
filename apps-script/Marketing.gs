@@ -27,13 +27,16 @@ function mktStateFile_() {
 }
 function mktRead_() { const s = JSON.parse(mktStateFile_().getBlob().getDataAsString() || '{}'); s.edits = s.edits || { text: {}, ok: {} }; s.edits.text = s.edits.text || {}; s.edits.ok = s.edits.ok || {}; s.albums = s.albums || []; s.photos = s.photos || []; s.hidden = s.hidden || []; return s; }
 function mktWrite_(s) { s.rev = (s.rev || 0) + 1; s.updatedAt = new Date().toISOString(); mktStateFile_().setContent(JSON.stringify(s)); return s; }
-function mktPublic_(s) { return { ok: true, edits: s.edits, albums: s.albums, photos: s.photos.map(p => ({ id: p.id, album: p.album, w: p.w, h: p.h, addedAt: p.addedAt, by: p.by || '', video: p.kind === 'video' || undefined, vf: p.kind === 'video' ? p.f : undefined, wid: p.wid || undefined })), hidden: s.hidden, rev: s.rev || 0, sort: !!mktSortKey_() }; }
+function mktPublic_(s) { return { ok: true, edits: s.edits, albums: s.albums, photos: s.photos.map(p => ({ id: p.id, album: p.album, w: p.w, h: p.h, addedAt: p.addedAt, by: p.by || '', video: p.kind === 'video' || undefined, vf: p.kind === 'video' ? p.f : undefined, wid: p.wid || undefined })), hidden: s.hidden, rev: s.rev || 0, sort: !!mktSortKey_(), vid: true }; }
 
 function mkt_(d) {
   if (mktHex_(String(d.code || '').replace(/\s+/g, '')) !== MKT_CODE_SHA) return { ok: false, error: 'signin' };
   if (d.op === 'thumbs') return mktThumbs_(mktRead_(), d);   // read-only, so it doesn't queue behind uploads (Oct 23 2026)
   if (d.op === 'addPhoto') return mktAddPhoto_(d);            // saves to Drive first, takes the lock only to list it (Oct 24 2026)
   if (d.op === 'sort') return mktSort_(d);                    // asks Claude first, takes the lock only to save the moves
+  if (d.op === 'vidStart') return mktVidStart_(d);            // Videos tab (Nov 9 2026): opens a Drive upload for one video
+  if (d.op === 'vidCheck') return mktVidCheck_(d);            // asks Drive how much of the video arrived
+  if (d.op === 'vidChunk') return mktVidChunk_(d);            // the rest of the video, in pieces, if the straight send fell short
   if (d.op === 'sortKey') {                                    // one time: the Claude key for auto-sort, kept in Script Properties
     const k = String(d.key || '').trim();
     if (!/^sk-ant-[\w-]{20,}$/.test(k)) return { ok: false, error: 'key' };
@@ -182,4 +185,50 @@ function mktSort_(d) {
     if (Object.keys(picks).length) mktWrite_(s);
     return Object.assign(mktPublic_(s), { moves: moves });
   } finally { lock.releaseLock(); }
+}
+
+// Videos tab (Alexandra, Nov 9 2026): videos go into any Marketing Proofs album. The page sends the whole video straight to
+// a Drive upload link (favUploadUrl_ in Favorites.gs); vidCheck asks Drive how much arrived and vidChunk sends the rest in pieces.
+// The video is listed only once Drive has all of it. Pieces run outside the script lock.
+function mktVidStart_(d) {
+  const v = d.video || {}, album = String(d.album || '').slice(0, 40);
+  if (!album || !(v.size > 0)) return { ok: false, error: 'bad_request' };
+  if (v.size > 1024 * 1048576) return { ok: false, error: 'too_big', message: 'That video is over 1 GB. Trim it on your phone first.' };
+  const folder = mktFolder_(), id = 'v' + Utilities.getUuid().replace(/-/g, '').slice(0, 14);
+  const type = /^video\/[\w.+-]+$/.test(v.type || '') ? v.type : 'video/mp4';
+  const ext = (String(v.name || '').match(/\.(\w{2,4})$/) || [, type === 'video/quicktime' ? 'mov' : 'mp4'])[1].toLowerCase();
+  const url = favUploadUrl_({ name: id + '.' + ext, mimeType: type, parents: [folder.getId()] }, type, v.size);
+  if (!url) return { ok: false, error: 'server', message: 'Drive did not take the video. Try again.' };
+  const t = v.thumb ? folder.createFile(Utilities.newBlob(Utilities.base64Decode(v.thumb), 'image/jpeg', id + ' (cover).jpg')).getId() : '';
+  const token = Utilities.getUuid();
+  CacheService.getScriptCache().put('mktv:' + token, JSON.stringify({ url: url, size: v.size, type: type, id: id, album: album, t: t, w: Number(v.w) || 0, h: Number(v.h) || 0, by: String(d.by || '').slice(0, 40) }), 21600);
+  return { ok: true, token: token, url: url };
+}
+function mktVidCheck_(d) {
+  const key = 'mktv:' + String(d.token || ''), raw = CacheService.getScriptCache().get(key);
+  if (!raw) return { ok: false, error: 'expired', message: 'The upload timed out. Add the video again.' };
+  const u = JSON.parse(raw);
+  const r = UrlFetchApp.fetch(u.url, { method: 'put', muteHttpExceptions: true, headers: { 'Content-Range': 'bytes */' + u.size } });
+  const code = r.getResponseCode();
+  if (code === 308) { const m = String(r.getHeaders().Range || r.getHeaders().range || '').match(/-(\d+)$/); return { ok: true, next: m ? Number(m[1]) + 1 : 0 }; }
+  if (code !== 200 && code !== 201) return { ok: false, error: 'server', message: 'Drive did not take the video. Try again.' };
+  return mktVidSaved_(key, u, JSON.parse(r.getContentText()).id);
+}
+function mktVidChunk_(d) {
+  const key = 'mktv:' + String(d.token || ''), raw = CacheService.getScriptCache().get(key);
+  if (!raw) return { ok: false, error: 'expired', message: 'The upload timed out. Add the video again.' };
+  const u = JSON.parse(raw);
+  const bytes = Utilities.base64Decode(String(d.data || '')), start = Number(d.offset) || 0, end = start + bytes.length - 1;
+  const r = UrlFetchApp.fetch(u.url, { method: 'put', contentType: u.type, payload: bytes, muteHttpExceptions: true, headers: { 'Content-Range': 'bytes ' + start + '-' + end + '/' + u.size } });
+  const code = r.getResponseCode();
+  if (code === 308) { const m = String(r.getHeaders().Range || r.getHeaders().range || '').match(/-(\d+)$/); return { ok: true, next: m ? Number(m[1]) + 1 : end + 1 }; }
+  if (code !== 200 && code !== 201) return { ok: false, error: 'server', message: 'A piece of the video did not go through. Try again.' };
+  return mktVidSaved_(key, u, JSON.parse(r.getContentText()).id);
+}
+function mktVidSaved_(key, u, fileId) {
+  CacheService.getScriptCache().remove(key);
+  const p = { id: u.id, album: u.album, kind: 'video', w: u.w, h: u.h, addedAt: Date.now(), by: u.by, f: fileId, t: u.t || fileId, sorted: 1 };
+  const lock = LockService.getScriptLock();
+  try { lock.waitLock(30000); const s = mktRead_(); s.photos.unshift(p); mktWrite_(s); } finally { lock.releaseLock(); }
+  return { ok: true, done: true, photo: { id: p.id, album: p.album, w: p.w, h: p.h, addedAt: p.addedAt, video: true, vf: p.f } };
 }

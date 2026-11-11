@@ -110,11 +110,16 @@
     /* Tap Count to type what's on the shelf (Alexandra, Nov 2 2026). Saved to the Stock Counts tab through the host app's
        WhatToOrder.saveCount(id, item, n); o.counts = {id: {n, at}} shows the last count. */
     const C=o.counts||{};
-    const crow=(name,detail,ids)=>{const id='c:'+norm(name),c=(ids||[id]).map(k=>C[k]).filter(Boolean)[0];
+    /* Nov 9 2026: Rose's Backbar counts ('b:Brand|Line|Shade', from her Inventory tab) count here too, and the newest count wins (ts from the script) */
+    const BLBL=(b,l)=>b==='Redken'?'Shades EQ':/^Colorance Canister$/.test(l)?'Colorance':/^Topchic Canister/.test(l)?'Topchic':l==='Fast Color 10'?'Alter Ego 10-minute':/blondor/i.test(l+b)?'Wella Blondor':'';
+    const bIds={};Object.keys(C).forEach(k=>{if(k.slice(0,2)!=='b:')return;const [b,l,sh]=k.slice(2).split('|');const lb=BLBL(b,l||'');if(!lb||!sh)return;
+      const key=shadeOf(lb==='Wella Blondor'?'Wella Blondor':lb+' '+sh.split(' ')[0]).key;(bIds[key]||=[]).push(k)});
+    const crow=(name,detail,ids)=>{const id='c:'+norm(name),all=(ids||[id]).concat(bIds[shadeOf(name).key]||[]),
+      c=all.map(k=>C[k]).filter(Boolean).sort((a,b)=>(+b.ts||0)-(+a.ts||0))[0];
       return '<div class="wr wc" data-cid="'+esc(id)+'" data-citem="'+esc(name)+'"><span><b>'+esc(name)+'</b><small>'+esc(detail)+'</small>'
         +'<small class="cdone"'+(c?'':' hidden')+'>'+(c?'Counted '+esc(c.n)+(c.at?' · '+esc(c.at):''):'')+'</small></span>'
         +'<button type="button" class="q b wcbtn"'+(o.canCount?'':' disabled')+'>'+(c?'Recount':'Count')+'</button>'
-        +'<span class="wcin" hidden><input type="number" inputmode="numeric" min="0" max="9999" aria-label="How many on the shelf"><button type="button" class="wcsave">Save</button></span></div>'};
+        +'<span class="wcin" hidden><input type="number" inputmode="numeric" min="0" max="9999" aria-label="How many on the shelf and in the back room"><button type="button" class="wcsave">Save</button></span></div>'};
     /* every shade to count (order list + fastest-used), merged by brand and shade code, then grouped and sorted */
     const toCount=[];
     ((R&&R.order)||[]).forEach(([s,x])=>parseList(x).items.filter(it=>!NOUSE.test(it.name)).forEach(it=>toCount.push({nm:it.name,det:(/recount/i.test(s)?'Recount':s)+(it.qty?' · order '+it.qty:'')})));
@@ -132,13 +137,13 @@
     let lastB='';
     const cfRows=merged.map(m=>{const head=m.brand!==lastB?'<h3 class="wbr">'+esc(m.brand)+'</h3>':'';lastB=m.brand;return head+crow(m.name,m.det,m.ids)}).join('');
     const countFirst=merged.length?'<div class="wst"><div class="top"><h2>Count These First</h2><span class="q b">Mondays</span></div>'
-      +'<p>These counts are estimates: the last shelf count minus every bowl weighed in SureTint. A bowl that wasn’t weighed never comes off, so count these on the shelf. Tap Count, type how many are there, and tap Save.</p>'
+      +'<p>These are guesses, not what we have. Each one is Rose’s last count minus the color weighed in SureTint since then. Boxes that came in after that count are not added, so a shade can show here even when it’s sitting in the back room. Count the shelf and the back room together, tap Count, type the total, and tap Save.</p>'
       +cfRows+'</div>':'';
     /* Color on hand (R.onHand, Nov 2 2026): [line, shade, counted, used since, on hand, per week, weeks left] */
     const OH=((R&&R.onHand)||[]).filter(r=>!NOUSE.test(r.join(' ')));
-    const ohCard=OH.length?'<details class="wmore"><summary>Color &amp; Backbar On Hand</summary><div><p>Estimates: Rose’s last count minus SureTint use since then.</p>'
+    const ohCard=OH.length?'<details class="wmore"><summary>Color &amp; Backbar On Hand</summary><div><p>Estimates: Rose’s last count minus SureTint use since then. Deliveries after that count are not added.</p>'
       +OH.slice().sort((a,b)=>(+a[6]||99)-(+b[6]||99)).map(([l,sh,c,u,oh,pw,wl])=>row(l+' '+sh,'Counted '+fmt(c)+' · used '+fmt(u)+' since'+(+wl?' · about '+Math.round(+wl)+' wk left':''),fmt(oh)+' on hand',+oh<=0?'r':+wl&&+wl<3?'':'g')).join('')+'</div></details>':'';
-    const backCards=byStore(back).filter(([s])=>!(countFirst&&/recount/i.test(s))).map(([s,rs])=>storeCard(s,rs.map(r=>typeof r==='string'?r:crow(r.cnt,'Count it on the shelf')).concat(prices.filter(p=>String(p[1]).toLowerCase()===s.toLowerCase()).map(([i,,p])=>row(i,'Best price here',p,'g')))));
+    const backCards=byStore(back).filter(([s])=>!(countFirst&&/recount/i.test(s))).map(([s,rs])=>storeCard(s,rs.map(r=>typeof r==='string'?r:crow(r.cnt,'Count the shelf and back room')).concat(prices.filter(p=>String(p[1]).toLowerCase()===s.toLowerCase()).map(([i,,p])=>row(i,'Best price here',p,'g')))));
     /* On The Way: one card per order */
     const ords={};oo.forEach(q=>(ords[q[1]+'|'+q[2]+'|'+q[0]]||=[]).push(q));
     const wayCards=Object.keys(ords).map(k=>{const [st,num,d]=k.split('|'),its=ords[k],s=its[0][5]||'Ordered',a=arrives(s);
@@ -154,7 +159,7 @@
       +'<div class="wpick" role="group" aria-label="Choose a list">'+btn('retail','Retail',ret.length+cnt.length,'for the shelf')
       +btn('back','Color & Backbar',backN,'color and supplies')+btn('way','On The Way',Object.keys(ords).length,Object.keys(ords).length===1?'order':'orders')+'</div>'
       +v('retail',loading||(retailCards.length?'<p>Grouped by where we buy it. Open the store and order the amount shown.</p>'+retailCards.join(''):'<p>Nothing to reorder this week.</p>'))
-      +v('back',noColor||(countFirst+(backCards.length?'<p>From this week’s color report.</p>'+backCards.join(''):'<p>Nothing on this week’s color order list.</p>')+ohCard))
+      +v('back',noColor||(countFirst+(backCards.length?'<p>Suggested from this week’s color report. Check the shelf and back room first, and only order what we really don’t have.</p>'+backCards.join(''):'<p>Nothing on this week’s color order list.</p>')+ohCard))
       +v('way',wayCards.length?'<p>From the order emails in info@. Don’t order these again. When a box comes in, receive it in Paired Plus.</p>'+wayCards.join(''):'<p>Nothing on the way right now.</p>')
       +(o.countsHint?'<p>'+esc(o.countsHint)+'</p>':'');
     if(window.Ordering) h+='<details class="wmore"><summary>All Stores, Logins &amp; Amazon Lists</summary><div>'+Ordering.html(o.mode||'full',prices,o.logins).replace(/<h1>Ordering<\/h1>/,'')+'</div></details>';

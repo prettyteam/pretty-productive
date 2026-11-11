@@ -109,49 +109,49 @@
     "angelina-h"
   ],
   "social": {
-    "week": "Week of Nov 2",
+    "week": "Week of Nov 9",
     "hair": [
       [
-        "Thinning hair that feels see-through?",
-        "Show a root-lift mousse and a smart part change on fine hair, with a before and after of the volume."
+        "Hair gets tangled the second you step outside?",
+        "Film a quick leave-in detangling routine with a wide-tooth comb, working from ends to roots, and the one product you'd send home."
       ],
       [
-        "Perm or curl that fell out in a week?",
-        "Film how to set curls with a diffuser and a curl-friendly gel so the shape lasts, and the cream you'd send home."
+        "Dye job turned too warm after a few washes?",
+        "Show a color-depositing gloss or toning shampoo on warm tones, with a before and after of the shine and tone."
       ],
       [
-        "Scalp itchy and flaky in winter?",
-        "Demo a gentle scalp massage at the shampoo bowl and the cleansing routine you'd suggest to keep a scalp comfortable."
+        "Hair static every time you pull off a hat?",
+        "Demo an anti-static finish: a touch of smoothing oil on the mid-lengths and the brush that tames flyaways, with the result on camera."
       ],
       [
-        "Bleached hair that feels gummy?",
-        "Show a bond-care mask on lightened ends and how often to use it, with the hair-feel difference on camera."
+        "Fine hair falls flat by lunch?",
+        "Show a lightweight volumizing blowout on fine hair with a root-lift spray and a round brush, then the hair hours later."
       ],
       [
-        "Showed up with no idea what to book?",
-        "Film filling out our online consultation form with a guest, scanning the QR sign in the salon, and how her answers helped you plan her service."
+        "Never sure what to ask for at the chair?",
+        "Film a guest filling out our online consultation form after scanning the QR sign in the salon, and how her answers helped you plan the service together."
       ]
     ],
     "esti": [
       [
-        "Chapped lips under your lipstick?",
-        "Show a gentle lip scrub and balm prep, then the lip color going on smooth."
+        "Hands cracked and dry from the cold?",
+        "Demo a quick hand scrub and rich cream massage, and the cuticle oil routine you'd send home."
       ],
       [
-        "Brows overplucked and sparse?",
-        "Demo a brow map and shaping with light filling, and the grow-out timeline you'd recommend."
+        "Brows uneven no matter what you do?",
+        "Show a brow map with a pencil line to mark the shape and a before and after of the balanced result."
       ],
       [
-        "Lashes crossing and clumping?",
-        "Film a quick lash-brush-through and the at-home care tips that keep a set neat between visits."
+        "Waxing nerves before your first appointment?",
+        "Film the calm step-by-step of a brow or lip wax, from prep to soothing aftercare, so guests know what to expect."
       ],
       [
-        "Redness after a hot shower or wind?",
-        "Show a calming facial step and the simple moisturizer and SPF routine you'd keep for winter."
+        "Foundation gets patchy by afternoon?",
+        "Show a skin prep, thin base and setting spray routine, and the face at the start and end of the day."
       ],
       [
-        "Not sure which treatment your skin needs?",
-        "Film a guest scanning the QR sign and filling out the online consultation form before her visit, then how it guided her treatment plan."
+        "Not sure how to start with us?",
+        "Film a guest scanning the QR sign in the salon to see the digital menu and concierge, then filling out the online consultation form before her facial, and how it shaped her visit."
       ]
     ]
   },
@@ -171,26 +171,26 @@
     ]
   },
   "pk": {
-    "week": "Nov 1",
+    "week": "Nov 9",
     "groups": [
       {
         "name": "Hair Care",
         "brands": [
           {
             "name": "Oribe",
-            "title": "New for curly and coily hair",
-            "blurb": "Four new Moisture & Control products, plus three tips from the launch.",
-            "url": "https://behindthechair.com/articles/3-curly-and-coily-hair-tips-we-learned-at-oribes-new-launch/",
+            "title": "Bond Building, Oribe Style",
+            "blurb": "See the Hair Alchemy Elixir routine for stronger, more resilient strands.",
+            "url": "https://www.oribe.com/blogs/community/bond-building-in-the-big-apple",
             "cta": "Read",
-            "week": "Oct 17"
+            "week": "Nov 9"
           },
           {
             "name": "K18",
-            "title": "GLP-1s and hair shedding",
-            "blurb": "Many guests on GLP-1s notice shedding. Know why, and how to help.",
-            "url": "https://www.k18hair.com/blogs/consumer/how-do-glp-1s-impact-hair",
+            "title": "Using the K18 Mask Right",
+            "blurb": "Step-by-step mask tips so every guest gets the full repair.",
+            "url": "https://www.k18hair.com/blogs/consumer/how-to-use-the-k18-mask-correctly-step-by-step",
             "cta": "Read",
-            "week": "Nov 1"
+            "week": "Nov 9"
           },
           {
             "name": "Brazilian Blowout",
@@ -202,11 +202,11 @@
           },
           {
             "name": "Davines",
-            "title": "Heart of Glass Silkening Shampoo",
-            "blurb": "Brightens blonde and adds shine. A perfect pick after a glaze.",
-            "url": "https://behindthechair.com/product-announcements/heart-of-glass-silkening-shampoo/",
+            "title": "Naturaltech Overnight Scalp Serum",
+            "blurb": "Works while guests sleep for fuller-looking hair and less breakage.",
+            "url": "https://davinespro.com/en/international/blog/discover-our-new-naturaltech-energizing-overnight-serum",
             "cta": "Read",
-            "week": "Oct 17"
+            "week": "Nov 9"
           },
           {
             "name": "Rossano Ferretti",
@@ -252,11 +252,11 @@
         "brands": [
           {
             "name": "Taffeta Makeup",
-            "title": "7 looks guests want this fall",
-            "blurb": "Toasted monochrome and smudgy shadow are easy with our palettes.",
-            "url": "https://www.whowhatwear.com/beauty/makeup/fall-makeup-trends-2026",
+            "title": "10 Winter Makeup Trends",
+            "blurb": "Renaissance blush to icicle eyes: the looks guests will ask for.",
+            "url": "https://coveteur.com/winter-2026-makeup-trends",
             "cta": "Read",
-            "week": "Oct 17"
+            "week": "Nov 9"
           }
         ]
       }
@@ -271,428 +271,432 @@
       "https://shop.advancedderm.com/collections/cool-as-a-cucumber",
       "https://www.biologique-recherche.com/en-us/pages/choose-a-lotion-p50",
       "https://www.whowhatwear.com/beauty/makeup/fall-makeup-trends-2026",
-      "https://www.k18hair.com/blogs/consumer/how-do-glp-1s-impact-hair"
+      "https://www.k18hair.com/blogs/consumer/how-do-glp-1s-impact-hair",
+      "https://www.oribe.com/blogs/community/bond-building-in-the-big-apple",
+      "https://www.k18hair.com/blogs/consumer/how-to-use-the-k18-mask-correctly-step-by-step",
+      "https://davinespro.com/en/international/blog/discover-our-new-naturaltech-energizing-overnight-serum",
+      "https://coveteur.com/winter-2026-makeup-trends"
     ]
   },
   "promo": {
-    "week": "Week of Nov 2",
+    "week": "Week of Nov 9",
     "people": {
       "alexandra": [
         [
-          "Booking holiday hair too late every year?",
-          "Film a quick note on when to book color and glazes so guests look fresh for Thanksgiving through New Year's."
+          "Shopping for a gift she'll actually use?",
+          "Film a Taffeta gift card being tucked into a card and say which services it covers."
         ],
         [
-          "Gift shopping for someone who has everything?",
-          "Show a Biologique Recherche product you'd wrap up and why Taffeta is the only South Jersey partner for it."
+          "Skin can't keep up with the cold?",
+          "Show the Biologique Recherche step you lean on in November and why Taffeta is the only South Jersey partner."
         ],
         [
-          "Wonder where our towels come from?",
-          "Film the reused bamboo hand towels coming out of the wash and why we chose them."
+          "Curious why we serve drinks in mismatched glasses?",
+          "Film our second-hand glassware and filtered water station and tell the reason in one line."
         ],
         [
-          "Color fading from cold, dry air?",
-          "Show a glaze refresh in natural light and the one home step that protects shine in winter."
+          "Highlights look gray in winter light?",
+          "Show a warming glaze before and after by the same window."
         ],
         [
-          "Want to plan your whole holiday look at once?",
-          "Film the QR concierge helping a guest book color, a blowout and brows in one visit."
+          "Hosting Thanksgiving and short on time?",
+          "Film the QR concierge booking a quick blowout slot the day before the holiday."
         ]
       ],
       "amanda": [
         [
-          "Want dimension without upkeep?",
-          "Film a low-maintenance balayage and show what it looks like 10 weeks later."
+          "Balayage lost its brightness?",
+          "Film a toner refresh on balayage, before and after in the same light."
         ],
         [
-          "Hair color uneven from at-home dye?",
-          "Show a color correction plan in steps, with a before and after (with her OK)."
+          "Color went too dark at home?",
+          "Show the first step of a color correction and how you plan the next visit (with her OK)."
         ],
         [
-          "Extensions for the holiday parties?",
-          "Film an extensions install reveal with a soft curled finish."
+          "Want length for New Year's Eve?",
+          "Film an extensions reveal styled in big soft curls."
         ],
         [
-          "Blowout puffs up in the cold?",
-          "Demo the cool-shot finish that keeps a blowout smooth outside."
+          "Blowout falls flat under a scarf?",
+          "Demo the root lift and finishing spray that keep volume under winter layers."
         ],
         [
-          "Not sure if your hair can go lighter?",
-          "Film a guest answering the hair history questions on the online consultation form and why they matter."
+          "Nervous your stylist won't get it?",
+          "Film a guest marking 'what I don't want' on the online consultation form and how it guides you."
         ]
       ],
       "angelina-h": [
         [
-          "Want to look awake for early holiday mornings?",
-          "Film a lash lift and tint before and after with no makeup."
+          "No time for mascara on busy mornings?",
+          "Film a lash lift and tint before and after, bare-faced."
         ],
         [
-          "Lashes look straight in every photo?",
-          "Show the curl from a lash lift from the side, before and after."
+          "Lashes curl down under glasses?",
+          "Show a lash lift on a guest who wears glasses, before and after."
         ],
         [
-          "Thinking about a lash lift before a trip?",
-          "Share the timing: when to book so the curl is fresh for travel."
+          "Want lifted lashes for the holidays?",
+          "Share when to book a lift so it's fresh for Thanksgiving and December parties."
         ],
         [
-          "Brows look faded?",
-          "Show a quick brow tint before and after in the same light."
+          "Brows and lashes don't match?",
+          "Show a brow tint and lash tint done together, before and after."
         ],
         [
-          "Want to book a lash lift between errands?",
-          "Film yourself booking a lash lift from the QR concierge on a phone in under a minute."
+          "Want to see lash prices before booking?",
+          "Film the QR digital menu open to lash services and booking in a few taps."
         ]
       ],
       "ashley-b": [
         [
-          "Hair frizzes under a winter hat?",
-          "Film hair coming out of a hat after a Brazilian Blowout, smooth and ready."
+          "Thick hair takes an hour to dry?",
+          "Film a Brazilian Blowout and time the next blow-dry."
         ],
         [
-          "Balayage needs a holiday refresh?",
-          "Show a gloss over balayage and the before and after shine."
+          "Balayage looks faded?",
+          "Show a gloss refresh on balayage with a before and after."
         ],
         [
-          "Fade growing out before the holidays?",
-          "Film a fresh fade and when to rebook for the parties."
+          "His fade lost its shape?",
+          "Film a fade cleanup from start to finish, sped up."
         ],
         [
-          "Makeup fades by dinner?",
-          "Show your 3 steps for holiday party makeup that lasts all night."
+          "Holiday makeup that photographs well?",
+          "Show a soft party look under flash and natural light."
         ],
         [
-          "Can't decide smoothing or a glaze?",
-          "Film a guest using the consultation form to explain her frizz so you can pick the right service."
+          "Is smoothing right for your hair?",
+          "Film a guest answering the hair questions on the online consultation form before a Brazilian Blowout."
         ]
       ],
       "carolyn": [
         [
-          "Skin feels tight as soon as the heat comes on?",
-          "Show the Biologique Recherche step you suggest for winter skin, on face and neck."
+          "Flaky skin under makeup?",
+          "Show the Biologique Recherche prep step you use before makeup in winter, on face and neck."
         ],
         [
-          "Brows look sparse in holiday photos?",
-          "Film a brow map and tint before and after."
+          "Brows grown out and shapeless?",
+          "Film a brow sculpt maintenance visit before and after."
         ],
         [
-          "Want smooth skin before a big event?",
-          "Show when to book a facial before an event and why the timing matters."
+          "Want brows that last through the holidays?",
+          "Show a brow tint and how long it holds its color."
         ],
         [
-          "Makeup clings to dry spots?",
-          "Film skin prep for winter makeup, ending on a smooth finish."
+          "Bridal skin prep for a winter wedding?",
+          "Share a simple timeline of facials before a winter wedding."
         ],
         [
-          "Don't know where to start with skincare?",
-          "Film a guest filling out the online consultation form so you can plan her first treatment."
+          "Unsure which treatment your skin needs?",
+          "Film a guest using the online consultation form to list her skin concerns before her visit."
         ]
       ],
       "dominique": [
         [
-          "Highlights look dull in winter light?",
-          "Film a foil and gloss with the before and after under the same light."
+          "Want a holiday color change?",
+          "Film a foil reveal for the season with a soft blend."
         ],
         [
-          "Want smooth hair for holiday photos?",
-          "Show a Brazilian Blowout and how sleek it looks in a group photo setup."
+          "Frizz ruining holiday photos?",
+          "Show a Brazilian Blowout before and after in party lighting."
         ],
         [
-          "Just got engaged?",
-          "Share the first step to booking bridal hair and makeup with Taffeta Weddings."
+          "Planning a fall or winter wedding?",
+          "Share the 3 things to send before booking bridal hair and makeup."
         ],
         [
-          "Grown-out men's cut before Thanksgiving?",
-          "Film a quick men's cut and style, sped up."
+          "Holiday cut for him?",
+          "Film a men's cut with a clean finish and the product you use."
         ],
         [
-          "Brides with questions late at night?",
-          "Show how the QR digital menu lets her see services and prices before she calls."
+          "Wondering how much a bridal trial costs?",
+          "Show a bride finding wedding services on the QR digital menu before she reaches out."
         ]
       ],
       "emily-b": [
         [
-          "Dry, cracked cuticles in winter?",
-          "Film the cuticle care step and the oil you'd use every night."
+          "Nails look dull in winter?",
+          "Film a signature manicure finish with a high-shine top coat."
         ],
         [
-          "Want a Thanksgiving nail color?",
-          "Show 3 warm fall shades on one hand."
+          "Cuticles crack in the cold?",
+          "Show your cuticle care and the oil you'd send home."
         ],
         [
-          "Polish chips while cooking?",
-          "Show the capping step that helps polish last through kitchen work."
+          "Want a classic holiday red?",
+          "Show 3 reds side by side and which skin tones each suits."
         ],
         [
-          "Hands feel rough from the cold?",
-          "Demo the hand massage step of the signature manicure."
+          "Nails split from washing dishes?",
+          "Share 2 at-home tips that protect nails during the holidays."
         ],
         [
-          "Booking a manicure for a group?",
-          "Film how friends can each book from the QR concierge for the same day."
+          "Want a manicure before Thanksgiving?",
+          "Film a guest booking a manicure through the QR concierge."
         ]
       ],
       "isabella": [
         [
-          "Want a softer, darker color for winter?",
-          "Film a glaze that deepens her color, before and after."
+          "Hair looks dark and heavy for the season?",
+          "Film a partial foil and glaze before and after."
         ],
         [
-          "Foils feel like a big commitment?",
-          "Show a partial foil and how little upkeep it needs."
+          "Color feels flat and one-tone?",
+          "Show how a few foils add dimension, with a before and after."
         ],
         [
-          "Haircut that looks good under a hat?",
-          "Film a cut and how it falls after taking a hat off."
+          "Bangs or no bangs?",
+          "Film a soft fringe cut and how to style it at home."
         ],
         [
-          "Wonder how we pick photos for our posts?",
-          "Show the light and angle you use for every before and after."
+          "Want to see our process behind the scenes?",
+          "Film setting up a before and after shot in our natural light corner."
         ],
         [
-          "Hard to explain the color you want?",
-          "Film a guest adding inspiration photos to the online consultation form."
+          "Hard to say what you want changed?",
+          "Film a guest choosing her top concern on the online consultation form."
         ]
       ],
       "jen-m": [
         [
-          "Gray roots before family visits?",
-          "Film a single process root touch-up and when to book before Thanksgiving."
+          "Roots showing before the holidays?",
+          "Film a single process root touch-up and when to rebook."
         ],
         [
-          "Hair looks flat in the cold?",
-          "Show a glaze and blow-dry for shine and body."
+          "Color looks dull under indoor lights?",
+          "Show a glaze before and after under warm indoor light."
         ],
         [
-          "Want a fresh cut without losing length?",
-          "Film a dusting cut and the before and after of her ends."
+          "Hair hard to manage in winter?",
+          "Film a shape-up cut that makes styling easier."
         ],
         [
-          "Thinking of going warmer for winter?",
-          "Show a warm single process before and after."
+          "Want warmer tones for winter?",
+          "Show a warm single process change before and after."
         ],
         [
-          "Want the same stylist every visit?",
-          "Film a guest finding you on the QR concierge and booking her next 3 visits."
+          "Want to book your next 3 visits at once?",
+          "Film a guest scheduling ahead through the QR concierge."
         ]
       ],
       "jennifer-c": [
         [
-          "Need volume for holiday events?",
-          "Film an extensions reveal styled for a party."
+          "Want fuller hair for holiday photos?",
+          "Film an extensions reveal in a party style."
         ],
         [
-          "Bridal hair that holds through the dancing?",
-          "Show the base you build before any curls."
+          "Bride wants hair down that lasts?",
+          "Show your prep for a long-lasting down style."
         ],
         [
-          "Color looks brassy in winter?",
-          "Film a toning refresh with a before and after."
+          "Color lost its shine since summer?",
+          "Film a color refresh before and after."
         ],
         [
-          "Extensions feel heavy?",
-          "Show how you place extensions so they feel light and blend."
+          "Extensions slipping?",
+          "Share your tips for keeping extensions secure between visits."
         ],
         [
-          "Bride unsure what she wants?",
-          "Film a bride using the online consultation form to share her inspiration before her trial."
+          "Bride unsure of her style?",
+          "Film a bride filling out the online consultation form with photos before her trial."
         ]
       ],
       "joanna": [
         [
-          "Want brighter hair for the holidays?",
-          "Film a full foil reveal with a soft blend."
+          "Want dimension for winter?",
+          "Film a full foil with a lowlight before and after."
         ],
         [
-          "Blowout lasts one day only?",
-          "Show your blowout and the night-time wrap that keeps it."
+          "Blowout fades by evening?",
+          "Show the finishing steps that keep a blowout smooth."
         ],
         [
-          "Men's cut for family photos?",
-          "Film a clean men's cut and finish."
+          "Men's cut before the holidays?",
+          "Film a men's cut with a sharp neckline."
         ],
         [
-          "Want extensions without damage?",
-          "Show your extension care tips with a close-up of healthy hair."
+          "Extensions for a holiday event?",
+          "Show an extensions reveal with a soft wave."
         ],
         [
-          "Not sure how much brightness you want?",
-          "Film a guest picking between foil options on the digital menu from the QR sign."
+          "Not sure if you need foils or a glaze?",
+          "Film a guest comparing both on the QR digital menu."
         ]
       ],
       "kat": [
         [
-          "Need party makeup in under 10 minutes?",
-          "Film a quick holiday party look start to finish."
+          "Want a quick holiday glam?",
+          "Film a 10-minute holiday makeup look."
         ],
         [
-          "Lipstick fades by dessert?",
-          "Show the lip layering steps that make color last."
+          "Eyeliner never even?",
+          "Show a simple liner trick for both eyes."
         ],
         [
-          "Hair and makeup for a holiday event?",
-          "Film a full look reveal with a soft wave."
+          "Hair and makeup for a holiday party?",
+          "Film a full look reveal."
         ],
         [
-          "Makeup looks heavy in photos?",
-          "Show how you keep makeup soft for flash photos."
+          "Makeup fades in the cold?",
+          "Show your setting steps for winter wear."
         ],
         [
-          "Want makeup for an event but unsure what to book?",
-          "Film a guest choosing event makeup on the QR digital menu."
+          "Booking makeup for a group?",
+          "Film how friends can each book makeup through the QR concierge."
         ]
       ],
       "kelly": [
         [
-          "Skin dry from the heater?",
-          "Film the hydrating step of a facial and the home care that matches."
+          "Skin dull in the cold months?",
+          "Film the exfoliation step of a facial with a before and after."
         ],
         [
-          "Want smooth skin for holiday photos?",
-          "Show when to book a facial before an event."
+          "Skin feels rough and tight?",
+          "Show the hydrating mask step and the home care that matches."
         ],
         [
-          "Skin feels congested?",
-          "Show your gentle cleansing and extraction prep."
+          "Big event coming and skin isn't ready?",
+          "Share when to book a facial before an event."
         ],
         [
-          "Does a facial feel good or just help?",
-          "Film the relaxing parts of a facial in 20 seconds."
+          "Is a facial relaxing?",
+          "Film the calm moments of a facial in 20 seconds."
         ],
         [
-          "First facial and not sure what to expect?",
+          "First facial nerves?",
           "Film a guest filling out the online consultation form before her visit."
         ]
       ],
       "lexi": [
         [
-          "Want a big holiday change?",
-          "Film a long-to-lob transformation reveal."
+          "Want a fresh holiday cut?",
+          "Film a cut transformation before and after."
         ],
         [
-          "Bangs for the holidays?",
-          "Show a curtain bang cut and how to style it at home."
+          "Bangs for the new year?",
+          "Show how to style curtain bangs at home."
         ],
         [
-          "Men's cut looks messy before family photos?",
-          "Film a clean men's cut with a sharp finish."
+          "Men's cut grows out fast?",
+          "Film a men's cut and the rebook timing you suggest."
         ],
         [
-          "Wedding hair that lasts all night?",
-          "Show your pinning and spray steps for a long-lasting style."
+          "Winter bride hair?",
+          "Show a bridal style that holds up in cold weather."
         ],
         [
-          "Scared of a big change?",
-          "Film a guest using the online consultation form to talk through her change before she sits down."
+          "Thinking about a big change?",
+          "Film a guest using the online consultation form to share her change."
         ]
       ],
       "mia": [
         [
-          "Blowout that lasts through the weekend?",
-          "Film a blowout and the second-day refresh."
+          "Blowout for a holiday party?",
+          "Film a party blowout and how long it lasts."
         ],
         [
-          "Color looks dull under holiday lights?",
+          "Hair looks dull under holiday lights?",
           "Show a glaze before and after under warm lights."
         ],
         [
-          "Roots showing before Thanksgiving?",
+          "Roots coming in already?",
           "Film a single process root touch-up."
         ],
         [
-          "Hair feels heavy and flat?",
+          "Hair flat and heavy?",
           "Show a cut that adds movement."
         ],
         [
-          "Want a blowout before a holiday party?",
-          "Film a guest booking a blowout from the QR concierge."
+          "Want a blowout before a holiday event?",
+          "Film a guest booking a blowout through the QR concierge."
         ]
       ],
       "neva-l": [
         [
-          "Want brightness for winter without a full foil?",
+          "Want brightness around the face?",
           "Film a face-frame highlight before and after."
         ],
         [
-          "Color looks brassy?",
-          "Show a toning glaze and the before and after."
+          "Color brassy in winter?",
+          "Show a toning glaze before and after."
         ],
         [
-          "Want a cut that's easy in the cold?",
-          "Film a cut and how it air dries."
+          "Cut that works with a winter hat?",
+          "Film a cut and how it looks after a hat comes off."
         ],
         [
-          "Extensions for the holidays?",
-          "Show an extensions color match and finished look."
+          "Want extensions that match perfectly?",
+          "Show an extensions color match and finished style."
         ],
         [
-          "Not sure if you need a half or full foil?",
+          "Unsure if you need a half or full foil?",
           "Film a guest describing her goals on the online consultation form."
         ]
       ],
       "sara": [
         [
-          "Want richer color for winter?",
-          "Film a color consultation where you show warm and cool shade swatches."
+          "Want to go richer for winter?",
+          "Film a color consultation with shade swatches."
         ],
         [
-          "Roots come in fast?",
-          "Show a re-application and your rebook timing."
+          "Roots grow fast?",
+          "Show a re-application and the rebook timing."
         ],
         [
-          "Color feels dull?",
-          "Film a glaze before and after under the same light."
+          "Color looks dull?",
+          "Film a glaze before and after."
         ],
         [
-          "Want a blowout to finish your color?",
+          "Want a polished finish after color?",
           "Show a color and blowout combo before and after."
         ],
         [
-          "Wish your color was planned ahead?",
+          "Want your color planned before you arrive?",
           "Film a guest filling out the online consultation form before her color visit."
         ]
       ],
       "adriana": [
         [
-          "Fade needs a fresh line?",
-          "Film a clean fade line-up, sped up."
+          "Fade needs a sharp line?",
+          "Film a fade line-up, sped up."
         ],
         [
-          "Hair feels shapeless?",
-          "Show a cut that adds shape with a before and after."
+          "Hair lacks shape?",
+          "Show a cut that adds shape, before and after."
         ],
         [
-          "Gray at the temples before the holidays?",
+          "Gray at the temples?",
           "Film a quick gray coverage touch-up."
         ],
         [
-          "Wonder what makes a first visit special?",
+          "What makes a first visit special?",
           "Film writing a thank-you card for a new guest."
         ],
         [
-          "First time booking with us?",
-          "Film the QR sign and how the concierge helps a new guest book."
+          "Never been to Taffeta before?",
+          "Film the QR sign and the concierge helping a new guest book."
         ]
       ],
       "rose": [
         [
-          "Want a holiday blowout?",
+          "Practicing blowouts for the holiday rush?",
           "Film a blowout on a model and one new tip you learned."
         ],
         [
-          "Gray hair showing at the part?",
-          "Show gray coverage on a model with a before and after."
+          "Gray peeking through your part line?",
+          "Show gray coverage on a model before and after."
         ],
         [
-          "Wonder how we keep the shelves stocked?",
-          "Film a quick restock of the retail shelf."
+          "How does the front desk keep things running?",
+          "Film a quick behind-the-scenes of the desk."
         ],
         [
-          "Hair frizzy in winter?",
-          "Show a smoothing service on a model and the aftercare."
+          "Frizzy in the cold?",
+          "Show a smoothing service on a model."
         ],
         [
-          "Not sure how to book a visit?",
-          "Film the QR sign and the digital menu guests can browse."
+          "How do guests book with us?",
+          "Film the QR sign and the digital menu."
         ]
       ]
     }
