@@ -76,6 +76,49 @@ def on_order(rows, keys, year, now):
     return out, got
 
 
+def shade_code(shade):
+    """'010VV Lavender Ice' and '10VV Lavender Ice' -> '10VV'; None when the first word has no digit ('Blondor ...')."""
+    t = str(shade).split(' ')[0]
+    return t.lstrip('0') if re.search(r'\d', t) else None
+
+
+def counted_extras(keys, counts, products, usage4, weeks=4):
+    """On hand rows for shades the weekly report left off On hand but that do have a Backbar shelf count, e.g. Shades EQ
+    010VV: SureTint calls it '10VV Lavender Ice', the count says '010VV Lavender Ice', so the report listed it under
+    NOT COUNTED YET and the color list never showed it (found Nov 11 2026). products = [(manufacturer, line, product)]
+    from the daily scale and the report's 4-week use. Row: [line, shade, counted, used, on hand, pace/week, weeks left].
+    """
+    have = {co.norm(k[0] + k[1] + k[2]) for k in keys} | {co.norm(k[0] + k[1] + (shade_code(k[2]) or k[2])) for k in keys}
+    shelf = {}
+    for cid in counts:
+        if not cid.startswith('b:') or cid.count('|') != 2:
+            continue
+        k = tuple(cid[2:].split('|'))
+        shelf.setdefault(co.norm(k[0] + k[1] + k[2]), k)
+        if shade_code(k[2]):
+            shelf.setdefault(co.norm(k[0] + k[1] + shade_code(k[2])), k)
+    u4 = {}
+    for man, line, prod, units in usage4 or []:
+        for nm in (prod, shade_code(prod)):
+            if nm:
+                u4[co.norm(man + line + nm)] = u4.get(co.norm(man + line + nm), 0) + float(units or 0)
+    out, seen = [], set()
+    for man, line, prod in products:
+        ids = [co.norm(man + line + prod)] + ([co.norm(man + line + shade_code(prod))] if shade_code(prod) else [])
+        if any(i in have for i in ids):
+            continue
+        k = next((shelf[i] for i in ids if i in shelf), None)
+        if not k or k in seen or co.is_alias(k):
+            continue
+        seen.add(k)
+        n = counts['b:%s|%s|%s' % k][0]
+        used = round(next((u4[i] for i in ids if i in u4), 0.0), 2)   # report window starts the day of Rose's counts
+        pace = round(used / weeks, 2)
+        oh = round(n - used, 2)
+        out.append(['%s %s' % (k[0], k[1]), k[2], n, used, oh, pace, round(oh / pace, 1) if pace > 0 else None])
+    return out
+
+
 def daily_usage(rows, keys):
     """({(key, date): units}, {weighed dates}, [unmatched products]) from Scale Usage rows."""
     full = {co.norm(k[0] + k[1] + k[2]): k for k in keys}
@@ -142,6 +185,13 @@ def refresh(inv, stock_rows, order_rows, now=None, year=2026, usage_rows=None):
         R['base'] = {'ran': R.get('ran'), 'onHand': R.get('onHand') or [], 'order': R.get('order') or []}
     rows = R['base']['onHand']
     keys = [(*key_of(r[0]), r[1]) for r in rows]
+    # shades with a shelf count that the weekly report missed (name mismatch) join the list from their count
+    products = [tuple(str(x).strip() for x in (list(r) + [''] * 4)[1:4]) for r in usage_rows or []
+                if re.match(r'\d{4}-\d{2}-\d{2}', str((r or [''])[0]))]
+    products += [tuple(r[:3]) for r in R.get('usage4') or []]
+    extra = counted_extras(keys, counts, products, R.get('usage4'))
+    rows = rows + extra
+    keys = keys + [(*key_of(r[0]), r[1]) for r in extra]
     way, got = on_order(order_rows, keys, year, now)
     use, days, miss = daily_usage(usage_rows, keys)
     # The weekly report's estimate covers SureTint use through the report's Sunday. With daily scale numbers, count use
@@ -190,7 +240,7 @@ def refresh(inv, stock_rows, order_rows, now=None, year=2026, usage_rows=None):
     n_items = sum(len(v) for v in stores.values())
     if days:
         R['scaleDays'] = [min(days).isoformat(), max(days).isoformat(), len(days)]
-    return {'scaleDays': len([d for d in days if d >= use_ran.date()]), 'unmatchedScale': miss[:12], 'freshCounts': fresh, 'receivedUnits': added, 'onTheWay': len(way), 'orderItems': n_items, 'recount': len(recount)}
+    return {'scaleDays': len([d for d in days if d >= use_ran.date()]), 'unmatchedScale': miss[:12], 'addedFromCounts': [r[0].split(' ', 1)[-1] + ' ' + r[1] for r in extra], 'freshCounts': fresh, 'receivedUnits': added, 'onTheWay': len(way), 'orderItems': n_items, 'recount': len(recount)}
 
 
 if __name__ == '__main__':

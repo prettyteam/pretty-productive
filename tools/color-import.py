@@ -150,6 +150,14 @@ def import_report(inv, rows, url=None, force=False):
             continue
         onhand.append([r[0], r[1], num(r[2]), num(r[3]), num(r[4]), num(r[5]), num(r[6])])
 
+    # 4-week SureTint use per product (Manufacturer, Line, Product, Units): color-refresh.py uses it for shades that have a
+    # shelf count but the report left off On hand ("NOT COUNTED YET": its names didn't match, e.g. 10VV vs 010VV)
+    usage4 = []
+    for r in S.get('FULL USAGE', []):
+        if len(r) < 7 or r[0].lower() == 'manufacturer' or UNUSED(' '.join(r)) or num(r[6]) is None:
+            continue
+        usage4.append([r[0], r[1], r[2], num(r[6])])
+
     order, by = [], {}
     for r in S.get('ORDER LIST', []):
         if len(r) < 3 or r[0].lower() == 'supplier' or UNUSED(r[1]):
@@ -167,7 +175,7 @@ def import_report(inv, rows, url=None, force=False):
 
     R.update({'week': week, 'ran': ran.strftime('%b %-d, %Y'), 'tiles': tiles, 'services': services or R.get('services', []),
               'artists': artists, 'flags': flags, 'look': look, 'fastest': fastest[:11] or R.get('fastest', []),
-              'onHand': onhand, 'order': order, 'links': links})
+              'onHand': onhand, 'order': order, 'links': links, 'usage4': usage4})
     R.pop('base', None)          # color-refresh.py starts again from these rows
     R.pop('refreshed', None)
     inv['updated'] = datetime.now().strftime('%b %-d, %Y')
