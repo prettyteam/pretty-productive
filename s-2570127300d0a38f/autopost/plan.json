@@ -1,0 +1,639 @@
+{
+ "note": "Instagram auto-post plan read by Zapier every hour. stories = Stories; firstComments = hashtag comments for grid posts queued elsewhere; feed = grid posts Zapier posts itself, only when ok is true.",
+ "stories": [
+  {
+   "id": "spa-1109",
+   "account": "spa.taffeta",
+   "at": "2026-11-09T17:30:00-05:00",
+   "url": "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/spa-1109.jpg"
+  },
+  {
+   "id": "spa-1110",
+   "account": "spa.taffeta",
+   "at": "2026-11-10T17:30:00-05:00",
+   "url": "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/spa-1110.jpg"
+  },
+  {
+   "id": "spa-1111",
+   "account": "spa.taffeta",
+   "at": "2026-11-11T17:30:00-05:00",
+   "url": "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/spa-1111.jpg"
+  },
+  {
+   "id": "spa-1112",
+   "account": "spa.taffeta",
+   "at": "2026-11-12T12:00:00-05:00",
+   "url": "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/spa-1112.jpg"
+  },
+  {
+   "id": "spa-1113",
+   "account": "spa.taffeta",
+   "at": "2026-11-13T17:30:00-05:00",
+   "url": "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/spa-1113.jpg"
+  },
+  {
+   "id": "spa-1114",
+   "account": "spa.taffeta",
+   "at": "2026-11-14T17:30:00-05:00",
+   "url": "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/spa-1114.jpg"
+  },
+  {
+   "id": "spa-1115",
+   "account": "spa.taffeta",
+   "at": "2026-11-15T17:30:00-05:00",
+   "url": "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/spa-1115.jpg"
+  },
+  {
+   "id": "spa-1116",
+   "account": "spa.taffeta",
+   "at": "2026-11-16T17:30:00-05:00",
+   "url": "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/spa-1116.jpg"
+  },
+  {
+   "id": "spa-1117",
+   "account": "spa.taffeta",
+   "at": "2026-11-17T17:30:00-05:00",
+   "url": "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/spa-1117.jpg"
+  },
+  {
+   "id": "spa-1118",
+   "account": "spa.taffeta",
+   "at": "2026-11-18T17:30:00-05:00",
+   "url": "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/spa-1118.jpg"
+  },
+  {
+   "id": "spa-1119",
+   "account": "spa.taffeta",
+   "at": "2026-11-19T12:00:00-05:00",
+   "url": "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/spa-1119.jpg"
+  },
+  {
+   "id": "spa-1120",
+   "account": "spa.taffeta",
+   "at": "2026-11-20T17:30:00-05:00",
+   "url": "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/spa-1120.jpg"
+  },
+  {
+   "id": "spa-1121",
+   "account": "spa.taffeta",
+   "at": "2026-11-21T17:30:00-05:00",
+   "url": "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/spa-1121.jpg"
+  },
+  {
+   "id": "spa-1122",
+   "account": "spa.taffeta",
+   "at": "2026-11-22T17:30:00-05:00",
+   "url": "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/spa-1122.jpg"
+  },
+  {
+   "id": "spa-1123",
+   "account": "spa.taffeta",
+   "at": "2026-11-23T17:30:00-05:00",
+   "url": "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/spa-1123.jpg"
+  },
+  {
+   "id": "spa-1124",
+   "account": "spa.taffeta",
+   "at": "2026-11-24T17:30:00-05:00",
+   "url": "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/spa-1124.jpg"
+  },
+  {
+   "id": "spa-1125",
+   "account": "spa.taffeta",
+   "at": "2026-11-25T17:30:00-05:00",
+   "url": "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/spa-1125.jpg"
+  },
+  {
+   "id": "spa-1126",
+   "account": "spa.taffeta",
+   "at": "2026-11-26T12:00:00-05:00",
+   "url": "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/spa-1126.jpg"
+  },
+  {
+   "id": "spa-1127",
+   "account": "spa.taffeta",
+   "at": "2026-11-27T17:30:00-05:00",
+   "url": "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/spa-1127.jpg"
+  },
+  {
+   "id": "spa-1128",
+   "account": "spa.taffeta",
+   "at": "2026-11-28T12:00:00-05:00",
+   "url": "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/spa-1128.jpg"
+  },
+  {
+   "id": "spa-1129",
+   "account": "spa.taffeta",
+   "at": "2026-11-29T17:30:00-05:00",
+   "url": "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/spa-1129.jpg"
+  },
+  {
+   "id": "spa-1130",
+   "account": "spa.taffeta",
+   "at": "2026-11-30T17:30:00-05:00",
+   "url": "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/spa-1130.jpg"
+  }
+ ],
+ "firstComments": [
+  {
+   "id": "nsalon-4",
+   "account": "taffetasalonandspa",
+   "at": "2026-11-10T17:30:00-05:00",
+   "start": "Skin feels tight the minute the heat com",
+   "tags": "#BiologiqueRecherche #DrySkin #WinterSkincare #SouthJerseySpa #TaffetaSalonAndSpa"
+  },
+  {
+   "id": "nsalon-5",
+   "account": "taffetasalonandspa",
+   "at": "2026-11-11T12:30:00-05:00",
+   "start": "Heat on inside, cold outside, and your h",
+   "tags": "#WinterHands #CuticleCare #GelManicure #HammontonNails #TaffetaSalonAndSpa"
+  },
+  {
+   "id": "nsalon-6",
+   "account": "taffetasalonandspa",
+   "at": "2026-11-15T17:30:00-05:00",
+   "start": "Saved 40 hair photos and still not sure?",
+   "tags": "#HairConsultation #HairInspo #HammontonSalon #SouthJerseyHair #TaffetaSalonAndSpa"
+  },
+  {
+   "id": "nsalon-7",
+   "account": "taffetasalonandspa",
+   "at": "2026-11-17T17:30:00-05:00",
+   "start": "The most wonderful time of the year, and",
+   "tags": "#HolidaySeason #HolidayHair #HammontonNJ #SouthJerseySalon #TaffetaSalonAndSpa"
+  },
+  {
+   "id": "nsalon-8",
+   "account": "taffetasalonandspa",
+   "at": "2026-11-18T12:30:00-05:00",
+   "start": "Curled your hair for the party and by 9 ",
+   "tags": "#PartyHair #HolidayHair #Blowout #HammontonSalon #TaffetaSalonAndSpa"
+  },
+  {
+   "id": "nsalon-9",
+   "account": "taffetasalonandspa",
+   "at": "2026-11-22T17:30:00-05:00",
+   "start": "Curling iron every morning before the ho",
+   "tags": "#HeatProtectant #HairDamage #K18 #HammontonSalon #TaffetaSalonAndSpa"
+  },
+  {
+   "id": "nsalon-10",
+   "account": "taffetasalonandspa",
+   "at": "2026-11-24T17:30:00-05:00",
+   "start": "Thank you for sitting in our chairs this",
+   "tags": "#Thankful #SmallBusinessLove #HammontonNJ #SouthJerseySalon #TaffetaSalonAndSpa"
+  },
+  {
+   "id": "nsalon-11",
+   "account": "taffetasalonandspa",
+   "at": "2026-11-25T12:30:00-05:00",
+   "start": "At-home box dye the night before your co",
+   "tags": "#HairColor #ColorAppointment #HairTips #HammontonSalon #TaffetaSalonAndSpa"
+  },
+  {
+   "id": "nsalon-12",
+   "account": "taffetasalonandspa",
+   "at": "2026-11-26T12:30:00-05:00",
+   "start": "Happy Thanksgiving from all of us at Taf",
+   "tags": "#HappyThanksgiving #Grateful #HammontonNJ #SouthJerseySalon #TaffetaSalonAndSpa"
+  },
+  {
+   "id": "nspa-3",
+   "account": "spa.taffeta",
+   "at": "2026-11-09T17:30:00-05:00",
+   "start": "Cold hands, tight shoulders, and a week ",
+   "tags": "#HotStoneMassage #Massage #SelfCareSaturday #SouthJerseySpa #TaffetaSpa"
+  },
+  {
+   "id": "nspa-4",
+   "account": "spa.taffeta",
+   "at": "2026-11-10T17:30:00-05:00",
+   "start": "Bought five serums and still not sure wh",
+   "tags": "#FacialSpa #SkincareRoutine #BiologiqueRecherche #SouthJerseySpa #TaffetaSpa"
+  },
+  {
+   "id": "nspa-5",
+   "account": "spa.taffeta",
+   "at": "2026-11-12T12:00:00-05:00",
+   "start": "We only talk about what we use ourselves",
+   "tags": "#BiologiqueRecherche #FrenchSkincare #FacialTreatment #SouthJerseySpa #TaffetaSpa"
+  },
+  {
+   "id": "nspa-6",
+   "account": "spa.taffeta",
+   "at": "2026-11-16T17:30:00-05:00",
+   "start": "Holiday party or family photos coming up",
+   "tags": "#HolidaySkin #FacialTreatment #BiologiqueRecherche #SouthJerseySpa #TaffetaSpa"
+  },
+  {
+   "id": "nspa-7",
+   "account": "spa.taffeta",
+   "at": "2026-11-17T17:30:00-05:00",
+   "start": "Foundation catching on dry patches no ma",
+   "tags": "#HydroDiamond #DrySkin #SmoothSkin #SouthJerseySpa #TaffetaSpa"
+  },
+  {
+   "id": "nspa-8",
+   "account": "spa.taffeta",
+   "at": "2026-11-19T12:00:00-05:00",
+   "start": "Your summer routine stopped working when",
+   "tags": "#WinterSkincare #SkincareRoutine #DrySkinTips #SouthJerseySpa #TaffetaSpa"
+  },
+  {
+   "id": "nspa-9",
+   "account": "spa.taffeta",
+   "at": "2026-11-23T17:30:00-05:00",
+   "start": "Late nights, holiday shopping, screens a",
+   "tags": "#TiredEyes #EyeTreatment #FacialAddOn #SouthJerseySpa #TaffetaSpa"
+  },
+  {
+   "id": "nspa-10",
+   "account": "spa.taffeta",
+   "at": "2026-11-24T17:30:00-05:00",
+   "start": "Thanksgiving week. The list is long, so ",
+   "tags": "#RestIsProductive #SpaDay #SelfCare #SouthJerseySpa #TaffetaSpa"
+  },
+  {
+   "id": "nspa-11",
+   "account": "spa.taffeta",
+   "at": "2026-11-26T12:00:00-05:00",
+   "start": "Happy Thanksgiving. Thank you for trusti",
+   "tags": "#HappyThanksgiving #Grateful #SmallBusiness #SouthJerseySpa #TaffetaSpa"
+  },
+  {
+   "id": "nspa-12",
+   "account": "spa.taffeta",
+   "at": "2026-11-28T12:00:00-05:00",
+   "start": "Small Business Saturday. Thank you for c",
+   "tags": "#SmallBusinessSaturday #ShopSmall #ShopLocal #SouthJerseySpa #TaffetaSpa"
+  },
+  {
+   "id": "nweddings-5",
+   "account": "taffetaweddings",
+   "at": "2026-11-10T17:30:00-05:00",
+   "start": "Just engaged and not sure what to book w",
+   "tags": "#BridalBeauty #WeddingPlanning #BridalSkincare #NJBride #TaffetaWeddings"
+  },
+  {
+   "id": "nweddings-6",
+   "account": "taffetaweddings",
+   "at": "2026-11-12T10:00:00-05:00",
+   "start": "Your trial is where your wedding look ge",
+   "tags": "#BridalTrial #WeddingPrep #BridalHairTrial #NJBride #TaffetaWeddings"
+  },
+  {
+   "id": "nweddings-7",
+   "account": "taffetaweddings",
+   "at": "2026-11-15T17:30:00-05:00",
+   "start": "Worried the wedding morning will run lat",
+   "tags": "#WeddingMorning #BridalParty #GettingReady #NJWeddings #TaffetaWeddings"
+  },
+  {
+   "id": "nweddings-8",
+   "account": "taffetaweddings",
+   "at": "2026-11-17T17:30:00-05:00",
+   "start": "Airbrush or traditional makeup? Both are",
+   "tags": "#AirbrushMakeup #BridalMakeup #WeddingMakeup #NJBride #TaffetaWeddings"
+  },
+  {
+   "id": "nweddings-9",
+   "account": "taffetaweddings",
+   "at": "2026-11-19T10:00:00-05:00",
+   "start": "Why the rollers? So your curls are still",
+   "tags": "#BridalHair #WeddingCurls #BridalPrep #NJWeddings #TaffetaWeddings"
+  },
+  {
+   "id": "nweddings-10",
+   "account": "taffetaweddings",
+   "at": "2026-11-22T17:30:00-05:00",
+   "start": "Will you still love your wedding photos ",
+   "tags": "#TimelessBride #ClassicBride #BridalBeauty #NJBride #TaffetaWeddings"
+  },
+  {
+   "id": "nweddings-11",
+   "account": "taffetaweddings",
+   "at": "2026-11-24T17:30:00-05:00",
+   "start": "Low bun, half-up or soft waves? Tell us ",
+   "tags": "#BridalHairstyles #WeddingHair #BrideToBe #NJBride #TaffetaWeddings"
+  },
+  {
+   "id": "nweddings-12",
+   "account": "taffetaweddings",
+   "at": "2026-11-26T10:00:00-05:00",
+   "start": "Happy Thanksgiving. We’re grateful for e",
+   "tags": "#HappyThanksgiving #RealBride #NJWeddings #BridalHairAndMakeup #TaffetaWeddings"
+  },
+  {
+   "id": "nhipretty-4",
+   "account": "hiprettybrand",
+   "at": "2026-11-09T14:30:00-05:00",
+   "start": "Hard day and nothing seems to help? Make",
+   "tags": "#HiPretty #SelfCareRituals #MentalHealthMatters #SlowLiving #SelfCare"
+  },
+  {
+   "id": "nhipretty-5",
+   "account": "hiprettybrand",
+   "at": "2026-11-10T17:30:00-05:00",
+   "start": "Lying awake replaying every conversation",
+   "tags": "#HiPretty #Overthinking #AnxietyRelief #SleepBetter #MentalHealthMatters"
+  },
+  {
+   "id": "nhipretty-6",
+   "account": "hiprettybrand",
+   "at": "2026-11-15T17:30:00-05:00",
+   "start": "Perfectionism is exhausting, and the hol",
+   "tags": "#HiPretty #Perfectionism #DoneIsBetterThanPerfect #MentalHealthMatters #SelfCompassion"
+  },
+  {
+   "id": "nhipretty-7",
+   "account": "hiprettybrand",
+   "at": "2026-11-16T14:30:00-05:00",
+   "start": "Cozy season, sorted. Matching pajamas fo",
+   "tags": "#HiPretty #CozySeason #Loungewear #ShopSmall #WomenOwnedBusiness"
+  },
+  {
+   "id": "nhipretty-8",
+   "account": "hiprettybrand",
+   "at": "2026-11-17T17:30:00-05:00",
+   "start": "That voice in your head that says you’re",
+   "tags": "#HiPretty #SelfTalk #SelfCompassion #MentalHealthMatters #WomenSupportingWomen"
+  },
+  {
+   "id": "nhipretty-9",
+   "account": "hiprettybrand",
+   "at": "2026-11-22T17:30:00-05:00",
+   "start": "Getting ready for the holiday party: 2 h",
+   "tags": "#HiPretty #RelatableMoments #HolidayParty #SundayReset #WomenSupportingWomen"
+  },
+  {
+   "id": "nhipretty-10",
+   "account": "hiprettybrand",
+   "at": "2026-11-23T14:30:00-05:00",
+   "start": "Thanksgiving week. Gratitude doesn’t hav",
+   "tags": "#HiPretty #Gratitude #Thankful #FindYourPeople #WomenSupportingWomen"
+  },
+  {
+   "id": "nhipretty-11",
+   "account": "hiprettybrand",
+   "at": "2026-11-24T17:30:00-05:00",
+   "start": "Stuck on what to get your sister, your b",
+   "tags": "#HiPretty #GiftGuide #GiftsForHer #ShopSmall #SmallBusinessSaturday"
+  },
+  {
+   "id": "nhipretty-12",
+   "account": "hiprettybrand",
+   "at": "2026-11-27T14:30:00-05:00",
+   "start": "No door busters, no 5 am lines. Just coz",
+   "tags": "#HiPretty #BlackFriday #ShopSmall #SmallBusinessSaturday #WomenOwnedBusiness"
+  }
+ ],
+ "feed": [
+  {
+   "id": "nsalon-6",
+   "account": "taffetasalonandspa",
+   "at": "2026-11-15T17:30:00-05:00",
+   "ok": false,
+   "urls": [
+    "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/feed/nsalon-6-1.jpg",
+    "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/feed/nsalon-6-2.jpg",
+    "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/feed/nsalon-6-3.jpg",
+    "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/feed/nsalon-6-4.jpg",
+    "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/feed/nsalon-6-5.jpg"
+   ],
+   "caption": "Saved 40 hair photos and still not sure? Same. That’s what the consult is for.\n\nBring every screenshot. We’ll look at your texture, your routine and how much time you really want to spend on your hair, then make the look work for you. Book a consult at the link in bio.",
+   "tags": "#HairConsultation #HairInspo #HammontonSalon #SouthJerseyHair #TaffetaSalonAndSpa"
+  },
+  {
+   "id": "nsalon-8",
+   "account": "taffetasalonandspa",
+   "at": "2026-11-18T12:30:00-05:00",
+   "ok": false,
+   "urls": [
+    "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/feed/nsalon-8-1.jpg",
+    "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/feed/nsalon-8-2.jpg",
+    "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/feed/nsalon-8-3.jpg",
+    "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/feed/nsalon-8-4.jpg",
+    "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/feed/nsalon-8-5.jpg"
+   ],
+   "caption": "Curled your hair for the party and by 9 pm it was straight again? It’s not you, it’s the timing.\n\nA style done the day of, set properly, lasts much longer than one you sleep on. Blow Dry $50, Blow Dry Plus $65, Formal Style $105. Book your party hair at the link in bio.",
+   "tags": "#PartyHair #HolidayHair #Blowout #HammontonSalon #TaffetaSalonAndSpa"
+  },
+  {
+   "id": "nsalon-9",
+   "account": "taffetasalonandspa",
+   "at": "2026-11-22T17:30:00-05:00",
+   "ok": false,
+   "urls": [
+    "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/feed/nsalon-9-1.jpg"
+   ],
+   "caption": "Curling iron every morning before the holidays? Your ends are keeping score.\n\nUse a heat protectant every single time, and keep your tools under the highest setting. If your hair already feels rough, a K18 ($45) or Olaplex ($50) treatment at your next visit helps. Book at the link in bio.",
+   "tags": "#HeatProtectant #HairDamage #K18 #HammontonSalon #TaffetaSalonAndSpa"
+  },
+  {
+   "id": "nsalon-11",
+   "account": "taffetasalonandspa",
+   "at": "2026-11-25T12:30:00-05:00",
+   "ok": false,
+   "urls": [
+    "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/feed/nsalon-11-1.jpg",
+    "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/feed/nsalon-11-2.jpg",
+    "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/feed/nsalon-11-3.jpg",
+    "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/feed/nsalon-11-4.jpg",
+    "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/feed/nsalon-11-5.jpg"
+   ],
+   "caption": "At-home box dye the night before your color appointment? Well, that’s perfect. 😅 (We’ll still fix it, promise.)\n\nCome in with dry hair, worn how you usually wear it, and bring photos of what you love and what you don’t. It makes your color better every time. Book at the link in bio.",
+   "tags": "#HairColor #ColorAppointment #HairTips #HammontonSalon #TaffetaSalonAndSpa"
+  },
+  {
+   "id": "nsalon-12",
+   "account": "taffetasalonandspa",
+   "at": "2026-11-26T12:30:00-05:00",
+   "ok": false,
+   "urls": [
+    "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/feed/nsalon-12-1.jpg"
+   ],
+   "caption": "Happy Thanksgiving from all of us at Taffeta. We’re so grateful for you. 🤍\n\nQuick tip before December gets busy: book your next visit before you leave the chair, so you’re not hunting for a spot later. Ask about our Beauty Membership ($75 a month) at the desk, or book at the link in bio.",
+   "tags": "#HappyThanksgiving #Grateful #HammontonNJ #SouthJerseySalon #TaffetaSalonAndSpa"
+  },
+  {
+   "id": "nspa-6",
+   "account": "spa.taffeta",
+   "at": "2026-11-16T17:30:00-05:00",
+   "ok": false,
+   "urls": [
+    "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/feed/nspa-6-1.jpg"
+   ],
+   "caption": "Holiday party or family photos coming up, and your skin isn’t cooperating?\n\nBook a Lift & Remodel (90 min, $200) a week or two before. It’s our Biologique Recherche facial for skin that looks tired, and makeup goes on smoother after. Book at the link in bio.",
+   "tags": "#HolidaySkin #FacialTreatment #BiologiqueRecherche #SouthJerseySpa #TaffetaSpa"
+  },
+  {
+   "id": "nspa-8",
+   "account": "spa.taffeta",
+   "at": "2026-11-19T12:00:00-05:00",
+   "ok": false,
+   "urls": [
+    "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/feed/nspa-8-1.jpg",
+    "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/feed/nspa-8-2.jpg",
+    "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/feed/nspa-8-3.jpg",
+    "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/feed/nspa-8-4.jpg",
+    "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/feed/nspa-8-5.jpg"
+   ],
+   "caption": "Your summer routine stopped working when the heat came on? Simplify it.\n\nGentle cleanser, a hydrating layer and SPF every morning. Want it matched to your skin? Our Skin Reset (60 min, $180) includes a facial and a regimen to take home. Book at the link in bio.",
+   "tags": "#WinterSkincare #SkincareRoutine #DrySkinTips #SouthJerseySpa #TaffetaSpa"
+  },
+  {
+   "id": "nspa-9",
+   "account": "spa.taffeta",
+   "at": "2026-11-23T17:30:00-05:00",
+   "ok": false,
+   "urls": [
+    "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/feed/nspa-9-1.jpg"
+   ],
+   "caption": "Late nights, holiday shopping, screens all day: your eyes are telling on you.\n\nAdd the Stress Free Eye Lift to any facial for $25. Small add-on, big difference. Book at the link in bio.",
+   "tags": "#TiredEyes #EyeTreatment #FacialAddOn #SouthJerseySpa #TaffetaSpa"
+  },
+  {
+   "id": "nspa-11",
+   "account": "spa.taffeta",
+   "at": "2026-11-26T12:00:00-05:00",
+   "ok": false,
+   "urls": [
+    "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/feed/nspa-11-1.jpg"
+   ],
+   "caption": "Happy Thanksgiving. Thank you for trusting us with your quiet hour this year. 🤍\n\nIf a visit with us helped, a Google review helps others find us. The link is in our bio.",
+   "tags": "#HappyThanksgiving #Grateful #SmallBusiness #SouthJerseySpa #TaffetaSpa"
+  },
+  {
+   "id": "nspa-12",
+   "account": "spa.taffeta",
+   "at": "2026-11-28T12:00:00-05:00",
+   "ok": false,
+   "urls": [
+    "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/feed/nspa-12-1.jpg"
+   ],
+   "caption": "Small Business Saturday. Thank you for choosing a local spa. It means everything to us.\n\nStart December with your skin in a good place: book a $99 express treatment at the link in bio.",
+   "tags": "#SmallBusinessSaturday #ShopSmall #ShopLocal #SouthJerseySpa #TaffetaSpa"
+  },
+  {
+   "id": "nweddings-8",
+   "account": "taffetaweddings",
+   "at": "2026-11-17T17:30:00-05:00",
+   "ok": false,
+   "urls": [
+    "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/feed/nweddings-8-1.jpg",
+    "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/feed/nweddings-8-2.jpg",
+    "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/feed/nweddings-8-3.jpg",
+    "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/feed/nweddings-8-4.jpg",
+    "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/feed/nweddings-8-5.jpg"
+   ],
+   "caption": "Airbrush or traditional makeup? Both are beautiful. It depends on your skin and your day.\n\nAirbrush is light and long-wearing, great for summer and lots of hugs. Traditional gives more control and suits drier skin. We’ll help you choose at your trial. Send us your date at the link in bio.",
+   "tags": "#AirbrushMakeup #BridalMakeup #WeddingMakeup #NJBride #TaffetaWeddings"
+  },
+  {
+   "id": "nweddings-9",
+   "account": "taffetaweddings",
+   "at": "2026-11-19T10:00:00-05:00",
+   "ok": false,
+   "urls": [
+    "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/feed/nweddings-9-1.jpg"
+   ],
+   "caption": "Why the rollers? So your curls are still there at the last dance.\n\nSetting curls while makeup goes on gives them time to cool and hold. It’s a small step that makes your hair last all night. Send us your date at the link in bio.",
+   "tags": "#BridalHair #WeddingCurls #BridalPrep #NJWeddings #TaffetaWeddings"
+  },
+  {
+   "id": "nweddings-10",
+   "account": "taffetaweddings",
+   "at": "2026-11-22T17:30:00-05:00",
+   "ok": false,
+   "urls": [
+    "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/feed/nweddings-10-1.jpg",
+    "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/feed/nweddings-10-2.jpg",
+    "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/feed/nweddings-10-3.jpg",
+    "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/feed/nweddings-10-4.jpg",
+    "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/feed/nweddings-10-5.jpg"
+   ],
+   "caption": "Will you still love your wedding photos in 20 years? Here’s how to make sure.\n\nStart with your features, choose one focus and keep everything soft enough to move. Timeless isn’t a trend. It’s a promise. Send us your date at the link in bio.",
+   "tags": "#TimelessBride #ClassicBride #BridalBeauty #NJBride #TaffetaWeddings"
+  },
+  {
+   "id": "nweddings-12",
+   "account": "taffetaweddings",
+   "at": "2026-11-26T10:00:00-05:00",
+   "ok": false,
+   "urls": [
+    "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/feed/nweddings-12-1.jpg"
+   ],
+   "caption": "Happy Thanksgiving. We’re grateful for every bride who trusted us with her morning this year. 🤍\n\nIf we were part of your day, a Google review means the world and helps future brides find us. The link is in our bio.",
+   "tags": "#HappyThanksgiving #RealBride #NJWeddings #BridalHairAndMakeup #TaffetaWeddings"
+  },
+  {
+   "id": "nhipretty-6",
+   "account": "hiprettybrand",
+   "at": "2026-11-15T17:30:00-05:00",
+   "ok": false,
+   "urls": [
+    "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/feed/nhipretty-6-1.jpg",
+    "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/feed/nhipretty-6-2.jpg",
+    "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/feed/nhipretty-6-3.jpg",
+    "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/feed/nhipretty-6-4.jpg",
+    "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/feed/nhipretty-6-5.jpg"
+   ],
+   "caption": "Perfectionism is exhausting, and the holidays make it louder.\n\nHere’s your list of things that are allowed to be good enough this season. Which one are you letting go of? Tell me in the comments.",
+   "tags": "#HiPretty #Perfectionism #DoneIsBetterThanPerfect #MentalHealthMatters #SelfCompassion"
+  },
+  {
+   "id": "nhipretty-8",
+   "account": "hiprettybrand",
+   "at": "2026-11-17T17:30:00-05:00",
+   "ok": false,
+   "urls": [
+    "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/feed/nhipretty-8-1.jpg",
+    "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/feed/nhipretty-8-2.jpg",
+    "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/feed/nhipretty-8-3.jpg",
+    "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/feed/nhipretty-8-4.jpg",
+    "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/feed/nhipretty-8-5.jpg"
+   ],
+   "caption": "That voice in your head that says you’re behind, not enough, too much? She’s rude.\n\nTalk to yourself the way you’d talk to your best friend. Save this, and send it to the friend who needs it too.",
+   "tags": "#HiPretty #SelfTalk #SelfCompassion #MentalHealthMatters #WomenSupportingWomen"
+  },
+  {
+   "id": "nhipretty-9",
+   "account": "hiprettybrand",
+   "at": "2026-11-22T17:30:00-05:00",
+   "ok": false,
+   "urls": [
+    "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/feed/nhipretty-9-1.jpg"
+   ],
+   "caption": "Getting ready for the holiday party: 2 hours. Time at the party: 45 minutes. Worth it.\n\nTag the friend who’s always the first to leave.",
+   "tags": "#HiPretty #RelatableMoments #HolidayParty #SundayReset #WomenSupportingWomen"
+  },
+  {
+   "id": "nhipretty-11",
+   "account": "hiprettybrand",
+   "at": "2026-11-24T17:30:00-05:00",
+   "ok": false,
+   "urls": [
+    "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/feed/nhipretty-11-1.jpg",
+    "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/feed/nhipretty-11-2.jpg",
+    "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/feed/nhipretty-11-3.jpg",
+    "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/feed/nhipretty-11-4.jpg",
+    "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/feed/nhipretty-11-5.jpg",
+    "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/feed/nhipretty-11-6.jpg"
+   ],
+   "caption": "Stuck on what to get your sister, your best friend or your mom? Skip the stuff that ends up in a drawer.\n\nHi Pretty Pajamas ($40), the Oversized Fleece Crewneck ($65) and our Baseball Hats ($25): gifts she’ll wear all winter. Shop small this Saturday at the link in bio.",
+   "tags": "#HiPretty #GiftGuide #GiftsForHer #ShopSmall #SmallBusinessSaturday"
+  },
+  {
+   "id": "nhipretty-12",
+   "account": "hiprettybrand",
+   "at": "2026-11-27T14:30:00-05:00",
+   "ok": false,
+   "urls": [
+    "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/feed/nhipretty-12-1.jpg"
+   ],
+   "caption": "No doorbusters, no 5 am lines. Just cozy things made to make you feel good.\n\nShop small this weekend, from the couch, in your pajamas. Shop at the link in bio.",
+   "tags": "#HiPretty #BlackFriday #ShopSmall #SmallBusinessSaturday #WomenOwnedBusiness"
+  }
+ ]
+}
