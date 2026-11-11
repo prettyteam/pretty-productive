@@ -1614,7 +1614,13 @@ async function stockSave(inp,id,item,n){
 function stockBox(id,item,dflt){
   const n=stockOf(id,dflt);
   const inp=h('input',{type:'number',inputmode:'numeric',min:'0',step:'1',value:n==null?'':String(n),'aria-label':'On hand: '+item});
-  inp.addEventListener('change',()=>{const v=inp.value.trim(); if(/^\d{1,4}$/.test(v)) stockSave(inp,id,item,+v); else inp.classList.add('err')});
+  /* Nov 11 2026: a count that matches the old number never fired 'change', so it wasn't saved or dated and the color list
+     kept using the old count. Now any typed count saves when the box is left, even if the number is the same. */
+  let typed=false;
+  const save=()=>{const v=inp.value.trim(); typed=false; if(/^\d{1,4}$/.test(v)) stockSave(inp,id,item,+v); else inp.classList.add('err')};
+  inp.addEventListener('input',()=>{typed=true});
+  inp.addEventListener('change',save);
+  inp.addEventListener('blur',()=>{if(typed) save()});
   return h('label',{class:'cntw'},inp,h('small',{class:'soft'},'on hand'));
 }
 function invSearch(placeholder,rows){
