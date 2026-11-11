@@ -79,9 +79,13 @@ def on_order(rows, keys, year, now):
 def daily_usage(rows, keys):
     """({(key, date): units}, {weighed dates}, [unmatched products]) from Scale Usage rows."""
     full = {co.norm(k[0] + k[1] + k[2]): k for k in keys}
+    # shade-code match ('10VV Lavender Ice' = '010VV Lavender Ice'), only for codes with a digit, so 'Blondor ...'
+    # products never match each other by their first word
+    code = lambda p: (lambda t: t.lstrip('0') if re.search(r'\d', t) else None)(p.split(' ')[0])
     short = {}
     for k in keys:
-        short.setdefault(co.norm(k[0] + k[1] + k[2].split(' ')[0]), k)
+        if code(k[2]):
+            short.setdefault(co.norm(k[0] + k[1] + code(k[2])), k)
     six_n = next((k for k in keys if k[1] == 'Colorance Canister' and k[2].split(' ')[0] == '6N'), None)
     use, days, miss = {}, set(), set()
     for r in rows or []:
@@ -99,7 +103,7 @@ def daily_usage(rows, keys):
         if '6n@gb' in prod.lower() and six_n:         # Colorance 6N@GB isn't carried: those bowls are Colorance 6N
             k = six_n
         else:
-            k = full.get(co.norm(man + brand + prod)) or short.get(co.norm(man + brand + prod.split(' ')[0]))
+            k = full.get(co.norm(man + brand + prod)) or (code(prod) and short.get(co.norm(man + brand + code(prod))))
         if not k:
             if u > 0:
                 miss.add(' '.join(x for x in (man, brand, prod) if x))
