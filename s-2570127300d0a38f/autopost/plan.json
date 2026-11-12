@@ -150,13 +150,6 @@
    "tags": "#WinterHands #CuticleCare #GelManicure #HammontonNails #TaffetaSalonAndSpa"
   },
   {
-   "id": "nsalon-6",
-   "account": "taffetasalonandspa",
-   "at": "2026-11-15T17:30:00-05:00",
-   "start": "Saved 40 hair photos and still not sure?",
-   "tags": "#HairConsultation #HairInspo #HammontonSalon #SouthJerseyHair #TaffetaSalonAndSpa"
-  },
-  {
    "id": "nsalon-7",
    "account": "taffetasalonandspa",
    "at": "2026-11-17T17:30:00-05:00",
@@ -164,39 +157,11 @@
    "tags": "#HolidaySeason #HolidayHair #HammontonNJ #SouthJerseySalon #TaffetaSalonAndSpa"
   },
   {
-   "id": "nsalon-8",
-   "account": "taffetasalonandspa",
-   "at": "2026-11-18T12:30:00-05:00",
-   "start": "Curled your hair for the party and by 9 ",
-   "tags": "#PartyHair #HolidayHair #Blowout #HammontonSalon #TaffetaSalonAndSpa"
-  },
-  {
-   "id": "nsalon-9",
-   "account": "taffetasalonandspa",
-   "at": "2026-11-22T17:30:00-05:00",
-   "start": "Curling iron every morning before the ho",
-   "tags": "#HeatProtectant #HairDamage #K18 #HammontonSalon #TaffetaSalonAndSpa"
-  },
-  {
    "id": "nsalon-10",
    "account": "taffetasalonandspa",
    "at": "2026-11-24T17:30:00-05:00",
    "start": "Thank you for sitting in our chairs this",
    "tags": "#Thankful #SmallBusinessLove #HammontonNJ #SouthJerseySalon #TaffetaSalonAndSpa"
-  },
-  {
-   "id": "nsalon-11",
-   "account": "taffetasalonandspa",
-   "at": "2026-11-25T12:30:00-05:00",
-   "start": "At-home box dye the night before your co",
-   "tags": "#HairColor #ColorAppointment #HairTips #HammontonSalon #TaffetaSalonAndSpa"
-  },
-  {
-   "id": "nsalon-12",
-   "account": "taffetasalonandspa",
-   "at": "2026-11-26T12:30:00-05:00",
-   "start": "Happy Thanksgiving from all of us at Taf",
-   "tags": "#HappyThanksgiving #Grateful #HammontonNJ #SouthJerseySalon #TaffetaSalonAndSpa"
   },
   {
    "id": "nspa-3",
@@ -220,13 +185,6 @@
    "tags": "#BiologiqueRecherche #FrenchSkincare #FacialTreatment #SouthJerseySpa #TaffetaSpa"
   },
   {
-   "id": "nspa-6",
-   "account": "spa.taffeta",
-   "at": "2026-11-16T17:30:00-05:00",
-   "start": "Holiday party or family photos coming up",
-   "tags": "#HolidaySkin #FacialTreatment #BiologiqueRecherche #SouthJerseySpa #TaffetaSpa"
-  },
-  {
    "id": "nspa-7",
    "account": "spa.taffeta",
    "at": "2026-11-17T17:30:00-05:00",
@@ -234,39 +192,11 @@
    "tags": "#HydroDiamond #DrySkin #SmoothSkin #SouthJerseySpa #TaffetaSpa"
   },
   {
-   "id": "nspa-8",
-   "account": "spa.taffeta",
-   "at": "2026-11-19T12:00:00-05:00",
-   "start": "Your summer routine stopped working when",
-   "tags": "#WinterSkincare #SkincareRoutine #DrySkinTips #SouthJerseySpa #TaffetaSpa"
-  },
-  {
-   "id": "nspa-9",
-   "account": "spa.taffeta",
-   "at": "2026-11-23T17:30:00-05:00",
-   "start": "Late nights, holiday shopping, screens a",
-   "tags": "#TiredEyes #EyeTreatment #FacialAddOn #SouthJerseySpa #TaffetaSpa"
-  },
-  {
    "id": "nspa-10",
    "account": "spa.taffeta",
    "at": "2026-11-24T17:30:00-05:00",
    "start": "Thanksgiving week. The list is long, so ",
    "tags": "#RestIsProductive #SpaDay #SelfCare #SouthJerseySpa #TaffetaSpa"
-  },
-  {
-   "id": "nspa-11",
-   "account": "spa.taffeta",
-   "at": "2026-11-26T12:00:00-05:00",
-   "start": "Happy Thanksgiving. Thank you for trusti",
-   "tags": "#HappyThanksgiving #Grateful #SmallBusiness #SouthJerseySpa #TaffetaSpa"
-  },
-  {
-   "id": "nspa-12",
-   "account": "spa.taffeta",
-   "at": "2026-11-28T12:00:00-05:00",
-   "start": "Small Business Saturday. Thank you for c",
-   "tags": "#SmallBusinessSaturday #ShopSmall #ShopLocal #SouthJerseySpa #TaffetaSpa"
   },
   {
    "id": "nweddings-5",
@@ -290,39 +220,11 @@
    "tags": "#WeddingMorning #BridalParty #GettingReady #NJWeddings #TaffetaWeddings"
   },
   {
-   "id": "nweddings-8",
-   "account": "taffetaweddings",
-   "at": "2026-11-17T17:30:00-05:00",
-   "start": "Airbrush or traditional makeup? Both are",
-   "tags": "#AirbrushMakeup #BridalMakeup #WeddingMakeup #NJBride #TaffetaWeddings"
-  },
-  {
-   "id": "nweddings-9",
-   "account": "taffetaweddings",
-   "at": "2026-11-19T10:00:00-05:00",
-   "start": "Why the rollers? So your curls are still",
-   "tags": "#BridalHair #WeddingCurls #BridalPrep #NJWeddings #TaffetaWeddings"
-  },
-  {
-   "id": "nweddings-10",
-   "account": "taffetaweddings",
-   "at": "2026-11-22T17:30:00-05:00",
-   "start": "Will you still love your wedding photos ",
-   "tags": "#TimelessBride #ClassicBride #BridalBeauty #NJBride #TaffetaWeddings"
-  },
-  {
    "id": "nweddings-11",
    "account": "taffetaweddings",
    "at": "2026-11-24T17:30:00-05:00",
    "start": "Low bun, half-up or soft waves? Tell us ",
    "tags": "#BridalHairstyles #WeddingHair #BrideToBe #NJBride #TaffetaWeddings"
-  },
-  {
-   "id": "nweddings-12",
-   "account": "taffetaweddings",
-   "at": "2026-11-26T10:00:00-05:00",
-   "start": "Happy Thanksgiving. We’re grateful for e",
-   "tags": "#HappyThanksgiving #RealBride #NJWeddings #BridalHairAndMakeup #TaffetaWeddings"
   },
   {
    "id": "nhipretty-4",
@@ -339,13 +241,6 @@
    "tags": "#HiPretty #Overthinking #AnxietyRelief #SleepBetter #MentalHealthMatters"
   },
   {
-   "id": "nhipretty-6",
-   "account": "hiprettybrand",
-   "at": "2026-11-15T17:30:00-05:00",
-   "start": "Perfectionism is exhausting, and the hol",
-   "tags": "#HiPretty #Perfectionism #DoneIsBetterThanPerfect #MentalHealthMatters #SelfCompassion"
-  },
-  {
    "id": "nhipretty-7",
    "account": "hiprettybrand",
    "at": "2026-11-16T14:30:00-05:00",
@@ -353,39 +248,11 @@
    "tags": "#HiPretty #CozySeason #Loungewear #ShopSmall #WomenOwnedBusiness"
   },
   {
-   "id": "nhipretty-8",
-   "account": "hiprettybrand",
-   "at": "2026-11-17T17:30:00-05:00",
-   "start": "That voice in your head that says you’re",
-   "tags": "#HiPretty #SelfTalk #SelfCompassion #MentalHealthMatters #WomenSupportingWomen"
-  },
-  {
-   "id": "nhipretty-9",
-   "account": "hiprettybrand",
-   "at": "2026-11-22T17:30:00-05:00",
-   "start": "Getting ready for the holiday party: 2 h",
-   "tags": "#HiPretty #RelatableMoments #HolidayParty #SundayReset #WomenSupportingWomen"
-  },
-  {
    "id": "nhipretty-10",
    "account": "hiprettybrand",
    "at": "2026-11-23T14:30:00-05:00",
    "start": "Thanksgiving week. Gratitude doesn’t hav",
    "tags": "#HiPretty #Gratitude #Thankful #FindYourPeople #WomenSupportingWomen"
-  },
-  {
-   "id": "nhipretty-11",
-   "account": "hiprettybrand",
-   "at": "2026-11-24T17:30:00-05:00",
-   "start": "Stuck on what to get your sister, your b",
-   "tags": "#HiPretty #GiftGuide #GiftsForHer #ShopSmall #SmallBusinessSaturday"
-  },
-  {
-   "id": "nhipretty-12",
-   "account": "hiprettybrand",
-   "at": "2026-11-27T14:30:00-05:00",
-   "start": "No door busters, no 5 am lines. Just coz",
-   "tags": "#HiPretty #BlackFriday #ShopSmall #SmallBusinessSaturday #WomenOwnedBusiness"
   }
  ],
  "feed": [
@@ -393,7 +260,7 @@
    "id": "nsalon-6",
    "account": "taffetasalonandspa",
    "at": "2026-11-15T17:30:00-05:00",
-   "ok": false,
+   "ok": true,
    "urls": [
     "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/feed/nsalon-6-1.jpg",
     "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/feed/nsalon-6-2.jpg",
@@ -408,7 +275,7 @@
    "id": "nsalon-8",
    "account": "taffetasalonandspa",
    "at": "2026-11-18T12:30:00-05:00",
-   "ok": false,
+   "ok": true,
    "urls": [
     "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/feed/nsalon-8-1.jpg",
     "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/feed/nsalon-8-2.jpg",
@@ -423,7 +290,7 @@
    "id": "nsalon-9",
    "account": "taffetasalonandspa",
    "at": "2026-11-22T17:30:00-05:00",
-   "ok": false,
+   "ok": true,
    "urls": [
     "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/feed/nsalon-9-1.jpg"
    ],
@@ -434,7 +301,7 @@
    "id": "nsalon-11",
    "account": "taffetasalonandspa",
    "at": "2026-11-25T12:30:00-05:00",
-   "ok": false,
+   "ok": true,
    "urls": [
     "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/feed/nsalon-11-1.jpg",
     "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/feed/nsalon-11-2.jpg",
@@ -449,7 +316,7 @@
    "id": "nsalon-12",
    "account": "taffetasalonandspa",
    "at": "2026-11-26T12:30:00-05:00",
-   "ok": false,
+   "ok": true,
    "urls": [
     "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/feed/nsalon-12-1.jpg"
    ],
@@ -460,7 +327,7 @@
    "id": "nspa-6",
    "account": "spa.taffeta",
    "at": "2026-11-16T17:30:00-05:00",
-   "ok": false,
+   "ok": true,
    "urls": [
     "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/feed/nspa-6-1.jpg"
    ],
@@ -471,7 +338,7 @@
    "id": "nspa-8",
    "account": "spa.taffeta",
    "at": "2026-11-19T12:00:00-05:00",
-   "ok": false,
+   "ok": true,
    "urls": [
     "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/feed/nspa-8-1.jpg",
     "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/feed/nspa-8-2.jpg",
@@ -486,7 +353,7 @@
    "id": "nspa-9",
    "account": "spa.taffeta",
    "at": "2026-11-23T17:30:00-05:00",
-   "ok": false,
+   "ok": true,
    "urls": [
     "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/feed/nspa-9-1.jpg"
    ],
@@ -497,7 +364,7 @@
    "id": "nspa-11",
    "account": "spa.taffeta",
    "at": "2026-11-26T12:00:00-05:00",
-   "ok": false,
+   "ok": true,
    "urls": [
     "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/feed/nspa-11-1.jpg"
    ],
@@ -508,7 +375,7 @@
    "id": "nspa-12",
    "account": "spa.taffeta",
    "at": "2026-11-28T12:00:00-05:00",
-   "ok": false,
+   "ok": true,
    "urls": [
     "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/feed/nspa-12-1.jpg"
    ],
@@ -519,7 +386,7 @@
    "id": "nweddings-8",
    "account": "taffetaweddings",
    "at": "2026-11-17T17:30:00-05:00",
-   "ok": false,
+   "ok": true,
    "urls": [
     "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/feed/nweddings-8-1.jpg",
     "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/feed/nweddings-8-2.jpg",
@@ -534,7 +401,7 @@
    "id": "nweddings-9",
    "account": "taffetaweddings",
    "at": "2026-11-19T10:00:00-05:00",
-   "ok": false,
+   "ok": true,
    "urls": [
     "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/feed/nweddings-9-1.jpg"
    ],
@@ -545,7 +412,7 @@
    "id": "nweddings-10",
    "account": "taffetaweddings",
    "at": "2026-11-22T17:30:00-05:00",
-   "ok": false,
+   "ok": true,
    "urls": [
     "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/feed/nweddings-10-1.jpg",
     "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/feed/nweddings-10-2.jpg",
@@ -560,7 +427,7 @@
    "id": "nweddings-12",
    "account": "taffetaweddings",
    "at": "2026-11-26T10:00:00-05:00",
-   "ok": false,
+   "ok": true,
    "urls": [
     "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/feed/nweddings-12-1.jpg"
    ],
@@ -571,7 +438,7 @@
    "id": "nhipretty-6",
    "account": "hiprettybrand",
    "at": "2026-11-15T17:30:00-05:00",
-   "ok": false,
+   "ok": true,
    "urls": [
     "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/feed/nhipretty-6-1.jpg",
     "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/feed/nhipretty-6-2.jpg",
@@ -586,7 +453,7 @@
    "id": "nhipretty-8",
    "account": "hiprettybrand",
    "at": "2026-11-17T17:30:00-05:00",
-   "ok": false,
+   "ok": true,
    "urls": [
     "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/feed/nhipretty-8-1.jpg",
     "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/feed/nhipretty-8-2.jpg",
@@ -601,7 +468,7 @@
    "id": "nhipretty-9",
    "account": "hiprettybrand",
    "at": "2026-11-22T17:30:00-05:00",
-   "ok": false,
+   "ok": true,
    "urls": [
     "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/feed/nhipretty-9-1.jpg"
    ],
@@ -612,7 +479,7 @@
    "id": "nhipretty-11",
    "account": "hiprettybrand",
    "at": "2026-11-24T17:30:00-05:00",
-   "ok": false,
+   "ok": true,
    "urls": [
     "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/feed/nhipretty-11-1.jpg",
     "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/feed/nhipretty-11-2.jpg",
@@ -628,7 +495,7 @@
    "id": "nhipretty-12",
    "account": "hiprettybrand",
    "at": "2026-11-27T14:30:00-05:00",
-   "ok": false,
+   "ok": true,
    "urls": [
     "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/feed/nhipretty-12-1.jpg"
    ],
