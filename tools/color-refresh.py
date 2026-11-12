@@ -78,8 +78,7 @@ def on_order(rows, keys, year, now):
 
 def shade_code(shade):
     """'010VV Lavender Ice' and '10VV Lavender Ice' -> '10VV'; None when the first word has no digit ('Blondor ...')."""
-    t = str(shade).split(' ')[0]
-    return t.lstrip('0') if re.search(r'\d', t) else None
+    return co.code_of(shade)
 
 
 def counted_extras(keys, counts, products, usage4, weeks=4):
@@ -124,7 +123,7 @@ def daily_usage(rows, keys):
     full = {co.norm(k[0] + k[1] + k[2]): k for k in keys}
     # shade-code match ('10VV Lavender Ice' = '010VV Lavender Ice'), only for codes with a digit, so 'Blondor ...'
     # products never match each other by their first word
-    code = lambda p: (lambda t: t.lstrip('0') if re.search(r'\d', t) else None)(p.split(' ')[0])
+    code = co.code_of
     short = {}
     for k in keys:
         if code(k[2]):

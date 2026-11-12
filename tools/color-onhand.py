@@ -71,10 +71,49 @@ def item_name(key):
     return s
 
 
+def code_of(shade):
+    """Shade code with leading zeros dropped, so SureTint's '10VV Lavender Ice' = the shelf's '010VV Lavender Ice'.
+    None when the first word has no digit ('Blondor ...', 'Crystal Clear')."""
+    m = re.match(r'0*(\d+)\s?([A-Z@][A-Za-z@]{0,4})?(?=\s|$)', str(shade).strip())   # '010 NB' = '010NB'
+    if m:
+        return (m.group(1) + (m.group(2) or '')).upper()
+    t = str(shade).split(' ')[0]
+    return t.lstrip('0').upper() if re.search(r'\d', t) else None
+
+
+def backbar_id(key, counts):
+    """Stock Counts Backbar id for a SureTint (brand, line, shade), or None. Exact name first; then the same brand, line
+    and shade code (leading zeros ignored: 10VV = 010VV); then, only when there is exactly one, the same brand, the same
+    line family (first word, e.g. 'Topchic Canister High Blond' 11V = the shelf's 'Topchic Tubes High Blond' 11V) and
+    code. Found Nov 11 2026: these name differences kept counted shades under NOT COUNTED YET."""
+    b, l, s = key
+    exact = 'b:%s|%s|%s' % key
+    if exact in counts:
+        return exact
+    c = code_of(s)
+    if not c:
+        return None
+    same, family = [], []
+    for cid in counts:
+        if not cid.startswith('b:') or cid.count('|') != 2:
+            continue
+        cb, cl, cs = cid[2:].split('|')
+        if cb != b or code_of(cs) != c:
+            continue
+        if cl == l:
+            same.append(cid)
+        elif cl.split(' ')[0] == l.split(' ')[0]:
+            family.append(cid)
+    if same:
+        return max(same, key=lambda i: counts[i][1])
+    return family[0] if len(family) == 1 else None
+
+
 def start_count(key, counts):
     """Newest of the Backbar count and any What To Order count for this item: (n, datetime, source) or None."""
     b, l, s = key
-    found = [(*counts['b:%s|%s|%s' % key], 'backbar')] if 'b:%s|%s|%s' % key in counts else []
+    bid = backbar_id(key, counts)
+    found = [(*counts[bid], 'backbar')] if bid else []
     # desk names use the short shade ('Shades EQ 09V'); Backbar keys carry the full name ('09V Platinum Iced')
     ids = {'c:' + norm(x + ' ' + y) for x in (l, b + ' ' + l, b, l.split(' ')[0], '') for y in {s, s.split(' ')[0]}} | {'c:' + norm(item_name(key))}
     for cid in ids:
@@ -176,9 +215,11 @@ unused = lambda *t: 'color renew' in ' '.join(map(str, t)).lower() or '6n@gb' in
 
 def par_of(key):
     b, l, s = key
+    c = code_of(s)
     for test, dflt, ex in PAR:
         if test(l, s):
-            return ex.get(s.split(' ')[0], dflt)
+            # leading zeros ignored: SureTint's 10VV gets Rose's 010VV par
+            return next((v for x, v in ex.items() if c and code_of(x) == c), ex.get(s.split(' ')[0], dflt))
     return None
 
 
