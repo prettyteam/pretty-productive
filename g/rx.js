@@ -252,7 +252,7 @@ function rxNowAll(R){
   if(color.includes('Grays showing'))add('Grays showing');
   return now;
 }
-function rxNeeds(R){
+function rxNeeds(R,all){
   const a=R.a||{}, now=rxNowAll(R), out=[], add=k=>{if(!out.includes(k)&&RX_PROD[k]) out.push(k)};
   const notHappy=a.prod&&!['Professional','Unsure','Not sure','I don’t know'].includes(a.prod)||a.love==='No'||a.love==='It’s okay'; /* "it's okay" means she's open to something better (Alexandra, Oct 16 2026) */
   if(R.kind==='hair'&&rxGoalList(R).some(g=>/^Blowout/.test(g))&&(now.includes('Frizz')||now.includes('Flyaways'))) add('sleekStick');
@@ -296,8 +296,24 @@ function rxNeeds(R){
   if((a.wash==='Every 2–3 days'||a.wash==='Once a week')&&(/^Blow-dry with a brush/.test(a.style||'')||feel.includes('Flat'))) add('airWash');
   /* home care is always budgeted, even before the artist knows exactly what she'll take home (Alexandra, Oct 16 2026) */
   if(!out.length) add(colored?'colorSafe':'basicWash');
-  return out.slice(0,2).map(k=>a.clean==='Yes'&&RX_PROD[k+'RF']?k+'RF':k);
+  return (all?out:out.slice(0,2)).map(k=>a.clean==='Yes'&&RX_PROD[k+'RF']?k+'RF':k);
 }
+/* Hair cards, the artist's way (Alexandra, Nov 12 2026): the artist picks the services for Worth The Wait and All In
+   herself, and the card only adds the home care money ($45 / $81) and the totals. The guest sees two totals with home
+   care already inside them; product names wait until the end of the appointment. The consult questions stay: they
+   teach the artist her routine, and become "What She Needs At Home" for picking products at the end. */
+const RX_NEED_WORDS={colorSafe:'Color-safe shampoo and conditioner',glazeKeep:'Color-safe shampoo to keep her glaze glossy',uv:'UV and heat protection',heat:'Heat protection',
+  brassy:'Purple shampoo for brassiness',k18Home:'Repair at home after lightening',airWash:'Dry shampoo to stretch washes',movement:'A styler for soft movement',movementAir:'A styler for soft movement',
+  airDry:'An air-dry styler',airCurl:'A cream for her natural waves or curls',flyaway:'Flyaway control',sleekStick:'Flyaway control',prep:'Blow-dry prep',frizz:'Frizz control',
+  dry:'Moisture for dry hair',breakage:'Repair for breakage',flat:'Volume',flatSpray:'Volume',flatWash:'Volume',oily:'Oil control',scalp:'Scalp care',grays:'Root touch-up between visits',
+  blowLast:'Makes her blowout last',basicWash:'A good shampoo and conditioner'};
+function rxNeedWords(R){let k=[];try{k=rxNeeds(R,true)}catch(e){}
+  const svc=(R.opts||[]).flatMap(o=>o.lines.map(l=>l.n)); if(svc.some(n=>RX_BIG_BLOND.test(n))&&!k.includes('k18Home')) k.push('k18Home');
+  return [...new Set(k.map(x=>RX_NEED_WORDS[x.replace(/RF$/,'')]).filter(Boolean))]}
+const rxHairHC=amt=>({n:'Home Care',p:amt,t:'h',full:amt,why:''});
+function rxStartHair(){return {opts:[{title:'Option 1',lines:[rxHairHC(RX_HC_LO)]},{title:'Option 2',lines:[rxHairHC(RX_HC_HI)]}],
+  m:{lines:[],when:'',text:''},refresh:'',keep:false,more:false,rec:[],spec:null,pick:1}}
+const rxPicked=R=>R.kind==='hair'&&!!R.pick;
 
 /* Every blonding service gets K18 sprayed in before the lightener: a backbar charge from $25 (up to $50 by amount used),
    and one pump of K18 leave-in after (Alexandra, Oct 2026). */
@@ -713,11 +729,14 @@ function rxBuild(R,me){
     if(!(Number(R.budget)>0)){const n=document.querySelector('.card2 input[type=number]');if(n){n.scrollIntoView({behavior:'smooth',block:'center'});n.focus()}RX_HINT='Type her budget first.';return}
     RX_DD.open=!rxGoalList(R).length?'goal':'now';RX_HINT=!rxGoalList(R).length?'Pick today’s goals first.':(sk?'Answer Her Skin Instant first.':'Answer Scalp Condition first.');render();
     setTimeout(()=>{const d=document.querySelector('details.rxdd[open]');if(d)d.scrollIntoView({behavior:'smooth',block:'center'})},60)};
-  const gen=h('button',{type:'button',class:'obtn',style:ready?null:'opacity:.55',onclick:()=>{if(!ready){missing();return}RX_HINT='';const g=rxGenerate(R);if(!g)return;Object.assign(R,g);rxSave();render();setTimeout(()=>{const n=document.getElementById('rxopts');if(n)n.scrollIntoView({behavior:'smooth'})},50)}},R.opts?'Suggest Again':'Suggest Options');
+  const hairPick=R.kind==='hair';
+  const gen=h('button',{type:'button',class:'obtn',style:ready?null:'opacity:.55',onclick:()=>{if(!ready){missing();return}RX_HINT='';
+    if(hairPick&&R.opts&&R.opts.some(o=>o.lines.some(l=>l.t==='s'))&&!confirm('Start her options over? This clears the services you picked.'))return;
+    const g=hairPick?rxStartHair():rxGenerate(R);if(!g)return;Object.assign(R,g);rxSave();render();setTimeout(()=>{const n=document.getElementById('rxopts');if(n)n.scrollIntoView({behavior:'smooth'})},50)}},hairPick?(R.opts?'Start Her Options Over':'Build Her Options'):(R.opts?'Suggest Again':'Suggest Options'));
   const s4=h('section',{class:'card2',style:'align-items:center;text-align:center'},gen,
     h('small',{class:'soft'},done+' of '+order.length+' questions answered'),
     !ready&&RX_HINT?h('small',{style:'color:#8b3a2b;font-weight:600'},RX_HINT):null,
-    h('small',{class:'soft'},ready?'Suggestions follow the Taffeta consultation: only what she needs, inside her budget.':(Number(R.budget)>0?'Pick her goals and what’s going on right now.':'Type her budget first. Options only show once there’s a budget.')));
+    h('small',{class:'soft'},ready?(hairPick?'You pick the services for each option. Home care is already added in.':'Suggestions follow the Taffeta consultation: only what she needs, inside her budget.'):(Number(R.budget)>0?'Pick her goals and what’s going on right now.':'Type her budget first. Options only show once there’s a budget.')));
   const out=[s1,...(sk?[s3,s2]:[s2,s3]),s4];
   if(R.opts) out.push(...rxEditor(R,me));
   return out;
@@ -750,22 +769,24 @@ function rxEditor(R,me){
     const p=h('input',{type:'number',inputmode:'decimal',min:'0',value:String(l.p),class:'rxp','aria-label':'Price for '+l.n});
     p.addEventListener('change',()=>{l.p=Number(p.value)||0;rxSave();render()});
     return h('div',{class:'rxl'},
-      h('div',{class:'rxn'},h('b',{},l.t==='t'?'Try Me: '+l.n:l.t==='h'?'Home Care Budget':l.n),l.t==='s'&&l.reg&&l.reg!==l.p?h('small',{class:'soft'},'VIP · regular ',h('s',{},rxMoney(l.reg))):null,l.t==='s'?null:h('small',{class:'soft'},l.t==='t'?'1 oz Try Me bottle':l.t==='h'?'She agrees to this at the consult; you pick what she takes home at the end.'+(l.why?' '+l.why+'.':''):'Maintenance'+(l.why?' · '+l.why:''))),
+      h('div',{class:'rxn'},h('b',{},l.t==='t'?'Try Me: '+l.n:l.t==='h'?'Home Care Budget':l.n),l.t==='s'&&l.reg&&l.reg!==l.p?h('small',{class:'soft'},'VIP · regular ',h('s',{},rxMoney(l.reg))):null,l.t==='s'?null:h('small',{class:'soft'},l.t==='t'?'1 oz Try Me bottle':l.t==='h'?(pk?'Built into her total. You pick the products at the end of her appointment.':'She agrees to this at the consult; you pick what she takes home at the end.'+(l.why?' '+l.why+'.':'')):'Maintenance'+(l.why?' · '+l.why:''))),
       l.t==='s'||l.t==='h'||(R.kind==='skin'&&l.t!=='t')?null:h('button',{type:'button',class:'tab rxtry',onclick:()=>{if(l.t==='t'){l.t='p';l.p=l.full||(RX_PRICES[R.kind].find(x=>x[0]===l.n)||[0,l.p])[1]}else{l.full=l.full||l.p;l.t='t';l.p=RX_TRY}rxSave();render()}},l.t==='t'?'Full Size':'Try Me '+rxMoney(RX_TRY)),
       p,h('button',{type:'button',class:'rgx','aria-label':'Remove '+l.n,onclick:()=>{L.splice(L.indexOf(l),1);rxSave();render()}},'×'));
   };
   /* Add a line in two steps, a category and then what's in it, so it's never one long list (Alexandra, Oct 20 2026) */
+  const pk=rxPicked(R);
   const adder=L=>{
     const opt=([n,p])=>h('option',{value:n},n+' · '+rxMoney(p));
     const svc=RX_SVC[R.kind].filter(([n])=>!(n==='Glaze'&&L.some(l=>RX_BAL.test(l.n))));
     const cats=[];
     /* the $25 BR Bottle sits first on skin cards (Alexandra, Oct 24 2026) */
     if(R.kind==='skin') cats.push([RX_BRB_N+' · $25',[['__brb',RX_BRB]]]);
-    if(favs.length) cats.push(['My Go-Tos',plist.filter(x=>favs.includes(x[0]))]);
-    rxSvcCats(R.kind,svc).forEach(c=>cats.push(c));
-    rxProdCats(R.kind,plist).forEach(([c,P])=>cats.push(['Maintenance · '+c,P]));
+    if(favs.length&&!pk) cats.push(['My Go-Tos',plist.filter(x=>favs.includes(x[0]))]);
+    rxSvcCats(R.kind,svc).forEach(c=>cats.push(pk?[c[0].replace(/^Services · /,''),c[1]]:c));
+    /* picked hair cards: services only here; products wait for the end of the appointment (Nov 12 2026) */
+    if(!pk) rxProdCats(R.kind,plist).forEach(([c,P])=>cats.push(['Maintenance · '+c,P]));
     /* skin has no Try Me bottles: its version is the $25 take-home size (Alexandra, Oct 20 2026) */
-    if(R.kind!=='skin') cats.push(['Try Me Bottle',[['__try',RX_TRY]]]);
+    if(R.kind!=='skin'&&!pk) cats.push(['Try Me Bottle',[['__try',RX_TRY]]]);
     const cur=RX_ADDCAT.get(L), cat=h('select',{'aria-label':'Category'},h('option',{value:''},'Pick A Category'),cats.map(([c,P])=>h('option',Object.assign({value:c},c===cur?{selected:''}:{}),c+' ('+P.length+')')));
     const items=(cats.find(c=>c[0]===cur)||[])[1];
     const sel=h('select',Object.assign({'aria-label':'Add a service or product'},items?{}:{disabled:''}),h('option',{value:''},'Then Pick One'),items?items.map(([n,p])=>n==='__try'?h('option',{value:n},'Try Me bottle · '+rxMoney(p)):n==='__brb'?h('option',{value:n},RX_BRB_N+' (pick the BR product) · '+rxMoney(p)):opt([n,p])):null);
@@ -774,21 +795,24 @@ function rxEditor(R,me){
       const sv=RX_SVC[R.kind].find(x=>x[0]===n);const pr=plist.find(x=>x[0]===n);const ex=Object.values(RX_PROD).find(x=>x[0]===n);
       L.push(sv?(()=>{const p=rxPrice(R.kind,n),reg=sv[1];return reg!==p?{n,p,t:'s',reg}:{n,p,t:'s'}})():{n,p:pr[1],t:'p',why:ex?ex[2]:'',full:pr[1]});rxSave();render()});
     /* folded under "Add A Service Or Product +" so the two pickers don't read as part of the card (Alexandra, Oct 20 2026) */
-    const d=h('details',Object.assign({class:'rxaddd'},RX_ADDOPEN.has(L)||cur?{open:''}:{}),h('summary',{},h('span',{},'Add A Service Or Product'),h('span',{class:'pm','aria-hidden':'true'})),
+    const d=h('details',Object.assign({class:'rxaddd'},RX_ADDOPEN.has(L)||cur?{open:''}:{}),h('summary',{},h('span',{},pk?'Add A Service':'Add A Service Or Product'),h('span',{class:'pm','aria-hidden':'true'})),
       h('div',{class:'rxadd'},h('label',{class:'fld'},cat),h('label',{class:'fld'},sel)));
     d.addEventListener('toggle',()=>{if(d.open)RX_ADDOPEN.add(L);else{RX_ADDOPEN.delete(L);RX_ADDCAT.delete(L)}});
     return d};
   const badge=t=>b==null?null:h('span',{class:'rxbadge '+(t<=b?'ok':'over')},t<=b?rxMoney(b-t)+' under budget':rxMoney(t-b)+' over budget');
   /* the same names her card shows: the higher total is All In, the other Worth The Wait, none when they tie (Alexandra, Oct 20 2026) */
-  const tots=R.opts.map(o=>rxTotal(o.lines)), hiI=tots.length===2&&tots[0]!==tots[1]?tots.indexOf(Math.max(...tots)):-1;
+  const tots=R.opts.map(o=>rxTotal(o.lines)), hiI=pk?1:tots.length===2&&tots[0]!==tots[1]?tots.indexOf(Math.max(...tots)):-1;
   const opts=R.opts.map((o,i)=>{const t=tots[i];
     return h('section',{class:'card2 out'},h('span',{class:'lbl'},o.title+(hiI<0?'':i===hiI?' · All In':' · Worth The Wait')),
+      pk&&!o.lines.some(l=>l.t==='s')?h('p',{class:'soft',style:'margin:0'},'Add her services below.'):null,
       ...o.lines.map(l=>lineRow(o.lines,l)),
-      !o.lines.some(l=>l.t!=='s')?h('p',{class:'soft'},'Maintenance: keep her current routine.'):null,
+      pk?h('small',{class:'soft'},i===0?'Keep Worth The Wait at or under her budget.':'All In is usually $60 to $80 more than Worth The Wait.'):null,
+      pk?h('small',{class:'soft'},'Her card shows only the total. Home care is already inside it.'):null,
+      pk?null:!o.lines.some(l=>l.t!=='s')?h('p',{class:'soft'},'Maintenance: keep her current routine.'):null,
       i===1&&R.more?h('small',{class:'soft'},'Kept at '+rxMoney(R.kind==='skin'?RX_ALLIN_SKIN:RX_ALLIN_HAIR)+' or under: home care is trimmed to Try Me bottles or left off. The full sizes she should end up with show below the options.'):null,
       o.lines.some(l=>l.n==='K18 Bond Protection')?h('small',{class:'soft'},'K18 goes on before the lightener ($25 to $50 by amount used). Finish with one pump of K18 leave-in.'):null,
-      o.lines.some(l=>l.t!=='s'&&l.t!=='h')?h('small',{class:'soft'},'Home care is estimated from her answers. Swap in what she’s really taking home once you know.'):null,
-      o.lines.some(l=>l.t!=='s')?h('small',{class:'soft'},'Her card shows these as one line: Maintenance '+rxMoney(o.lines.filter(l=>l.t!=='s').reduce((a,l)=>a+(Number(l.p)||0),0))+'.'):null,
+      !pk&&o.lines.some(l=>l.t!=='s'&&l.t!=='h')?h('small',{class:'soft'},'Home care is estimated from her answers. Swap in what she’s really taking home once you know.'):null,
+      !pk&&o.lines.some(l=>l.t!=='s')?h('small',{class:'soft'},'Her card shows these as one line: Maintenance '+rxMoney(o.lines.filter(l=>l.t!=='s').reduce((a,l)=>a+(Number(l.p)||0),0))+'.'):null,
       adder(o.lines),
       h('div',{class:'rxtot'},badge(t),h('b',{},rxMoney(t))));
   });
@@ -816,7 +840,11 @@ function rxEditor(R,me){
     h('div',{style:'display:flex;justify-content:space-between;gap:12px;font-size:15px'},h('b',{},R.spec.n),h('span',{},rxMoney(R.spec.p))),
     h('small',{class:'soft'},R.spec.why),
     h('button',{type:'button',class:'tab',onclick:()=>{all2.lines=[...rxSvcLines('skin',[R.spec.n]),...all2.lines.filter(l=>l.t!=='s')];rxSave();render()}},'Use It In All In')):null;
-  const wrap=h('div',{id:'rxopts',style:'display:flex;flex-direction:column;gap:26px'},...opts,spec,rec,maint,pro,done);
+  const nw=pk?rxNeedWords(R):[];
+  const needSec=nw.length?h('section',{class:'card2'},h('span',{class:'lbl'},'What She Needs At Home'),
+    h('small',{class:'soft'},'From her answers. Use this at the end of her appointment to pick her products.'),
+    h('ul',{style:'margin:0;padding-left:20px;font-size:15px;display:flex;flex-direction:column;gap:4px'},nw.map(w=>h('li',{},w)))):null;
+  const wrap=h('div',{id:'rxopts',style:'display:flex;flex-direction:column;gap:26px'},...opts,spec,rec,needSec,maint,pro,done);
   return [wrap];
 }
 
@@ -1063,6 +1091,9 @@ function rxTakeHomeView(me){
       h('div',{class:'rxthb',id:'rxthsum'},h('div',{},h('b',{},rxMoney(budget)),h('small',{},'Her budget')),h('div',{},h('b',{'data-k':'p'},rxMoney(sum)),h('small',{},'Picked')),h('div',{},h('b',{'data-k':'l'},rxMoney(Math.max(0,left))),h('small',{},'Left'))),
       h('p',{class:'soft',id:'rxthpicked',style:'margin:0'},x.home.length?'Picked: '+x.home.map(q=>q.n.replace(/^Biologique Recherche /,'BR ')).join(', '):'Nothing picked yet.'),
       h('p',{class:'rxover',id:'rxthover',hidden:left<0?null:''},rxMoney(-left)+' over her budget: let her know before ringing it up.')),
+    (()=>{const nw=kind==='hair'?rxNeedWords(d):[];return nw.length?h('section',{class:'card2'},h('span',{class:'lbl'},'What She Needs At Home'),
+      h('small',{class:'soft'},'From her consult answers, most important first.'),
+      h('ul',{style:'margin:0;padding-left:20px;font-size:15px;display:flex;flex-direction:column;gap:4px'},nw.map(w=>h('li',{},w)))):null})(),
     listSec,
     kind==='skin'?h('section',{class:'card2'},h('span',{class:'lbl'},'P50 Options'),
       h('button',{type:'button',class:'rxth'+(x.newP50?' on':''),'aria-pressed':String(!!x.newP50),onclick:()=>{x.newP50=!x.newP50;put();render()}},
