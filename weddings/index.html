@@ -11,6 +11,7 @@
 <meta name="theme-color" content="#f8f6f0">
 <script src="config.js"></script>
 <script src="/g/life.js?v=1"></script>
+<script src="/g/uploader.js?v=1"></script>
 <script src="../g/topnav.js?v=4"></script>
 <script src="../g/jokes.js?v=2"></script>
 <script src="../g/coach.js?v=1"></script>
@@ -1985,7 +1986,7 @@ function renderHome(){
   const box=$("#view-home");if(!box||!ROLE)return;
   const name=myName(),first=String(name).trim().split(/\s+/)[0]||"",k=first.toLowerCase(),ph=lsGet(photoKey());
   const today=new Date().toLocaleDateString("en-US",{weekday:"long",month:"long",day:"numeric"});
-  let h='<div class="hhome"><button type="button" class="crest" id="hCrest" aria-label="'+(ph?"Change your photo":"Add your photo")+'">'+(ph?'<img class="me" alt="" src="'+ph+'">':'')+'<img class="w'+(ph?' over':'')+'" src="wreath-weddings.png?v=2" alt="Taffeta Weddings"></button>';
+  let h='<div class="hhome"><button type="button" class="crest" id="hCrest" data-drop-for="hFile" aria-label="'+(ph?"Change your photo":"Add your photo")+'">'+(ph?'<img class="me" alt="" src="'+ph+'">':'')+'<img class="w'+(ph?' over':'')+'" src="wreath-weddings.png?v=2" alt="Taffeta Weddings"></button>';
   if(ROLE==="office"&&!name){
     h+='<div class="whois"><div class="hhi"><span>Who’s this?</span></div><div class="row">'+OFFICE_PEOPLE.map(n=>'<button type="button" class="btn ghost" data-who="'+n+'">'+n+'</button>').join("")+'</div></div></div>';
   }else{
@@ -2079,7 +2080,7 @@ function homePhoto(file){
   const img=new Image(),url=URL.createObjectURL(file);
   img.onload=()=>{const s=Math.min(img.width,img.height),c=document.createElement("canvas");c.width=c.height=360;
     c.getContext("2d").drawImage(img,(img.width-s)/2,(img.height-s)/2,s,s,0,0,360,360);URL.revokeObjectURL(url);
-    try{localStorage.setItem(photoKey(),c.toDataURL("image/jpeg",.82))}catch(e){toast("That photo is too big for this phone. Try another.")}
+    try{localStorage.setItem(photoKey(),c.toDataURL("image/jpeg",.82));if(window.TUp)TUp.saved(null,"","Your photo is set.")}catch(e){toast("That photo is too big for this phone. Try another.")}
     renderHome()};
   img.onerror=()=>{URL.revokeObjectURL(url);toast("That photo didn't open. Try another.")};
   img.src=url;
@@ -2931,6 +2932,7 @@ async function pvOpenFull(p,ph){
   catch(e){if(w)w.close();toast("Couldn't open that photo.")}
 }
 function pvShrink(file,max,q){
+  if(window.TUp)return TUp.shrink(file,max,q).then(u=>u.split(",")[1]);   // shared uploader: opens each photo once (Nov 12 2026)
   return new Promise((res,rej)=>{
     const url=URL.createObjectURL(file),img=new Image();
     img.onload=()=>{const k=Math.min(1,max/Math.max(img.width,img.height)),c=document.createElement("canvas");c.width=Math.round(img.width*k);c.height=Math.round(img.height*k);
@@ -2943,7 +2945,7 @@ async function pvUpload(p,kind,files){
   let done=0;upAwake(true);
   const q=files.filter(f=>/^image\//.test(f.type)||/\.(jpe?g|png|heic|heif|webp)$/i.test(f.name)),total=q.length;
   const worker=async()=>{for(let f;(f=q.shift());){   // three at a time (Oct 24 2026)
-    if(st)st.textContent="Uploading "+(done+1)+" of "+total+"…";
+    if(st)st.textContent="Uploading "+(done+1)+" of "+total+"…";if(window.TUp)TUp.progress(done,total,"photo");
     try{
       const data=await pvShrink(f,1600,.82),thumb=await pvShrink(f,320,.7);
       const j=await apiRetry("addPhoto",{key:p.key,photo:{kind,data,thumb}});
@@ -2951,8 +2953,9 @@ async function pvUpload(p,kind,files){
       if(pvSel===p.key)pvRenderPhotos(p,me);
     }catch(e){toast(e.code==="too_many"?e.message:"A photo didn't upload. Try again.")}
   }};
-  try{await Promise.all([worker(),worker(),worker()])}finally{upAwake(false)}
-  if(st)st.textContent=done?done+" photo"+(done>1?"s":"")+" added.":"";
+  try{await Promise.all([worker(),worker(),worker(),worker()])}finally{upAwake(false)}
+  if(st)st.textContent=done?"✓ Saved! "+done+" photo"+(done>1?"s":"")+" added.":"";
+  if(window.TUp)TUp.done(done,total-done,"photo");
   renderPreviews();
 }
 
@@ -3022,6 +3025,7 @@ function wpRender(where){
       g.appendChild(d);
     });
   });
+  if(window.TUp)box.querySelectorAll("[data-g]").forEach(g=>{const inp=box.querySelector('input[data-kind="'+g.dataset.g+'"]');if(inp)TUp.zone(g,inp)});
   box.querySelectorAll('input[type="file"]').forEach(inp=>inp.onchange=()=>{const dd=inp.closest("details");if(dd)dd.open=false;return(inp.dataset.kind==="fav"?favUpload(id,[...inp.files]):wpUpload(id,inp.dataset.kind,[...inp.files],box.querySelector("[data-st]"))).finally(()=>{inp.value=""})});
   const need=photos.filter(p=>wpThumbs[p.id]===undefined).map(p=>p.id);
   if(need.length)wpFetchThumbs(id,need);
@@ -3038,7 +3042,7 @@ async function wpUpload(id,kind,files,st){   // three at a time (Oct 24 2026)
   let done=0;upAwake(true);
   const q=files.filter(f=>/^image\//.test(f.type)||/\.(jpe?g|png|heic|heif|webp)$/i.test(f.name)),total=q.length;
   const worker=async()=>{for(let f;(f=q.shift());){
-    if(st)st.textContent="Uploading "+(done+1)+" of "+total+"…";
+    if(st)st.textContent="Uploading "+(done+1)+" of "+total+"…";if(window.TUp)TUp.progress(done,total,"photo");
     try{
       const data=await pvShrink(f,1600,.82),thumb=await pvShrink(f,320,.7);
       const j=await apiRetry("addWedPhoto",{id,photo:{kind,data,thumb}});
@@ -3046,9 +3050,9 @@ async function wpUpload(id,kind,files,st){   // three at a time (Oct 24 2026)
       wpRefresh(id);st=null;
     }catch(e){toast(e.code==="too_many"?e.message:"A photo didn't upload. Try again.")}
   }};
-  try{await Promise.all([worker(),worker(),worker()])}finally{upAwake(false)}
+  try{await Promise.all([worker(),worker(),worker(),worker()])}finally{upAwake(false)}
   wpRefresh(id);
-  if(done)toast(done+" photo"+(done>1?"s":"")+" added.");
+  if(window.TUp)TUp.done(done,total-done,"photo");else if(done)toast(done+" photo"+(done>1?"s":"")+" added.");
 }
 /* Wedding day favorites (Alexandra, Oct 23 2026): the artists add their favorite photos and videos after the wedding.
    Each wedding gets its own album on Marketing Proofs (and a Drive folder) for Alexandra and Dom. Videos go up in 16 MB pieces; photos go up three at a time (Oct 24 2026). */
@@ -3070,9 +3074,9 @@ function driveSend(url,file,type,pct){return new Promise(res=>{try{const x=new X
   x.upload.onprogress=e=>{if(!e.lengthComputable)return;const p=Math.floor(100*e.loaded/e.total);if(p!==last){last=p;pct(p)}};
   x.onload=x.onerror=x.onabort=x.ontimeout=()=>res();x.send(file)}catch(e){res()}})}
 function favB64(blob){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(String(r.result).split(",")[1]);r.onerror=rej;r.readAsDataURL(blob)})}
-function imgSize(file){return new Promise(res=>{const u=URL.createObjectURL(file),i=new Image();i.onload=()=>{URL.revokeObjectURL(u);res({w:i.naturalWidth,h:i.naturalHeight})};i.onerror=()=>{URL.revokeObjectURL(u);res({w:0,h:0})};i.src=u})}
+function imgSize(file){if(window.TUp)return TUp.size(file);return new Promise(res=>{const u=URL.createObjectURL(file),i=new Image();i.onload=()=>{URL.revokeObjectURL(u);res({w:i.naturalWidth,h:i.naturalHeight})};i.onerror=()=>{URL.revokeObjectURL(u);res({w:0,h:0})};i.src=u})}
 async function favUpload(id,files){
-  const say=t=>{["team","build"].forEach(k=>{const b=$("#wp-"+k);if(b&&!b.hidden&&b.dataset.w===id){const st=b.querySelector("[data-st]");if(st)st.textContent=t}})};
+  const say=t=>{if(window.TUp)TUp.say(t,"busy");["team","build"].forEach(k=>{const b=$("#wp-"+k);if(b&&!b.hidden&&b.dataset.w===id){const st=b.querySelector("[data-st]");if(st)st.textContent=t}})};
   const isVid=f=>/^video\//.test(f.type)||/\.(mov|mp4|m4v|3gp|webm)$/i.test(f.name);
   const list=files.filter(f=>isVid(f)||/^image\//.test(f.type)||/\.(jpe?g|png|heic|heif|webp)$/i.test(f.name)),total=list.length;
   let done=0,tried=0;upAwake(true);
@@ -3111,11 +3115,11 @@ async function favUpload(id,files){
   try{
     const pics=list.filter(f=>!isVid(f)),vids=list.filter(isVid);
     const worker=async()=>{for(let f;(f=pics.shift());)await one(f)};
-    await Promise.all([worker(),worker(),worker()]);
+    await Promise.all([worker(),worker(),worker(),worker()]);
     for(const f of vids)await one(f);   // videos one at a time, each in big pieces
   }finally{upAwake(false)}
   wpRefresh(id);
-  if(done)toast(done+(done>1?" favorites":" favorite")+" added. Thank you!");
+  if(window.TUp)TUp.done(done,total-done,"photo or video",done?"Thank you!":"");else if(done)toast(done+(done>1?" favorites":" favorite")+" added. Thank you!");
 }
 /* The photos also sit on the team copy of the timeline (Alexandra, Oct 23 2026),
    so they ride along in the Team PDF and Text team. They sit on top of the times. Small pictures on screen, full size in the PDF. */
@@ -3187,8 +3191,8 @@ function bpRender(){
       const j=await apiRetry("addWedPhoto",{id,photo:{kind:"bride",data,thumb}});
       bpFull[j.photo.id]="data:image/jpeg;base64,"+data;
       wpCache[id]=(wpCache[id]||[]).filter(p=>p.kind!=="bride").concat([j.photo]);
-      bpRender();toast("Bride photo added.");
-    }catch(e){if(st)st.textContent="";toast("The photo didn't upload. Try again.")}
+      bpRender();if(window.TUp)TUp.saved(null,"","Bride photo added.");else toast("Bride photo added.");
+    }catch(e){if(st)st.textContent="";if(window.TUp)TUp.failed();else toast("The photo didn't upload. Try again.")}
   };
 }
 {const wr=wpRender;wpRender=function(w){wr(w);if(w==="build")bpRender()}}
