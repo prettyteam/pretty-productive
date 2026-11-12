@@ -160,6 +160,23 @@ def ordered_shades(rows, keys):
     return rows, out
 
 
+def way_keys(rows, keys):
+    """Keys with an Ordered/Shipped (not yet received) row in the On Order sheet."""
+    names = {}
+    for k in keys:
+        for nm in (co.item_name(k), k[1] + ' ' + k[2], k[0] + ' ' + k[1] + ' ' + k[2]):
+            names.setdefault(co.norm(nm), k)
+    out = set()
+    for r in rows or []:
+        r = list(r) + [''] * 8
+        if re.search(r'cancel|deliver|receiv|^status$', str(r[5]), re.I) or not str(r[5]).strip():
+            continue
+        k = co.match_item(co.norm(r[3]), names)
+        if k:
+            out.add(k)
+    return out
+
+
 def units_of(r):
     try:
         return float(str((list(r) + [''] * 8)[7]).replace(',', '') or 0)
@@ -259,14 +276,17 @@ def refresh(inv, stock_rows, order_rows, now=None, year=2026, usage_rows=None):
     keys = keys + [(*key_of(r[0]), r[1]) for r in extra]
     # color Rose orders that the list has never seen (Nov 12 2026: Colorance 8BA, 9BA, 6A, Topchic 9GB): counted on
     # Count These First -> joins the list from that count; not counted yet -> goes on Count These First
+    # Not counted yet but on order (Rose, Nov 12 2026: "she already ordered those"): start at 0, so the boxes are added
+    # when they arrive, and keep them off Count These First.
     o_rows, o_keys = ordered_shades(order_rows, keys)
     for (k, nm) in o_keys:
         st = co.start_count(k, counts)
-        if st:
-            rows.append(['%s %s' % (k[0], k[1]), k[2], st[0], 0.0, st[0], 0.0, None])
-            keys.append(k)
-        elif nm not in nocount:
-            nocount.append(nm)
+        n = st[0] if st else 0.0
+        rows.append(['%s %s' % (k[0], k[1]), k[2], n, 0.0, n, 0.0, None])
+        keys.append(k)
+    ordered_names = {co.norm(co.item_name(k)) for k, _ in o_keys}
+    ordered_names |= {co.norm(co.item_name(k)) for k in way_keys(order_rows, keys)}
+    nocount = [nm for nm in nocount if co.norm(nm) not in ordered_names]
     R['countNew'] = nocount                       # never counted: Rose's Count These First list
     way, got = on_order(order_rows, keys, year, now)
     use, days, miss = daily_usage(usage_rows, keys)
