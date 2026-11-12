@@ -177,7 +177,9 @@ const RX_GOAL={
       m:[['Minimum Foil','Glaze','Leave Wet (no haircut)'],'8–10 weeks','Foils around the part and hairline and a glaze. If you get your cut today, skip it next time to save: leave wet, or add a $50 blow dry. Need a trim? A haircut leaving wet is $50.']},
     /* soft, grown-out color so she can go longer between visits (Alexandra, Oct 15 2026); balayage already includes shadow root and glaze */
     'Lower Maintenance Hair Color':{p:[['Half Head Balayage','Female Haircut'],['Refresh Balayage','Female Haircut'],['Shadow Root','Glaze','Female Haircut'],['Shadow Root','Glaze']],
-      m:[['Shadow Root','Glaze'],'8–10 weeks','A soft root melt and a glaze. It grows out softly, so you can go up to 10 weeks between visits.']},
+      /* low maintenance means she comes back every 10–12 weeks for color: a Minimum Foil plus a $45 glaze, or a Refresh
+         Balayage (glaze and root melt included) when she had a balayage (Alexandra, Nov 12 2026) */
+      m:[['Minimum Foil','Glaze'],'10–12 weeks','Foils around your part and hairline and a glaze. It grows out softly, so you can go 10 to 12 weeks between visits.']},
     /* a Female Haircut already includes the blow dry, so the two are never listed together; with no cut she leaves wet,
        no extra service (Alexandra, Oct 16 2026) */
     'Single Process or Gray Coverage':{p:[['Single Process','Glaze','Female Haircut'],['Single Process','Female Haircut'],['Single Process']],
@@ -189,8 +191,11 @@ const RX_GOAL={
     /* movement comes from both the color (dimension) and the styling and products (Alexandra, Oct 15 2026) */
     'Movement (Color & Style)':{p:[['Half Head Balayage','Female Haircut'],['Face Frame/Spot Highlight','Glaze','Female Haircut'],['Face Frame/Spot Highlight','Glaze'],['Female Haircut']],
       m:[['Face Frame/Spot Highlight','Glaze','Female Haircut'],'8–10 weeks','Brightness around the face, a glaze and a trim keep the movement going.']},
-    'Big Change (Transformation)':{p:[['Full Head Balayage','Female Haircut'],['Full Foil','Glaze','Female Haircut'],['Half Head Balayage','Female Haircut'],['Half Foil','Glaze','Female Haircut']],
-      m:[['Face Frame/Spot Highlight','Glaze','Leave Wet (no haircut)'],'8–10 weeks','A big change can take more than one visit. Next time: face-framing foils and a glaze. If you get your cut today, skip it next time to save: leave wet, or add a $50 blow dry. Need a trim? A haircut leaving wet is $50.']},
+    'Big Change (Transformation)':{p:[['Full Head Balayage','Female Haircut'],['Half Head Balayage','Female Haircut'],['Full Foil','Glaze','Female Haircut'],['Half Foil','Glaze','Female Haircut']],
+      /* big change (Alexandra, Nov 12 2026): around $350–$380 it's a balayage, K18 and a haircut with $45–$50 home care, so
+         balayage comes before foils. A bigger first visit, then a smaller upkeep visit: a minimal foil and glaze
+         (or a Refresh Balayage after a balayage) with a blow dry, no haircut */
+      m:[['Minimum Foil','Glaze','Blow Dry'],'8–10 weeks','Today is the big job. Upkeep is smaller: foils around your part and hairline, a glaze and a blow dry.']},
     'Blowout or Style':{p:[['Blowdry Plus'],['Blow Dry']],m:[['Blow Dry'],'1–2 weeks','A blowout for your next event.']}
   },
   skin:{
@@ -370,43 +375,59 @@ function rxRecFull(o1,o2,keys){
    her price at checkout (Alexandra, Oct 17 2026, from Melissa's paper card): All In $81 (the Taffeta shampoo and
    conditioner set), Worth The Wait $45. The artist decides what she actually goes home with at the end. */
 const RX_HC_HI=81, RX_HC_LO=45;
-const rxHcLine=(amt,needs)=>({n:'Home Care',p:amt,t:'h',why:needs.length?'Suggested: '+[...new Set(needs.map(k=>RX_PROD[k][0]))].join(', '):'',full:amt});
+/* just the money while she builds the card: the artist picks the products at the end of the appointment, from her consult answers (Alexandra, Nov 12 2026) */
+/* Tight budget, cut + color (Alexandra, Nov 12 2026): the haircut goes to a Haircut Leaving Wet ($50 instead of $65-$100)
+   and the home care money is $15 for two Try Me bottles, before the card drops any color. */
+const RX_HC_TRY=15;
+const rxHcLine=(amt,needs)=>({n:'Home Care',p:amt,t:'h',why:amt===RX_HC_TRY?'Two Try Me bottles':'',full:amt});
+const rxWetSwap=P=>P.flatMap(t=>t.includes('Female Haircut')&&t.some(n=>n!=='Female Haircut')?[t,t.map(n=>n==='Female Haircut'?'Haircut Leaving Wet':n)]:[t]);
 /* the lighter option keeps the color and swaps the haircut for a blow dry (Melissa's card: $266 with the cut, $246 with a blow dry) */
 function rxCutSwap(P){const out=[];P.forEach(t=>{out.push(t);if(t.includes('Female Haircut')&&t.some(n=>n!=='Female Haircut')){const b=t.map(n=>n==='Female Haircut'?'Blow Dry':n);
   if(!P.some(x=>x.length===b.length&&x.every((n,i)=>n===b[i])))out.push(b)}});return out}
-/* Option 1 at or under her budget, Option 2 about $60 to $80 more, so the two are a real choice (Alexandra, Oct 20 2026:
-   Sarah's skin card came out $9 over her budget with the options only $41 apart). Option 1 is the fullest service
-   that fits her budget with home care; when none does, the lightest service with whatever home care is left.
-   Option 2 is the fullest package up to $80 more, keeping every service in Option 1; when nothing lands at
-   least $60 more, its home care goes up to make the difference. pkg(i,home care $,leave-in) builds a tier. */
-const RX_GAP_LO=60, RX_GAP_HI=80, RX_GAP_MID=70;
+/* Hair options follow the skin rule (Alexandra, Nov 12 2026): Worth The Wait is ALWAYS at or under her budget, All In is
+   never more than $60 over it, and BOTH always have home care money in them (at least $15, two Try Me bottles). A $320 guest with two goals
+   used to get about $400 and $450, because the two goals' services stacked and nothing checked the budget.
+   Worth The Wait: the fullest package that fits with $45 home care; if none does, the fullest whose services leave at
+   least $15 for home care. All In: the fullest package that keeps Worth The Wait's services and lands at or under
+   budget + $60 and no more than $80 over Worth The Wait; when it's less than $60 over Worth The Wait, its home care goes up to
+   close the gap (never past budget + $60). pkg(i,home care $,leave-in) builds a tier. */
+const RX_HC_MIN=RX_HC_TRY, RX_OVER_HI=60, RX_GAP_LO=60, RX_GAP_HI=80;
 function rxPair(P,b,pkg,lo,vars,ok,cap){
-  const bb=b!=null?b:RX_CAP-RX_GAP_HI;
-  let o1=null,i1=P.length-1;
-  for(let i=0;i<P.length&&!o1;i++){const L=pkg(i,lo,false); if(rxTotal(L)<=bb){o1=L;i1=i}}
-  if(!o1){const s=rxTotal(pkg(i1,0,false)); o1=pkg(i1,Math.max(0,Math.floor((bb-s)/5)*5),false)}
+  const bb=b!=null?b:RX_CAP-RX_OVER_HI, svc=i=>rxTotal(pkg(i,0,false)), wet=i=>P[i].includes('Haircut Leaving Wet');
+  let o1=null,i1=-1;
+  /* cut + color: fullest color first, each with her full haircut, then with a haircut leaving wet ($45 home care); then a
+     haircut leaving wet with two Try Me bottles ($15); only then the packages with no cut. Everything else: fullest first. */
+  const needCut=P.some((_,i)=>wet(i)), cut=i=>P[i].includes('Female Haircut');
+  const steps=needCut?[[i=>cut(i)||wet(i),lo],[wet,RX_HC_TRY],[i=>!cut(i)&&!wet(i),lo]]:[[()=>true,lo]];
+  for(const [f,a] of steps) for(let i=0;i<P.length&&!o1;i++){if(!f(i))continue; const L=pkg(i,a,false); if(rxTotal(L)<=bb){o1=L;i1=i}}
+  if(!o1) for(let i=0;i<P.length&&!o1;i++){const s=svc(i); if(s+RX_HC_MIN<=bb){o1=pkg(i,Math.floor((bb-s)/5)*5,false);i1=i}}
+  if(!o1){i1=P.reduce((m,_,i)=>svc(i)<svc(m)?i:m,0); o1=pkg(i1,RX_HC_MIN,false)}   /* her budget is under every service for these goals: the badge shows it's over */
   /* Option 2 keeps every service in Option 1 (Donelle's card, Oct 20 2026: never trade her haircut for a blow dry) */
-  const svc1=o1.filter(l=>l.t==='s').map(l=>l.n), keeps=L=>svc1.every(n=>L.some(l=>l.n===n));
-  const t1=rxTotal(o1); let best=null;
-  for(let i=0;i<=i1;i++) for(const [a,lv] of vars){const L=pkg(i,a,lv),t=rxTotal(L);
-    if(t>t1&&t<=t1+RX_GAP_HI&&ok(L)&&keeps(L)&&(!best||t>best.t)) best={L,t,i,a,lv}}
-  if(!best) for(let i=0;i<=i1;i++) for(const [a,lv] of vars){const L=pkg(i,a,lv),t=rxTotal(L);
-    if(t>t1&&ok(L)&&keeps(L)&&(!best||t<best.t)) best={L,t,i,a,lv}}
-  if(!best){const a=vars[0][0];best={L:pkg(i1,a,false),i:i1,a,lv:false};best.t=rxTotal(best.L)}
+  const svc1=o1.filter(l=>l.t==='s').map(l=>l.n), keeps=L=>svc1.every(n=>L.some(l=>l.n===n||(n==='Haircut Leaving Wet'&&l.n==='Female Haircut')));
+  const t1=rxTotal(o1), lim=Math.max(Math.min(bb+RX_OVER_HI,t1+RX_GAP_HI),t1+RX_HC_MIN); let best=null;
+  for(let i=0;i<P.length;i++) for(const [a,lv] of vars){const L=pkg(i,a,lv),t=rxTotal(L);
+    if(t>t1&&t<=lim&&ok(L)&&keeps(L)&&(!best||t>best.t)) best={L,t,i,a,lv}}
+  if(!best){const a=Math.max(RX_HC_MIN,o1.filter(l=>l.t==='h').reduce((x,l)=>x+l.p,0));best={L:pkg(i1,a,false),i:i1,a,lv:false};best.t=rxTotal(best.L)}
   let o2=best.L;
-  if(best.t<t1+RX_GAP_LO){const add=Math.min(Math.round(t1+RX_GAP_MID)-best.t,cap-best.t), a=Math.ceil((best.a+add)/5)*5;
-    if(add>0) o2=pkg(best.i,best.t+a-best.a<=cap?a:best.a+add,best.lv)}
+  const want=Math.min(lim,Math.max(t1+RX_GAP_LO,t1+RX_HC_MIN));
+  if(best.t<want){const a=best.a+Math.floor((Math.min(lim,Math.ceil(want/5)*5)-best.t)/5)*5; if(a>best.a) o2=pkg(best.i,a,best.lv)}
   return [o1,o2];
 }
 function rxGenerateHair(R,g){
-  const needs=rxNeeds(R), P=rxCutSwap(g.p), b=R.nob?null:Number(R.budget)||null;
+  /* two or more goals: after the stacked packages, each goal's own packages, so a smaller step can fit her budget (Nov 12 2026) */
+  const gl=rxGoalList(R).map(k=>RX_GOAL.hair[k]).filter(Boolean), seen=new Set(), PP=[];
+  [...g.p,...(gl.length>1?gl.flatMap(x=>x.p):[])].map(rxMergeSvc).forEach(t=>{const k=t.join('|');if(!seen.has(k)){seen.add(k);PP.push(t)}});
+  const needs=rxNeeds(R), P=rxWetSwap(rxCutSwap(PP)), b=R.nob?null:Number(R.budget)||null;
   const now=rxNowAll(R), leave=now.some(x=>/Color fading|Brassiness|Breakage|Dryness/.test(x))||P[0].some(n=>RX_BLOND.test(n));
   const cap=Infinity;  /* Option 2 stays within $80 of Option 1 (rxPair), which replaces the old $100-over-budget cap */
   const pkg=(i,amt,lv)=>[...rxSvcLines('hair',P[i]),...(lv?rxSvcLines('hair',['Goldwell Leave-In Treatment']):[]),...(amt>0?[rxHcLine(amt,rxNeedsFor(needs,P[i]))]:[])];
   const okL=L=>rxTotal(L)<=cap&&(rxTotal(L)<=RX_ALLIN_HAIR||!L.some(l=>l.n==='Goldwell Leave-In Treatment'));
   const vars=[[RX_HC_HI,leave],[RX_HC_HI,false],[RX_HC_LO,leave],[RX_HC_LO,false]].filter(([,lv],i,A)=>!lv||A.findIndex(x=>x[0]===A[i][0])===i);
   const [o1,o2]=rxPair(P,b,pkg,RX_HC_LO,vars,okL,cap);
-  let [ms,mw,mt]=[o1,o2].some(L=>L.some(l=>RX_BAL.test(l.n)))?RX_BAL_M:g.m;
+  const lowM=rxGoalList(R).includes('Lower Maintenance Hair Color');
+  const bigC=rxGoalList(R).includes('Big Change (Transformation)');
+  let [ms,mw,mt]=[o1,o2].some(L=>L.some(l=>RX_BAL.test(l.n)))?(bigC&&!lowM?[['Refresh Balayage','Blow Dry'],'8–10 weeks','Today is the big job. Upkeep is smaller: a refresh balayage and a blow dry. Your glaze is included.']:lowM?[RX_BAL_M[0],'10–12 weeks','A refresh balayage and a trim. Your glaze and root melt are included, so you can go 10 to 12 weeks between visits.']:RX_BAL_M):g.m;
+
   /* next visit: today's color stays (a glaze she had today comes back), and with no cut or style it's a blow dry, not leave wet */
   ms=[...ms]; const today=[...o1,...o2].map(l=>l.n);
   /* single process or gray coverage today: her next visit is her roots in 4–6 weeks, even with a balayage or foils
@@ -414,6 +435,11 @@ function rxGenerateHair(R,g){
   if(today.includes('Single Process')){const bal=today.some(n=>RX_BAL.test(n)), bl=today.some(n=>RX_BLOND.test(n));
     ms=['Single Process']; mw='4–6 weeks';
     mt='Your roots every 4 to 6 weeks keep your grays covered.'+(bl?' Your '+(bal?'balayage':'highlights')+' refresh comes at about 8 to 10 weeks.':'')+' Add a cut every other visit.'}
+  /* low maintenance, every 10–12 weeks: her next visit looks like today's Worth The Wait visit, minus the home care
+     (a balayage comes back as a Refresh Balayage) (Alexandra, Nov 12 2026) */
+  if(lowM&&!today.includes('Single Process')){
+    ms=o1.filter(l=>l.t==='s'&&l.n!=='K18 Bond Protection'&&l.n!=='Goldwell Leave-In Treatment').map(l=>RX_BAL.test(l.n)?'Refresh Balayage':l.n);
+    mw='10–12 weeks'; mt='About the same as today’s visit, every 10 to 12 weeks.'+(ms.includes('Refresh Balayage')?' Your glaze and root melt are included.':'')}
   if(ms.includes('Single Process')&&today.includes('Glaze')&&!ms.includes('Glaze')) ms.push('Glaze');
   ms=ms.map(n=>n==='Leave Wet (no haircut)'?'Blow Dry':n);
   if(!ms.some(n=>/Haircut|Blow ?dry|Blowdry/i.test(n))&&ms.some(n=>!/Female Haircut/.test(n))&&g.p[0].includes('Female Haircut')) ms.push('Blow Dry');
@@ -562,6 +588,7 @@ function rxGenerate(R){
     const L=pkg(i,mode,false); if(rxTotal(L)<=lim) o1=L } if(o1) break }
   if(!o1) o1=pkg(P.length-1,'none',false);
   let [ms,mw,mt]=[o1,o2].some(L=>L.some(l=>RX_BAL.test(l.n)))?RX_BAL_M:g.m;
+
   /* no cut today: the next visit keeps the cut instead of leaving wet */
   if(ms.includes('Leave Wet (no haircut)')&&![o1,o2].some(L=>L.some(l=>/haircut/i.test(l.n)))){
     ms=ms.map(n=>n==='Leave Wet (no haircut)'?'Female Haircut':n); mt=mt.replace(/ and a glaze\..*$/,', a glaze and a trim.') }
