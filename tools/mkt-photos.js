@@ -44,7 +44,7 @@
   function renderTabs(){
     var nav=$('albums');nav.textContent='';
     albums.forEach(function(a){var b=document.createElement('button');b.type='button';b.textContent=a.name;
-      b.setAttribute('aria-current',a.id===rootOf(cur)?'true':'false');b.onclick=function(){go(a.id)};nav.appendChild(b);});
+      b.setAttribute('aria-current',a.id===rootOf(cur)?'true':'false');if(a.id!=='team'&&!FOLD[a.id])b.dataset.alb=a.id;b.onclick=function(){go(a.id)};nav.appendChild(b);});
     if(ready){var n=document.createElement('button');n.type='button';n.className='add';n.textContent='+ New Album';n.onclick=newAlbum;nav.appendChild(n);}
   }
   function tile(p){
@@ -73,7 +73,7 @@
       var back=box('o-back','pback','button',$('o-title').parentNode);back.type='button';back.textContent=par?par.back:'';back.hidden=!par;back.onclick=function(){go(a.parent)};
       var fold=box('o-folders','pfolders','div',$('o-empty'));fold.textContent='';fold.hidden=!kids.length;
       if(!fold.hidden){var fh=box('o-fh','pfh','h3',fold);fh.hidden=false;fh.textContent=here.head;
-        kids.forEach(function(w){var list=photos.filter(function(p){return p.album===w.id&&(mode==='videos')===!!p.video});var k=document.createElement('button');k.type='button';k.className='pfolder';
+        kids.forEach(function(w){var list=photos.filter(function(p){return p.album===w.id&&(mode==='videos')===!!p.video});var k=document.createElement('button');k.type='button';k.className='pfolder';if(!FOLD[w.id]&&w.id!=='team')k.dataset.alb=w.id;
           k.innerHTML='<div class="pcov"></div><b></b><small></small>';k.querySelector('b').textContent=w.name;var wk=FOLD[w.id]?FOLD[w.id].kids().length:0;k.querySelector('small').textContent=FOLD[w.id]&&!list.length?wk+(w.id==='bridal'?(wk===1?' wedding':' weddings'):(wk===1?' album':' albums')):list.length+(mode==='videos'?(list.length===1?' video':' videos'):(list.length===1?' photo':' photos'));
           var c0=list.filter(function(p){return p.kind==='d'})[0]||list[0];if(c0){var im=document.createElement('img');im.alt='';if(c0.kind==='m')im.dataset.e='alb/t/'+c0.id+'.jpg';else im.dataset.d=c0.id;k.querySelector('.pcov').appendChild(im)}
           k.onclick=function(){go(w.id)};fold.appendChild(k)});
@@ -176,7 +176,7 @@
     busy=true;MK.busy=true;awake(true);
     var album=cur,full=$('fullsize').checked,done=0,fail=0,dup=0,total=files.length,q=files.slice(),have=[],added=[];
     var bar=$('prog');bar.hidden=false;
-    function step(){bar.firstChild.style.width=Math.round(100*(done+fail+dup)/total)+'%';msg('Adding photos: '+(done+fail+dup)+' of '+total+(dup?' ('+dup+' already here, skipped)':'')+(fail?' ('+fail+' did not work)':'')+'.'+(waiting.length?' '+waiting.length+' more after this.':'')+' Keep this page open.');}
+    function step(){bar.firstChild.style.width=Math.round(100*(done+fail+dup)/total)+'%';msg('Adding photos: '+(done+fail+dup)+' of '+total+(dup?' ('+dup+' already here, skipped)':'')+(fail?' ('+fail+' did not work)':'')+'.'+(waiting.length?' '+waiting.length+' more after this.':'')+' Keep this page open.');if(window.TUp)TUp.say($('upmsg').textContent,'busy',100*(done+fail+dup)/total);}
     msg('Got '+total+' photo'+(total===1?'':'s')+'. Getting ready\u2026'+(total>150?' A big batch takes a while, so keep this page open and the phone plugged in.':''));
     function worker(){var f=q.shift();if(!f)return Promise.resolve();
       return prep(f,full).then(function(p){
@@ -189,9 +189,9 @@
       .then(null,function(e){fail++;console.warn(e)})
       .then(function(){step();return worker()});}
     // Waits at most 20 seconds for the album's fingerprints, so a slow connection never holds up the upload.
-    Promise.race([albumFps(album),new Promise(function(r){setTimeout(function(){r(null)},20000)})]).catch(function(){return null}).then(function(l){return l||photos.filter(function(p){return p.album===album&&fps[p.id]}).map(function(p){return{fp:fps[p.id]}})}).then(function(l){have=l.map(function(x){return x.fp});step();return Promise.all([worker(),worker(),worker()])}).then(function(){busy=false;MK.busy=false;awake(false);bar.hidden=true;
+    Promise.race([albumFps(album),new Promise(function(r){setTimeout(function(){r(null)},20000)})]).catch(function(){return null}).then(function(l){return l||photos.filter(function(p){return p.album===album&&fps[p.id]}).map(function(p){return{fp:fps[p.id]}})}).then(function(l){have=l.map(function(x){return x.fp});step();return Promise.all([worker(),worker(),worker(),worker()])}).then(function(){busy=false;MK.busy=false;awake(false);bar.hidden=true;
       var said=done+' photo'+(done===1?'':'s')+' added'+(dup?'. '+dup+(dup===1?' was':' were')+' already in this album, so I skipped '+(dup===1?'it':'them'):'')+(fail?'. '+fail+' did not work. Try those again, or turn off Full size.':'.');
-      flushLand();msg(said);$('pick').value='';
+      flushLand();msg(said);$('pick').value='';if(window.TUp)TUp.say((fail?'':'\u2713 Saved! ')+said,fail?'err':'ok');
       if(MK._state&&MK._state.sort&&added.length&&!isKid(album))autoSort(added,said);else{MK.refresh();next()}});
   }
   // Photos and videos together (Alexandra, Nov 10 2026): one pick or one drag can hold both. Photos go up first (they are quick),
@@ -295,17 +295,21 @@
   // Drag and drop (Alexandra, Oct 23 2026): the Mac file window hides her Photos albums, so on a computer she can drag
   // pictures straight out of an album in the Photos app onto the page and they go into the album that's open.
   var drop=document.createElement('div');drop.className='pdrop';drop.hidden=true;document.body.appendChild(drop);
-  var dst=document.createElement('style');dst.textContent='.pdrop{position:fixed;inset:12px;z-index:50;display:flex;align-items:center;justify-content:center;text-align:center;padding:24px;border:2px dashed #111;background:rgba(250,249,247,.92);font:inherit;font-size:22px;color:#111;pointer-events:none}.pdrop[hidden]{display:none}.pdrophint{margin:6px 0 0;color:#555250;font-size:14px}';document.head.appendChild(dst);
+  var dst=document.createElement('style');dst.textContent='.pdrop{position:fixed;left:50%;top:12px;transform:translateX(-50%);z-index:50;max-width:92vw;text-align:center;padding:12px 20px;border:2px dashed #111;border-radius:12px;background:rgba(250,249,247,.97);font:inherit;font-size:18px;color:#111;pointer-events:none;box-shadow:0 6px 20px rgba(0,0,0,.12)}.mk-dragging #p-photos{outline:2px dashed #111;outline-offset:6px}.mk-dragging [data-alb]{outline:2px dashed #111;outline-offset:2px}.mk-dragging [data-alb].mk-over{outline:3px solid #111;background:rgba(17,17,17,.08)}.pdrop[hidden]{display:none}.pdrophint{margin:6px 0 0;color:#555250;font-size:14px}';document.head.appendChild(dst);
   if(window.matchMedia&&matchMedia('(hover:hover) and (pointer:fine)').matches){var hint=document.createElement('p');hint.className='pdrophint';
     hint.textContent='On a computer, you can also open an album in your Photos app and drag the pictures onto this page.';$('upmsg').before(hint);}
   function hasFiles(e){return e.dataTransfer&&[].indexOf.call(e.dataTransfer.types||[],'Files')>=0}
   function albumName(){var a=albums.concat(weds,subs).filter(function(x){return x.id===cur})[0];return a?a.name:'this album'}
   var depth=0;
   function onPhotos(){var pp=document.getElementById('p-photos');return ready&&!(pp&&pp.hidden)}
-  document.addEventListener('dragenter',function(e){if(!onPhotos())return;e.preventDefault();depth++;drop.textContent='Drop to add to '+albumName();drop.hidden=false;});
-  document.addEventListener('dragover',function(e){if(!onPhotos())return;e.preventDefault();e.dataTransfer.dropEffect='copy';});
-  document.addEventListener('dragleave',function(e){if(!onPhotos())return;depth=Math.max(0,depth-1);if(!depth)drop.hidden=true;});
-  document.addEventListener('drop',function(e){if(!onPhotos())return;e.preventDefault();depth=0;drop.hidden=true;
+  // Drag into a folder (Alexandra, Nov 12 2026): drop on any album or sub-album name or folder and they go into that one.
+  var overA=null;function albAt(e){var t=e.target&&e.target.closest?e.target.closest('[data-alb]'):null;return t}
+  function dragOff(){document.documentElement.classList.remove('mk-dragging');if(overA)overA.classList.remove('mk-over');overA=null}
+  document.addEventListener('dragenter',function(e){if(!onPhotos())return;e.preventDefault();depth++;document.documentElement.classList.add('mk-dragging');drop.textContent='Drop to add to '+albumName()+', or drop on any album or folder';drop.hidden=false;});
+  document.addEventListener('dragover',function(e){if(!onPhotos())return;e.preventDefault();e.dataTransfer.dropEffect='copy';var t=albAt(e);if(t!==overA){if(overA)overA.classList.remove('mk-over');overA=t;if(t)t.classList.add('mk-over');var a=t&&albumOf(t.dataset.alb);drop.textContent='Drop to add to '+(a?a.name:albumName())+(t?'':', or drop on any album or folder')}});
+  document.addEventListener('dragleave',function(e){if(!onPhotos())return;depth=Math.max(0,depth-1);if(!depth){drop.hidden=true;dragOff()}});
+  document.addEventListener('drop',function(e){if(!onPhotos())return;e.preventDefault();depth=0;drop.hidden=true;var into=albAt(e);dragOff();
+    if(into&&into.dataset.alb!==cur){if(busy){msg('Still adding the last batch. Drop on that album again when it says done.');if(window.TUp)TUp.say('Still adding the last batch. Drop on that album again when it says done.','err');return}go(into.dataset.alb);}
     if(!hasFiles(e)||!(e.dataTransfer.files||[]).length){msg('Chrome could not take those straight from Photos. Drag them to your Desktop first, then from the Desktop onto this page.');return;}
     var all=[].slice.call(e.dataTransfer.files||[]),canV=!!(MK._state&&MK._state.vid);
     if(cur==='team'){msg('Open one of the brand albums first, then drag them in.');return;}

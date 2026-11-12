@@ -11,6 +11,7 @@
 <script src="../g/pdfview.js?v=4"></script>
 <script src="../g/aftercare.js?v=12"></script>
 <script src="/g/life.js?v=1"></script>
+<script src="/g/uploader.js?v=1"></script>
 <script src="../g/topnav.js?v=4"></script>
 <script src="../g/ordering.js?v=3"></script>
 <script src="../g/inventory.js?v=2"></script>
@@ -463,10 +464,11 @@ function deskHome(){
   const sel=$('#hWhoSel');if(sel)sel.onchange=()=>{if(sel.value){store.set('desk-who',sel.value);deskHome()}};
   const nw=$('#hWho');if(nw)nw.onclick=()=>{store.set('desk-who','');deskHome()};
   const pick=()=>{if(store.get('desk-who'))$('#hFile').click()};$('#hCrest').onclick=pick;const hp=$('#hPhoto');if(hp)hp.onclick=pick;
-  $('#hFile').onchange=e=>{const f=e.target.files&&e.target.files[0];if(!f)return;const img=new Image(),url=URL.createObjectURL(f);
+  $('#hFile').onchange=e=>{const f=e.target.files&&e.target.files[0];if(!f||!store.get('desk-who'))return;const img=new Image(),url=URL.createObjectURL(f);
     img.onload=()=>{const m=Math.min(img.width,img.height),c=document.createElement('canvas');c.width=c.height=360;
       c.getContext('2d').drawImage(img,(img.width-m)/2,(img.height-m)/2,m,m,0,0,360,360);URL.revokeObjectURL(url);
-      store.set('desk-photo:'+store.get('desk-who'),c.toDataURL('image/jpeg',.82));deskHome()};img.src=url};
+      store.set('desk-photo:'+store.get('desk-who'),c.toDataURL('image/jpeg',.82));deskHome();if(window.TUp)TUp.saved(null,'','Your photo is set.')};img.src=url};
+  {const cr=$('#hCrest');if(cr&&store.get('desk-who'))cr.setAttribute('data-drop-for','hFile')}
   box.querySelectorAll('.cgrid>button[data-g]').forEach(b=>b.onclick=()=>{const g=b.dataset.g,keys=DESK_GROUPS.find(x=>x[0]===g)[1];
     if(keys.length===1)deskGo(keys[0]);else{HOME_OPEN=HOME_OPEN===g?'':g;deskHome();if(HOME_OPEN)setTimeout(()=>{const p=box.querySelector('.hpages');if(p)p.scrollIntoView({behavior:'smooth',block:'center'})},30)}});
   box.querySelectorAll('.hpages button').forEach(b=>b.onclick=()=>deskGo(b.dataset.p));
