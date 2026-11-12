@@ -89,12 +89,18 @@
     if(!vb.dataset.on){vb.dataset.on=1;vb.innerHTML='<label class="pupbtn">Add Photos &amp; Videos<input type="file" id="vpick" accept="image/*,video/*" multiple></label><p class="pdrophint">Pick as many as you want at once. On a computer, you can also drag a whole group of photos and videos onto this page. Videos show here. Photos go to this album on the Photos tab.</p><p id="vmsg" role="status" aria-live="polite"></p>';
       // On an iPhone the page sees nothing until the phone has every picked video ready, which can take minutes, and a picked video
       // that is only in iCloud can come back as nothing at all. Say so out loud instead of staying blank (Alexandra, Nov 12 2026).
-      var vgot=function(inp){var f=[].slice.call(inp.files||[]);inp.value='';
-        if(!f.length){msg('Your phone did not hand over any videos. Try 5 to 10 at a time. If they are in iCloud, open them in Photos first so they download.');return}
-        msg('Got '+f.length+' file'+(f.length===1?'':'s')+'. Starting\u2026');addMixed(f)};
+      // Blue check mark on iPhone (Alexandra, Nov 12 2026): after the check mark the phone gets videos ready before the page
+      // sees anything, so "nothing happened". Now a box at the bottom says so the moment the picker closes, until they start.
+      var vwait0=false,big=function(t,k,pc){if(window.TUp)TUp.say(t,k||'busy',pc)};
+      var vback=function(){if(!vwait0||busy)return;setTimeout(function(){if(vwait0&&!busy){big('Got it. Your phone is getting them ready. Videos can take a minute or two. Keep this page open.');msg('Your phone is getting them ready. Videos can take a minute or two. Keep this page open.')}},700)};
+      window.addEventListener('focus',vback);document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible')vback()});
+      var vgot=function(inp){vwait0=false;var f=[].slice.call(inp.files||[]);inp.value='';
+        if(!f.length){msg('Your phone did not hand over any videos. Try 5 to 10 at a time. If they are in iCloud, open them in Photos first so they download.');big('Your phone did not hand over any videos. Try 5 to 10 at a time. If they are in iCloud, open them in Photos first.','err');return}
+        var nv=f.filter(isVid).length,np=f.length-nv;
+        msg('Got '+f.length+' file'+(f.length===1?'':'s')+'. Starting\u2026');big('Got '+(nv?nv+' video'+(nv===1?'':'s'):'')+(nv&&np?' and ':'')+(np?np+' photo'+(np===1?'':'s'):'')+'. Starting\u2026');addMixed(f)};
       $('vpick').addEventListener('change',function(){vgot(this)});
-      $('vpick').addEventListener('click',function(){if(!busy)msg('Pick your videos, then tap Add or the check mark. Your phone may say Preparing for a few minutes before they start. Keep this page open.')});
-      $('vpick').addEventListener('cancel',function(){if(!busy)msg('')});}
+      $('vpick').addEventListener('click',function(){if(!busy){vwait0=true;msg('Pick your videos, then tap Add or the check mark. Your phone may say Preparing for a few minutes before they start. Keep this page open.')}});
+      $('vpick').addEventListener('cancel',function(){vwait0=false;if(!busy){msg('');var t=document.getElementById('tup-toast');if(t)t.classList.remove('on')}});}
     vb.hidden=!(ready&&mode==='videos'&&canV&&cur!=='team');
     var vn=box('o-vnote','pdrophint','p',$('upbar'));vn.hidden=!(mode==='videos'&&(!canV||cur==='team'));vn.textContent=cur==='team'?'Videos from My Work in the team app show here.':'Adding videos from this page is coming next. For now, videos from My Work in the team app show here.';if($('mk-sub'))$('mk-sub').hidden=!canSub();
     MK.scan(grid);
@@ -191,7 +197,7 @@
     // Waits at most 20 seconds for the album's fingerprints, so a slow connection never holds up the upload.
     Promise.race([albumFps(album),new Promise(function(r){setTimeout(function(){r(null)},20000)})]).catch(function(){return null}).then(function(l){return l||photos.filter(function(p){return p.album===album&&fps[p.id]}).map(function(p){return{fp:fps[p.id]}})}).then(function(l){have=l.map(function(x){return x.fp});step();return Promise.all([worker(),worker(),worker(),worker()])}).then(function(){busy=false;MK.busy=false;awake(false);bar.hidden=true;
       var said=done+' photo'+(done===1?'':'s')+' added'+(dup?'. '+dup+(dup===1?' was':' were')+' already in this album, so I skipped '+(dup===1?'it':'them'):'')+(fail?'. '+fail+' did not work. Try those again, or turn off Full size.':'.');
-      flushLand();msg(said);$('pick').value='';if(window.TUp)TUp.say((fail?'':'\u2713 Saved! ')+said,fail?'err':'ok');
+      if(mode==='videos'&&done)said+=' Photos show on the Photos tab of this album.';flushLand();msg(said);$('pick').value='';if(window.TUp)TUp.say((fail?'':'\u2713 Saved! ')+said,fail?'err':'ok');
       if(MK._state&&MK._state.sort&&added.length&&!isKid(album))autoSort(added,said);else{MK.refresh();next()}});
   }
   // Photos and videos together (Alexandra, Nov 10 2026): one pick or one drag can hold both. Photos go up first (they are quick),
@@ -333,16 +339,16 @@
   function vB64(b){return new Promise(function(res,rej){var r=new FileReader();r.onload=function(){res(String(r.result).split(',')[1])};r.onerror=rej;r.readAsDataURL(b)})}
   function uploadVids(files){
     if(busy){vwait=vwait.concat(files);return}
-    var album=cur,total=files.length,i=0,ok=0,say=function(t){var m=$('vmsg');if(m)m.textContent=t;if(mode!=='videos')$('upmsg').textContent=t};busy=true;awake(true);
+    var album=cur,total=files.length,i=0,ok=0,say=function(t,pc){var m=$('vmsg');if(m)m.textContent=t;if(mode!=='videos')$('upmsg').textContent=t;if(window.TUp)TUp.say(t,'busy',pc)};busy=true;awake(true);
     function one(f){var lead='Video '+(i+1)+' of '+total;say(lead+': getting it ready\u2026');var c0;
       return vCover(f).then(function(c){c0=c||{};return MK.api('vidStart',{album:album,by:MK.who||'',video:{name:f.name,type:f.type||'video/mp4',size:f.size,thumb:c0.thumb||'',w:c0.w||0,h:c0.h||0}})})
-        .then(function(st){return vSend(st.url,f,function(p){say(lead+': '+p+'%. Keep this page open.')}).then(function(){return MK.api('vidCheck',{token:st.token})})
+        .then(function(st){return vSend(st.url,f,function(p){say(lead+': '+p+'%. Keep this page open.',p)}).then(function(){return MK.api('vidCheck',{token:st.token})})
           .then(function loop(r){if(r.done)return r;var off=r.next||0;say(lead+': '+Math.round(100*off/f.size)+'%. Keep this page open.');
             var piece=f.slice(off,Math.min(f.size,off+16*1048576));return vB64(piece).then(function(d){return MK.api('vidChunk',{token:st.token,offset:off,data:d})}).then(loop)})})
         .then(function(r){ok++;if(c0&&c0.thumb&&r.photo)MK._thumbs.set(r.photo.id,'data:image/jpeg;base64,'+c0.thumb)})
         .catch(function(e){say(lead+' did not upload'+(e&&e.message==='too_big'?' because it is over 1 GB':'')+'. Try that one again.');return new Promise(function(r){setTimeout(r,2500)})});}
     files.reduce(function(pr,f){return pr.then(function(){return one(f)}).then(function(){i++})},Promise.resolve())
-      .then(function(){busy=false;awake(false);say(ok+' video'+(ok===1?'':'s')+' added'+(ok<total?'. '+(total-ok)+' did not go through.':'.'));MK.refresh();next()});
+      .then(function(){busy=false;awake(false);say(ok+' video'+(ok===1?'':'s')+' added'+(ok<total?'. '+(total-ok)+' did not go through.':'.'));if(window.TUp)TUp.done(ok,total-ok,'video');MK.refresh();next()});
   }
   renderTabs();renderPhotos();
 
