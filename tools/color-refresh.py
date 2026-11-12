@@ -81,7 +81,7 @@ def shade_code(shade):
     return co.code_of(shade)
 
 
-def counted_extras(keys, counts, products, usage4, weeks=4):
+def counted_extras(keys, counts, products, usage4, weeks=4, scale_products=()):
     """On hand rows for shades the weekly report left off On hand but that do have a Backbar shelf count, e.g. Shades EQ
     010VV: SureTint calls it '10VV Lavender Ice', the count says '010VV Lavender Ice', so the report listed it under
     NOT COUNTED YET and the color list never showed it (found Nov 11 2026). products = [(manufacturer, line, product)]
@@ -101,21 +101,49 @@ def counted_extras(keys, counts, products, usage4, weeks=4):
         for nm in (prod, shade_code(prod)):
             if nm:
                 u4[co.norm(man + line + nm)] = u4.get(co.norm(man + line + nm), 0) + float(units or 0)
-    out, seen = [], set()
+    out, seen, nocount = [], set(), []
     for man, line, prod in products:
         ids = [co.norm(man + line + prod)] + ([co.norm(man + line + shade_code(prod))] if shade_code(prod) else [])
-        if any(i in have for i in ids):
+        if any(i in have for i in ids) or co.unused(man, line, prod) or re.match(r'(water|conditioner)$', prod, re.I):
             continue
-        k = next((shelf[i] for i in ids if i in shelf), None)
-        if not k or k in seen or co.is_alias(k):
+        bid = co.backbar_id((man, line, prod), counts)
+        k = tuple(bid[2:].split('|')) if bid else next((shelf[i] for i in ids if i in shelf), None)
+        n = counts['b:%s|%s|%s' % k][0] if k else None
+        if not k:                                 # no Backbar row: a Count These First count (Nov 12 2026) also works
+            st = co.start_count((man, line, prod), counts)
+            if st:
+                k, n = (man, line, prod), st[0]
+        if not k:
+            nm = count_name(man, line, prod)
+            if nm not in nocount and (man, line, prod) in scale_products:
+                nocount.append(nm)
+            continue
+        if k in seen or co.is_alias(k):
             continue
         seen.add(k)
-        n = counts['b:%s|%s|%s' % k][0]
         used = round(next((u4[i] for i in ids if i in u4), 0.0), 2)   # report window starts the day of Rose's counts
         pace = round(used / weeks, 2)
         oh = round(n - used, 2)
         out.append(['%s %s' % (k[0], k[1]), k[2], n, used, oh, pace, round(oh / pace, 1) if pace > 0 else None])
-    return out
+    return out, nocount
+
+
+def units_of(r):
+    try:
+        return float(str((list(r) + [''] * 8)[7]).replace(',', '') or 0)
+    except ValueError:
+        return 0.0
+
+
+def count_name(man, line, prod):
+    """Name for a never-counted item on Rose's Count These First list. Its saved id ('c:' + letters/digits) is one that
+    color-onhand.start_count looks for, so the count is used on the next refresh."""
+    k = (man, line, prod)
+    if co.item_name(k) != prod:
+        return co.item_name(k)                    # 'Colorance 6A'
+    if line.endswith('Developers'):
+        return prod if prod.lower().startswith(man.lower()) else man + ' ' + prod
+    return line + ' ' + prod
 
 
 def daily_usage(rows, keys):
@@ -187,8 +215,11 @@ def refresh(inv, stock_rows, order_rows, now=None, year=2026, usage_rows=None):
     # shades with a shelf count that the weekly report missed (name mismatch) join the list from their count
     products = [tuple(str(x).strip() for x in (list(r) + [''] * 4)[1:4]) for r in usage_rows or []
                 if re.match(r'\d{4}-\d{2}-\d{2}', str((r or [''])[0]))]
+    scale = {p for p, r in zip(products, [r for r in usage_rows or [] if re.match(r'\d{4}-\d{2}-\d{2}', str((r or [''])[0]))])
+             if units_of(r) > 0}
     products += [tuple(r[:3]) for r in R.get('usage4') or []]
-    extra = counted_extras(keys, counts, products, R.get('usage4'))
+    extra, nocount = counted_extras(keys, counts, products, R.get('usage4'), scale_products=scale)
+    R['countNew'] = nocount                       # used on the scale, never counted: Rose's Count These First list
     rows = rows + extra
     keys = keys + [(*key_of(r[0]), r[1]) for r in extra]
     way, got = on_order(order_rows, keys, year, now)
@@ -239,7 +270,7 @@ def refresh(inv, stock_rows, order_rows, now=None, year=2026, usage_rows=None):
     n_items = sum(len(v) for v in stores.values())
     if days:
         R['scaleDays'] = [min(days).isoformat(), max(days).isoformat(), len(days)]
-    return {'scaleDays': len([d for d in days if d >= use_ran.date()]), 'unmatchedScale': miss[:12], 'addedFromCounts': [r[0].split(' ', 1)[-1] + ' ' + r[1] for r in extra], 'freshCounts': fresh, 'receivedUnits': added, 'onTheWay': len(way), 'orderItems': n_items, 'recount': len(recount)}
+    return {'scaleDays': len([d for d in days if d >= use_ran.date()]), 'unmatchedScale': miss[:12], 'addedFromCounts': [r[0].split(' ', 1)[-1] + ' ' + r[1] for r in extra], 'countNew': nocount, 'freshCounts': fresh, 'receivedUnits': added, 'onTheWay': len(way), 'orderItems': n_items, 'recount': len(recount)}
 
 
 if __name__ == '__main__':

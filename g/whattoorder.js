@@ -53,7 +53,8 @@
     if(brand==='Wella Blondor')return{brand,key:brand,lvl:0,code:'',name:'Wella Blondor'};
     const m=/(?:^|\s)0*(\d{1,2})(\/\d+|[A-Z@]*[A-Z])?(?=\s|$)/.exec(t.replace(/\b(redken|goldwell|wella)\b/ig,''));
     const code=m?(m[1]+(m[2]||'')).toUpperCase():'',lvl=m?+m[1]:0;
-    return{brand,key:brand+'|'+(code||t.toLowerCase()),lvl,code,name:t}};
+    /* developers are told apart by name, not by volume: Alter Ego 20 vol and Redken 20 vol are different bottles (Nov 12 2026) */
+    return{brand,key:brand+'|'+(brand==='Developer'?t.toLowerCase():(code||t.toLowerCase())),lvl,code,name:t}};
   const row=(name,detail,pill,kind)=>'<div class="wr"><span><b>'+esc(name)+'</b>'+(detail?'<small>'+esc(detail)+'</small>':'')+'</span>'+(pill?'<span class="q'+(kind?' '+kind:'')+'">'+esc(pill)+'</span>':'')+'</div>';
   /* The color report writes each store's order as one sentence, like "Topchic 6NN ×2, 7NN ×2; Colorance 7N ×1. Skip anything
      already on order." (Nov 2 2026: Alexandra asked for one line per item instead of a paragraph.) parseList splits it into
@@ -124,6 +125,9 @@
     const toCount=[];
     ((R&&R.order)||[]).forEach(([s,x])=>parseList(x).items.filter(it=>!NOUSE.test(it.name)).forEach(it=>toCount.push({nm:it.name,det:(/recount/i.test(s)?'Recount':s)+(it.qty?' · order '+it.qty:'')})));
     fast.forEach(([l,p,u])=>{const x=ohOf(l,p);toCount.push({nm:l+' '+p,det:'About '+u+' used a week'+(x?' · estimate '+fmt(x[4])+' on hand':'')})});
+    /* Nov 12 2026 (Alexandra said yes): used on the SureTint scale but never counted, so the app can't track them yet.
+       Once counted here, the daily color refresh starts tracking them from that count. */
+    ((R&&R.countNew)||[]).filter(nm=>!NOUSE.test(nm)).forEach(nm=>toCount.push({nm,det:'New · used on the scale, never counted'}));
     const merged=[];
     toCount.forEach(t=>{const sh=shadeOf(t.nm),had=merged.find(m=>m.key===sh.key);
       if(!had){merged.push({...sh,ids:['c:'+norm(t.nm)],det:t.det});return}
