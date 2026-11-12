@@ -310,6 +310,21 @@ def refresh(inv, stock_rows, order_rows, now=None, year=2026, usage_rows=None):
     if recount:
         order.append(['Recount first', 'Used more than was counted, so these were restocked. Count them before ordering: '
                       + ', '.join(recount) + '.'])
+    # Order hold (Alexandra, Nov 12 2026: "We don't need anything, so with everything that's on the way, we should have
+    # nothing on our list that says need to order"). While R.hold is on, the color stores' order lines, the backbar
+    # check and the recount list stay off What To Order and the Front Desk list. It ends by itself after hold.until.
+    hold = R.get('hold') or {}
+    held = False
+    if hold.get('until'):
+        try:
+            held = now.date() <= datetime.strptime(hold['until'], '%Y-%m-%d').date()
+        except ValueError:
+            held = False
+    if held:
+        order = [[s, x] for s, x in order if s not in COLOR_STORES and s not in (hold.get('stores') or []) and s != 'Paramount']
+        stores, recount = {}, []
+    elif hold:
+        R.pop('hold', None)
     new_rows = [r for r, k in zip(new_rows, keys) if not co.unused(*k)]
     R['onHand'] = sorted(new_rows, key=lambda r: r[6] if r[6] is not None else 999)
     R['order'] = order
@@ -318,7 +333,7 @@ def refresh(inv, stock_rows, order_rows, now=None, year=2026, usage_rows=None):
     n_items = sum(len(v) for v in stores.values())
     if days:
         R['scaleDays'] = [min(days).isoformat(), max(days).isoformat(), len(days)]
-    return {'scaleDays': len([d for d in days if d >= use_ran.date()]), 'unmatchedScale': miss[:12], 'addedFromCounts': [r[0].split(' ', 1)[-1] + ' ' + r[1] for r in extra], 'countNew': nocount, 'freshCounts': fresh, 'receivedUnits': added, 'onTheWay': len(way), 'orderItems': n_items, 'recount': len(recount)}
+    return {'scaleDays': len([d for d in days if d >= use_ran.date()]), 'unmatchedScale': miss[:12], 'addedFromCounts': [r[0].split(' ', 1)[-1] + ' ' + r[1] for r in extra], 'countNew': nocount, 'freshCounts': fresh, 'receivedUnits': added, 'onTheWay': len(way), 'orderItems': sum(len(v) for v in stores.values()), 'recount': len(recount), 'hold': hold.get('until') if held else None}
 
 
 if __name__ == '__main__':
