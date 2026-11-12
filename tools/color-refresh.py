@@ -66,7 +66,7 @@ def on_order(rows, keys, year, now):
             except ValueError:
                 pass
         it = co.norm(r[3])
-        k = names.get(it) or next((v for n, v in names.items() if len(n) > 6 and (n in it or it in n)), None)
+        k = co.match_item(it, names)
         try:
             q = float(r[4] or 1)
         except ValueError:
@@ -126,6 +126,38 @@ def counted_extras(keys, counts, products, usage4, weeks=4, scale_products=()):
         oh = round(n - used, 2)
         out.append(['%s %s' % (k[0], k[1]), k[2], n, used, oh, pace, round(oh / pace, 1) if pace > 0 else None])
     return out, nocount
+
+
+ORDER_SHADE = re.compile(r'\b(Topchic|Colorance|Shades EQ)\s+(0*\d{1,2}[A-Z@]{0,4})\b')
+LINE_OF = {'Topchic': ('Goldwell', 'Topchic Canister'), 'Colorance': ('Goldwell', 'Colorance Canister'),
+           'Shades EQ': ('Redken', 'Shades EQ')}
+
+
+def ordered_shades(rows, keys):
+    """Topchic / Colorance / Shades EQ shades in the On Order sheet that match no known key: [(key, count name)]."""
+    names = {}
+    for k in keys:
+        for nm in (co.item_name(k), k[1] + ' ' + k[2], k[0] + ' ' + k[1] + ' ' + k[2]):
+            names.setdefault(co.norm(nm), k)
+    have = {(k[1].split(' ')[0], co.code_of(k[2])) for k in keys}
+    out, seen = [], set()
+    for r in rows or []:
+        r = list(r) + [''] * 8
+        if re.search(r'cancel', str(r[5]), re.I):
+            continue
+        m = ORDER_SHADE.search(str(r[3]))
+        if not m or co.match_item(co.norm(r[3]), names):
+            continue
+        b, l = LINE_OF[m.group(1)]
+        code = m.group(2).upper()
+        if (l.split(' ')[0], co.code_of(code)) in have or (l, code) in seen:
+            continue
+        seen.add((l, code))
+        k = (b, l, code)
+        if co.unused(*k):
+            continue
+        out.append((k, co.item_name(k)))
+    return rows, out
 
 
 def units_of(r):
@@ -218,10 +250,24 @@ def refresh(inv, stock_rows, order_rows, now=None, year=2026, usage_rows=None):
     scale = {p for p, r in zip(products, [r for r in usage_rows or [] if re.match(r'\d{4}-\d{2}-\d{2}', str((r or [''])[0]))])
              if units_of(r) > 0}
     products += [tuple(r[:3]) for r in R.get('usage4') or []]
+    # every color shade Rose counted on the shelf joins the list, even with no scale use yet (Nov 12 2026: Topchic 8CA,
+    # Colorance 8BP were counted but never on the list)
+    products += [tuple(c[2:].split('|')) for c in counts if c.startswith('b:') and c.count('|') == 2
+                 and co.par_of(tuple(c[2:].split('|'))) is not None]
     extra, nocount = counted_extras(keys, counts, products, R.get('usage4'), scale_products=scale)
-    R['countNew'] = nocount                       # used on the scale, never counted: Rose's Count These First list
     rows = rows + extra
     keys = keys + [(*key_of(r[0]), r[1]) for r in extra]
+    # color Rose orders that the list has never seen (Nov 12 2026: Colorance 8BA, 9BA, 6A, Topchic 9GB): counted on
+    # Count These First -> joins the list from that count; not counted yet -> goes on Count These First
+    o_rows, o_keys = ordered_shades(order_rows, keys)
+    for (k, nm) in o_keys:
+        st = co.start_count(k, counts)
+        if st:
+            rows.append(['%s %s' % (k[0], k[1]), k[2], st[0], 0.0, st[0], 0.0, None])
+            keys.append(k)
+        elif nm not in nocount:
+            nocount.append(nm)
+    R['countNew'] = nocount                       # never counted: Rose's Count These First list
     way, got = on_order(order_rows, keys, year, now)
     use, days, miss = daily_usage(usage_rows, keys)
     # The weekly report's estimate covers SureTint use through the report's Sunday. With daily scale numbers, count use
@@ -251,7 +297,8 @@ def refresh(inv, stock_rows, order_rows, now=None, year=2026, usage_rows=None):
         now_oh = round(base - extra_use + recv, 2)
         new_rows.append([line, shade, counted, round(float(used or 0) + extra_use, 2), now_oh, round(pace, 2),
                          round(now_oh / pace, 1) if pace > 0 else None])
-        items.append((k, counted, now_oh + way.get(k, 0), pace))
+        fresh_count = bool(st) and (now - st[1]).days <= 7
+        items.append((k, counted, now_oh + way.get(k, 0), pace, fresh_count))
     stores, recount = co.order_lists(items)
     order = []
     for s in ('DePasquale', 'SalonCentric', 'CosmoProf'):
@@ -263,6 +310,7 @@ def refresh(inv, stock_rows, order_rows, now=None, year=2026, usage_rows=None):
     if recount:
         order.append(['Recount first', 'Used more than was counted, so these were restocked. Count them before ordering: '
                       + ', '.join(recount) + '.'])
+    new_rows = [r for r, k in zip(new_rows, keys) if not co.unused(*k)]
     R['onHand'] = sorted(new_rows, key=lambda r: r[6] if r[6] is not None else 999)
     R['order'] = order
     R['refreshed'] = now.strftime('%b %-d, %Y %-I:%M %p')

@@ -131,6 +131,15 @@ def alias_target(key, keys):
     return next((k for k in keys if k[1] == 'Colorance Canister' and k[2].split(' ')[0] == '6N'), None)
 
 
+def match_item(it, names):
+    """Key for a normalized order-email item name: exact name first, else the LONGEST known name inside it (or it inside
+    the name), so 'Goldwell Topchic 6NN Dark Blonde Extra' is 6NN, not 6N (found Nov 12 2026)."""
+    if it in names:
+        return names[it]
+    hits = [(len(n), v) for n, v in names.items() if len(n) > 6 and (n in it or it in n)]
+    return max(hits, key=lambda x: x[0])[1] if hits else None
+
+
 def received_from_orders(rows, keys, year=2026):
     """f(key, datetime) -> units delivered after that time.
     A row counts once its Status says Delivered/Received, or 'arrives <date>' with that date passed; it is dated by
@@ -161,7 +170,7 @@ def received_from_orders(rows, keys, year=2026):
             continue
         d = arr or when(r[6], year) or when(r[0], year)
         it = norm(r[3])
-        k = names.get(it) or next((v for n, v in names.items() if len(n) > 6 and (n in it or it in n)), None)
+        k = match_item(it, names)
         try:
             q = float(r[4] or 1)
         except ValueError:
@@ -199,18 +208,27 @@ def on_hand(keys, counts, used_since, pace, received_since=None):
     return sorted(rows, key=lambda r: r[6] if r[6] is not None else 999)
 
 
-# Color order rules (Alexandra, Nov 2 2026). Color shades: order par - on hand, rounded up, when above 0.
+# Color order rules. Nov 2 2026: fill each shade to Rose's par. Nov 12 2026 (Alexandra, after Rose said the list was
+# "off" next to her DePasquale order W-100148): order by how fast each shade is used instead. Every carried shade keeps
+# at least its floor below (1 can, or the bigger number Alexandra set for her must-have shades); on top of that it is
+# filled to WEEKS weeks of use. Fast shades get more, slow shades get nothing until they run low.
 # Developers and other backbar keep the weeks-of-pace rule (under 3 weeks left: order 6 weeks of pace - on hand).
-# Wella Color Renew and Colorance 6N@GB aren't carried: they stay off order, onHand and Count These First
-# (6N@GB usage counts toward Colorance 6N, see on_hand).
-PAR = [  # (line test, default par, {shade: par})
-    (lambda l, s: l == 'Shades EQ' and s != 'EQ Processing Solution' and not s.startswith('Bonder'), 3, {'09NB': 6, '09M': 6, '010VV': 6, '07M': 6}),
-    (lambda l, s: l.startswith('Colorance Canister'), 2, {'6A': 3, '2A': 3, '5NB': 3, '7NA': 3, '6N': 3}),
-    (lambda l, s: l.startswith('Topchic Canister') and l != 'Topchic Canister Blonding Cream', 2, {'4NN': 3, '5NN': 3, '6NN': 3, '7NN': 3, '4G': 3}),
-    (lambda l, s: l in ('Fast Color 10', 'Technofruit') and 'Coactivator' not in s, 3, {}),
+# Not carried, so never ordered: Wella Color Renew, Colorance 6N@GB (its bowls count as Colorance 6N), Colorance NN
+# shades (Rose buys NN in Topchic) and Alter Ego Technofruit color (Rose buys Fast Color 10) (Nov 12 2026).
+WEEKS = 6
+PAR = [  # (line test, floor, {shade: floor})
+    (lambda l, s: l == 'Shades EQ' and s != 'EQ Processing Solution' and not s.startswith('Bonder'), 1, {'09NB': 6, '09M': 6, '010VV': 6, '07M': 6}),
+    (lambda l, s: l.startswith('Colorance Canister'), 1, {'6A': 3, '2A': 3, '5NB': 3, '7NA': 3, '6N': 3}),
+    (lambda l, s: l.startswith('Topchic Canister') and l != 'Topchic Canister Blonding Cream', 1, {'4NN': 3, '5NN': 3, '6NN': 3, '7NN': 3, '4G': 3}),
+    (lambda l, s: l in ('Fast Color 10', 'Technofruit') and 'Coactivator' not in s, 1, {}),
 ]
 STORE = {'Redken': 'SalonCentric', 'Goldwell': 'DePasquale', 'Alter Ego': 'DePasquale', 'Wella': 'CosmoProf'}
-unused = lambda *t: 'color renew' in ' '.join(map(str, t)).lower() or '6n@gb' in ' '.join(map(str, t)).lower()
+
+
+def unused(*t):
+    j = ' '.join(map(str, t)).lower()
+    return ('color renew' in j or '6n@gb' in j or bool(re.search(r'colorance canister\S* 0*\d+nn\b', j))
+            or ('technofruit' in j and 'coactivator' not in j))
 
 
 def par_of(key):
@@ -223,27 +241,34 @@ def par_of(key):
     return None
 
 
-def order_qty(key, oh, pace, counted=None):
+def order_qty(key, oh, pace, counted=None, fresh=True):
     """Units to order, or None when the count needs a recount first (used more than was counted, so it was restocked).
-    A shade counted 0 and not used in 4 weeks isn't carried, so par doesn't apply to it."""
+    A shade Rose counted at 0 in the last week is ordered, never sent to recount (Nov 12 2026); an older 0 count that
+    has been used since was restocked, so it still asks for a recount. A shade counted 0 and not used in 4 weeks isn't
+    carried, so it isn't ordered."""
+    zero = counted is not None and float(counted or 0) <= 0
     if oh < 0:
-        return None
+        if not (zero and fresh):
+            return None
+        oh = 0.0
     par = par_of(key)
-    if par is not None and (counted or pace > 0):
-        # less than a quarter can used since the count doesn't buy another can (Nov 10 2026: Rose counted 1 of a
-        # par-2 shade and the list said order 2 because a sliver had been used since)
-        return max(0, math.ceil(round(par - oh - 0.25, 2)))
+    if par is not None:
+        if zero and pace <= 0:
+            return 0
+        target = max(par, WEEKS * pace)
+        # less than a quarter can short doesn't buy another can (Nov 10 2026)
+        return max(0, math.ceil(round(target - oh - 0.25, 2)))
     wl = oh / pace if pace > 0 else None
-    return max(0, math.ceil(round(6 * pace - oh, 2))) if par is None and wl is not None and wl < 3 else 0
+    return max(0, math.ceil(round(6 * pace - oh, 2))) if wl is not None and wl < 3 else 0
 
 
 def order_lists(items):
     """items = [(key, counted, on hand, pace)] -> ({store: [(name, qty)]}, [recount names]); Color Renew left off."""
     stores, recount = {}, []
-    for key, counted, oh, pace in items:
+    for key, counted, oh, pace, *more in items:
         if unused(*key):
             continue
-        q = order_qty(key, oh, pace, counted)
+        q = order_qty(key, oh, pace, counted, *more)
         if q is None:
             recount.append(item_name(key))
         elif q > 0:
