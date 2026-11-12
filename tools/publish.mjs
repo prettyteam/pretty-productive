@@ -385,7 +385,7 @@ const payroll = (() => {
       const raw = fs.readFileSync(path.join(root, 'docs', keys.inv.file + '.enc'));
       const k0 = await crypto.subtle.importKey('raw', Buffer.from(keys.inv.key, 'base64'), 'AES-GCM', false, ['decrypt']);
       const R = (JSON.parse(new TextDecoder().decode(await crypto.subtle.decrypt({ name: 'AES-GCM', iv: raw.subarray(0, 12) }, k0, raw.subarray(12)))).report) || {};
-      const color = { updated: keys.inv.updated || '', week: R.week || '', order: R.order || [], fastest: R.fastest || [], onHand: R.onHand || [] };
+      const color = { updated: keys.inv.updated || '', week: R.week || '', order: R.order || [], fastest: R.fastest || [], onHand: R.onHand || [], countNew: R.countNew || [] };
       const key = await crypto.subtle.importKey('raw', Buffer.from(gk[1], 'base64url'), 'AES-GCM', false, ['encrypt']);
       const iv = crypto.getRandomValues(new Uint8Array(12));
       const ct = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, enc.encode(JSON.stringify(color))));
