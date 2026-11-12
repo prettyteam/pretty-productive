@@ -87,7 +87,14 @@
       em.hidden=mine.length>0||kids.length>0;}
     $('upbar').hidden=!ready||cur==='team'||mode==='videos';var canV=!!(MK._state&&MK._state.vid);var vb=box('o-vbar','pupbar','div',$('upbar'));
     if(!vb.dataset.on){vb.dataset.on=1;vb.innerHTML='<label class="pupbtn">Add Photos &amp; Videos<input type="file" id="vpick" accept="image/*,video/*" multiple></label><p class="pdrophint">Pick as many as you want at once. On a computer, you can also drag a whole group of photos and videos onto this page. Videos show here. Photos go to this album on the Photos tab.</p><p id="vmsg" role="status" aria-live="polite"></p>';
-      $('vpick').addEventListener('change',function(){var f=[].slice.call(this.files||[]);this.value='';if(f.length)addMixed(f)});}
+      // On an iPhone the page sees nothing until the phone has every picked video ready, which can take minutes, and a picked video
+      // that is only in iCloud can come back as nothing at all. Say so out loud instead of staying blank (Alexandra, Nov 12 2026).
+      var vgot=function(inp){var f=[].slice.call(inp.files||[]);inp.value='';
+        if(!f.length){msg('Your phone did not hand over any videos. Try 5 to 10 at a time. If they are in iCloud, open them in Photos first so they download.');return}
+        msg('Got '+f.length+' file'+(f.length===1?'':'s')+'. Starting\u2026');addMixed(f)};
+      $('vpick').addEventListener('change',function(){vgot(this)});
+      $('vpick').addEventListener('click',function(){if(!busy)msg('Pick your videos, then tap Add or the check mark. Your phone may say Preparing for a few minutes before they start. Keep this page open.')});
+      $('vpick').addEventListener('cancel',function(){if(!busy)msg('')});}
     vb.hidden=!(ready&&mode==='videos'&&canV&&cur!=='team');
     var vn=box('o-vnote','pdrophint','p',$('upbar'));vn.hidden=!(mode==='videos'&&(!canV||cur==='team'));vn.textContent=cur==='team'?'Videos from My Work in the team app show here.':'Adding videos from this page is coming next. For now, videos from My Work in the team app show here.';if($('mk-sub'))$('mk-sub').hidden=!canSub();
     MK.scan(grid);
