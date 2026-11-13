@@ -218,7 +218,7 @@ const RX_Q={
     ['feel','How does her hair feel?',['Dry','Oily','Frizzy','Flat','Breakage','Flyaways','Hard to style','Curly or wavy','Normal'],1,'How would you describe your hair?'],
     ['style','How does she style it?',['Air dry','Blow-dry with a brush or diffuser','Blow-dry, then hot tools','Hot tools each time'],0,'After you wash, how do you typically style it?'],
     ['color','Is it color-treated?',['No','Yes','Yes, with a glaze that fades','Blonde that turns brassy','Grays showing'],1,'Is your hair color treated?'],
-    ['prod','What does she use now?',['Professional','Drugstore']],
+    ['prod','What does she use now?',['Professional','Drugstore'],0,'What shampoo and conditioner are you using right now?'],
     ['love','Does she love it?',['Yes','It’s okay','No']],
     ['clean','Does she like clean, vegan products?',['No preference','Yes']]],
   skin:[
