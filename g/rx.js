@@ -724,7 +724,7 @@ function rxBuild(R,me){
   /* skin, right after what her skin is going through: known allergies, yes or no (Alexandra, Oct 20 2026) */
   const allergyQ={key:'allergy',q:'Does she have any known allergies to skincare products we should be aware of?',opts:['Yes','No'],multi:false,
     get:()=>[].concat(R.a.allergy||[]).filter(Boolean),tap:o=>{R.a.allergy=R.a.allergy===o?'':o}};
-  const order=[goalQ,...(sk?[nowQ,allergyQ,...routine]:[...routine,nowQ])];
+  const order=[goalQ,...(sk?[nowQ,allergyQ,...routine]:[nowQ,...routine])];
   const nextOpen=after=>{const i=order.findIndex(x=>x.key===after);const L=[...order.slice(i+1),...order.slice(0,Math.max(i,0))];const n=L.find(x=>!x.get().length);return n?n.key:null};
   if(RX_DD.card!==R||RX_DD.kind!==R.kind){RX_DD={card:R,kind:R.kind,open:(order.find(x=>!x.get().length)||{}).key||null}}
   const dd=x=>{const sel=x.get(), isOpen=RX_DD.open===x.key, unsure=sel.includes(IDK);
@@ -742,8 +742,8 @@ function rxBuild(R,me){
   s1.append(dd(goalQ));
   /* skin: Her Skin Instant comes right after the guest, then her routine (Alexandra, Oct 16 2026) */
   /* every question starts with "I don't know" (what the girls say); tapping it tells her to go ask (Alexandra, Oct 15 2026) */
-  const s2=h('section',{class:'card2'},h('span',{class:'lbl'},(sk?'3':'2')+' · Her Routine'),...routine.map(dd));
-  const s3=h('section',{class:'card2'},h('span',{class:'lbl'},sk?'2 · Her Skin Instant':'3 · Right Now'),dd(nowQ),
+  const s2=h('section',{class:'card2'},h('span',{class:'lbl'},'3 · Her Routine'),...routine.map(dd));
+  const s3=h('section',{class:'card2'},h('span',{class:'lbl'},sk?'2 · Her Skin Instant':'2 · Right Now'),dd(nowQ),
     sk?dd(allergyQ):null,sk&&R.a.allergy==='Yes'?h('small',{class:'rxfind'},'Ask what she’s allergic to, and check every product before you suggest it.'):null);
   const done=order.filter(x=>x.get().length).length;
   /* no options until a budget is typed in (Alexandra, Oct 16 2026): "No set budget" is gone */
@@ -758,7 +758,7 @@ function rxBuild(R,me){
     h('small',{class:'soft'},done+' of '+order.length+' questions answered'),
     !ready&&RX_HINT?h('small',{style:'color:#8b3a2b;font-weight:600'},RX_HINT):null,
     h('small',{class:'soft'},ready?'Suggestions follow the Taffeta consultation: only what she needs, inside her budget.':(Number(R.budget)>0?'Pick her goals and what’s going on right now.':'Type her budget first. Options only show once there’s a budget.')));
-  const out=[s1,...(sk?[s3,s2]:[s2,s3]),s4];
+  const out=[s1,s3,s2,s4];  /* hair too: scalp right after her goals, then her routine (Alexandra, Nov 12 2026) */
   if(R.opts) out.push(...rxEditor(R,me));
   return out;
 }
