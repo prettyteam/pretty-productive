@@ -842,9 +842,11 @@ function rxEditor(R,me){
   /* Pro Notes (Alexandra, Oct 24 2026): only the team sees these. They're saved with the card in Saved Cards, never on her card or QR. */
   const pn=h('textarea',{class:'rgta',rows:'3',placeholder:'Formulas, what she liked, what to watch for next time'}); pn.value=R.pro||''; pn.addEventListener('input',()=>{R.pro=pn.value;rxSave()});
   const pro=h('section',{class:'card2'},h('span',{class:'lbl'},'Pro Notes'),h('small',{class:'soft'},'Only the team sees these. They’re saved with her card in Saved Cards and never show on her card.'),h('label',{class:'fld'},pn));
-  const save=h('button',{type:'button',class:'obtn',onclick:()=>rxStore(R,me)},'Save & Send To Desk');
+  /* Save Her Card (Alexandra, Nov 12 2026): the card is the artist's guide, so it's only saved (the desk can look it up);
+     nothing goes to the guest until her Home Care card at the end */
+  const save=h('button',{type:'button',class:'obtn',onclick:()=>rxStore(R,me)},'Save Her Card');
   const done=h('section',{class:'card2',style:'align-items:center;text-align:center'},save,
-    h('small',{class:'soft'},'Her card goes to the front desk and her QR shows here. She scans it with her camera; if she doesn’t, the desk texts it to her.'));
+    h('small',{class:'soft'},'Saves it in your Saved Cards, and the front desk can look it up. Nothing goes to her yet. Tell her the two totals.'));
   /* full sizes she should end up with, outside the budget (Alexandra, Oct 16 2026) */
   const hs=(R.rec||[]).some(l=>l.hint==='p50');
   const rec=(R.rec&&R.rec.length)?h('section',{class:'card2'},h('span',{class:'lbl'},hs?'Highly Suggested: Add Her P50':'Full Sizes To Go Home With'),
@@ -907,12 +909,10 @@ let RX_CHOSE_MSG='';
 function rxQrView(x){
   /* the team mostly shows or talks her through the card, so the QR folds under "Client QR Code +" and the next steps
      are the main part of the screen (Alexandra, Oct 20 2026) */
-  const qr=h('details',{class:'rxqrd'},h('summary',{},h('span',{},'Client QR Code'),h('span',{class:'pm','aria-hidden':'true'})),
-    h('div',{class:'rxqrb'},rxQR(x.link),h('p',{class:'rxscript'},'Scan With Your Camera'),
-      h('small',{class:'soft'},'It opens her options and what her next visit looks like on her own phone.')));
+  /* no QR any more (Alexandra, Nov 12 2026): the card is the artist's guide; she can still open it to show her */
   return h('section',{class:'card2 out',style:'align-items:center;text-align:center'},
     h('h2',{},rxGuestName(x.guest)+'’s RX card'),
-    h('small',{class:'soft'},'Saved and sent to the front desk. If she doesn’t open it, the desk texts it to her.'),
+    h('small',{class:'soft'},'Saved. The front desk can look it up under RX Cards. Tell her the two totals and tap the one she picks.'),
     (()=>{const sv=rxSaved().find(r=>r.id===x.id); if(!sv||!sv.draft||!(sv.draft.opts||[]).length) return null;
       const nm=rxOptNames(sv), t=h('small',{class:'soft'},RX_CHOSE_MSG);
       return h('div',{class:'rxchose'},h('span',{class:'lbl'},'Which option did she choose?'),
@@ -923,7 +923,6 @@ function rxQrView(x){
       /* same tab, so Go Back To Edit on her card comes back here with this card open to edit (Alexandra, Oct 20 2026) */
       h('button',{type:'button',class:'obtn',onclick:()=>rxCardOverlay(x)},'Open Her Card'),
       x.id?h('button',{type:'button',class:'obtn',onclick:()=>rxEditSaved(x.id)},'Edit Her Card'):null),
-    qr,
     h('button',{type:'button',class:'tab',onclick:()=>{RX_VIEW='build';RX_SHOW=null;render()}},'Done'));
 }
 /* coming back from her card with the Back button (the page may be restored as it was): open the card to edit */
@@ -1085,7 +1084,9 @@ function rxTakeHomeView(me){
         h('div',{class:'seg'},whens.map(o=>h('button',{type:'button','aria-pressed':String(q.when===o),onclick:()=>{set('when',o);render()}},o))),
         h('label',{class:'fld'},ta))})):null;
   const toRG=()=>{
-    RG=rgBlank(); RG.guest=x.guest; RG.next=d.m&&d.m.when||''; RG.rid=x.id;   /* her card id: saving again replaces the desk's copy */
+    RG=rgBlank(); RG.guest=x.guest; RG.next=d.m&&d.m.when||''; RG.rid=x.id;
+    /* her maintenance appointment prints on her Home Care card (Alexandra, Nov 12 2026) */
+    RG.nextSvc=((d.m&&d.m.lines)||[]).map(l=>l.n).filter(n=>n!=='K18 Bond Protection');   /* her card id: saving again replaces the desk's copy */
     RG.picks=x.home.map(howOf);
     /* New to P50 (Alexandra, Oct 20 2026): the artist checks it and her P50 step gets the dilute / ease-in line */
     if(kind==='skin'&&x.newP50) RG.newP50=true;   /* g/regimen.js rgBake puts it on her P50 step, or with her aftercare notes */
