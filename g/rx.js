@@ -423,7 +423,10 @@ function rxPair(P,b,pkg,lo,vars,ok,cap){
   /* All In can be her full goal look (the top package: color, K18 and haircut) with $45 home care, up to $70 over her
      budget: a $400 guest's All In can be $450–$470 (Alexandra, Nov 12 2026). Its color can be bigger than Worth The
      Wait's (full balayage over half), and it keeps her haircut. */
-  if(b!=null){const L=pkg(0,lo,false),t=rxTotal(L); if(t>best.t&&t<=b+RX_DREAM&&ok(L)&&(!svc1.some(n=>/Haircut/.test(n))||L.some(l=>l.n==='Female Haircut'))) best={L,t,i:0,a:lo,lv:false}}
+  /* too far over with her full haircut? the same look with a haircut leaving wet (Alexandra, Nov 13 2026) */
+  if(b!=null){const w0=P.findIndex(t=>t.includes('Haircut Leaving Wet')&&t.length===P[0].length&&t.every((n,k)=>n===P[0][k]||(n==='Haircut Leaving Wet'&&P[0][k]==='Female Haircut')));
+    for(const i of [0,...(P[0].includes('Female Haircut')&&w0>0?[w0]:[])]){const L=pkg(i,lo,false),t=rxTotal(L);
+      if(t>best.t&&t<=b+RX_DREAM&&ok(L)&&(!svc1.some(n=>/Haircut/.test(n))||L.some(l=>/^(Female Haircut|Haircut Leaving Wet)$/.test(l.n)))){best={L,t,i,a:lo,lv:false};break}}}
   let o2=best.L;
   return [o1,o2];
 }
