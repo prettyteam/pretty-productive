@@ -216,7 +216,7 @@ const RX_Q={
   hair:[
     ['wash','How often does she wash?',['Daily','Every other day','Every 2–3 days','Once a week'],0,'How many times a week do you wash your hair?'],  /* starts learning her routine (Alexandra, Nov 12 2026) */
     ['feel','How does her hair feel?',['Dry','Oily','Frizzy','Flat','Breakage','Flyaways','Hard to style','Curly or wavy','Normal'],1,'How would you describe your hair?'],
-    ['style','How does she style it?',['Air dry','Blow-dry with a brush or diffuser','Hot tools each time'],0,'After you wash, how do you typically style it?'],
+    ['style','How does she style it?',['Air dry','Blow-dry with a brush or diffuser','Blow-dry, then hot tools','Hot tools each time'],0,'After you wash, how do you typically style it?'],
     ['color','Is it color-treated?',['No','Yes','Yes, with a glaze that fades','Blonde that turns brassy','Grays showing'],1],
     ['prod','What does she use now?',['Professional','Drugstore']],
     ['love','Does she love it?',['Yes','It’s okay','No']],
@@ -295,7 +295,7 @@ function rxNeeds(R){
   if(now.includes('Hard to style')) add(a.style==='Air dry'?(feel.includes('Curly or wavy')?'airCurl':'airDry'):/^Blow-dry with a brush/.test(a.style||'')?'prep':'blowLast');
   /* from the routine, only when nothing above already covers it */
   if(colored&&notHappy) add('colorSafe');
-  if(/^Hot tools/.test(a.style||'')||/^Blow-dry with a brush/.test(a.style||'')) add('heat');
+  if(/^Hot tools|^Blow-dry/.test(a.style||'')) add('heat');
   if(a.style==='Air dry'&&!out.some(k=>k==='airDry'||k==='airCurl')) add(feel.includes('Curly or wavy')?'airCurl':'airDry');
   if(feel.includes('Oily')&&a.wash==='Daily') add('oily');
   if(feel.includes('Flat')) add('flatWash');
