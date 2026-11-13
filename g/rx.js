@@ -175,8 +175,9 @@ const RX_GOAL={
     /* foils are their own color choice; foil prices don't include the glaze, so it's its own line (Alexandra, Oct 17 2026) */
     'Foils (Highlights)':{p:[['Full Foil','Glaze','Female Haircut'],['Half Foil','Glaze','Female Haircut'],['Minimum Foil','Glaze','Female Haircut'],['Face Frame/Spot Highlight','Glaze'],['Minimum Foil','Glaze']],
       m:[['Minimum Foil','Glaze','Leave Wet (no haircut)'],'8–10 weeks','Foils around the part and hairline and a glaze. If you get your cut today, skip it next time to save: leave wet, or add a $50 blow dry. Need a trim? A haircut leaving wet is $50.']},
-    /* soft, grown-out color so she can go longer between visits (Alexandra, Oct 15 2026); balayage already includes shadow root and glaze */
-    'Lower Maintenance Hair Color':{p:[['Half Head Balayage','Female Haircut'],['Refresh Balayage','Female Haircut'],['Shadow Root','Glaze','Female Haircut'],['Shadow Root','Glaze']],
+    /* soft, grown-out color so she can go longer between visits (Alexandra, Oct 15 2026); a decent budget gets a half or full
+       balayage, then a Refresh Balayage upkeep (Nov 12 2026); balayage already includes shadow root and glaze */
+    'Lower Maintenance Hair Color':{p:[['Full Head Balayage','Female Haircut'],['Half Head Balayage','Female Haircut'],['Refresh Balayage','Female Haircut'],['Shadow Root','Glaze','Female Haircut'],['Shadow Root','Glaze']],
       /* low maintenance means she comes back every 10–12 weeks for color: a Minimum Foil plus a $45 glaze, or a Refresh
          Balayage (glaze and root melt included) when she had a balayage (Alexandra, Nov 12 2026) */
       m:[['Minimum Foil','Glaze'],'10–12 weeks','Foils around your part and hairline and a glaze. It grows out softly, so you can go 10 to 12 weeks between visits.']},
@@ -435,9 +436,10 @@ function rxGenerateHair(R,g){
   if(today.includes('Single Process')){const bal=today.some(n=>RX_BAL.test(n)), bl=today.some(n=>RX_BLOND.test(n));
     ms=['Single Process']; mw='4–6 weeks';
     mt='Your roots every 4 to 6 weeks keep your grays covered.'+(bl?' Your '+(bal?'balayage':'highlights')+' refresh comes at about 8 to 10 weeks.':'')+' Add a cut every other visit.'}
-  /* low maintenance, every 10–12 weeks: her next visit looks like today's Worth The Wait visit, minus the home care
+  /* low maintenance on a low budget (under $300), every 10–12 weeks: her next visit looks like today's Worth The Wait visit, minus the home care.
+     $300 and up: a Minimum Foil and Glaze, or a Refresh Balayage after a balayage
      (a balayage comes back as a Refresh Balayage) (Alexandra, Nov 12 2026) */
-  if(lowM&&!today.includes('Single Process')){
+  if(lowM&&b!=null&&b<300&&!today.includes('Single Process')){
     ms=o1.filter(l=>l.t==='s'&&l.n!=='K18 Bond Protection'&&l.n!=='Goldwell Leave-In Treatment').map(l=>RX_BAL.test(l.n)?'Refresh Balayage':l.n);
     mw='10–12 weeks'; mt='About the same as today’s visit, every 10 to 12 weeks.'+(ms.includes('Refresh Balayage')?' Your glaze and root melt are included.':'')}
   if(ms.includes('Single Process')&&today.includes('Glaze')&&!ms.includes('Glaze')) ms.push('Glaze');
