@@ -1853,6 +1853,26 @@ function invMerch(R){
     h('section',{class:'section',id:'invm1'},h('h2',{},'In stock · '+inS.length),h('div',{class:'sec2'},inS.length?inS:h('p',{class:'soft'},'Nothing counted yet.'))),
     h('section',{class:'section',id:'invm0'},h('h2',{},'Out or not counted · '+outS.length),h('small',{class:'soft',style:'margin-top:-8px'},'Type a count and it moves up next time you open this tab.'),h('div',{class:'sec2'},outS))];
 }
+/* Shampoo Sink sub-tab (Nov 12 2026, Alexandra for Rose): backbar shampoo and conditioner at the sinks, grouped by brand.
+   Rose types the starting counts by hand; they save to the Stock Counts tab like every other count (ids 'k:Brand|Item'). */
+const SINK=[
+  ['Rossano Ferretti',['Color Safe Shampoo','Color Safe Conditioner','Volume Shampoo','Volume Conditioner','Dolce Shampoo','Dolce Conditioner','Moisture Smoothing Mask (Tub)','Dolce Mask']],
+  ['Oribe',['Supershine Shampoo','Supershine Conditioner','Gold Lust Shampoo','Gold Lust Conditioner','Beautiful Color Shampoo','Beautiful Color Conditioner',
+    'Magnificent Volume Shampoo','Magnificent Volume Conditioner','Hair Alchemy Shampoo','Hair Alchemy Conditioner','Signature Shampoo','Signature Conditioner']],
+  ['K18',['Purple Foam']],
+  ['Aluram',['Moisture Shampoo','Moisture Conditioner','Daily Shampoo','Daily Conditioner']],
+  ['Davines',['NouNou Shampoo','NouNou Conditioner']]];
+function invSink(){
+  const rows=[], out=[];
+  SINK.forEach(([br,items],gi)=>{
+    const gid='invk'+gi, ids=items.map(i=>'k:'+br+'|'+i);
+    const els=items.map(i=>{const e=h('div',{class:'lrow','data-grp':gid},h('span',{},h('b',{},i),h('small',{},br+' · backbar'),stockBox('k:'+br+'|'+i,br+' '+i,null)));
+      e.dataset.q=(br+' '+i).toLowerCase(); rows.push(e); return e});
+    out.push(invGroup(gid,'k|'+br,br,null,els,ids));
+  });
+  return [h('p',{class:'soft',style:'font-size:13.5px;margin:0'},'Type how many bottles or tubs are at the shampoo sinks and in the back. It saves on its own.'),
+    invSearch('Search a brand or product',rows),invAll(),...out];
+}
 /* Weekly Report sub-tab (Oct 29 2026): the Retail Inventory Report from Drive via the desk script, same as the Front Desk's Inventory page (g/inventory.js) */
 let WREP={d:null,at:0,busy:false,err:false};
 function wrepLoad(){
@@ -1870,8 +1890,9 @@ function invView(){
   invLoad();
   const sub=S.invt||'week';
   const head=h('div',{},h('span',{class:'lbl'},'Just for you'),h('h1',{style:'font-size:28px'},'Inventory'));
-  const tabs=h('div',{class:'dtabs',role:'tablist'},[['week','Weekly Report'],['back','Backbar counts'],['retail','Retail counts'],['report','Color report'],['merch','Hi Pretty merch']].concat(S.mine.spa?[['spa','Spa supplies & cost']]:[]).map(([k,l])=>h('button',{role:'tab','aria-current':String(sub===k),onclick:()=>{S.invt=k;render();window.scrollTo(0,0)}},l)));
+  const tabs=h('div',{class:'dtabs',role:'tablist'},[['week','Weekly Report'],['sink','Shampoo Sink'],['back','Backbar counts'],['retail','Retail counts'],['report','Color report'],['merch','Hi Pretty merch']].concat(S.mine.spa?[['spa','Spa supplies & cost']]:[]).map(([k,l])=>h('button',{role:'tab','aria-current':String(sub===k),onclick:()=>{S.invt=k;render();window.scrollTo(0,0)}},l)));
   if(sub==='week') return [h('div',{class:'hub'},head,tabs,...weekReport())];
+  if(sub==='sink') return [h('div',{class:'hub'},head,tabs,...invSink())];
   if(!INV.data) return [h('div',{class:'hub'},head,tabs,h('p',{class:'dmsg'},INV.err?'Couldn’t open this right now. Check your signal and try again.':'Opening…'))];
   const D=INV.data;
   const body=sub==='spa'&&S.mine.spa?invSpa():sub==='back'?invBackbar(D.backbar):sub==='retail'?invRetail(D.retail,D.merged,D.check):sub==='merch'?invMerch(D.retail):invReport(D.report);
