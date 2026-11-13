@@ -288,6 +288,8 @@ for (const p of pages) {
   if (spaFor.list && p.role === 'esthetician') mine.spaList = spaFor.list;
   if (schedMap[p.slug]) mine.schedule = { weeks: schedMap[p.slug], updated: (data.schedule && data.schedule.updated) || null };
   /* Ordering tab store logins (Oct 28 2026): keys.json "ordering" [{label,site,user,pw}], sealed only into the pages that get the full Ordering tab */
+  /* Bridal App square (Nov 13 2026): keys.json "wedLinks" {slug: her Weddings App artist link}, sealed only into her own page */
+  if (keys.wedLinks && keys.wedLinks[p.slug]) mine.wed = keys.wedLinks[p.slug];
   if (Array.isArray(keys.ordering) && keys.ordering.length && ['rose', 'alexandra'].includes(p.slug)) mine.ordering = keys.ordering;
   if (pkAll) mine.pk = pkAll; // PK Knowledge tab: same brand reads for everyone (Oct 17 2026)
   // Self Promotion page: her own 5 ideas from team.json promo (Oct 21 2026), else the hair or skin set.

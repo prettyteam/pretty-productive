@@ -2222,6 +2222,7 @@ function staffTabs(){
   t.push(['guide','Culture']);
   const dc=p.docs||{}; if(dc.hb) t.push(['hb','Handbook']); if(dc.fg) t.push(['fg','Desk Guide']);
   if(st.slug&&MKT_SLUGS.includes(st.slug)) t.push(['mkt','Marketing Proofs']);
+  if(st.slug&&p.wed) t.push(['wed','Bridal App']);   // her own Weddings App artist link, sealed in her data (Angelina C, Nov 13 2026)
   if(st.slug) t.push(['tip','Gratuity']);
   if(st.slug) t.push(['promo','Self Promotion']);
   if(st.slug) t.push(['me','My Profile']);
@@ -2229,7 +2230,7 @@ function staffTabs(){
 }
 /* One menu instead of a row of tabs (Alexandra, Oct 2026). Sections are grouped; Customer cards holds RX card and Home care. */
 const NAV_GROUPS=[['Guest Requests',['greq']],['Appointments',['home','today','tomorrow','tip']],['Customer Cards',['rx','reg']],[MW_NAME,['mph']],['Goals',['growth','binder','cr']],
-  ['Salon & Spa',['prices','order','pk','inv','skin','cards','off']],['Taffeta',['guide','hb','fg']],['Send To Alex',['ask']],['Self Promotion',['promo']],['Marketing Proofs',['mkt']],['My Profile',['me']]];
+  ['Salon & Spa',['prices','order','pk','inv','skin','cards','off']],['Taffeta',['guide','hb','fg']],['Send To Alex',['ask']],['Self Promotion',['promo']],['Marketing Proofs',['mkt']],['Bridal App',['wed']],['My Profile',['me']]];
 let NAV_OPEN=false;
 /* Disco ball = Home, Back arrow = the page before (Alexandra, Oct 15 2026). Each page change is a browser history step,
    so the Back arrow and the phone's own back swipe both work. */
@@ -2237,6 +2238,7 @@ const DISCO="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBo
 function homeKey(){const t=staffTabs().map(x=>x[0]);return t.includes('home')?'home':t[0]}
 function navGo(k,fromHistory){
   if(k==='mkt'){NAV_OPEN=false;HOME_OPEN='';openMkt();render();return}
+  if(k==='wed'){NAV_OPEN=false;HOME_OPEN='';const u=(S.mine||{}).wed;if(u)openUrl(u);render();return}
   const hubHome=!fromHistory&&k==='home'&&isHub()&&HUB_OPEN; if(hubHome) HUB_OPEN='';
   if(!fromHistory&&(k!==S.tab||hubHome)){const d=((history.state&&history.state.d)||0)+1;try{history.pushState({pp:k,d,hub:HUB_OPEN},'',location.href)}catch(e){}}
   NAV_OPEN=false;S.tab=k;S.dayBack=false;store.set('pp-tab:'+ID,k);render();window.scrollTo(0,0);
