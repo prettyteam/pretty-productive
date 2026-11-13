@@ -708,7 +708,7 @@ function rxBuild(R,me){
     /* skin: the kind of visit comes before her budget (Alexandra, Oct 20 2026): a relaxing 60-minute facial, or results
        first where time doesn't matter (then the $99 targeted treatment makes sense on a budget) */
     R.kind==='skin'?h('div',{class:'fld'},'What Kind Of Visit Is She Hoping For?',chips(['Relaxing 60 min & solve a skin problem','Results first, time doesn’t matter'],o=>R.visit===(/^Relaxing/.test(o)?'relax':'results'),o=>{const v=/^Relaxing/.test(o)?'relax':'results';if(v!==R.visit){R.visit=v;R.opts=null;R.m=null}})):null,
-    h('label',{class:'fld'},h('span',{},'Her All In Cost For Today’s Visit'),bIn));
+    h('label',{class:'fld'},h('span',{},'Her Budget For Today’s Visit'),h('small',{class:'soft'},'Ask: “Is there a budget you’re comfortable with for your visit today?”'),bIn));  /* Alexandra, Nov 12 2026 */
   /* Each question is one dropdown row that shows what's picked; tap it to open a checklist (Alexandra, Oct 16 2026).
      Answering a one-answer question closes it and opens the next unanswered one, so nothing gets skipped; a pick-all
      question stays open until she taps it closed, then the next one opens. Same colors as the rest of the app. */
