@@ -2895,14 +2895,14 @@ function renderPreview(){
    +'<label class="f">Color<select id="pv-color">'+pvOpts(PV_COLORS,i.color)+'</select></label>'
    +'<label class="f" style="flex:0 1 110px">Pieces<input id="pv-pieces" inputmode="numeric" value="'+esc(i.pieces||"")+'"></label></div>'
    +'<label class="f" id="pv-colorOtherWrap"'+(i.color==="Other"?'':' hidden')+'>Color (other)<input id="pv-colorOther" value="'+esc(i.colorOther||"")+'"></label>'
-   +'<div class="f" style="margin-top:10px"><span>Photos of the extensions you used</span><div class="pv-photos" id="pv-ph-ext"></div>'
-   +'<span class="btn ghost filebtn">Add extension photos<input type="file" accept="image/*" multiple data-kind="ext" aria-label="Add extension photos"></span><span class="status" id="pv-up-ext"></span></div></div></div>'
+   +'<div class="f" style="margin-top:10px"><span>Photos and Videos of the Extensions You Used</span><div class="pv-photos" id="pv-ph-ext"></div>'
+   +'<span class="btn ghost filebtn">Add Extension Photos &amp; Videos<input type="file" accept="image/*,video/*" multiple data-kind="ext" aria-label="Add extension photos and videos"></span><span class="status" id="pv-up-ext"></span></div></div></div>'
    +'<div class="card"><h2>Notes</h2>'
    +'<label class="f">Preview notes (the look, products, timing, anything for the wedding day)<textarea id="pv-notes" rows="5">'+esc(i.notes||"")+'</textarea></label>'
    +'<label class="f">Anything new needed from the office?<textarea id="pv-needs" rows="2">'+esc(i.needs||"")+'</textarea></label>'
    +'<div class="row" style="align-items:center"><button class="btn" id="pv-save" style="flex:0 0 auto">Save</button><span class="status" id="pv-status">'+(i.updatedAt?'Last saved by '+esc(i.updatedBy||"")+', '+esc(new Date(i.updatedAt).toLocaleString(undefined,{month:"short",day:"numeric",hour:"numeric",minute:"2-digit"})):'')+'</span></div></div>'
-   +'<div class="card"><h2>Preview photos</h2><p class="hint">The finished look, inspiration pictures, or anything the wedding-day team should see.</p><div class="pv-photos" id="pv-ph-look"></div>'
-   +'<span class="btn ghost filebtn">Add photos<input type="file" accept="image/*" multiple data-kind="look" aria-label="Add preview photos"></span><span class="status" id="pv-up-look"></span></div>'
+   +'<div class="card"><h2>Preview Photos &amp; Videos</h2><p class="hint">The finished look, inspiration pictures, videos, or anything the wedding-day team should see. Pick many at once, or drag them from your computer onto the album.</p><div class="pv-photos" id="pv-ph-look"></div>'
+   +'<span class="btn ghost filebtn">Add Photos &amp; Videos<input type="file" accept="image/*,video/*" multiple data-kind="look" aria-label="Add preview photos and videos"></span><span class="status" id="pv-up-look"></span></div>'
    +'</div>';
   let extVal=ext;
   box.querySelectorAll("[data-ext]").forEach(b=>b.onclick=()=>{extVal=b.dataset.ext;box.querySelectorAll("[data-ext]").forEach(x=>x.setAttribute("aria-pressed",x===b));$("#pv-extFields").hidden=extVal!=="Yes";$("#pv-status").textContent="Not saved yet"});
@@ -2916,6 +2916,7 @@ function renderPreview(){
     finally{$("#pv-save").disabled=false}
   };
   box.querySelectorAll('input[type="file"]').forEach(inp=>inp.onchange=()=>pvUpload(p,inp.dataset.kind,[...inp.files]).finally(()=>{inp.value=""}));
+  if(window.TUp)["look","ext"].forEach(k=>TUp.zone($("#pv-ph-"+k),box.querySelector('input[data-kind="'+k+'"]')));   // drag photos and videos right onto the album (Nov 13 2026)
   pvRenderPhotos(p,me);
 }
 function pvRenderPhotos(p,me){
@@ -2923,13 +2924,14 @@ function pvRenderPhotos(p,me){
   ["look","ext"].forEach(kind=>{
     const box=$("#pv-ph-"+kind);if(!box)return;
     const mine=photos.filter(x=>x.kind===kind);
-    box.innerHTML=mine.length?"":'<p class="hint" style="grid-column:1/-1">No photos yet.</p>';
+    box.innerHTML=mine.length?"":'<p class="hint" style="grid-column:1/-1">No photos or videos yet.</p>';
     mine.forEach(ph=>{
       const d=document.createElement("div");d.className="pv-ph";
       const can=ROLE==="office"||ph.by===me;
-      d.innerHTML='<button type="button" class="open" aria-label="Open photo">'+(pvThumbs[ph.id]?'<img alt="" src="'+pvThumbs[ph.id]+'">':'')+'</button>'+(can?'<button type="button" class="x" aria-label="Remove photo">×</button>':'')+'<small>'+esc(ph.by||"")+'</small>';
+      const what=ph.video?"video":"photo";
+      d.innerHTML='<button type="button" class="open" aria-label="Open '+what+'">'+(pvThumbs[ph.id]?'<img alt="" src="'+pvThumbs[ph.id]+'">':'')+(ph.video?'<span class="play" aria-hidden="true">▶</span>':'')+'</button>'+(can?'<button type="button" class="x" aria-label="Remove '+what+'">×</button>':'')+'<small>'+esc(ph.by||"")+'</small>';
       d.querySelector(".open").onclick=()=>pvOpenFull(p,ph);
-      if(can)d.querySelector(".x").onclick=async()=>{if(!confirm("Remove this photo?"))return;try{const j=await api("deletePhoto",{key:p.key,id:ph.id});p.info=j.info;pvRenderPhotos(p,me);renderPreviews()}catch(e){toast(e.message&&e.message!=="error"?e.message:"Couldn't remove it. Try again.")}};
+      if(can)d.querySelector(".x").onclick=async()=>{if(!confirm("Remove this "+what+"?"))return;try{const j=await api("deletePhoto",{key:p.key,id:ph.id});p.info=j.info;pvRenderPhotos(p,me);renderPreviews()}catch(e){toast(e.message&&e.message!=="error"?e.message:"Couldn't remove it. Try again.")}};
       box.appendChild(d);
     });
   });
@@ -2937,6 +2939,7 @@ function pvRenderPhotos(p,me){
   if(need.length)api("photos",{key:p.key,ids:need}).then(j=>{Object.assign(pvThumbs,j.photos||{});if(pvSel===p.key)pvRenderPhotos(p,me)}).catch(()=>{});
 }
 async function pvOpenFull(p,ph){
+  if(ph.video){window.open("https://drive.google.com/file/d/"+ph.id+"/view","_blank");return}   // videos play in Drive, like the wedding day favorites
   const w=window.open("","_blank");
   try{const j=await api("photos",{key:p.key,ids:[ph.id],full:true});const src=(j.photos||{})[ph.id];
     if(w&&src){w.document.title="Preview photo";w.document.body.style.margin="0";w.document.body.innerHTML='<img alt="Preview photo" style="max-width:100%;display:block;margin:auto" src="'+src+'">'}else if(w)w.close()}
@@ -2953,20 +2956,31 @@ function pvShrink(file,max,q){
 }
 async function pvUpload(p,kind,files){
   const st=$("#pv-up-"+kind),me=ROLE==="office"?"Office":(ME&&(ME.preferredName||ME.legalName))||"";
-  let done=0;upAwake(true);
-  const q=files.filter(f=>/^image\//.test(f.type)||/\.(jpe?g|png|heic|heif|webp)$/i.test(f.name)),total=q.length;
-  const worker=async()=>{for(let f;(f=q.shift());){   // three at a time (Oct 24 2026)
-    if(st)st.textContent="Uploading "+(done+1)+" of "+total+"…";if(window.TUp)TUp.progress(done,total,"photo");
+  let done=0,tried=0;upAwake(true);
+  const pics=files.filter(f=>!isVidFile(f)&&isImgFile(f)),vids=files.filter(isVidFile),total=pics.length+vids.length,what=upWhat(pics.length,vids.length);
+  const say=t=>{if(st)st.textContent=t;if(window.TUp)TUp.say(t,"busy")};
+  const worker=async()=>{for(let f;(f=pics.shift());){   // photos four at a time (Oct 24 2026)
+    if(st)st.textContent="Uploading "+(tried+1)+" of "+total+"…";if(window.TUp)TUp.progress(tried,total,what);
     try{
       const data=await pvShrink(f,1600,.82),thumb=await pvShrink(f,320,.7);
       const j=await apiRetry("addPhoto",{key:p.key,photo:{kind,data,thumb}});
       p.info=j.info;pvThumbs[j.photo.id]="data:image/jpeg;base64,"+thumb;done++;
       if(pvSel===p.key)pvRenderPhotos(p,me);
     }catch(e){toast(e.code==="too_many"?e.message:"A photo didn't upload. Try again.")}
+    tried++;
   }};
-  try{await Promise.all([worker(),worker(),worker(),worker()])}finally{upAwake(false)}
-  if(st)st.textContent=done?"✓ Saved! "+done+" photo"+(done>1?"s":"")+" added.":"";
-  if(window.TUp)TUp.done(done,total-done,"photo");
+  try{
+    await Promise.all([worker(),worker(),worker(),worker()]);
+    for(const f of vids){   // then videos one at a time, straight to Drive (Nov 13 2026)
+      try{
+        const r=await sendVideo("mediaVideoStart",{key:p.key,kind},f,"Uploading video "+(tried+1)+" of "+total,say);
+        if(r.photo){if(r.info)p.info=r.info;if(r.thumb)pvThumbs[r.photo.id]="data:image/jpeg;base64,"+r.thumb;done++;if(pvSel===p.key)pvRenderPhotos(p,me)}
+      }catch(e){toast(vidErr(e))}
+      tried++;
+    }
+  }finally{upAwake(false)}
+  if(st)st.textContent=done?"✓ Saved! "+done+" added.":"";
+  if(window.TUp)TUp.done(done,total-done,what);
   renderPreviews();
 }
 
@@ -3015,23 +3029,23 @@ function wpRender(where){
   WP_GROUPS.forEach(([k,label])=>{const n=photos.filter(p=>p.kind===k).length;if((k==="preview"||k==="fav")&&!n)return;h+='<h3>'+label+(n?' ('+n+')':'')+'</h3><div class="pv-photos" data-g="'+k+'"></div>'});
   /* one Add Photos dropdown instead of three buttons (Alexandra, Oct 30 2026): Lexi couldn't tell which one was for wedding day photos.
      Each choice is the file picker itself, so a tap opens the phone's photos right away. Wedding day photos are the favorites album. */
-  h+='<div class="wp-btns"><details class="more wp-add"><summary class="btn">Add Photos</summary><div class="menu">'
+  h+='<div class="wp-btns"><details class="more wp-add"><summary class="btn">Add Photos &amp; Videos</summary><div class="menu">'
    +'<span class="btn ghost filebtn">Wedding Day Photos &amp; Videos<input type="file" accept="image/*,video/*" multiple data-kind="fav" aria-label="Add wedding day photos and videos"></span>'
-   +'<span class="btn ghost filebtn">Trial &amp; Look Photos<input type="file" accept="image/*" multiple data-kind="look" aria-label="Add trial and look photos"></span>'
-   +'<span class="btn ghost filebtn">Inspiration From the Bride<input type="file" accept="image/*" multiple data-kind="inspo" aria-label="Add inspiration photos from the bride"></span>'
+   +'<span class="btn ghost filebtn">Trial &amp; Look Photos &amp; Videos<input type="file" accept="image/*,video/*" multiple data-kind="look" aria-label="Add trial and look photos and videos"></span>'
+   +'<span class="btn ghost filebtn">Inspiration From the Bride<input type="file" accept="image/*,video/*" multiple data-kind="inspo" aria-label="Add inspiration photos and videos from the bride"></span>'
    +'</div></details></div>'
-   +'<p class="hint" style="margin:6px 0 0">After the wedding, add your wedding day photos and videos. They go to Alexandra and Dom in the wedding\'s album.</p><p class="status" data-st style="margin:6px 0 0"></p>';
+   +'<p class="hint" style="margin:6px 0 0">Every spot takes photos and videos, many at once. On a computer you can drag them right onto an album. After the wedding, add your wedding day photos and videos. They go to Alexandra and Dom in the wedding\'s album.</p><p class="status" data-st style="margin:6px 0 0"></p>';
   box.innerHTML=h;
   box.querySelectorAll("[data-g]").forEach(g=>{
     const list=photos.filter(p=>p.kind===g.dataset.g);
-    if(!list.length){g.innerHTML='<p class="hint" style="grid-column:1/-1;margin:0">No photos yet.</p>';return}
+    if(!list.length){g.innerHTML='<p class="hint" style="grid-column:1/-1;margin:0">No photos or videos yet.</p>';return}
     list.forEach(ph=>{
       const d=document.createElement("div");d.className="pv-ph";
       const can=ph.kind!=="preview"&&(ROLE==="office"||ph.by===me);
       const tag=ph.kind==="preview"?(ph.ext?"Extensions · ":"")+(ph.by||""):(ph.by||"");
-      d.innerHTML='<button type="button" class="open" aria-label="Open '+(ph.video?'video':'photo')+'">'+(wpThumbs[ph.id]?'<img alt="" src="'+wpThumbs[ph.id]+'">':'')+(ph.video?'<span class="play" aria-hidden="true">▶</span>':'')+'</button>'+(can?'<button type="button" class="x" aria-label="Remove photo">×</button>':'')+'<small>'+esc(tag)+'</small>';
+      d.innerHTML='<button type="button" class="open" aria-label="Open '+(ph.video?'video':'photo')+'">'+(wpThumbs[ph.id]?'<img alt="" src="'+wpThumbs[ph.id]+'">':'')+(ph.video?'<span class="play" aria-hidden="true">▶</span>':'')+'</button>'+(can?'<button type="button" class="x" aria-label="Remove '+(ph.video?'video':'photo')+'">×</button>':'')+'<small>'+esc(tag)+'</small>';
       d.querySelector(".open").onclick=()=>wpOpen(id,ph);
-      if(can)d.querySelector(".x").onclick=async()=>{if(!confirm("Remove this photo?"))return;
+      if(can)d.querySelector(".x").onclick=async()=>{if(!confirm("Remove this "+(ph.video?"video":"photo")+"?"))return;
         try{await api("delWedPhoto",{id,photoId:ph.id});wpCache[id]=(wpCache[id]||[]).filter(x=>x.id!==ph.id);wpRefresh(id)}catch(e){toast(e.message&&e.message!=="error"?e.message:"Couldn't remove it. Try again.")}};
       g.appendChild(d);
     });
@@ -3049,21 +3063,55 @@ async function wpOpen(id,ph){
     if(w&&src){w.document.title="Wedding photo";w.document.body.style.margin="0";w.document.body.innerHTML='<img alt="Wedding photo" style="max-width:100%;display:block;margin:auto" src="'+src+'">'}else if(w)w.close()}
   catch(e){if(w)w.close();toast("Couldn't open that photo.")}
 }
-async function wpUpload(id,kind,files,st){   // three at a time (Oct 24 2026)
-  let done=0;upAwake(true);
-  const q=files.filter(f=>/^image\//.test(f.type)||/\.(jpe?g|png|heic|heif|webp)$/i.test(f.name)),total=q.length;
-  const worker=async()=>{for(let f;(f=q.shift());){
-    if(st)st.textContent="Uploading "+(done+1)+" of "+total+"…";if(window.TUp)TUp.progress(done,total,"photo");
+async function wpUpload(id,kind,files,st){   // photos four at a time (Oct 24 2026), then videos (Nov 13 2026)
+  let done=0,tried=0;upAwake(true);
+  const pics=files.filter(f=>!isVidFile(f)&&isImgFile(f)),vids=files.filter(isVidFile),total=pics.length+vids.length,what=upWhat(pics.length,vids.length);
+  const say=t=>{if(window.TUp)TUp.say(t,"busy");["team","build"].forEach(k=>{const b=$("#wp-"+k);if(b&&!b.hidden&&b.dataset.w===id){const s2=b.querySelector("[data-st]");if(s2)s2.textContent=t}})};
+  const worker=async()=>{for(let f;(f=pics.shift());){
+    if(st)st.textContent="Uploading "+(tried+1)+" of "+total+"…";if(window.TUp)TUp.progress(tried,total,what);
     try{
       const data=await pvShrink(f,1600,.82),thumb=await pvShrink(f,320,.7);
       const j=await apiRetry("addWedPhoto",{id,photo:{kind,data,thumb}});
       wpThumbs[j.photo.id]="data:image/jpeg;base64,"+thumb;wtPut(j.photo.id,wpThumbs[j.photo.id]);(wpCache[id]=wpCache[id]||[]).push(j.photo);done++;
       wpRefresh(id);st=null;
     }catch(e){toast(e.code==="too_many"?e.message:"A photo didn't upload. Try again.")}
+    tried++;
   }};
-  try{await Promise.all([worker(),worker(),worker(),worker()])}finally{upAwake(false)}
+  try{
+    await Promise.all([worker(),worker(),worker(),worker()]);
+    for(const f of vids){
+      try{
+        const r=await sendVideo("mediaVideoStart",{id,kind},f,"Uploading video "+(tried+1)+" of "+total,say);
+        if(r.photo){if(r.thumb){wpThumbs[r.photo.id]="data:image/jpeg;base64,"+r.thumb;wtPut(r.photo.id,wpThumbs[r.photo.id])}(wpCache[id]=wpCache[id]||[]).push(r.photo);done++;wpRefresh(id)}
+      }catch(e){toast(vidErr(e))}
+      tried++;
+    }
+  }finally{upAwake(false)}
   wpRefresh(id);
-  if(window.TUp)TUp.done(done,total-done,"photo");else if(done)toast(done+" photo"+(done>1?"s":"")+" added.");
+  if(window.TUp)TUp.done(done,total-done,what);else if(done)toast(done+" added.");
+}
+/* One way to send a video, used by every upload spot (Nov 13 2026): the whole video goes straight to Drive first (Oct 26 2026);
+   whatever didn't make it goes up in 16 MB pieces. start is favVideoStart (wedding day album) or mediaVideoStart (everywhere else). */
+const upWhat=(p,v)=>p&&v?"file":v?"video":"photo";   // "✓ Saved! 3 files uploaded."
+const isVidFile=f=>window.TUp?TUp.isVid(f):(/^video\//.test(f.type)||/\.(mov|mp4|m4v|3gp|webm)$/i.test(f.name));
+const isImgFile=f=>window.TUp?TUp.isImg(f):(/^image\//.test(f.type)||/\.(jpe?g|png|heic|heif|webp)$/i.test(f.name));
+const vidErr=e=>e.code==="unknown_action"?"Videos can't go in this spot yet. The app's Google script needs its update.":(e.message&&e.message!=="error"&&e.message!=="server"?e.message:"A video didn't upload. Try again.");
+async function sendVideo(start,data,f,lead,say){
+  say(lead+"…");
+  const c=await favCover(f)||{};
+  const st=await apiRetry(start,Object.assign({},data,{video:{name:f.name,type:f.type||"video/mp4",size:f.size,thumb:c.thumb||"",w:c.w||0,h:c.h||0}}));
+  let photo=null,info=null,off=0;
+  if(st.url){await driveSend(st.url,f,f.type||"video/mp4",p=>say(lead+"… "+p+"%. Keep this page open."));
+    try{const k=await api("favVideoCheck",{token:st.token});if(k.done){photo=k.photo;info=k.info}else off=k.next||0}catch(e){if(e.code==="expired")throw e}}
+  while(!photo&&off<f.size){
+    say(lead+"… "+Math.round(100*off/f.size)+"%. Keep this page open.");
+    const piece=f.slice(off,Math.min(f.size,off+FAV_PIECE)),b64=await favB64(piece);
+    let j,tries=0;
+    for(;;){try{j=await api("favVideoChunk",{token:st.token,offset:off,data:b64});break}catch(e){if(++tries>=3||e.code==="expired")throw e;await new Promise(r=>setTimeout(r,2000*tries))}}
+    if(j.done){photo=j.photo;info=j.info;break}
+    off=j.next||off+piece.size;
+  }
+  return {photo,info,thumb:c.thumb||""};
 }
 /* Wedding day favorites (Alexandra, Oct 23 2026): the artists add their favorite photos and videos after the wedding.
    Each wedding gets its own album on Marketing Proofs (and a Drive folder) for Alexandra and Dom. Videos go up in 16 MB pieces; photos go up three at a time (Oct 24 2026). */
@@ -3102,22 +3150,9 @@ async function favUpload(id,files){
         photo=(await apiRetry("addFav",{id,photo:{data,thumb,w:Math.round(sz.w*k),h:Math.round(sz.h*k)}})).photo;
         wpThumbs[photo.id]="data:image/jpeg;base64,"+thumb;wtPut(photo.id,wpThumbs[photo.id]);
       }else{
-        say(lead+"…");
-        const c=await favCover(f)||{};
-        const st=await apiRetry("favVideoStart",{id,video:{name:f.name,type:f.type||"video/mp4",size:f.size,thumb:c.thumb||"",w:c.w||0,h:c.h||0}});
-        let off=0;
-        // Faster (Oct 26 2026): the whole video goes straight to Drive first; whatever didn't make it goes up in pieces below.
-        if(st.url){await driveSend(st.url,f,f.type||"video/mp4",p=>say(lead+"… "+p+"%. Keep this page open."));
-          try{const c=await api("favVideoCheck",{token:st.token});if(c.done)photo=c.photo;else off=c.next||0}catch(e){if(e.code==="expired")throw e}}
-        while(!photo&&off<f.size){
-          say(lead+"… "+Math.round(100*off/f.size)+"%. Keep this page open.");
-          const piece=f.slice(off,Math.min(f.size,off+FAV_PIECE)),data=await favB64(piece);
-          let j,tries=0;
-          for(;;){try{j=await api("favVideoChunk",{token:st.token,offset:off,data});break}catch(e){if(++tries>=3||e.code==="expired")throw e;await new Promise(r=>setTimeout(r,2000*tries))}}
-          if(j.done){photo=j.photo;break}
-          off=j.next||off+piece.size;
-        }
-        if(c.thumb&&photo){wpThumbs[photo.id]="data:image/jpeg;base64,"+c.thumb;wtPut(photo.id,wpThumbs[photo.id])}
+        const r=await sendVideo("favVideoStart",{id},f,lead,say);
+        photo=r.photo;
+        if(r.thumb&&photo){wpThumbs[photo.id]="data:image/jpeg;base64,"+r.thumb;wtPut(photo.id,wpThumbs[photo.id])}
       }
       if(photo){(wpCache[id]=wpCache[id]||[]).push(photo);done++;wpRefresh(id)}
     }catch(e){toast(e.message&&e.message!=="error"&&e.message!=="server"?e.message:(vid?"A video didn't upload. Try again.":"A photo didn't upload. Try again."))}
@@ -3130,7 +3165,7 @@ async function favUpload(id,files){
     for(const f of vids)await one(f);   // videos one at a time, each in big pieces
   }finally{upAwake(false)}
   wpRefresh(id);
-  if(window.TUp)TUp.done(done,total-done,"photo or video",done?"Thank you!":"");else if(done)toast(done+(done>1?" favorites":" favorite")+" added. Thank you!");
+  if(window.TUp)TUp.done(done,total-done,upWhat(list.some(f=>!isVid(f)),list.some(isVid)),done?"Thank you!":"");else if(done)toast(done+(done>1?" favorites":" favorite")+" added. Thank you!");
 }
 /* The photos also sit on the team copy of the timeline (Alexandra, Oct 23 2026),
    so they ride along in the Team PDF and Text team. They sit on top of the times. Small pictures on screen, full size in the PDF. */
