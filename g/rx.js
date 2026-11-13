@@ -392,7 +392,7 @@ function rxCutSwap(P){const out=[];P.forEach(t=>{out.push(t);if(t.includes('Fema
    least $15 for home care. All In: the fullest package that keeps Worth The Wait's services and lands at or under
    budget + $60 and no more than $80 over Worth The Wait; when it's less than $60 over Worth The Wait, its home care goes up to
    close the gap (never past budget + $60). pkg(i,home care $,leave-in) builds a tier. */
-const RX_HC_MIN=RX_HC_TRY, RX_OVER_HI=60, RX_GAP_LO=60, RX_GAP_HI=80;
+const RX_DREAM=70, RX_HC_MIN=RX_HC_TRY, RX_OVER_HI=60, RX_GAP_LO=60, RX_GAP_HI=80;
 function rxPair(P,b,pkg,lo,vars,ok,cap){
   const bb=b!=null?b:RX_CAP-RX_OVER_HI, svc=i=>rxTotal(pkg(i,0,false)), wet=i=>P[i].includes('Haircut Leaving Wet');
   let o1=null,i1=-1;
@@ -409,6 +409,10 @@ function rxPair(P,b,pkg,lo,vars,ok,cap){
   for(let i=0;i<P.length;i++) for(const [a,lv] of vars){const L=pkg(i,a,lv),t=rxTotal(L);
     if(t>t1&&t<=lim&&ok(L)&&keeps(L)&&(!best||t>best.t)) best={L,t,i,a,lv}}
   if(!best){const a=Math.max(RX_HC_MIN,o1.filter(l=>l.t==='h').reduce((x,l)=>x+l.p,0));best={L:pkg(i1,a,false),i:i1,a,lv:false};best.t=rxTotal(best.L)}
+  /* All In can be her full goal look (the top package: color, K18 and haircut) with $45 home care, up to $70 over her
+     budget: a $400 guest's All In can be $450–$470 (Alexandra, Nov 12 2026). Its color can be bigger than Worth The
+     Wait's (full balayage over half), and it keeps her haircut. */
+  if(b!=null){const L=pkg(0,lo,false),t=rxTotal(L); if(t>best.t&&t<=b+RX_DREAM&&ok(L)&&(!svc1.some(n=>/Haircut/.test(n))||L.some(l=>l.n==='Female Haircut'))) best={L,t,i:0,a:lo,lv:false}}
   let o2=best.L;
   const want=Math.min(lim,Math.max(t1+RX_GAP_LO,t1+RX_HC_MIN));
   if(best.t<want){const a=best.a+Math.floor((Math.min(lim,Math.ceil(want/5)*5)-best.t)/5)*5; if(a>best.a) o2=pkg(best.i,a,best.lv)}
