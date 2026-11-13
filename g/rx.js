@@ -352,11 +352,18 @@ function rxMergeSkin(names){
    and plumps at the same time (Alexandra, Oct 16 2026). It stands in for both goals. */
 const RX_MC110={p:[['Taffeta Facial with MC 110'],['Brightening Mini Facial']],
   m:[['Taffeta Facial with MC 110'],'4–6 weeks','Your facial with MC 110 brightens and plumps at the same time.']};
+/* No haircut unless she asked for one (Alexandra, Nov 13 2026): without the "New Cut or Shape" goal, the hair goals'
+   packages lose their haircut (she leaves wet, or keeps the blow dry from a blowout goal) and the next visit gets a blow dry. */
+const RX_CUT_N=/^(Female|Male) Haircut$|^Haircut Leaving Wet$/;
+const rxCutAsked=R=>rxGoalList(R).includes('New Cut or Shape');
+function rxGoalFor(R,k){const g=(RX_GOAL[R.kind]||{})[k]; if(!g||R.kind!=='hair'||rxCutAsked(R)) return g;
+  const p=g.p.map(t=>t.filter(n=>!RX_CUT_N.test(n))).filter(t=>t.length);
+  return {p:p.length?p:g.p,m:[g.m[0].map(n=>RX_CUT_N.test(n)?'Blow Dry':n),g.m[1],g.m[2].replace(/ and a trim\./,' and a blow dry.').replace(/ If you get your cut today[^]*$/,'')]}}
 function rxGoalPlan(R){
   let keys=rxGoalList(R);
   const mc=R.kind==='skin'&&keys.includes('Anti-Aging (Fine Lines & Firmness)')&&keys.includes('Brighten or Even Tone');
   if(mc) keys=keys.filter(k=>k!=='Anti-Aging (Fine Lines & Firmness)'&&k!=='Brighten or Even Tone');
-  const gs=[...(mc?[RX_MC110]:[]),...keys.map(k=>(RX_GOAL[R.kind]||{})[k]).filter(Boolean)]; if(!gs.length) return null;
+  const gs=[...(mc?[RX_MC110]:[]),...keys.map(k=>rxGoalFor(R,k)).filter(Boolean)]; if(!gs.length) return null;
   if(gs.length===1) return gs[0];
   const mg=R.kind==='skin'?rxMergeSkin:rxMergeSvc;
   const n=Math.max(...gs.map(g=>g.p.length));
@@ -400,10 +407,12 @@ function rxPair(P,b,pkg,lo,vars,ok,cap){
   /* cut + color: fullest color first, each with her full haircut, then with a haircut leaving wet ($45 home care); then a
      haircut leaving wet with two Try Me bottles ($15); only then the packages with no cut. Everything else: fullest first. */
   const needCut=P.some((_,i)=>wet(i)), cut=i=>P[i].includes('Female Haircut');
-  const steps=needCut?[[i=>cut(i)||wet(i),lo],[wet,RX_HC_TRY],[i=>!cut(i)&&!wet(i),lo]]:[[()=>true,lo]];
+  /* her inspo color comes first (Alexandra, Nov 13 2026): a cut-only package is the last resort, after every color choice */
+  const color=i=>P[i].some(n=>!/Haircut|Leave Wet|Blow ?Dry|Blowdry/i.test(n)), hasColor=P.some((_,i)=>color(i)), c=f=>hasColor?i=>color(i)&&f(i):f;
+  const steps=needCut?[[c(i=>cut(i)||wet(i)),lo],[c(wet),RX_HC_TRY],[c(i=>!cut(i)&&!wet(i)),lo]]:[[()=>true,lo]];
   for(const [f,a] of steps) for(let i=0;i<P.length&&!o1;i++){if(!f(i))continue; const L=pkg(i,a,false); if(rxTotal(L)<=bb){o1=L;i1=i}}
-  if(!o1) for(let i=0;i<P.length&&!o1;i++){const s=svc(i); if(s+RX_HC_MIN<=bb){o1=pkg(i,Math.floor((bb-s)/5)*5,false);i1=i}}
-  if(!o1){i1=P.reduce((m,_,i)=>svc(i)<svc(m)?i:m,0); o1=pkg(i1,RX_HC_MIN,false)}   /* her budget is under every service for these goals: the badge shows it's over */
+  if(!o1) for(let i=0;i<P.length&&!o1;i++){const s=svc(i); if((!hasColor||color(i))&&s+RX_HC_MIN<=bb){o1=pkg(i,Math.floor((bb-s)/5)*5,false);i1=i}}
+  if(!o1){const C=P.map((_,i)=>i).filter(i=>!hasColor||color(i));i1=C.reduce((m,i)=>svc(i)<svc(m)?i:m,C[0]); o1=pkg(i1,RX_HC_MIN,false)}   /* her budget is under every service for these goals: the badge shows it's over */
   /* Option 2 keeps every service in Option 1 (Donelle's card, Oct 20 2026: never trade her haircut for a blow dry).
      A haircut leaving wet stays wet in All In, which gets $80 home care instead: $350 budget -> $345 / $380 (Nov 12 2026) */
   const svc1=o1.filter(l=>l.t==='s').map(l=>l.n), keeps=L=>svc1.every(n=>L.some(l=>l.n===n)), wet1=svc1.includes('Haircut Leaving Wet');
@@ -420,9 +429,13 @@ function rxPair(P,b,pkg,lo,vars,ok,cap){
 }
 function rxGenerateHair(R,g){
   /* two or more goals: after the stacked packages, each goal's own packages, so a smaller step can fit her budget (Nov 12 2026) */
-  const gl=rxGoalList(R).map(k=>RX_GOAL.hair[k]).filter(Boolean), seen=new Set(), PP=[];
+  const gl=rxGoalList(R).map(k=>rxGoalFor(R,k)).filter(Boolean), seen=new Set(), PP=[];
   [...g.p,...(gl.length>1?gl.flatMap(x=>x.p):[])].map(rxMergeSvc).forEach(t=>{const k=t.join('|');if(!seen.has(k)){seen.add(k);PP.push(t)}});
-  const needs=rxNeeds(R), P=rxWetSwap(rxCutSwap(PP)), b=R.nob?null:Number(R.budget)||null;
+  /* a haircut only when she asked for one (Alexandra, Nov 13 2026): with no "New Cut or Shape" goal the card never adds a
+     haircut or a haircut leaving wet; a blowout goal keeps its blow dry, otherwise she leaves wet. A haircut leaving
+     wet only shows when she asked for a cut and the budget is low, or to save so her inspo color can come first. */
+  const wantCut=rxCutAsked(R);
+  const needs=rxNeeds(R), P=wantCut?rxWetSwap(rxCutSwap(PP)):PP, b=R.nob?null:Number(R.budget)||null;
   const now=rxNowAll(R), leave=now.some(x=>/Color fading|Brassiness|Breakage|Dryness/.test(x))||P[0].some(n=>RX_BLOND.test(n));
   const cap=Infinity;  /* Option 2 stays within $80 of Option 1 (rxPair), which replaces the old $100-over-budget cap */
   const pkg=(i,amt,lv)=>[...rxSvcLines('hair',P[i]),...(lv?rxSvcLines('hair',['Goldwell Leave-In Treatment']):[]),...(amt>0?[rxHcLine(amt,rxNeedsFor(needs,P[i]))]:[])];
@@ -431,7 +444,7 @@ function rxGenerateHair(R,g){
   /* blonding on a budget under $350 (Alexandra, Nov 12 2026): both options get a haircut leaving wet and $50 home care.
      Worth The Wait is a minimal or refresh blonding; All In steps up to a half blonding, about $320. */
   let pair=null;
-  if(b!=null&&b<RX_TIGHT){const W=P.map((t,i)=>i).filter(i=>P[i].includes('Haircut Leaving Wet')&&P[i].some(n=>RX_BLOND.test(n))), T=i=>rxTotal(pkg(i,RX_HC_MID,false));
+  if(b!=null&&b<RX_TIGHT){const W=P.map((t,i)=>i).filter(i=>(!wantCut||P[i].includes('Haircut Leaving Wet'))&&P[i].some(n=>RX_BLOND.test(n))), T=i=>rxTotal(pkg(i,RX_HC_MID,false));
     const w1=W.find(i=>T(i)<=b);
     if(w1!=null){const up=W.filter(i=>T(i)>T(w1)&&T(i)<=b+RX_OVER_HI).sort((x,y)=>T(x)-T(y))[0];  /* one step up */
       if(up!=null) pair=[pkg(w1,RX_HC_MID,false),pkg(up,RX_HC_MID,false)]}}
@@ -454,8 +467,9 @@ function rxGenerateHair(R,g){
     ms=o1.filter(l=>l.t==='s'&&l.n!=='K18 Bond Protection'&&l.n!=='Goldwell Leave-In Treatment').map(l=>RX_BAL.test(l.n)?'Refresh Balayage':l.n);
     mw='10–12 weeks'; mt='About the same as today’s visit, every 10 to 12 weeks.'+(ms.includes('Refresh Balayage')?' Your glaze and root melt are included.':'')}
   if(ms.includes('Single Process')&&today.includes('Glaze')&&!ms.includes('Glaze')) ms.push('Glaze');
-  ms=ms.map(n=>n==='Leave Wet (no haircut)'?'Blow Dry':n);
-  if(!ms.some(n=>/Haircut|Blow ?dry|Blowdry/i.test(n))&&ms.some(n=>!/Female Haircut/.test(n))&&g.p[0].includes('Female Haircut')) ms.push('Blow Dry');
+  ms=ms.map(n=>n==='Leave Wet (no haircut)'||(!wantCut&&/^(Female Haircut|Haircut Leaving Wet)$/.test(n))?'Blow Dry':n);
+  if(!wantCut) mt=mt.replace(/ and a trim\./,' and a blow dry.').replace(/ If you get your cut today[^]*$/,'');
+  if(!ms.some(n=>/Haircut|Blow ?dry|Blowdry/i.test(n))&&ms.some(n=>!/Female Haircut/.test(n))&&(!wantCut||g.p[0].includes('Female Haircut'))) ms.push('Blow Dry');
   ms=rxMergeSvc(ms);
   if(ms.includes('Blow Dry')) mt=mt.replace(/ If you get your cut today[^]*$/,' With a blow dry, and your cut every other visit.').replace(/^Roots only\. Add a cut every other visit\.$/,'Your color refresh and a blow dry. Add a cut every other visit.');
   return {opts:[{title:'Option 1',lines:o1},{title:'Option 2',lines:o2}],
