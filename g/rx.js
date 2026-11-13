@@ -215,7 +215,7 @@ const RX_GOAL={
 const RX_Q={
   hair:[
     ['wash','How often does she wash?',['Daily','Every other day','Every 2–3 days','Once a week'],0,'How many times a week do you wash your hair?'],  /* starts learning her routine (Alexandra, Nov 12 2026) */
-    ['feel','How does her hair feel?',['Dry','Oily','Frizzy','Flat','Breakage','Flyaways','Hard to style','Curly or wavy','Normal'],1],
+    ['feel','How does her hair feel?',['Dry','Oily','Frizzy','Flat','Breakage','Flyaways','Hard to style','Curly or wavy','Normal'],1,'How would you describe your hair?'],
     ['style','How does she style it?',['Air dry','Blow-dry with a brush or diffuser','Hot tools daily']],
     ['color','Is it color-treated?',['No','Yes','Yes, with a glaze that fades','Blonde that turns brassy','Grays showing'],1],
     ['prod','What does she use now?',['Professional','Drugstore']],
