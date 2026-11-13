@@ -214,7 +214,7 @@ const RX_GOAL={
 /* Consultation questions (Alexandra's method: learn her weekly routine first). Hair approved as drafted; skin is a first draft. */
 const RX_Q={
   hair:[
-    ['wash','How often does she wash?',['Daily','Every other day','Every 2–3 days','Once a week']],
+    ['wash','How often does she wash?',['Daily','Every other day','Every 2–3 days','Once a week'],0,'How many times a week do you wash your hair?'],  /* starts learning her routine (Alexandra, Nov 12 2026) */
     ['feel','How does her hair feel?',['Dry','Oily','Frizzy','Flat','Breakage','Flyaways','Hard to style','Curly or wavy','Normal'],1],
     ['style','How does she style it?',['Air dry','Blow-dry with a brush or diffuser','Hot tools daily']],
     ['color','Is it color-treated?',['No','Yes','Yes, with a glaze that fades','Blonde that turns brassy','Grays showing'],1],
@@ -714,7 +714,7 @@ function rxBuild(R,me){
      question stays open until she taps it closed, then the next one opens. Same colors as the rest of the app. */
   rxDDStyle(); R.nob=false;
   const sk=R.kind==='skin', IDK='I don’t know';
-  const routine=RX_Q[R.kind].map(([key,q,opts,multi])=>({key,q,opts:[IDK,...opts],multi:!!multi,
+  const routine=RX_Q[R.kind].map(([key,q,opts,multi,ask])=>({key,q,ask,opts:[IDK,...opts],multi:!!multi,
     get:()=>[].concat(R.a[key]||[]).filter(Boolean),
     tap:o=>{if(multi){let a=[].concat(R.a[key]||[]);const i=a.indexOf(o);if(i<0)a=o===IDK?[IDK]:[...a.filter(x=>x!==IDK),o];else a.splice(i,1);R.a[key]=a}else R.a[key]=R.a[key]===o?'':o}}));
   const goalQ={key:'goal',q:'Today’s Goals',opts:Object.keys(RX_GOAL[R.kind]),multi:true,get:()=>rxGoalList(R),
@@ -732,7 +732,7 @@ function rxBuild(R,me){
       h('span',{class:'rxdd-ok'+(sel.length?' on':''),'aria-hidden':'true'},sel.length?'✓':''),
       h('span',{class:'rxdd-q'},h('span',{},x.q),h('small',{class:sel.length?'':'none'},sel.length?sel.map(rxTitle).join(', '):'Not answered yet')),
       h('span',{class:'rxdd-chev','aria-hidden':'true'},'⌄'));
-    const list=h('div',{class:'rxdd-list'},x.opts.map((o,i)=>{const id='rxdd_'+x.key+'_'+i;
+    const list=h('div',{class:'rxdd-list'},x.ask?h('small',{class:'soft'},'Ask: “'+x.ask+'”'):null,x.opts.map((o,i)=>{const id='rxdd_'+x.key+'_'+i;
       const inp=h('input',{type:x.multi?'checkbox':'radio',name:'rxdd_'+x.key,id});inp.checked=sel.includes(o);
       inp.addEventListener('change',()=>{x.tap(o);if(!x.multi&&x.get().length)RX_DD.open=nextOpen(x.key);rxSave();render()});
       return h('label',{for:id},inp,h('span',{},rxTitle(o)))}),
