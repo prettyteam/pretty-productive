@@ -28,6 +28,7 @@ html,body{background:#f8f6f0}
 <form id="f" novalidate>
 <div style="display:flex;flex-direction:column;gap:26px">
 <div class="field"><label for="name">Your name *</label><input class="input" id="name" name="name" autocomplete="given-name" placeholder="So we know who to bring it to" style="height:44px" required></div>
+<div class="field" id="artistWrap" hidden><label for="artist">Who is taking care of you today? <span style="color:var(--soft)">(optional)</span></label><select class="input" id="artist" name="artist" style="height:44px;width:100%;font:inherit;color:inherit;-webkit-appearance:none;appearance:none;padding:0 40px 0 14px;background:#fff url(&quot;data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2714%27 height=%278%27%3E%3Cpath d=%27M1 1l6 6 6-6%27 fill=%27none%27 stroke=%27%23121212%27 stroke-width=%271.4%27/%3E%3C/svg%3E&quot;) no-repeat right 16px center"><option value="">I’m not sure</option></select></div>
 
 <section class="group">
   <h2>Something to sip</h2>
@@ -75,11 +76,16 @@ html,body{background:#f8f6f0}
 </div>
 </main>
 <script>
+/* Who is taking care of you today? (Alexandra, Nov 13 2026): the artist she picks gets a ping on her phone. List = active artists on the Team tab. */
+(async()=>{try{if(!window.TAFFETA_ENDPOINT)return;
+  const r=await fetch(window.TAFFETA_ENDPOINT+'?artists=1'),j=await r.json(),L=(j&&j.artists)||[];if(!L.length)return;
+  const sel=document.getElementById('artist');L.forEach(x=>{const o=document.createElement('option');o.value=x.a;o.textContent=x.n;sel.append(o)});
+  document.getElementById('artistWrap').hidden=false}catch(e){}})();
 const $=s=>document.querySelector(s), vals=n=>[...document.querySelectorAll(`[name="${n}"]:checked`)].map(i=>i.value);
 $('#f').addEventListener('submit',async e=>{
   e.preventDefault(); const err=$('#err'); err.textContent='';
   const name=$('#name').value.trim();
-  const d={type:'concierge',name,sips:vals('sips'),comforts:vals('comforts'),before:vals('before'),note:$('#note').value.trim(),website:document.querySelector('[name=website]').value};
+  const d={type:'concierge',name,sips:vals('sips'),comforts:vals('comforts'),before:vals('before'),note:$('#note').value.trim(),artist:$('#artist').value,website:document.querySelector('[name=website]').value};
   if(!name){err.textContent='Please add your name so we know who to bring it to.';$('#name').focus();return}
   if(!d.sips.length&&!d.comforts.length&&!d.before.length&&!d.note){err.textContent='Tap at least one thing you’d love.';return}
   if(!window.TAFFETA_ENDPOINT){err.textContent='Almost ready! Please let the front desk know what you’d like for now.';return}

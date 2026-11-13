@@ -10,6 +10,8 @@
 <meta property="og:title" content="Employee Experience App">
 <meta property="og:site_name" content="Taffeta Salon &amp; Spa">
 <meta name="apple-mobile-web-app-title" content="Employee Experience App">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <style>@font-face{font-family:TaffetaJ;src:url(g/lora-latin-400-normal.woff2) format("woff2");font-weight:400;font-style:normal}@font-face{font-family:TaffetaJ;src:url(g/lora-latin-500-normal.woff2) format("woff2");font-weight:500;font-style:normal}@font-face{font-family:TaffetaJ;src:url(g/lora-latin-600-normal.woff2) format("woff2");font-weight:600;font-style:normal}@font-face{font-family:TaffetaJ;src:url(g/lora-latin-400-italic.woff2) format("woff2");font-weight:400;font-style:italic}@font-face{font-family:TaffetaJ;src:url(g/lora-latin-500-italic.woff2) format("woff2");font-weight:500;font-style:italic}</style>
@@ -990,9 +992,78 @@ function clockCard(){
     c.fix&&!HUB.fx?h('button',{class:'forgot',onclick:()=>fixOpen({miss:c.in?'in':'out'})},'Forgot to clock in or out?'):null,
     HUB.toast&&!HUB.fx?h('p',{class:'toast'},HUB.toast):null);
 }
+/* Guest request alerts (Alexandra, Nov 13 2026): a ping on her phone when a guest sends the Concierge form.
+   The people in CONCIERGE_ALL (TeamPush.gs) get every request; everyone else gets her own guests (the guest picks her artist).
+   Phones need one tap on Allow, so the card stays at the top of Home until alerts are on. iPhones need the app on the Home Screen first.
+   Same free Firebase project as the Front Desk alerts; the web config and push key are public by design. */
+const TP={busy:false,msg:'',
+  cfg:{apiKey:"AIzaSyAD82Uh-1_ttyRbYHyBOM6T2DDJFzqh08Y",authDomain:"taffeta-weddings-alerts.firebaseapp.com",projectId:"taffeta-weddings-alerts",
+    storageBucket:"taffeta-weddings-alerts.firebasestorage.app",messagingSenderId:"806353558918",appId:"1:806353558918:web:1db6d9a96736e698932007"},
+  vapid:"BPpDOUEeFFPDZBmnNYM4Kr9CLdq3LHuOmCmXYBev5jxigZwTvkG2FvnO2oMoJ_OsQcEkw3TC2GVmgnJVMrFCeB8"};
+const tpIOS=()=>/iPhone|iPad|iPod/.test(navigator.userAgent)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);
+const tpApp=()=>(window.matchMedia&&matchMedia("(display-mode: standalone)").matches)||navigator.standalone===true;
+const tpCan=()=>"serviceWorker" in navigator&&"PushManager" in window&&"Notification" in window;
+const tpOn=()=>tpCan()&&Notification.permission==="granted"&&!!store.get('tp-on:'+ID);
+const tpReady=()=>!!(HUB.data&&HUB.data.tpush&&S.mine&&S.mine.staff);
+async function tpToken(){
+  const reg=await navigator.serviceWorker.register("team-sw.js",{scope:"./"});await navigator.serviceWorker.ready;
+  try{const c=await caches.open('tp-app');await c.put('me',new Response(location.href))}catch(e){}
+  const FB="https://www.gstatic.com/firebasejs/10.12.2/";
+  const app=await import(FB+"firebase-app.js"),msg=await import(FB+"firebase-messaging.js");
+  const fb=app.getApps().length?app.getApp():app.initializeApp(TP.cfg);
+  return msg.getToken(msg.getMessaging(fb),{vapidKey:TP.vapid,serviceWorkerRegistration:reg});
+}
+async function tpSave(off){
+  const st=S.mine.staff, tok=await tpToken(); if(!tok) throw new Error('token');
+  const r=await fetch(API(),{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body:JSON.stringify({type:'tpush',slug:st.slug,t:st.t,token:tok,device:(tpIOS()?'iPhone/iPad':'Phone/computer')+(tpApp()?' app':''),off:!!off})});
+  const j=await r.json(); if(!j.ok) throw new Error(j.error||'x');
+  store.set('tp-on:'+ID,off?'':'1');
+}
+async function tpTurnOn(){
+  TP.busy=true;TP.msg='Turning on…';render();
+  try{const p=await Notification.requestPermission();
+    if(p!=='granted'){TP.msg=p==='denied'?'denied':'Tap Allow when your phone asks.'}
+    else{await tpSave();TP.msg='Alerts are on. You’re all set!'}}
+  catch(e){TP.msg='That didn’t work. Check your signal and try again.'}
+  TP.busy=false;render();setTimeout(()=>{if(TP.msg&&TP.msg!=='denied'){TP.msg='';render()}},5000);
+}
+async function tpTurnOff(){TP.busy=true;render();try{await tpSave(true);TP.msg='Alerts are off on this phone.'}catch(e){TP.msg='That didn’t work. Try again.'}TP.busy=false;render()}
+let tpRefreshed=false;
+function tpRefresh(){if(tpRefreshed||!tpReady()||!tpOn())return;tpRefreshed=true;tpSave().catch(()=>{})}   // keeps her phone's token fresh
+function tpWho(){return HUB.data.tpush==='all'?'You’ll get a ping for every guest request.':'You’ll get a ping when your guest asks for something.'}
+function tpSteps(){
+  if(tpIOS()&&!tpApp()) return [h('p',{style:'margin:6px 0'},'First, put this app on your Home Screen:'),
+    h('ol',{style:'margin:4px 0 6px;padding-left:22px;line-height:1.6'},
+      h('li',{},'Tap the Share button at the bottom of Safari (the square with the arrow up).'),
+      h('li',{},'Scroll down. Tap ',h('b',{},'Add to Home Screen'),', then ',h('b',{},'Add'),'.'),
+      h('li',{},'Open the app from your Home Screen. Type your PIN.'),
+      h('li',{},'Tap ',h('b',{},'Turn on alerts'),', then tap ',h('b',{},'Allow'),'.'))];
+  if(!tpCan()) return [h('p',{class:'soft',style:'margin:6px 0'},'This browser can’t show alerts. On an iPhone, open your link in Safari and add it to your Home Screen.')];
+  if(Notification.permission==='denied'||TP.msg==='denied') return [h('p',{style:'margin:6px 0'},'Alerts are blocked on this phone. Open ',h('b',{},'Settings'),', tap ',h('b',{},'Notifications'),', tap ',h('b',{},'Employee Experience App'),', and turn on ',h('b',{},'Allow Notifications'),'. Then tap the button below.'),
+    h('button',{class:'obtn',disabled:TP.busy?'':null,onclick:tpTurnOn},'Turn on alerts')];
+  return [h('button',{class:'obtn',disabled:TP.busy?'':null,onclick:tpTurnOn},TP.busy?'One moment…':'Turn on alerts'),
+    TP.msg&&TP.msg!=='denied'?h('p',{class:'toast'},TP.msg):null];
+}
+/* Top of Home until alerts are on */
+function tpHomeCard(){
+  if(!tpReady()) return null; tpRefresh();
+  if(tpOn()) return TP.msg?h('p',{class:'toast'},TP.msg):null;
+  return h('div',{class:'gcard',style:'border:2px solid var(--brown)'},h('h2',{},gIcon('🔔'),'Turn On Guest Alerts'),
+    h('p',{style:'margin:4px 0'},tpWho()),...tpSteps());
+}
+/* My Profile: on/off */
+function tpProfileCard(){
+  if(!tpReady()) return null;
+  return h('div',{class:'gcard'},h('h2',{},gIcon('🔔'),'Guest Request Alerts'),h('p',{style:'margin:4px 0'},tpWho()),
+    ...(tpOn()?[h('p',{style:'margin:6px 0'},h('b',{},'On for this phone ✓')),
+      h('button',{class:'obtn',style:'background:none;color:inherit;border:1px solid var(--line)',disabled:TP.busy?'':null,onclick:tpTurnOff},TP.busy?'One moment…':'Turn off on this phone'),
+      TP.msg?h('p',{class:'toast'},TP.msg):null]:tpSteps()));
+}
 function homeView(){
   const st=S.mine.staff||{}, d=HUB.data;
   const out=[hello()];
+  {const tc=tpHomeCard(); if(tc) out.push(tc);}
   const jk=S.daily&&S.daily.joke, today=new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
   out.push(h('div',{class:'hgig'},h('span',{class:'lbl'},today),jk?h('p',{},jk):null));
   if(isHub()&&HUB_OPEN!=='salon'){out.push(HUB_OPEN==='social'?hubSocial():hubMenu());return out}
@@ -1121,6 +1192,25 @@ function ipadPinsCard(list){
     list.map((s,i)=>h('div',{style:'display:flex;gap:10px;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--line)'},
       h('div',{style:'font-family:var(--display);font-size:16px'},s.name,h('div',{class:'soft',id:'ipm'+i,style:'font-family:var(--body);font-size:12.5px'},IPMSG[s.name]||'')),ins[i])),b);
 }
+/* Guest Alerts (Alexandra, Nov 13 2026): who has Concierge request alerts on in her app. Every request = the names in
+   CONCIERGE_ALL (TeamPush.gs); everyone else gets only her own guests. */
+let TPA={data:null,err:null,loading:false,at:0};
+async function tpaLoad(){
+  if(TPA.loading||!S.hubKey||!API())return; TPA.loading=true;
+  try{const r=await fetch(API()+'?admin='+encodeURIComponent(S.hubKey)+'&alerts=1&_='+Date.now());const j=await r.json();if(!j.ok)throw 0;TPA.data=j.alerts||[];TPA.err=null}
+  catch(e){TPA.err='offline'}
+  TPA.loading=false;TPA.at=Date.now();render();
+}
+function alertsCard(){
+  if(!TPA.loading&&Date.now()-TPA.at>60e3)setTimeout(tpaLoad,0);
+  const L=TPA.data;
+  return h('div',{class:'gcard'},h('span',{class:'lbl'},'Guest Request Alerts'),
+    h('p',{class:'soft',style:'font-size:13px;margin:4px 0 8px'},'Who gets a ping on her phone when a guest sends a request. Each person turns it on once in her app.'),
+    !L?h('p',{class:'soft'},TPA.err?'Can’t load the list right now.':'Loading…'):
+    L.length?L.map(x=>h('div',{style:'display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)'},
+      h('div',{},h('div',{style:'font-family:var(--display);font-size:16px'},x.n),h('div',{class:'soft',style:'font-size:12.5px'},x.all?'Gets every request':'Gets her own guests')),
+      h('b',{style:'flex:none;font-size:13px;color:'+(x.on?'var(--brown)':'#9a3b2e')},x.on?'On ✓':'Not on yet'))):h('p',{class:'soft'},'No one yet.'));
+}
 function accessView(){
   const A=S.access;
   if(!A) return [h('div',{class:'empty'},h('h3',{},'Nothing here yet'),h('p',{},'Links and logins appear after the next publish.'))];
@@ -1132,6 +1222,7 @@ function accessView(){
       h('div',{style:'min-width:0'},h('div',{style:'font-family:var(--display);font-size:16px'},label),h('div',{class:'soft',style:'font-size:12.5px;word-break:break-all'},sub||val)),h('div',{style:'display:flex;gap:6px;flex:none'},o,b))};
   return [h('section',{class:'section'},h('div',{class:'hub'},h('h2',{},'Access'),
     h('p',{class:'soft',style:'font-size:13px'},'Only you and Rick see this page. Please don’t share or screenshot it.'),
+    alertsCard(),
     h('div',{class:'gcard'},h('span',{class:'lbl'},'Apps & forms'),
       A.desk?row('Front Desk app',A.desk,'Private desk link (includes the desk guide key)',true):null,
       A.form?row('Guest profile form',A.form):null),
@@ -1556,6 +1647,7 @@ function meView(){
     ...(HUB.data?[...ins.map(([k,l,i])=>h('label',{class:'fld'},l,i)),
      h('button',{class:'obtn',disabled:HUB.busy?'':null,onclick:()=>{const o={type:'profile'};ins.forEach(([k,l,i])=>o[k]=i.value);hubPost(o,'Saved. Thank you!')}},HUB.busy?'One moment…':'Save'),
      HUB.toast?h('p',{class:'toast'},HUB.toast):null]:[])));
+  {const tc=tpProfileCard(); if(tc) out.push(tc);}
   if(HUB.data&&HUB.data.rx) out.push(rxPinCard());
   return [h('div',{class:'hub'},out)];
 }

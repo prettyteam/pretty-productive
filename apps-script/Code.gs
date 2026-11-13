@@ -65,6 +65,7 @@ function doGet(e) {
   if (p.staff) return staffGet_(p);
   if (p.admin) return adminGet_(p);
   if (p.decide) return decide_(p);
+  if (p.artists) return json_(conciergeArtists_());   // guest's artist pick list on the Concierge form (TeamPush.gs)
   if (p.key !== DESK_KEY) return json_({ ok: false, error: 'key' });
   if (p.rxall) return json_({ ok: true, rxall: rxDeskList_(0) });          // every saved RX card, for the desk's filing
   if (p.rgall) return json_({ ok: true, rgall: rows_(TABS.regimen, 3650).reverse().slice(0, 1500) });   // every saved home care card, searchable (Oct 20 2026)
@@ -93,6 +94,7 @@ function doPost(e) {
     const now = new Date();
     if (d.type === 'status') return setStatus_(d);
     if (d.type === 'push') return deskSavePush_(d);
+    if (d.type === 'tpush') return teamPushSave_(d);   // staff phone alerts (TeamPush.gs)
     if (d.type === 'todoAddr') return todoAddr_(d);
     if (d.type === 'concierge') {
       const name = clean_(d.name, 80);
@@ -101,6 +103,7 @@ function doPost(e) {
       const body = name + ' would love: ' + items + (d.note ? '\nNote: ' + clean_(d.note, 500) : '');
       alert_('Concierge: ' + name, body, 'bellhop_bell');
       deskPush_('New request', deskFirst_(name) + ' · ' + items.slice(0, 100));
+      teamPushConcierge_(d, name, items);   // staff phones: everyone in CONCIERGE_ALL + the guest's artist
     } else if (d.type === 'consult') {
       const who = clean_(d.first, 60) + ' ' + clean_(d.last, 60);
       const p1 = savePhoto_(d.photoNow, who + ' – today');
@@ -402,6 +405,7 @@ function staffGet_(p) {
     mphoto: true,       // tells the team app this version takes model photos (type 'mphoto')
     mvideo: true,       // ...and videos for them (mvideoStart / mvideoChunk)
     mvmore: true,       // ...and several videos at once under More (moreToks, Oct 26 2026)
+    tpush: teamPushAll_(me.slug, me.name) ? 'all' : 'mine',   // guest request alerts on her phone (TeamPush.gs)
     regimen: true,      // tells the team app this version takes Home care PDFs (type 'regimen')
     rx: { pin: !!rxMe_(me.slug).pin } });   // tells the team app this version syncs stars and RX cards, and whether her iPad PIN is set
 }
@@ -832,6 +836,7 @@ function teamPost_(d) {
 function adminGet_(p) {
   if (p.admin !== ADMIN_KEY) return json_({ ok: false, error: 'key' });
   if (p.mphotos) return json_(mphotoAlbum_());
+  if (p.alerts) return json_({ ok: true, alerts: teamPushStatus_() });   // who has guest alerts on (TeamPush.gs)
   if (p.mpfull) return json_(mphotoFull_(p.mpfull));
   const now = new Date();
   const wk = /^\d{4}-\d{2}-\d{2}$/.test(p.week || '') ? p.week : weekStart_(now);

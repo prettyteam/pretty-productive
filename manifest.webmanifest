@@ -1,0 +1,12 @@
+{
+  "name": "Employee Experience App",
+  "short_name": "Experience",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f2f1ec",
+  "theme_color": "#f2f1ec",
+  "icons": [
+    { "src": "briefing/icons/employee-experience-180.png", "sizes": "180x180", "type": "image/png" },
+    { "src": "briefing/icons/employee-experience.png", "sizes": "1024x1024", "type": "image/png" }
+  ]
+}
