@@ -719,7 +719,7 @@ function rxBuild(R,me){
     tap:o=>{if(multi){let a=[].concat(R.a[key]||[]);const i=a.indexOf(o);if(i<0)a=o===IDK?[IDK]:[...a.filter(x=>x!==IDK),o];else a.splice(i,1);R.a[key]=a}else R.a[key]=R.a[key]===o?'':o}}));
   const goalQ={key:'goal',q:'Today’s Goals',opts:Object.keys(RX_GOAL[R.kind]),multi:true,get:()=>rxGoalList(R),
     tap:o=>{const L=rxGoalList(R);R.goal=L.includes(o)?L.filter(x=>x!==o):[...L,o]}};
-  const nowQ={key:'now',q:sk?'What is her skin going through right now, this season?':'Scalp Condition',
+  const nowQ={key:'now',q:sk?'What is her skin going through right now, this season?':'Scalp Condition',ask:sk?'':'How does your scalp feel between washes?',
     opts:RX_NOW[R.kind],multi:true,get:()=>R.now,tap:o=>{const i=R.now.indexOf(o);i<0?R.now.push(o):R.now.splice(i,1)}};
   /* skin, right after what her skin is going through: known allergies, yes or no (Alexandra, Oct 20 2026) */
   const allergyQ={key:'allergy',q:'Does she have any known allergies to skincare products we should be aware of?',opts:['Yes','No'],multi:false,
