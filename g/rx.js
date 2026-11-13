@@ -310,7 +310,9 @@ function rxNeeds(R){
 const RX_BLOND=/foil|balayage|highlight|lightener/i;
 const rxSvcLines=(k,names)=>{names=k==='hair'?rxMergeSvc(names):rxMergeSkin(names); if(names.some(n=>RX_BAL.test(n))) names=names.filter(n=>n!=='Glaze');
   const L=names.map(n=>{const p=rxPrice(k,n),reg=rxRegPrice(k,n);return reg!==p?{n,p,t:'s',reg}:{n,p,t:'s'}});
-  if(k==='hair'&&names.some(n=>RX_BLOND.test(n))&&!names.includes('K18 Bond Protection')) L.push({n:'K18 Bond Protection',p:rxPrice('hair','K18 Bond Protection'),t:'s'});
+  if(k==='hair'&&names.some(n=>RX_BLOND.test(n))&&!names.includes('K18 Bond Protection')) L.unshift({n:'K18 Bond Protection',p:rxPrice('hair','K18 Bond Protection'),t:'s'});
+  /* K18 goes on first, before the color and the haircut, so it's listed first (Alexandra, Nov 12 2026) */
+  const k18=L.findIndex(l=>l.n==='K18 Bond Protection'); if(k18>0) L.unshift(...L.splice(k18,1));
   return L};
 /* 1.7 oz P50 lotions are offered only when they're on the shelf (Alexandra, Oct 15 2026); otherwise the full size.
    Out of stock as of the last Paired Plus count; update this list when the 1.7 oz comes in or sells out. */
