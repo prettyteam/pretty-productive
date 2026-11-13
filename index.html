@@ -1004,7 +1004,9 @@ const tpIOS=()=>/iPhone|iPad|iPod/.test(navigator.userAgent)||(navigator.platfor
 const tpApp=()=>(window.matchMedia&&matchMedia("(display-mode: standalone)").matches)||navigator.standalone===true;
 const tpCan=()=>"serviceWorker" in navigator&&"PushManager" in window&&"Notification" in window;
 const tpOn=()=>tpCan()&&Notification.permission==="granted"&&!!store.get('tp-on:'+ID);
-const tpReady=()=>!!(HUB.data&&HUB.data.tpush&&S.mine&&S.mine.staff);
+const tpReady=()=>!!(HUB.data&&S.mine&&S.mine.staff&&S.mine.staff.slug);
+const TP_ALL=['amanda','ashley-b','adriana','sara','alexandra','carolyn','isabella','kat','rose'];   // same list as CONCIERGE_ALL (TeamPush.gs)
+const tpAll=()=>HUB.data&&HUB.data.tpush?HUB.data.tpush==='all':TP_ALL.includes(S.mine.staff.slug)||TP_ALL.includes(firstName(S.mine.name).toLowerCase());
 async function tpToken(){
   const reg=await navigator.serviceWorker.register("team-sw.js",{scope:"./"});await navigator.serviceWorker.ready;
   try{const c=await caches.open('tp-app');await c.put('me',new Response(location.href))}catch(e){}
@@ -1031,7 +1033,7 @@ async function tpTurnOn(){
 async function tpTurnOff(){TP.busy=true;render();try{await tpSave(true);TP.msg='Alerts are off on this phone.'}catch(e){TP.msg='That didn’t work. Try again.'}TP.busy=false;render()}
 let tpRefreshed=false;
 function tpRefresh(){if(tpRefreshed||!tpReady()||!tpOn())return;tpRefreshed=true;tpSave().catch(()=>{})}   // keeps her phone's token fresh
-function tpWho(){return HUB.data.tpush==='all'?'You’ll get a ping for every guest request.':'You’ll get a ping when your guest asks for something.'}
+function tpWho(){return tpAll()?'You’ll get a ping for every guest request.':'You’ll get a ping when your guest asks for something.'}
 function tpSteps(){
   if(tpIOS()&&!tpApp()) return [h('p',{style:'margin:6px 0'},'First, put this app on your Home Screen:'),
     h('ol',{style:'margin:4px 0 6px;padding-left:22px;line-height:1.6'},
@@ -1044,6 +1046,17 @@ function tpSteps(){
     h('button',{class:'obtn',disabled:TP.busy?'':null,onclick:tpTurnOn},'Turn on alerts')];
   return [h('button',{class:'obtn',disabled:TP.busy?'':null,onclick:tpTurnOn},TP.busy?'One moment…':'Turn on alerts'),
     TP.msg&&TP.msg!=='denied'?h('p',{class:'toast'},TP.msg):null];
+}
+/* Guest Requests on Home (Alexandra, Nov 13 2026): today's concierge requests (every one for TP_ALL, her own guests for everyone else). */
+function tpReqCard(){
+  if(!tpReady()) return null;
+  const L=HUB.data.greqs; if(!Array.isArray(L)) return null;
+  const tm=t=>new Date(t).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'}).toLowerCase();
+  return h('div',{class:'gcard'},h('h2',{},gIcon('🛎'),'Guest Requests Today'),
+    L.length?L.slice(0,12).map(x=>h('div',{style:'padding:8px 0;border-top:1px solid var(--line)'},
+      h('div',{style:'display:flex;justify-content:space-between;gap:10px'},h('b',{},x.name+(x.artist?' · '+x.artist+'’s guest':'')),h('span',{class:'soft',style:'font-size:13px;flex:none'},tm(x.at)+' · '+x.status)),
+      h('div',{},x.items||'(see note)'),x.note?h('div',{class:'soft',style:'font-size:13px'},'Note: '+x.note):null)):
+    h('p',{class:'soft',style:'margin:0'},tpAll()?'No guest requests yet today.':'No requests from your guests yet today.'));
 }
 /* Top of Home until alerts are on */
 function tpHomeCard(){
@@ -1060,16 +1073,16 @@ function tpProfileCard(){
       h('button',{class:'obtn',style:'background:none;color:inherit;border:1px solid var(--line)',disabled:TP.busy?'':null,onclick:tpTurnOff},TP.busy?'One moment…':'Turn off on this phone'),
       TP.msg?h('p',{class:'toast'},TP.msg):null]:tpSteps()));
 }
-const CLOCK_TOP=['carolyn'];
 function homeView(){
   const st=S.mine.staff||{}, d=HUB.data;
   const out=[hello()];
   {const tc=tpHomeCard(); if(tc) out.push(tc);}
+  {const rc=tpReqCard(); if(rc) out.push(rc);}
   const jk=S.daily&&S.daily.joke, today=new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
   out.push(h('div',{class:'hgig'},h('span',{class:'lbl'},today),jk?h('p',{},jk):null));
   if(isHub()&&HUB_OPEN!=='salon'){out.push(HUB_OPEN==='social'?hubSocial():hubMenu());return out}
-  /* Clock in above the Menu for these people (Alexandra, Nov 13 2026: Carolyn) */
-  const clockTop=st.clock&&CLOCK_TOP.includes(st.slug);
+  /* Clock in above the Menu for everyone who clocks in (Alexandra, Nov 13 2026) */
+  const clockTop=!!st.clock;
   if(clockTop){out.push(clockCard()); if(HUB.fx) out.push(fixCard());}
   const hm=homeMenu(); if(hm) out.push(hm);
   if(st.clock&&!clockTop) out.push(clockCard());

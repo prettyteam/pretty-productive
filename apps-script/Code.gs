@@ -406,6 +406,7 @@ function staffGet_(p) {
     mvideo: true,       // ...and videos for them (mvideoStart / mvideoChunk)
     mvmore: true,       // ...and several videos at once under More (moreToks, Oct 26 2026)
     tpush: teamPushAll_(me.slug, me.name) ? 'all' : 'mine',   // guest request alerts on her phone (TeamPush.gs)
+    greqs: teamPushReqs_(me),   // today's guest requests for her Home (TeamPush.gs)
     regimen: true,      // tells the team app this version takes Home care PDFs (type 'regimen')
     rx: { pin: !!rxMe_(me.slug).pin } });   // tells the team app this version syncs stars and RX cards, and whether her iPad PIN is set
 }

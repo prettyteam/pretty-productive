@@ -120,3 +120,17 @@ function teamPushStatus_() {
       .sort((x, y) => (y.all - x.all) || x.n.localeCompare(y.n));
   } catch (e) { console.warn(e); return []; }
 }
+
+/** Team app Home: today's guest requests (every request for CONCIERGE_ALL, her own guests for everyone else). Never throws. */
+function teamPushReqs_(me) {
+  try {
+    const sh = tab_(TABS.concierge), n = sh.getLastRow(), col = TABS.concierge.headers.length + 1;
+    if (n < 2) return [];
+    const k = Math.min(n - 1, 150), vals = sh.getRange(n - k + 1, 1, k, col).getValues();
+    const all = teamPushAll_(me.slug, me.name), mine = (conciergeArtistList_().find(x => x.a === me.slug) || {}).n;
+    const today = day_(new Date());
+    return vals.filter(r => r[0] instanceof Date && day_(r[0]) === today && (all || (mine && String(r[col - 1]) === mine)))
+      .map(r => ({ at: r[0].getTime(), name: deskFirst_(r[1]), items: [r[2], r[3], r[4]].filter(String).join(', '), note: String(r[5] || ''),
+        status: String(r[6] || 'New'), artist: String(r[col - 1] || '') })).reverse();
+  } catch (e) { console.warn(e); return []; }
+}
