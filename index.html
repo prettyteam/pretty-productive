@@ -1060,6 +1060,7 @@ function tpProfileCard(){
       h('button',{class:'obtn',style:'background:none;color:inherit;border:1px solid var(--line)',disabled:TP.busy?'':null,onclick:tpTurnOff},TP.busy?'One moment…':'Turn off on this phone'),
       TP.msg?h('p',{class:'toast'},TP.msg):null]:tpSteps()));
 }
+const CLOCK_TOP=['carolyn'];
 function homeView(){
   const st=S.mine.staff||{}, d=HUB.data;
   const out=[hello()];
@@ -1067,9 +1068,12 @@ function homeView(){
   const jk=S.daily&&S.daily.joke, today=new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
   out.push(h('div',{class:'hgig'},h('span',{class:'lbl'},today),jk?h('p',{},jk):null));
   if(isHub()&&HUB_OPEN!=='salon'){out.push(HUB_OPEN==='social'?hubSocial():hubMenu());return out}
+  /* Clock in above the Menu for these people (Alexandra, Nov 13 2026: Carolyn) */
+  const clockTop=st.clock&&CLOCK_TOP.includes(st.slug);
+  if(clockTop){out.push(clockCard()); if(HUB.fx) out.push(fixCard());}
   const hm=homeMenu(); if(hm) out.push(hm);
-  if(st.clock) out.push(clockCard());
-  if(st.clock&&HUB.fx) out.push(fixCard());
+  if(st.clock&&!clockTop) out.push(clockCard());
+  if(st.clock&&!clockTop&&HUB.fx) out.push(fixCard());
   const shifts=(d&&d.shifts)||[];
   if(st.clock||shifts.length) out.push(h('div',{class:'sec2'},h('span',{class:'lbl'},'Next shifts'),
     shifts.length?shifts.map(s=>h('div',{class:'lrow'},h('b',{},niceDay(s.date)),h('span',{},s.start+' – '+s.end))):h('p',{class:'soft',style:'padding-top:8px'},'Your shifts will show here soon.')));
