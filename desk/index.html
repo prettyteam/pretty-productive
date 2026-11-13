@@ -333,10 +333,11 @@ function rxCard(r,full){
   <p class="status rxst" style="margin:0"></p></div>`}
 function rxView(){
   const L=data.rx||[], wait=L.filter(r=>rxSt(r)==='New'), done=L.filter(r=>rxSt(r)!=='New'&&Date.now()-(Number(r.deskAt)||Number(r.at))<2*864e5);
-  let h=`<p class="sub" style="margin:0">Waiting to be texted</p>`+(wait.length?wait.map(r=>rxCard(r)).join(''):'<p class="empty">No RX cards waiting. Cards the guest opens with the QR don’t need texting.</p>');
-  if(done.length)h+=`<details class="more"><summary>Opened or texted (${done.length}) +</summary><div class="list">${done.map(r=>rxCard(r)).join('')}</div></details>`;
+  /* RX cards are the artist's guide now (Alexandra, Nov 12 2026): they're saved here to look up, nothing to text.
+     The guest gets her Home Care card (Home Care list) at the end. */
+  let h=`<p class="sub" style="margin:0">Look up a guest’s RX card if you need it. Nothing here needs texting; she gets her Home Care card from the Home Care list.</p>`;
   const q=rxQ.trim().toLowerCase(), hits=rxAll?rxAll.filter(r=>!q||String(r.guest).toLowerCase().includes(q)||String(r.artist).toLowerCase().includes(q)):[];
-  h+=`<p class="sub" style="margin:18px 0 0">All saved RX cards</p><input type="search" class="rxq" placeholder="Search by guest or artist" value="${esc(rxQ)}" style="padding:12px;font:inherit;border:1px solid var(--line,#ddd);border-radius:10px;width:100%;box-sizing:border-box">`;
+  h+=`<p class="sub" style="margin:14px 0 0">All saved RX cards</p><input type="search" class="rxq" placeholder="Search by guest or artist" value="${esc(rxQ)}" style="padding:12px;font:inherit;border:1px solid var(--line,#ddd);border-radius:10px;width:100%;box-sizing:border-box">`;
   if(!rxAll){h+=`<p class="empty">${rxBusy?'Loading…':'Couldn’t load the saved cards. Check the Wi-Fi.'}</p>`;if(!rxBusy)rxLoadAll()}
   else h+=hits.length?hits.slice(0,60).map(r=>rxCard(r,1)).join('')+(hits.length>60?`<p class="empty">${hits.length-60} more. Search by name to find one.</p>`:''):`<p class="empty">${q?'No saved card for “'+esc(rxQ)+'”.':'No saved cards yet.'}</p>`;
   return h}
@@ -371,7 +372,7 @@ function guests(){
   const kOpen=data.consult.filter(r=>st(r)!=='Booked'), kDone=data.consult.filter(r=>st(r)==='Booked');
   const pOpen=data.profiles.filter(r=>st(r)!=='Updated'), pDone=data.profiles.filter(r=>st(r)==='Updated'&&(pending[r.row+':'+r.at]||Date.now()-(Number(r.updatedAt)||Number(r.at))<2*864e5));   /* updated profiles drop off after 2 days */
   const rg=data.regimen||[], hOpen=rg.filter(r=>st(r)!=='Sent'&&st(r)!=='Draft'), hDraft=rg.filter(r=>st(r)==='Draft'), hDone=rg.filter(r=>st(r)==='Sent'&&(pending[r.row+':'+r.at]||Date.now()-(Number(r.sentAt)||Number(r.at))<2*864e5));
-  const rxw=(data.rx||[]).filter(r=>rxSt(r)==='New'), nR=rxw.length;
+  const nR=0;  /* nothing waits to be texted (Nov 12 2026) */
   const nC=cOpen.length, nK=kOpen.filter(r=>st(r)==='New').length, nP=pOpen.filter(r=>st(r)==='New').length, nH=hOpen.length;
   $('#nC').textContent=nC||'';$('#nK').textContent=nK||'';$('#nP').textContent=nP||'';$('#nR').textContent=nR||'';$('#nH').textContent=nH||'';$('#nG').textContent=(nC+nK+nP+nR+nH)||'';
   ['C','K','P','R','H'].forEach(k=>$('#t'+k).classList.toggle('on',tab===k));

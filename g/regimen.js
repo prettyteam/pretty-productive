@@ -598,7 +598,7 @@ async function rgPdf(me,R,kind){
     if(R.msg.trim()){para('“'+R.msg.trim()+'”',11*big,SF,'italic',ink,6,12);bw=CW}
     /* centered in the box, with the phone number kept on one line (Alexandra, Oct 20 2026) */
     if(rgBack(R)){doc.setFont('helvetica','bold');doc.setFontSize(9.5);doc.setTextColor(...choc);
-      ['We look forward to seeing you '+rgBack(R)+'.','Call or text '+RG_PHONE+' to reserve.'].forEach(t=>doc.splitTextToSize(t,CW-12).forEach(l=>{need(13);bw=Math.max(bw,doc.getTextWidth(l));doc.text(l,W/2,y+9.5,{align:'center'});y+=9.5*1.32}));y+=1}
+      [...((R.nextSvc||[]).length?['Your next visit: '+R.nextSvc.join(', ')+'.']:[]),'We look forward to seeing you '+rgBack(R)+'.','Call or text '+RG_PHONE+' to reserve.'].forEach(t=>doc.splitTextToSize(t,CW-12).forEach(l=>{need(13);bw=Math.max(bw,doc.getTextWidth(l));doc.text(l,W/2,y+9.5,{align:'center'});y+=9.5*1.32}));y+=1}
     /* the box hugs the text instead of running edge to edge (Alexandra, Oct 21 2026) */
     y+=7; bw=Math.min(CW+16,bw+36); doc.setDrawColor(43,42,40); doc.setLineWidth(.4); doc.rect(W/2-bw/2,top,bw,y-top,'S'); doc.setLineWidth(.2);
   }
