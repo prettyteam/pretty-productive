@@ -524,6 +524,13 @@ details.days summary::-webkit-details-marker{display:none}
 .askseg button{text-align:left;border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:10px;padding:9px 12px;font:inherit;font-size:15px;cursor:pointer}
 .askseg button small{display:block;font-size:12.5px;opacity:.75}
 .askseg button[aria-pressed=true]{background:var(--brown);border-color:var(--brown);color:#fff}
+/* "Sent To Alexandra" card after Send To Alex (Nov 13 2026) */
+.asksent{background:#fff;border:1.5px solid var(--choc);border-radius:10px;padding:22px 18px;display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center}
+.asksent .chk{width:52px;height:52px;border-radius:50%;background:var(--choc);color:#fff;font-size:28px;line-height:52px}
+.asksent b{font-family:var(--display);font-size:22px;font-weight:500;text-wrap:balance}
+.asksent p{margin:0;font-size:15px;color:var(--muted);max-width:34ch}
+.asksent .obtn{margin-top:6px}
+.lrow.asknew{background:var(--marshmallow);border-radius:6px;padding-left:8px;padding-right:8px}
 .hub textarea,.hub select{font:inherit;font-size:15px;border:1px solid var(--line);border-radius:6px;padding:8px 10px;background:#fff;width:100%;color:var(--ink)}
 .askreq{background:#fff;border:1px solid var(--line);border-radius:8px;padding:12px;display:flex;flex-direction:column;gap:4px;font-size:14px;margin-bottom:8px}
 .askreq .top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
@@ -928,13 +935,14 @@ async function hubGet(){
   catch(e){HUB.err=e.message==='link'?'link':'offline'}
   if(EDITION==='stylist') render();
 }
-async function hubPost(body,ok){
-  const st=S.mine.staff; HUB.busy=true; render();
+async function hubPost(body,ok,onOk){
+  const st=S.mine.staff; let done=false; HUB.busy=true; render();
   try{const r=await fetch(API(),{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({...body,slug:st.slug,t:st.t})});
     const j=await r.json(); HUB.toast=j.ok?(ok||'Saved'):(j.error==='taken'?'Someone already picked that one up.':FIX_ERR[j.error]||'That didn’t go through. Try again.');
-    if(j.ok&&body.type==='clockfix') HUB.fx=null;}
+    if(j.ok&&body.type==='clockfix') HUB.fx=null; done=!!j.ok;}
   catch(e){HUB.toast='Can’t connect right now. Check your signal and try again.'}
-  HUB.busy=false; await hubGet(); setTimeout(()=>{HUB.toast='';render()},4000);
+  HUB.busy=false; if(done&&onOk) onOk(); await hubGet(); setTimeout(()=>{HUB.toast='';render()},4000);
+  return done;
 }
 function liveClock(){const c=HUB.data&&HUB.data.clock; if(!c) return null;
   const extra=c.in?(Date.now()-HUB.at)/6e4:0; return {...c,todayMin:c.todayMin+extra,weekMin:c.weekMin+extra}}
@@ -2059,13 +2067,13 @@ const ASK_FIELDS={retail:[['for','Customer name'],['phone','Customer phone','tel
     ['type','Type',['Tape-In','K-Tip','I-Tip','Clip-In','Halo','Wefts','Other']],['qty','Packs'],['need','Need it by'],['note','Note','','Optional']],
   ask:[['note','Your question or request','area']]};
 const ASK_NEED={retail:['for','item'],easi:['item'],ask:['note']};
-let ASK={kind:'retail',f:{}};
+let ASK={kind:'retail',f:{},sent:null};
 const askWhat=x=>x.kind==='ask'?x.note:[x.item||(x.kind==='easi'?'Easi Hair Pro':''),x.qty?'×'+x.qty:''].join(' ').trim()+(x.for?' · '+x.for:'');
 function askView(){
   const d=HUB.data||{}, out=[h('h1',{style:'font-size:28px;text-align:center'},'Send To Alex'),
     h('p',{class:'soft',style:'text-align:center;margin:-14px 0 0'},'Order requests and questions go straight to The Pretty Report.')];
   if(HUB.data&&!d.req){out.push(h('p',{class:'soft',style:'text-align:center'},'This switches on soon.'));return [h('div',{class:'hub'},out)]}
-  out.push(h('div',{class:'askseg'},ASK_KINDS.map(([k,t,sub])=>h('button',{type:'button','aria-pressed':String(ASK.kind===k),onclick:()=>{ASK.kind=k;render()}},t,h('small',{},sub)))));
+  if(!ASK.sent) out.push(h('div',{class:'askseg'},ASK_KINDS.map(([k,t,sub])=>h('button',{type:'button','aria-pressed':String(ASK.kind===k),onclick:()=>{ASK.kind=k;render()}},t,h('small',{},sub)))));
   const K=ASK_KINDS.find(x=>x[0]===ASK.kind), f=ASK.f;
   const fld=([k,label,kind,ph])=>{const set=e=>{f[k]=e.target.value};
     const el=Array.isArray(kind)?h('select',{onchange:set},kind.map(o=>h('option',{selected:(f[k]||kind[0])===o?'':null},o))):
@@ -2074,13 +2082,23 @@ function askView(){
     return h('label',{class:'fld'},label,el)};
   const send=()=>{const need=ASK_NEED[ASK.kind].filter(k=>!(f[k]||'').trim());
     if(need.length){HUB.toast='Fill in '+need.map(k=>ASK_FIELDS[ASK.kind].find(x=>x[0]===k)[1].toLowerCase()).join(' and ')+' first.';render();setTimeout(()=>{HUB.toast='';render()},4000);return}
-    const body={type:'req',kind:ASK.kind,...f}; ASK.f={}; hubPost(body,'Sent. You’ll see Alex’s answer here.')};
-  out.push(h('div',{class:'card2'},h('span',{class:'lbl'},K[1]),ASK_FIELDS[ASK.kind].map(fld),
-    h('button',{class:'obtn',disabled:HUB.busy?'':null,onclick:send},'Send Request'),h('p',{class:'soft',style:'text-align:center;font-size:13px;margin:0'},K[3])));
-  if(HUB.toast) out.push(h('p',{class:'toast'},HUB.toast));
+    /* Nov 13 2026: a clear "Sent to Alexandra" card stays on screen after sending (the old 4-second line was easy to miss).
+       The form keeps what she typed if it didn't go through. */
+    const body={type:'req',kind:ASK.kind,...f}, kind=ASK.kind, what=askWhat({kind,...f});
+    hubPost(body,'',()=>{ASK.f={};ASK.sent={kind,what,at:Date.now()};scrollTo({top:0,behavior:'smooth'})})};
+  if(ASK.sent){const s=ASK.sent, rose=s.kind==='retail';
+    out.push(h('div',{class:'asksent',role:'status'},h('div',{class:'chk','aria-hidden':'true'},'✓'),
+      h('b',{},rose?'Sent To Alexandra And Rose':'Sent To Alexandra'),
+      h('p',{},'“'+s.what+'”'),
+      h('p',{},'It is in The Pretty Report and '+(rose?'their':'her')+' email now. Her answer shows under Your Requests below.'),
+      h('button',{type:'button',class:'obtn',onclick:()=>{ASK.sent=null;render()}},'Send Another')));
+    }
+  if(!ASK.sent) out.push(h('div',{class:'card2'},h('span',{class:'lbl'},K[1]),ASK_FIELDS[ASK.kind].map(fld),
+    h('button',{class:'obtn',disabled:HUB.busy?'':null,onclick:send},HUB.busy?'Sending…':'Send Request'),h('p',{class:'soft',style:'text-align:center;font-size:13px;margin:0'},K[3])));
+  if(HUB.toast&&!ASK.sent) out.push(h('p',{class:'toast'},HUB.toast));
   const st=s=>h('span',{class:'stat'+(s==='Sent'?'':' ok')},s);
   const mine=d.myReqs||[];
-  if(mine.length) out.push(h('div',{class:'sec2'},h('span',{class:'lbl'},'Your Requests'),mine.map(x=>h('div',{class:'lrow'},
+  if(mine.length) out.push(h('div',{class:'sec2'},h('span',{class:'lbl'},'Your Requests'),mine.map((x,i)=>h('div',{class:'lrow'+(ASK.sent&&i===0&&x.sent>=ASK.sent.at-6e5?' asknew':'')},
     h('div',{},h('b',{},askWhat(x)),h('br'),h('small',{},(ASK_KINDS.find(k=>k[0]===x.kind)||[])[1]+' · Sent '+new Date(x.sent).toLocaleDateString('en-US',{month:'short',day:'numeric'}))),st(x.status)))));
   const rr=d.retailReqs;
   if(rr) out.push(h('div',{class:'sec2'},h('span',{class:'lbl'},'Customer Orders To Place'),rr.length?rr.map(x=>h('div',{class:'askreq'},
