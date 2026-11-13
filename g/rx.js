@@ -375,7 +375,7 @@ function rxRecFull(o1,o2,keys){
 /* Hair home care is a budget she agrees to at the consult, built into each option's total, so it's already part of
    her price at checkout (Alexandra, Oct 17 2026, from Melissa's paper card): All In $81 (the Taffeta shampoo and
    conditioner set), Worth The Wait $45. The artist decides what she actually goes home with at the end. */
-const RX_HC_HI=81, RX_HC_LO=45;
+const RX_HC_HI=80, RX_HC_LO=45;  /* $80 so All In lands on an even number, e.g. $380 (Alexandra, Nov 12 2026) */
 /* just the money while she builds the card: the artist picks the products at the end of the appointment, from her consult answers (Alexandra, Nov 12 2026) */
 /* Tight budget, cut + color (Alexandra, Nov 12 2026): the haircut goes to a Haircut Leaving Wet ($50 instead of $65-$100)
    and the home care money is $15 for two Try Me bottles, before the card drops any color. */
@@ -390,9 +390,8 @@ function rxCutSwap(P){const out=[];P.forEach(t=>{out.push(t);if(t.includes('Fema
    used to get about $400 and $450, because the two goals' services stacked and nothing checked the budget.
    Worth The Wait: the fullest package that fits with $45 home care; if none does, the fullest whose services leave at
    least $15 for home care. All In: the fullest package that keeps Worth The Wait's services and lands at or under
-   budget + $60 and no more than $80 over Worth The Wait; when it's less than $60 over Worth The Wait, its home care goes up to
-   close the gap (never past budget + $60). pkg(i,home care $,leave-in) builds a tier. */
-const RX_DREAM=70, RX_HC_MIN=RX_HC_TRY, RX_OVER_HI=60, RX_GAP_LO=60, RX_GAP_HI=80;
+   budget + $60 and no more than $80 over Worth The Wait. All In home care tops out at $80 (no more padding, Nov 12 2026). pkg(i,home care $,leave-in) builds a tier. */
+const RX_DREAM=70, RX_TIGHT=350, RX_HC_MID=50, RX_HC_MIN=RX_HC_TRY, RX_OVER_HI=60, RX_GAP_LO=60, RX_GAP_HI=80;
 function rxPair(P,b,pkg,lo,vars,ok,cap){
   const bb=b!=null?b:RX_CAP-RX_OVER_HI, svc=i=>rxTotal(pkg(i,0,false)), wet=i=>P[i].includes('Haircut Leaving Wet');
   let o1=null,i1=-1;
@@ -403,19 +402,18 @@ function rxPair(P,b,pkg,lo,vars,ok,cap){
   for(const [f,a] of steps) for(let i=0;i<P.length&&!o1;i++){if(!f(i))continue; const L=pkg(i,a,false); if(rxTotal(L)<=bb){o1=L;i1=i}}
   if(!o1) for(let i=0;i<P.length&&!o1;i++){const s=svc(i); if(s+RX_HC_MIN<=bb){o1=pkg(i,Math.floor((bb-s)/5)*5,false);i1=i}}
   if(!o1){i1=P.reduce((m,_,i)=>svc(i)<svc(m)?i:m,0); o1=pkg(i1,RX_HC_MIN,false)}   /* her budget is under every service for these goals: the badge shows it's over */
-  /* Option 2 keeps every service in Option 1 (Donelle's card, Oct 20 2026: never trade her haircut for a blow dry) */
-  const svc1=o1.filter(l=>l.t==='s').map(l=>l.n), keeps=L=>svc1.every(n=>L.some(l=>l.n===n||(n==='Haircut Leaving Wet'&&l.n==='Female Haircut')));
+  /* Option 2 keeps every service in Option 1 (Donelle's card, Oct 20 2026: never trade her haircut for a blow dry).
+     A haircut leaving wet stays wet in All In, which gets $80 home care instead: $350 budget -> $345 / $380 (Nov 12 2026) */
+  const svc1=o1.filter(l=>l.t==='s').map(l=>l.n), keeps=L=>svc1.every(n=>L.some(l=>l.n===n)), wet1=svc1.includes('Haircut Leaving Wet');
   const t1=rxTotal(o1), lim=Math.max(Math.min(bb+RX_OVER_HI,t1+RX_GAP_HI),t1+RX_HC_MIN); let best=null;
-  for(let i=0;i<P.length;i++) for(const [a,lv] of vars){const L=pkg(i,a,lv),t=rxTotal(L);
+  for(let i=0;i<P.length;i++) for(const [a,lv] of vars){if(wet1&&lv)continue; const L=pkg(i,a,lv),t=rxTotal(L);
     if(t>t1&&t<=lim&&ok(L)&&keeps(L)&&(!best||t>best.t)) best={L,t,i,a,lv}}
-  if(!best){const a=Math.max(RX_HC_MIN,o1.filter(l=>l.t==='h').reduce((x,l)=>x+l.p,0));best={L:pkg(i1,a,false),i:i1,a,lv:false};best.t=rxTotal(best.L)}
+  if(!best){const h1=o1.filter(l=>l.t==='h').reduce((x,l)=>x+l.p,0), a=h1<RX_HC_HI?RX_HC_HI:h1+RX_HC_MIN;best={L:pkg(i1,a,false),i:i1,a,lv:false};best.t=rxTotal(best.L)}
   /* All In can be her full goal look (the top package: color, K18 and haircut) with $45 home care, up to $70 over her
      budget: a $400 guest's All In can be $450–$470 (Alexandra, Nov 12 2026). Its color can be bigger than Worth The
      Wait's (full balayage over half), and it keeps her haircut. */
   if(b!=null){const L=pkg(0,lo,false),t=rxTotal(L); if(t>best.t&&t<=b+RX_DREAM&&ok(L)&&(!svc1.some(n=>/Haircut/.test(n))||L.some(l=>l.n==='Female Haircut'))) best={L,t,i:0,a:lo,lv:false}}
   let o2=best.L;
-  const want=Math.min(lim,Math.max(t1+RX_GAP_LO,t1+RX_HC_MIN));
-  if(best.t<want){const a=best.a+Math.floor((Math.min(lim,Math.ceil(want/5)*5)-best.t)/5)*5; if(a>best.a) o2=pkg(best.i,a,best.lv)}
   return [o1,o2];
 }
 function rxGenerateHair(R,g){
@@ -428,7 +426,14 @@ function rxGenerateHair(R,g){
   const pkg=(i,amt,lv)=>[...rxSvcLines('hair',P[i]),...(lv?rxSvcLines('hair',['Goldwell Leave-In Treatment']):[]),...(amt>0?[rxHcLine(amt,rxNeedsFor(needs,P[i]))]:[])];
   const okL=L=>rxTotal(L)<=cap&&(rxTotal(L)<=RX_ALLIN_HAIR||!L.some(l=>l.n==='Goldwell Leave-In Treatment'));
   const vars=[[RX_HC_HI,leave],[RX_HC_HI,false],[RX_HC_LO,leave],[RX_HC_LO,false]].filter(([,lv],i,A)=>!lv||A.findIndex(x=>x[0]===A[i][0])===i);
-  const [o1,o2]=rxPair(P,b,pkg,RX_HC_LO,vars,okL,cap);
+  /* blonding on a budget under $350 (Alexandra, Nov 12 2026): both options get a haircut leaving wet and $50 home care.
+     Worth The Wait is a minimal or refresh blonding; All In steps up to a half blonding, about $320. */
+  let pair=null;
+  if(b!=null&&b<RX_TIGHT){const W=P.map((t,i)=>i).filter(i=>P[i].includes('Haircut Leaving Wet')&&P[i].some(n=>RX_BLOND.test(n))), T=i=>rxTotal(pkg(i,RX_HC_MID,false));
+    const w1=W.find(i=>T(i)<=b);
+    if(w1!=null){const up=W.filter(i=>T(i)>T(w1)&&T(i)<=b+RX_OVER_HI).sort((x,y)=>T(x)-T(y))[0];  /* one step up */
+      if(up!=null) pair=[pkg(w1,RX_HC_MID,false),pkg(up,RX_HC_MID,false)]}}
+  const [o1,o2]=pair||rxPair(P,b,pkg,RX_HC_LO,vars,okL,cap);
   const lowM=rxGoalList(R).includes('Lower Maintenance Hair Color');
   const bigC=rxGoalList(R).includes('Big Change (Transformation)');
   let [ms,mw,mt]=[o1,o2].some(L=>L.some(l=>RX_BAL.test(l.n)))?(bigC&&!lowM?[['Refresh Balayage','Blow Dry'],'8–10 weeks','Today is the big job. Upkeep is smaller: a refresh balayage and a blow dry. Your glaze is included.']:lowM?[RX_BAL_M[0],'10–12 weeks','A refresh balayage and a trim. Your glaze and root melt are included, so you can go 10 to 12 weeks between visits.']:RX_BAL_M):g.m;
