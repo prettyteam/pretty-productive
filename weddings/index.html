@@ -87,6 +87,11 @@ body.tw-home header.top{display:none}
 .ask .asklist{width:100%;max-width:360px;text-align:left}
 .ask .askrow{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);font-size:15px}
 .ask .askrow small{display:block;color:var(--muted);font-size:12px}
+.ask .asksent{width:100%;max-width:360px;background:#fff;border:1.5px solid var(--accent);padding:22px 18px;display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center}
+.ask .asksent .chk{width:52px;height:52px;border-radius:50%;background:var(--accent);color:#fff;font-size:28px;line-height:52px}
+.ask .asksent b{font-family:var(--serif);font-size:22px;font-weight:400;text-wrap:balance}
+.ask .asksent p{margin:0;font-size:15px;color:var(--muted)}
+.ask .askrow.asknew{background:#f8f6f0;padding-left:8px;padding-right:8px}
 .ask .askst{font-size:12px;border:1px solid var(--line);border-radius:999px;padding:1px 10px;white-space:nowrap}
 .ask .askst.ok{background:#121212;color:#fff;border-color:#121212}
 .ao .qr{background:#fff;border:1px solid #2b2a28;outline:1px solid #2b2a28;outline-offset:-6px;padding:22px;line-height:0}
@@ -2245,28 +2250,34 @@ const ASK_K={ask:["Question Or Request","Anything you need from Alex"],easi:["Ea
 const ASK_F={ask:[["note","Your question or request","area"]],
   easi:[["for","For (bride or client)"],["link","Paste the Easi Hair Pro link"],["item","What to order","","Like Tape-In 20\" 3 packs"],["color","Color"],["length","Length"],
     ["type","Type",["Tape-In","K-Tip","I-Tip","Clip-In","Halo","Wefts","Other"]],["qty","Packs"],["need","Need it by"],["note","Note","","Optional"]]};
-let ASKW={kind:"ask",f:{},asks:null,busy:false};
+let ASKW={kind:"ask",f:{},asks:null,busy:false,sent:null};
 function renderAsk(){
   const box=$("#view-ask");if(!box)return;
   if(ASKW.asks===null&&!ASKW.busy){ASKW.busy=true;api("myAsks").then(j=>{ASKW.asks=j.asks||[]}).catch(()=>{ASKW.asks=[]}).finally(()=>{ASKW.busy=false;if(!$("#view-ask").hidden)renderAsk()})}
   const f=ASKW.f,K=ASK_K[ASKW.kind];
-  let h='<div class="ao ask"><div class="mhead">Ask Alex</div><p>Questions and order requests go straight to Alex.</p><div class="askseg">'
+  let h='<div class="ao ask"><div class="mhead">Ask Alex</div><p>Questions and order requests go straight to Alex.</p>';
+  /* Nov 13 2026: a clear "Sent To Alexandra" card stays on screen after sending (the old 2-second line was easy to miss). */
+  if(ASKW.sent)h+='<div class="asksent" role="status"><div class="chk" aria-hidden="true">✓</div><b>Sent To Alexandra</b><p>“'+esc(ASKW.sent)+'”</p>'
+    +'<p>It is in The Pretty Report and her email now. Her answer shows under Your Requests below.</p><button type="button" class="pay" id="askAgain">Send Another</button></div>';
+  else{h+='<div class="askseg">'
     +Object.keys(ASK_K).map(k=>'<button type="button" data-k="'+k+'" aria-pressed="'+(ASKW.kind===k)+'">'+esc(ASK_K[k][0])+'<small>'+esc(ASK_K[k][1])+'</small></button>').join("")+'</div><div class="card askf">';
   ASK_F[ASKW.kind].forEach(([k,l,t,ph])=>{
     h+='<label class="f">'+esc(l)+(Array.isArray(t)?'<select data-f="'+k+'">'+t.map(o=>'<option'+((f[k]||t[0])===o?' selected':'')+'>'+esc(o)+'</option>').join("")+'</select>'
       :t==="area"?'<textarea rows="5" data-f="'+k+'">'+esc(f[k]||"")+'</textarea>':'<input data-f="'+k+'" value="'+esc(f[k]||"")+'" placeholder="'+esc(ph||"")+'">')+'</label>'});
-  h+='<button type="button" class="pay" id="askSend">Send To Alex</button></div>';
+  h+='<button type="button" class="pay" id="askSend">Send To Alex</button></div>';}
   const a=ASKW.asks||[];
-  if(a.length)h+='<div class="mhead" style="margin-top:8px">Your Requests</div><div class="asklist">'+a.map(x=>'<div class="askrow"><div><b>'+esc(x.kind==="ask"?x.note:(x.item||"Easi Hair Pro")+(x.qty?" ×"+x.qty:"")+(x.for?" · "+x.for:""))+'</b><small>Sent '
+  if(a.length)h+='<div class="mhead" style="margin-top:8px">Your Requests</div><div class="asklist">'+a.map((x,i)=>'<div class="askrow'+(ASKW.sent&&i===0?' asknew':'')+'"><div><b>'+esc(x.kind==="ask"?x.note:(x.item||"Easi Hair Pro")+(x.qty?" ×"+x.qty:"")+(x.for?" · "+x.for:""))+'</b><small>Sent '
     +new Date(x.sent).toLocaleDateString("en-US",{month:"short",day:"numeric"})+'</small></div><span class="askst'+(x.status==="Sent"?"":" ok")+'">'+esc(x.status)+'</span></div>').join("")+'</div>';
   box.innerHTML=h+'</div>';
   box.querySelectorAll("[data-k]").forEach(b=>b.onclick=()=>{ASKW.kind=b.dataset.k;renderAsk()});
   box.querySelectorAll("[data-f]").forEach(el=>{if(el.tagName==="SELECT"&&!f[el.dataset.f])f[el.dataset.f]=el.value;el.oninput=el.onchange=()=>{f[el.dataset.f]=el.value}});
+  if(ASKW.sent){$("#askAgain").onclick=()=>{ASKW.sent=null;renderAsk()};return}
   $("#askSend").onclick=async()=>{
     const need=ASKW.kind==="ask"?["note"]:["item"];
     if(need.some(k=>!(f[k]||"").trim())){toast(ASKW.kind==="ask"?"Write your question first.":"Write what to order first.");return}
     const b=$("#askSend");b.disabled=true;b.textContent="Sending…";
-    try{const j=await api("askAlex",{ask:Object.assign({kind:ASKW.kind},f)});ASKW.asks=j.asks||[];ASKW.f={};toast("Sent. You’ll see Alex’s answer here.");renderAsk()}
+    try{const j=await api("askAlex",{ask:Object.assign({kind:ASKW.kind},f)});ASKW.asks=j.asks||[];ASKW.f={};
+      ASKW.sent=ASKW.kind==="ask"?f.note:(f.item||"Easi Hair Pro")+(f.qty?" ×"+f.qty:"")+(f.for?" · "+f.for:"");renderAsk();box.scrollIntoView({behavior:"smooth",block:"start"})}
     catch(e){b.disabled=false;b.textContent="Send To Alex";toast(e.message&&e.message!=="error"?e.message:"That didn’t go through. Try again.")}};
 }
 
