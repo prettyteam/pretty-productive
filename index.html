@@ -1058,6 +1058,14 @@ function tpReqCard(){
       h('div',{},x.items||'(see note)'),x.note?h('div',{class:'soft',style:'font-size:13px'},'Note: '+x.note):null)):
     h('p',{class:'soft',style:'margin:0'},tpAll()?'No guest requests yet today.':'No requests from your guests yet today.'));
 }
+/* Guest Requests square on the Menu (Alexandra, Nov 13 2026): alerts on/off and today's requests on one page. */
+function greqView(){
+  const out=[h('h1',{style:'font-size:28px;text-align:center'},'Guest Requests')];
+  if(!HUB.data){out.push(h('p',{class:'soft',style:'text-align:center'},HUB.err?'Can’t load right now. Check your signal, then tap Refresh.':'Loading…'));return [h('div',{class:'hub'},out)]}
+  const pc=tpProfileCard(); if(pc) out.push(pc);
+  out.push(tpReqCard()||h('div',{class:'gcard'},h('h2',{},gIcon('🛎'),'Guest Requests Today'),h('p',{class:'soft',style:'margin:0'},'Today’s requests will show here soon.')));
+  return [h('div',{class:'hub'},out)];
+}
 /* Top of Home until alerts are on */
 function tpHomeCard(){
   if(!tpReady()) return null; tpRefresh();
@@ -2194,6 +2202,7 @@ function openMkt(){const w=window.open(MKT_URL,'_blank','noopener');if(!w)locati
 function staffTabs(){
   const p=S.mine||{}, st=p.staff||{}, t=[];
   if(st.slug) t.push(['home','Home']);
+  if(st.slug) t.push(['greq','Guest Requests']);
   if(p.inv&&p.inv.file) t.push(['inv','Inventory']);
   if(p.skin&&p.skin.file) t.push(['skin','Skincare Stock']);
   if(p.cards&&p.cards.file) t.push(['cards','Thank-You Cards']);
@@ -2219,7 +2228,7 @@ function staffTabs(){
   return t;
 }
 /* One menu instead of a row of tabs (Alexandra, Oct 2026). Sections are grouped; Customer cards holds RX card and Home care. */
-const NAV_GROUPS=[['Appointments',['home','today','tomorrow','tip']],['Customer Cards',['rx','reg']],[MW_NAME,['mph']],['Goals',['growth','binder','cr']],
+const NAV_GROUPS=[['Guest Requests',['greq']],['Appointments',['home','today','tomorrow','tip']],['Customer Cards',['rx','reg']],[MW_NAME,['mph']],['Goals',['growth','binder','cr']],
   ['Salon & Spa',['prices','order','pk','inv','skin','cards','off']],['Taffeta',['guide','hb','fg']],['Send To Alex',['ask']],['Self Promotion',['promo']],['Marketing Proofs',['mkt']],['My Profile',['me']]];
 let NAV_OPEN=false;
 /* Disco ball = Home, Back arrow = the page before (Alexandra, Oct 15 2026). Each page change is a browser history step,
@@ -2231,7 +2240,7 @@ function navGo(k,fromHistory){
   const hubHome=!fromHistory&&k==='home'&&isHub()&&HUB_OPEN; if(hubHome) HUB_OPEN='';
   if(!fromHistory&&(k!==S.tab||hubHome)){const d=((history.state&&history.state.d)||0)+1;try{history.pushState({pp:k,d,hub:HUB_OPEN},'',location.href)}catch(e){}}
   NAV_OPEN=false;S.tab=k;S.dayBack=false;store.set('pp-tab:'+ID,k);render();window.scrollTo(0,0);
-  if(k==='home'||k==='off'||k==='inv'||k==='skin'||k==='growth'||k==='mph'||k==='cards'||k==='me'||k==='prices'||k==='rx'||k==='tip'||k==='promo'||k==='ask')hubGet();
+  if(k==='home'||k==='off'||k==='inv'||k==='skin'||k==='growth'||k==='mph'||k==='cards'||k==='me'||k==='prices'||k==='rx'||k==='tip'||k==='promo'||k==='ask'||k==='greq')hubGet();
 }
 function navGroups(tabs){
   const label=Object.fromEntries(tabs);
@@ -2353,6 +2362,7 @@ function staffRender(){
   if(S.tab==='prices') return pricesView();
   if(S.tab==='order') return orderView();
   if(S.tab==='ask') return askView();
+  if(S.tab==='greq') return greqView();
   if(S.tab==='pk') return pkView();
   if(S.tab==='growth') return growthView();
   if(S.tab==='mph') return mphView();
