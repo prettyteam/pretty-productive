@@ -141,6 +141,7 @@ function favVideoSaved_(key, u, fileId) {
   const lock = LockService.getScriptLock();
   try {
     lock.waitLock(20000);
+    if (u.dest) return mediaVideoSaved_(u, fileId);   // a preview or wedding photo spot, not the favorites album
     const s = mktRead_();
     const p = { id: 'v' + Utilities.getUuid().replace(/-/g, '').slice(0, 14), album: u.album, wid: u.wid, kind: 'video', w: u.w, h: u.h, addedAt: Date.now(), by: u.by, f: fileId, t: u.t || fileId };
     s.photos.unshift(p); mktWrite_(s);
@@ -171,4 +172,66 @@ function delFav_(who, id, favId) {
   [p.f, p.t].forEach(fid => { try { DriveApp.getFileById(fid).setTrashed(true); } catch (e) {} });
   s.photos = s.photos.filter(x => x.id !== favId); mktWrite_(s);
   return { ok: true };
+}
+
+/* ---------- videos in the other photo spots (Alexandra, Nov 13 2026) ----------
+ * "Can it be the same way all the rest are able to accept videos and photos, multiples at a time, and set up to be fast."
+ * The bridal preview (Preview photos and Extensions) and a wedding's Trial & Look and Inspiration photos now take videos too.
+ * Same fast path as the favorites: the whole video goes straight to Drive, anything left goes in pieces
+ * (favVideoCheck / favVideoChunk above), and when it lands it is listed where it was added instead of the album.
+ *   d: {key:'<preview key>'} or {id:'<wedding id>'}, kind, video:{name, type, size, thumb, w, h} */
+function mediaVideoStart_(who, d) {
+  const video = d.video;
+  if (!video || !(video.size > 0)) return { ok: false, error: 'not_found' };
+  if (video.size > 1024 * 1048576) return { ok: false, error: 'too_big', message: 'That video is over 1 GB. Trim it on your phone first.' };
+  const by = favBy_(who);
+  let folder, dest, label;
+  if (d.key) {
+    const ev = findPreview_(who, d.key);
+    if (!ev) return { ok: false, error: 'not_found' };
+    const saved = previewRows_()[d.key] || { d: {} }, pd = saved.d;
+    if ((pd.photos || []).length >= 40) return { ok: false, error: 'too_many', message: 'This preview already has 40 photos and videos.' };
+    const had = pd.folderId;
+    folder = previewFolder_(ev, pd);
+    if (pd.folderId !== had) writePreview_(who, ev, saved.row, pd);   // keeps the new folder for the next one
+    dest = { p: d.key, kind: d.kind === 'ext' ? 'ext' : 'look' };
+    label = dest.kind === 'ext' ? 'Extensions' : 'Look';
+  } else {
+    const w = wedFor_(who, d.id);
+    if (!w) return { ok: false, error: 'not_found' };
+    const rows = wedPhotoRows_(d.id);
+    if (rows.length >= 60) return { ok: false, error: 'too_many', message: 'This wedding already has 60 photos and videos.' };
+    folder = wedFolder_(w, rows);
+    dest = { w: d.id, kind: d.kind === 'inspo' ? 'inspo' : 'look', f: folder.getId() };
+    label = dest.kind === 'inspo' ? 'Inspo' : 'Look';
+  }
+  const type = /^video\/[\w.+-]+$/.test(video.type || '') ? video.type : 'video/mp4';
+  const ext = (String(video.name || '').match(/\.(\w{2,4})$/) || [, type === 'video/quicktime' ? 'mov' : 'mp4'])[1].toLowerCase();
+  const name = label + ' video - ' + favFile_(by, ext);
+  const url = favUploadUrl_({ name: name, mimeType: type, parents: [folder.getId()] }, type, video.size);
+  if (!url) return { ok: false, error: 'server', message: 'Drive did not take the video. Try again.' };
+  const thumb = video.thumb ? folder.createFile(Utilities.newBlob(Utilities.base64Decode(video.thumb), 'image/jpeg', name.replace(/\.\w+$/, ' (cover).jpg'))).getId() : '';
+  const token = Utilities.getUuid();
+  CacheService.getScriptCache().put('fav:' + token, JSON.stringify({ url: url, size: video.size, type: type, by: clean_(by, 40), t: thumb, dest: dest,
+    uid: who.role === 'office' ? 'office' : who.member.id }), 21600);
+  return { ok: true, token: token, url: url };
+}
+
+/** Runs inside favVideoSaved_'s lock once Drive has the whole video. */
+function mediaVideoSaved_(u, fileId) {
+  const at = new Date(), dest = u.dest;
+  if (dest.p) {
+    const ev = previewEvents_().find(x => x.key === dest.p);
+    if (!ev) return { ok: false, error: 'not_found', message: 'That preview is no longer on the calendar.' };
+    const saved = previewRows_()[dest.p] || { d: {} }, d = saved.d;
+    d.photos = d.photos || [];
+    const rec = { id: fileId, thumbId: u.t || '', kind: dest.kind, by: u.by, at: at.toISOString(), video: true };
+    d.photos.push(rec);
+    writePreview_(u.uid === 'office' ? { role: 'office' } : { role: 'artist', member: { preferredName: u.by } }, ev, saved.row, d);
+    return { ok: true, done: true, photo: rec, info: d };
+  }
+  const w = weddings_().find(x => x.d.id === dest.w);
+  if (!w) return { ok: false, error: 'not_found' };
+  wedPhotoSheet_().appendRow([dest.w, clean_(w.d.bride, 120), w.d.date || '', dest.kind, clean_(u.by, 80), at, fileId, u.t || '', dest.f || '', 'video']);
+  return { ok: true, done: true, photo: { id: fileId, kind: dest.kind, by: u.by, at: at.toISOString(), video: true, vf: fileId } };
 }

@@ -129,6 +129,7 @@ function doPost(e) {
       case 'delWedPhoto': return json_(delWedPhoto_(who, d.id, d.photoId));
       case 'wedPhotoData': return json_(wedPhotoData_(who, d.id, d.ids, !!d.full));
       case 'favVideoStart': return json_(favVideoStart_(who, d.id, d.video));
+      case 'mediaVideoStart': return json_(mediaVideoStart_(who, d));   // videos in the preview and wedding photo spots (Favorites.gs)
       case 'myJobs': return json_(office ? { ok: true, jobs: [] } : myJobs_(who.member));
       case 'answerJob': return json_(office ? { ok: false, error: 'office_only' } : answerJob_(who.member, d.id, !!d.yes));
       case 'savePushToken': return json_(office ? saveOfficePushToken_(d.name, d.token, d.device, !!d.off) : savePushToken_(who.member, d.token, d.device, !!d.off));
@@ -479,6 +480,17 @@ function photoFolder_() {
   return f;
 }
 
+/** The preview's own Drive folder, made the first time a photo or video is added (saved on d.folderId). */
+function previewFolder_(ev, d) {
+  let folder = null;
+  if (d.folderId) { try { folder = DriveApp.getFolderById(d.folderId); } catch (_) {} }
+  if (!folder) {
+    folder = photoFolder_().createFolder(Utilities.formatDate(new Date(ev.start), TZ, 'yyyy-MM-dd') + ' ' + ev.title.replace(/[\/\\]/g, '-'));
+    d.folderId = folder.getId(); d.folderUrl = folder.getUrl();
+  }
+  return folder;
+}
+
 /** photo: {kind:'look'|'ext', data:'<base64 jpeg>', thumb:'<base64 jpeg>'} */
 function addPhoto_(who, key, photo) {
   const ev = findPreview_(who, key);
@@ -487,12 +499,7 @@ function addPhoto_(who, key, photo) {
   const d = saved.d;
   d.photos = d.photos || [];
   if (d.photos.length >= 40) return { ok: false, error: 'too_many', message: 'This preview already has 40 photos.' };
-  let folder = null;
-  if (d.folderId) { try { folder = DriveApp.getFolderById(d.folderId); } catch (_) {} }
-  if (!folder) {
-    folder = photoFolder_().createFolder(Utilities.formatDate(new Date(ev.start), TZ, 'yyyy-MM-dd') + ' ' + ev.title.replace(/[\/\\]/g, '-'));
-    d.folderId = folder.getId(); d.folderUrl = folder.getUrl();
-  }
+  const folder = previewFolder_(ev, d);
   const kind = photo.kind === 'ext' ? 'ext' : 'look';
   const by = who.role === 'office' ? 'Office' : (who.member.preferredName || who.member.legalName || 'Artist');
   const stamp = Utilities.formatDate(new Date(), TZ, 'yyyy-MM-dd HHmmss');
@@ -526,8 +533,10 @@ function photos_(who, key, ids, full) {
   if (!saved) return { ok: false, error: 'not_found' };
   const out = {};
   (saved.d.photos || []).filter(p => (ids || []).indexOf(p.id) >= 0).slice(0, 40).forEach(p => {
+    const fid = p.video ? p.thumbId : (full ? p.id : p.thumbId);   // a video sends its cover picture
+    if (!fid) return;
     try {
-      const b = DriveApp.getFileById(full ? p.id : p.thumbId).getBlob();
+      const b = DriveApp.getFileById(fid).getBlob();
       out[p.id] = 'data:image/jpeg;base64,' + Utilities.base64Encode(b.getBytes());
     } catch (_) {}
   });
@@ -537,7 +546,7 @@ function photos_(who, key, ids, full) {
 /* ---------- wedding photos (Alexandra, Oct 22 2026) ----------
    On each booked wedding: photos the office or that wedding's artists add (new inspo from the bride, trial pictures),
    plus every photo from the wedding's bridal preview, pulled in on their own. */
-const WED_PHOTOS = { name: 'Wedding photos', headers: ['Wedding id', 'Bride', 'Wedding date', 'Kind', 'Added by', 'Added', 'Photo id', 'Small id', 'Folder'] };
+const WED_PHOTOS = { name: 'Wedding photos', headers: ['Wedding id', 'Bride', 'Wedding date', 'Kind', 'Added by', 'Added', 'Photo id', 'Small id', 'Folder', 'Type'] };
 
 function wedPhotoSheet_() {
   const ss = ss_();
@@ -573,18 +582,26 @@ function wedPreviews_(w) {
 function wedPhotoRows_(id) {
   const vals = wedPhotoSheet_().getDataRange().getValues();
   const out = [];
-  for (let i = 1; i < vals.length; i++) if (vals[i][0] === id) out.push({ row: i + 1, id: String(vals[i][6]), thumbId: String(vals[i][7]), kind: String(vals[i][3]), by: String(vals[i][4]), at: iso_(vals[i][5]), folder: String(vals[i][8]) });
+  for (let i = 1; i < vals.length; i++) if (vals[i][0] === id) out.push({ row: i + 1, id: String(vals[i][6]), thumbId: String(vals[i][7]), kind: String(vals[i][3]), by: String(vals[i][4]), at: iso_(vals[i][5]), folder: String(vals[i][8]), video: String(vals[i][9] || '') === 'video' });
   return out;
 }
 
 function wedPhotos_(who, id) {
   const w = wedFor_(who, id);
   if (!w) return { ok: false, error: 'not_found' };
-  const photos = wedPhotoRows_(id).map(p => ({ id: p.id, kind: p.kind, by: p.by, at: p.at }));
+  const photos = wedPhotoRows_(id).map(p => ({ id: p.id, kind: p.kind, by: p.by, at: p.at, video: p.video || undefined, vf: p.video ? p.id : undefined }));
   const saved = previewRows_();
   wedPreviews_(w).forEach(ev => ((saved[ev.key] || {}).d || {}).photos && saved[ev.key].d.photos.forEach(p =>
-    photos.push({ id: p.id, kind: 'preview', ext: p.kind === 'ext', by: p.by, at: p.at })));
+    photos.push({ id: p.id, kind: 'preview', ext: p.kind === 'ext', by: p.by, at: p.at, video: p.video || undefined, vf: p.video ? p.id : undefined })));
   return { ok: true, photos: photos.concat(favList_(id)) };
+}
+
+/** The wedding's Drive folder for its own photos (the one its earlier photos went in, or a new one). */
+function wedFolder_(w, rows) {
+  let folder = null;
+  const fid = (rows.find(r => r.folder) || {}).folder;
+  if (fid) { try { folder = DriveApp.getFolderById(fid); } catch (_) {} }
+  return folder || photoFolder_().createFolder('Wedding ' + (w.d.date || '') + ' ' + String(w.d.bride || 'Bride').replace(/[\/\\]/g, '-'));
 }
 
 /** photo: {kind:'inspo'|'look', data:'<base64 jpeg>', thumb:'<base64 jpeg>'} */
@@ -593,10 +610,7 @@ function addWedPhoto_(who, id, photo) {
   if (!w || !photo || !photo.data) return { ok: false, error: 'not_found' };
   const rows = wedPhotoRows_(id);
   if (rows.length >= 60) return { ok: false, error: 'too_many', message: 'This wedding already has 60 photos.' };
-  let folder = null;
-  const fid = (rows.find(r => r.folder) || {}).folder;
-  if (fid) { try { folder = DriveApp.getFolderById(fid); } catch (_) {} }
-  if (!folder) folder = photoFolder_().createFolder('Wedding ' + (w.d.date || '') + ' ' + String(w.d.bride || 'Bride').replace(/[\/\\]/g, '-'));
+  const folder = wedFolder_(w, rows);
   const kind = photo.kind === 'inspo' ? 'inspo' : 'look';
   const by = who.role === 'office' ? 'Office' : (who.member.preferredName || who.member.legalName || 'Artist');
   const stamp = Utilities.formatDate(new Date(), TZ, 'yyyy-MM-dd HHmmss');
@@ -624,15 +638,15 @@ function delWedPhoto_(who, id, photoId) {
 function wedPhotoData_(who, id, ids, full) {
   const w = wedFor_(who, id);
   if (!w) return { ok: false, error: 'not_found' };
-  const allowed = {};
-  wedPhotoRows_(id).forEach(p => { allowed[p.id] = p.thumbId; });
+  const allowed = {}, vids = {};   // a video only ever sends its cover picture
+  wedPhotoRows_(id).forEach(p => { allowed[p.id] = p.thumbId; if (p.video) vids[p.id] = 1; });
   const saved = previewRows_();
-  wedPreviews_(w).forEach(ev => (((saved[ev.key] || {}).d || {}).photos || []).forEach(p => { allowed[p.id] = p.thumbId; }));
+  wedPreviews_(w).forEach(ev => (((saved[ev.key] || {}).d || {}).photos || []).forEach(p => { allowed[p.id] = p.thumbId || ''; if (p.video) vids[p.id] = 1; }));
   const out = {};
   (ids || []).filter(x => allowed[x]).slice(0, 60).forEach(x => {
-    try { out[x] = 'data:image/jpeg;base64,' + Utilities.base64Encode(DriveApp.getFileById(full ? x : allowed[x]).getBlob().getBytes()); } catch (_) {}
+    try { out[x] = 'data:image/jpeg;base64,' + Utilities.base64Encode(DriveApp.getFileById(full && !vids[x] ? x : allowed[x]).getBlob().getBytes()); } catch (_) {}
   });
-  const rest = (ids || []).filter(x => !allowed[x]);
+  const rest = (ids || []).filter(x => !(x in allowed));
   if (rest.length) Object.assign(out, favData_(id, rest.slice(0, 40), full));
   return { ok: true, photos: out };
 }
