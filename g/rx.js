@@ -446,7 +446,7 @@ function rxGenerateHair(R,g){
   let pair=null;
   if(b!=null&&b<RX_TIGHT){const W=P.map((t,i)=>i).filter(i=>(!wantCut||P[i].includes('Haircut Leaving Wet'))&&P[i].some(n=>RX_BLOND.test(n))), T=i=>rxTotal(pkg(i,RX_HC_MID,false));
     const w1=W.find(i=>T(i)<=b);
-    if(w1!=null){const up=W.filter(i=>T(i)>T(w1)&&T(i)<=b+RX_OVER_HI).sort((x,y)=>T(x)-T(y))[0];  /* one step up */
+    if(w1!=null){const up=W.filter(i=>T(i)>T(w1)&&T(i)<=b+RX_OVER_HI).sort((x,y)=>Math.abs(T(x)-320)-Math.abs(T(y)-320)||T(x)-T(y))[0];  /* a step up, closest to about $320 (a half blonding) */
       if(up!=null) pair=[pkg(w1,RX_HC_MID,false),pkg(up,RX_HC_MID,false)]}}
   const [o1,o2]=pair||rxPair(P,b,pkg,RX_HC_LO,vars,okL,cap);
   const lowM=rxGoalList(R).includes('Lower Maintenance Hair Color');
