@@ -322,6 +322,16 @@ details.more .menu .btn:last-child{border-bottom:0}
 .ask-chip.wait{background:#eee9e0;color:#423327}.ask-chip.seen{background:#f2f1ec;color:#423327;border-color:#d9d2c5}
 .ask-acts{display:flex;gap:6px;margin-top:6px}.ask-acts button{font-size:12px;padding:3px 10px}
 .ask-add{width:100%;margin-top:10px}
+.aw-list{display:flex;flex-direction:column;gap:10px}
+.aw-step{border-top:1px solid var(--line);padding-top:10px;display:flex;flex-direction:column;gap:4px}
+.aw-top{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.aw-top b{font-size:13px}
+.aw-btns{gap:6px;margin-top:4px}
+.aw-got{font-size:13px;color:var(--ink)}
+.pill.aw-duepill{background:var(--ink);color:#fff;border-color:var(--ink)}
+.aw-skip{opacity:.6}
+.aw-due .aw-row{border-top:1px solid var(--line);padding-top:10px;display:flex;flex-direction:column;gap:6px}
+.aw-due .aw-row a{color:var(--ink);text-decoration:none}
 .pill{display:inline-block;font-size:11px;padding:1px 8px;border:1px solid var(--line);color:var(--ink);margin:2px 4px 0 0}
 .empty-state{padding:28px;text-align:center;color:var(--muted);border:1px dashed var(--line)}
 .toast{position:fixed;z-index:70;left:50%;bottom:calc(72px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--accent);color:var(--accent-ink);padding:8px 16px;font-size:13px;opacity:0;transition:opacity .2s;pointer-events:none}
@@ -432,7 +442,10 @@ input,select,textarea{background:#fff;border-radius:0}
             <label class="f">Bride<input id="bride" placeholder="Bride's full name"></label>
             <label class="f">Wedding date<input id="date" type="date"></label>
           </div>
-          <label class="f">Bride's cell<input id="bridePhone" type="tel" inputmode="tel" placeholder="(609) 000-0000"></label>
+          <div class="row">
+            <label class="f">Bride's cell<input id="bridePhone" type="tel" inputmode="tel" placeholder="(609) 000-0000"></label>
+            <label class="f">Bride's email<input id="brideEmail" type="email" inputmode="email" autocomplete="off" placeholder="For the photo album email"></label>
+          </div>
           <label class="f">Getting-ready location<input id="location" placeholder="Venue or address"></label>
           <label class="f">Room / details<input id="room" placeholder="e.g. Bridal suite, room 305"></label>
           <label class="f">Parking / valet<input id="parking" placeholder="e.g. Street parking available"></label>
@@ -453,6 +466,12 @@ input,select,textarea{background:#fff;border-radius:0}
           <label class="f">Preview location<input id="previewLoc" placeholder="Blank = salon. NY: bride's address"></label>
           <div class="f" id="pvWhoWrap" hidden><span>At the Preview (Gets the Calendar Invite)</span><div id="pvWho" class="row" style="gap:6px 16px"></div></div>
           <p class="hint">NY previews happen at the bride's location, so add travel and parking.</p>
+        </div>
+        <div class="card" id="awCard">
+          <h2>After the Wedding</h2>
+          <label class="chk aw-got"><input type="checkbox" id="albumIn"> Photo album received</label>
+          <div id="awList" class="aw-list"></div>
+          <p class="hint">Nothing goes to the bride by itself. Tap the button, read it over, then tap Send.</p>
         </div>
         <div class="card">
           <h2>Timing</h2>
@@ -816,6 +835,7 @@ input,select,textarea{background:#fff;border-radius:0}
       </div>
       <button class="btn ghost" id="bk-copy">Copy for Sheets</button>
     </div>
+    <div class="card aw-due" id="awDue" hidden style="margin-bottom:14px"></div>
     <div style="overflow-x:auto"><table class="adm" id="bk-table"></table></div>
   </section>
 
@@ -1416,7 +1436,7 @@ function tsvOf(s){
 }
 
 /* ---------- form ---------- */
-const FIELDS=["bride","bridePhone","date","location","room","parking","contactName","contactPhone","notes","previewDate","previewTime","previewLen","previewLoc","start","finishBy","hairSlot","muSlot","bothSlot","arrival","touchups"];
+const FIELDS=["bride","bridePhone","brideEmail","date","location","room","parking","contactName","contactPhone","notes","previewDate","previewTime","previewLen","previewLoc","start","finishBy","hairSlot","muSlot","bothSlot","arrival","touchups"];
 /* team members this Timeline has seen on the wedding, so a save can tell the server who the office took off on purpose
    (anyone else, like an artist who just said Yes to the job, stays on; Lexi on Laura's wedding, Oct 30 2026) */
 let seenUids=new Set();
@@ -1427,6 +1447,7 @@ function fillForm(){
   setMode(S.mode,false);
   renderArtists();renderPeople();renderSheet();renderExt();
   $("#askedForm").hidden=true;$("#askedNote").textContent="";renderAsked();
+  renderAw();
 }
 /* an artist's answer: the invite the app sent, else her answer on the wedding's own Google Calendar event
    (artists added straight from the calendar, like Kat on Katie Leyden, Oct 15 2026) */
@@ -3259,6 +3280,7 @@ function bkInfo(d){
 }
 function renderBooked(){
   if(ROLE!=="office")return;
+  renderAwDue();
   const sel=$("#bk-year"),cur=sel.value,thisYear=new Date().getFullYear();
   const years=[...new Set([thisYear,thisYear+1,...allWeddings.map(w=>Number((w.d.date||"").slice(0,4))).filter(y=>y>=thisYear)])].sort();
   sel.innerHTML=years.map(y=>'<option'+(String(y)===cur?' selected':'')+'>'+y+'</option>').join("");
@@ -3281,6 +3303,107 @@ $("#bk-copy").onclick=()=>{
   const lines=[["Date","Bride","Location","Hair","Makeup","Team","Preview","Invites"].join("\t")].concat(rows.map(w=>{const d=w.d,i=bkInfo(d);return [d.date,d.bride,[d.location,d.room].filter(Boolean).join(", "),i.hair,i.mu,i.team.join(", "),i.prev,i.invites].map(v=>String(v??"").replace(/[\t\n]+/g," ")).join("\t")}));
   copy(lines.join("\n"));
 };
+
+/* ---------- After the wedding: photo album text and email (Alexandra, Nov 14 2026)
+   4 weeks after the wedding: a text to the bride asking for her photo album link.
+   6 weeks after: an email, only if the "Photo album received" box is still unchecked.
+   The app never sends anything by itself: a tap opens Messages or Mail with the words filled in, she reads it and taps Send,
+   then "Mark sent" keeps it off the due list. Saved on the wedding as albumIn, albumTextSent and albumEmailSent. ---------- */
+const AW_TEXT="Congratulations again! We loved being part of your day. When your photographer sends your photo album, we'd love to see it! Please share the link with us at sales@taffetadesign.com.";
+const AW_SUBJECT="We'd love to see your wedding photos!";
+const awEmailBody=first=>"Hi "+(first||"there")+",\n\nWe hope you're loving married life! We wanted to check in and see if your photographer has sent your wedding album yet. We'd love to see how everything turned out. When you have it, please share the link with us by replying to this email.\n\nThank you again for letting us be part of your day!\n\nTaffeta Weddings";
+const AW_LOOKBACK=120;   // the due list on Booked weddings only shows weddings from the last 120 days, so older ones don't flood it
+const awToday=()=>{const t=new Date();return t.getFullYear()+"-"+String(t.getMonth()+1).padStart(2,"0")+"-"+String(t.getDate()).padStart(2,"0")};
+function awAdd(iso,days){const d=new Date(iso+"T12:00:00");d.setDate(d.getDate()+days);return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
+function awEmailOf(d){
+  const e=String(d.brideEmail||"").trim();if(e)return e;
+  const n=String(d.bride||"").trim().toLowerCase(),r=(typeof ppRows!=="undefined"?ppRows:[]).find(x=>String(x.bride||"").trim().toLowerCase()===n&&x.email);
+  return r?String(r.email).trim():"";
+}
+/* what is due for one wedding: [{k:"text"|"email", due, state:"due"|"later"|"sent"|"skip"}] */
+function awSteps(d){
+  if(!d||!d.date)return [];
+  const today=awToday(),tDue=awAdd(d.date,28),eDue=awAdd(d.date,42);
+  return [
+    {k:"text",label:"Photo album text",when:"4 weeks after",due:tDue,sent:d.albumTextSent||"",state:d.albumTextSent?"sent":d.albumIn?"skip":today>=tDue?"due":"later"},
+    {k:"email",label:"Photo album email",when:"6 weeks after, only if no album yet",due:eDue,sent:d.albumEmailSent||"",state:d.albumEmailSent?"sent":d.albumIn?"skip":today>=eDue?"due":"later"}
+  ];
+}
+function awStateHTML(st){
+  return st.state==="sent"?'<span class="pill aw-sent">Sent '+esc(shortDate(st.sent))+'</span>'
+    :st.state==="skip"?'<span class="pill">Not needed</span>'
+    :st.state==="due"?'<span class="pill aw-duepill">Due now</span>'
+    :'<span class="pill">On '+esc(shortDate(st.due))+'</span>';
+}
+function awButtons(id,st){
+  if(st.state==="skip")return "";
+  const go=st.k==="text"?'Text Bride':'Email Bride';
+  return '<div class="row aw-btns"><button class="btn'+(st.state==="due"?"":" ghost")+' small" type="button" data-aw-go="'+st.k+'" data-aw-id="'+esc(id)+'">'+go+'</button>'
+    +(st.state==="sent"?'<button class="btn ghost small" type="button" data-aw-undo="'+st.k+'" data-aw-id="'+esc(id)+'">Undo</button>'
+      :'<button class="btn ghost small" type="button" data-aw-mark="'+st.k+'" data-aw-id="'+esc(id)+'">Mark Sent</button>')+'</div>';
+}
+function awStepHTML(id,st){
+  return '<div class="aw-step aw-'+st.state+'"><div class="aw-top"><b>'+st.label+'</b>'+awStateHTML(st)+'</div>'
+    +'<div class="hint">'+esc(st.when)+(st.state==="later"||st.state==="due"?" · "+esc(shortDate(st.due)):"")+'</div>'+awButtons(id,st)+'</div>';
+}
+/* the After the Wedding card on the Timeline */
+function renderAw(){
+  const card=$("#awCard");if(!card)return;
+  $("#albumIn").checked=!!S.albumIn;
+  const box=$("#awList");
+  if(!S.date){box.innerHTML='<p class="hint" style="margin:0">Add the wedding date to see when these go out.</p>';return}
+  box.innerHTML=awSteps(S).map(st=>awStepHTML("__cur",st)).join("");
+  awBind(box);
+}
+$("#albumIn").addEventListener("change",e=>{S.albumIn=e.target.checked;renderAw();queueSave();renderAwDue()});
+$("#date").addEventListener("input",()=>renderAw());
+/* one wedding's data, whether it is open on the Timeline or not */
+function awData(id){if(id==="__cur"||(docId&&id===docId))return S;const w=allWeddings.find(x=>x.id===id);return w?w.d:null}
+async function awPatch(id,patch){
+  if(id==="__cur"||(docId&&id===docId)){Object.assign(S,patch);renderAw();queueSave();renderAwDue();return}
+  const w=allWeddings.find(x=>x.id===id);if(!w)return;
+  const body=JSON.parse(JSON.stringify(w.d));Object.keys(patch).forEach(k=>{if(patch[k]==null)delete body[k];else body[k]=patch[k]});
+  delete body.cal;body.id=id;
+  try{const r=await api("saveWedding",{wedding:body});body.updatedAt=r.updatedAt;body.cal=r.cal||w.d.cal;w.d=Object.assign({},w.d,body);toast("Saved")}
+  catch(e){toast("Couldn't save. Try again.")}
+  renderAwDue();
+}
+function awGo(id,k){
+  const d=awData(id);if(!d)return;
+  const first=(String(d.bride||"").trim().split(/\s+/)[0])||"";
+  if(k==="text"){
+    const n=digits(d.bridePhone);
+    if(!n){toast("Add the bride's cell on her wedding first");return}
+    location.href=smsHref([n],AW_TEXT);
+  }else{
+    const em=awEmailOf(d);
+    if(!em){toast("Add the bride's email on her wedding first");return}
+    location.href="mailto:"+encodeURIComponent(em).replace(/%40/g,"@")+"?subject="+encodeURIComponent(AW_SUBJECT)+"&body="+encodeURIComponent(awEmailBody(first));
+  }
+}
+function awBind(box){
+  box.querySelectorAll("[data-aw-go]").forEach(b=>b.onclick=()=>awGo(b.dataset.awId,b.dataset.awGo));
+  box.querySelectorAll("[data-aw-mark]").forEach(b=>b.onclick=()=>awPatch(b.dataset.awId,{[b.dataset.awMark==="text"?"albumTextSent":"albumEmailSent"]:awToday()}));
+  box.querySelectorAll("[data-aw-undo]").forEach(b=>b.onclick=()=>awPatch(b.dataset.awId,{[b.dataset.awUndo==="text"?"albumTextSent":"albumEmailSent"]:null}));
+  box.querySelectorAll("[data-aw-album]").forEach(c=>c.onchange=()=>awPatch(c.dataset.awAlbum,{albumIn:c.checked||null}));
+  box.querySelectorAll("[data-aw-open]").forEach(a=>a.onclick=e=>{e.preventDefault();const s=$("#saved");s.value=a.dataset.awOpen;s.onchange({target:s});showTab("build");window.scrollTo(0,0)});
+}
+/* Booked weddings: the follow-ups that are due now, for weddings in the last 120 days */
+function renderAwDue(){
+  const box=$("#awDue");if(!box)return;
+  if(ROLE!=="office"){box.hidden=true;return}
+  const today=awToday(),from=awAdd(today,-AW_LOOKBACK);
+  const due=allWeddings.map(w=>({w,d:(docId&&w.id===docId)?S:w.d})).filter(x=>x.d.date&&x.d.date<today&&x.d.date>=from)
+    .map(x=>({...x,steps:awSteps(x.d).filter(st=>st.state==="due")})).filter(x=>x.steps.length)
+    .sort((a,b)=>a.d.date.localeCompare(b.d.date));
+  box.hidden=!due.length;
+  if(!due.length){box.innerHTML="";return}
+  box.innerHTML='<h2>After the Wedding · Due Now</h2>'
+    +due.map(x=>'<div class="aw-row"><div class="aw-top"><a href="#" data-aw-open="'+esc(x.w.id)+'"><b>'+esc(x.d.bride||"Untitled")+'</b></a><span class="hint">Wedding '+esc(shortDate(x.d.date))+'</span></div>'
+      +'<label class="chk aw-got"><input type="checkbox" data-aw-album="'+esc(x.w.id)+'"'+(x.d.albumIn?" checked":"")+'> Photo album received</label>'
+      +x.steps.map(st=>awStepHTML(x.w.id,st)).join("")+'</div>').join("");
+  awBind(box);
+}
 
 /* ---------- pipeline (office) ---------- */
 let ppRows=[],ppOpen=null,vmOpen=null,ppCard=null;
