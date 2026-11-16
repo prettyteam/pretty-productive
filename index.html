@@ -549,6 +549,7 @@ details.days summary::-webkit-details-marker{display:none}
 <script src="g/jokes.js?v=2"></script>
 <script src="g/rx.js?v=124"></script>
 <script src="g/prices.js?v=10"></script>
+<script src="g/addons.js?v=1"></script>
 <script src="g/ordering.js?v=4"></script>
 <script src="g/inventory.js?v=2"></script>
 <script src="g/whattoorder.js?v=12"></script>
@@ -2302,6 +2303,7 @@ function staffTabs(){
   if(p.cr&&p.cr.weeks&&p.cr.weeks.length) t.push(['cr','Weekly CR']);
   if(st.slug) t.push(['off','Time Off']);
   if(st.slug) t.push(['prices','Prices']);
+  if(st.slug) t.push(['addons','Quick Add-Ons']);
   if(orderMode()&&window.Ordering) t.push(['order',orderMode()==='full'?'What To Order':'Ordering']);
   if(st.slug) t.push(['ask','Send To Alex']);
   if(st.slug&&p.pk&&p.pk.groups&&p.pk.groups.length) t.push(['pk','PK Knowledge']);
@@ -2316,7 +2318,7 @@ function staffTabs(){
 }
 /* One menu instead of a row of tabs (Alexandra, Oct 2026). Sections are grouped; Customer cards holds RX card and Home care. */
 const NAV_GROUPS=[['Guest Requests',['greq']],['Appointments',['home','today','tomorrow','tip']],['Customer Cards',['rx','reg']],[MW_NAME,['mph']],['Goals',['growth','binder','cr']],
-  ['Salon & Spa',['prices','order','pk','inv','skin','cards','off']],['Taffeta',['guide','hb','fg']],['Send To Alex',['ask']],['Self Promotion',['promo']],['Marketing Proofs',['mkt']],['Bridal App',['wed']],['My Profile',['me']]];
+  ['Salon & Spa',['prices','addons','order','pk','inv','skin','cards','off']],['Taffeta',['guide','hb','fg']],['Send To Alex',['ask']],['Self Promotion',['promo']],['Marketing Proofs',['mkt']],['Bridal App',['wed']],['My Profile',['me']]];
 let NAV_OPEN=false;
 /* Disco ball = Home, Back arrow = the page before (Alexandra, Oct 15 2026). Each page change is a browser history step,
    so the Back arrow and the phone's own back swipe both work. */
@@ -2448,6 +2450,7 @@ function staffRender(){
   if(S.tab==='reg') return regimenView();
   if(S.tab==='rx') return rxView();
   if(S.tab==='prices') return pricesView();
+  if(S.tab==='addons') return addonsView();
   if(S.tab==='order') return orderView();
   if(S.tab==='ask') return askView();
   if(S.tab==='greq') return greqView();
