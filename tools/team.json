@@ -828,7 +828,16 @@
         "set": "hair",
         "pages": 2,
         "desc": "How to consult and price extensions",
-        "canva": "DAE-7gz48Hc"
+        "canva": "DAE-7gz48Hc",
+        "also": [
+          "dominique",
+          "jennifer-c",
+          "joanna",
+          "lexi",
+          "neva-l",
+          "angelina-c",
+          "alexandra"
+        ]
       },
       {
         "id": "build-book",
