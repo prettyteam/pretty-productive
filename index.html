@@ -555,6 +555,7 @@ details.days summary::-webkit-details-marker{display:none}
 .asksent p{margin:0;font-size:15px;color:var(--muted);max-width:34ch}
 .asksent .obtn{margin-top:6px}
 .lrow.asknew{background:var(--marshmallow);border-radius:6px;padding-left:8px;padding-right:8px}
+.askans{display:block;margin-top:4px;color:var(--ink,inherit);font-size:14px;line-height:1.4}
 .hub textarea,.hub select{font:inherit;font-size:15px;border:1px solid var(--line);border-radius:6px;padding:8px 10px;background:#fff;width:100%;color:var(--ink)}
 .askreq{background:#fff;border:1px solid var(--line);border-radius:8px;padding:12px;display:flex;flex-direction:column;gap:4px;font-size:14px;margin-bottom:8px}
 .askreq .top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
@@ -571,7 +572,7 @@ details.days summary::-webkit-details-marker{display:none}
 <script src="g/regimen.js?v=49"></script>
 <script src="g/qr.js?v=1"></script>
 <script src="g/jokes.js?v=2"></script>
-<script src="g/rx.js?v=124"></script>
+<script src="g/rx.js?v=125"></script>
 <script src="g/prices.js?v=10"></script>
 <script src="g/ordering.js?v=4"></script>
 <script src="g/inventory.js?v=2"></script>
@@ -2311,7 +2312,8 @@ function askView(){
   const st=s=>h('span',{class:'stat'+(s==='Sent'?'':' ok')},s);
   const mine=d.myReqs||[];
   if(mine.length) out.push(h('div',{class:'sec2'},h('span',{class:'lbl'},'Your Requests'),mine.map((x,i)=>h('div',{class:'lrow'+(ASK.sent&&i===0&&x.sent>=ASK.sent.at-6e5?' asknew':'')},
-    h('div',{},h('b',{},askWhat(x)),h('br'),h('small',{},(ASK_KINDS.find(k=>k[0]===x.kind)||[])[1]+' · Sent '+new Date(x.sent).toLocaleDateString('en-US',{month:'short',day:'numeric'}))),st(x.status)))));
+    h('div',{},h('b',{},askWhat(x)),h('br'),h('small',{},(ASK_KINDS.find(k=>k[0]===x.kind)||[])[1]+' · Sent '+new Date(x.sent).toLocaleDateString('en-US',{month:'short',day:'numeric'})),
+      x.answer?h('small',{class:'askans'},h('b',{},'Answer: '),x.answer):null),st(x.status)))));
   const rr=d.retailReqs;
   if(rr) out.push(h('div',{class:'sec2'},h('span',{class:'lbl'},'Customer Orders To Place'),rr.length?rr.map(x=>h('div',{class:'askreq'},
       h('div',{class:'top'},h('b',{},(x.item||'')+(x.qty?' ×'+x.qty:'')),st(x.status)),
@@ -3034,6 +3036,7 @@ function reqsView(){
     x.kind!=='ask'&&x.note?h('small',{},x.note):null,
     x.link?h('small',{},h('a',{href:/^https?:/i.test(x.link)?x.link:'https://'+x.link,target:'_blank',rel:'noopener'},'Open Easi Hair Pro link')):null,
     h('small',{class:'soft'},'Sent '+new Date(x.sent).toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'})+(x.status!=='Sent'&&x.by?' · '+x.status+' by '+x.by:'')),
+    x.answer?h('small',{class:'askans'},h('b',{},'Answer: '),x.answer):null,
     h('div',{class:'acts'},(x.kind==='ask'?['Done']:['Ordered','Arrived','Done']).map(st=>h('button',{type:'button',class:'obtn sm','aria-pressed':String(x.status===st),disabled:RQ.busy?'':null,onclick:()=>set(x,st)},st))));
   const msg=RQ.err==='setup'?'Requests aren’t connected yet.':RQ.err?'Can’t reach the requests right now.':'Loading…';
   return [h('div',{class:'hub'},h('h1',{style:'font-size:28px;text-align:center'},'Requests'),
