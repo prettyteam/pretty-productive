@@ -2086,7 +2086,8 @@ function askView(){
        The form keeps what she typed if it didn't go through. */
     /* Nov 16 2026: the Easi Hair Pro "Type" field (f.type) used to overwrite type:'req', so the script never saw a
        request and those orders were dropped while the app still said Sent. Hair type now goes as hairType, type last. */
-    const {type:hairType,...rest}=f, body={...rest,hairType:hairType||'',kind:ASK.kind,type:'req'}, kind=ASK.kind, what=askWhat({kind,...f});
+    const kind=ASK.kind, rest={}; ASK_FIELDS[kind].forEach(([k])=>{if(f[k])rest[k==='type'?'hairType':k]=f[k]});   /* only this form's boxes */
+    const body={...rest,kind,type:'req'}, what=askWhat({kind,...f});
     hubPost(body,'',()=>{ASK.f={};ASK.sent={kind,what,at:Date.now()};scrollTo({top:0,behavior:'smooth'})})};
   if(ASK.sent){const s=ASK.sent, rose=s.kind==='retail';
     out.push(h('div',{class:'asksent',role:'status'},h('div',{class:'chk','aria-hidden':'true'},'✓'),
