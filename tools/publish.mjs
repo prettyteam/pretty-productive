@@ -104,10 +104,11 @@ if (args.binder && binderCfg) {
     }
   }
 }
+// 'also' (Nov 16 2026) = people outside the page's set who still get it (the Extension guide goes to every stylist who does extensions).
 const binderFor = (slug) => {
   if (!binderCfg) return null;
   const sets = Object.entries(binderCfg.sets || {}).filter(([, who]) => (who || []).includes(slug)).map(([s]) => s);
-  const list = (binderCfg.pages || []).filter((pg) => (pg.only ? pg.only.includes(slug) : sets.includes(pg.set)) && keys.binder[pg.id] && keys.binder[pg.id].file)
+  const list = (binderCfg.pages || []).filter((pg) => (pg.only ? pg.only.includes(slug) : sets.includes(pg.set) || (pg.also || []).includes(slug)) && keys.binder[pg.id] && keys.binder[pg.id].file)
     .map((pg) => ({ id: pg.id, title: pg.title, sec: pg.sec, desc: pg.desc || '', pages: pg.pages || null, file: keys.binder[pg.id].file, k: keys.binder[pg.id].key }));
   return list.length ? list : null;
 };
