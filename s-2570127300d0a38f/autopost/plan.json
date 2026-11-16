@@ -44,6 +44,12 @@
    "url": "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/spa-1115.jpg"
   },
   {
+   "id": "spa-1116",
+   "account": "spa.taffeta",
+   "at": "2026-11-16T17:30:00-05:00",
+   "url": "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/spa-1116.jpg"
+  },
+  {
    "id": "spa-1117",
    "account": "spa.taffeta",
    "at": "2026-11-17T17:30:00-05:00",
@@ -120,6 +126,12 @@
    "account": "spa.taffeta",
    "at": "2026-11-29T17:30:00-05:00",
    "url": "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/spa-1129.jpg"
+  },
+  {
+   "id": "spa-1130",
+   "account": "spa.taffeta",
+   "at": "2026-11-30T17:30:00-05:00",
+   "url": "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/spa-1130.jpg"
   }
  ],
  "firstComments": [
@@ -315,7 +327,7 @@
    "id": "nspa-6",
    "account": "spa.taffeta",
    "at": "2026-11-16T17:30:00-05:00",
-   "ok": false,
+   "ok": true,
    "urls": [
     "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/feed/nspa-6-1.jpg"
    ],
@@ -489,20 +501,6 @@
    ],
    "caption": "No doorbusters, no 5 am lines. Just cozy things made to make you feel good.\n\nShop small this weekend, from the couch, in your pajamas. Shop at the link in bio.",
    "tags": "#HiPretty #BlackFriday #ShopSmall #SmallBusinessSaturday #WomenOwnedBusiness"
-  }
- ],
- "held": [
-  {
-   "id": "spa-1116",
-   "account": "spa.taffeta",
-   "at": "2026-11-16T17:30:00-05:00",
-   "url": "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/spa-1116.jpg"
-  },
-  {
-   "id": "spa-1130",
-   "account": "spa.taffeta",
-   "at": "2026-11-30T17:30:00-05:00",
-   "url": "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/spa-1130.jpg"
   }
  ]
 }
