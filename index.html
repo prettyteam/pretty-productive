@@ -1101,6 +1101,7 @@ function homeView(){
   const clockTop=!!st.clock;
   if(clockTop){out.push(clockCard()); if(HUB.fx) out.push(fixCard());}
   const hm=homeMenu(); if(hm) out.push(hm);
+  if(isSkinTeam(S.mine)) out.push(discCard());   /* Discontinued Retail for the skincare team (Nov 16 2026) */
   if(st.clock&&!clockTop) out.push(clockCard());
   if(st.clock&&!clockTop&&HUB.fx) out.push(fixCard());
   const shifts=(d&&d.shifts)||[];
@@ -1775,7 +1776,7 @@ function invGroup(gid,key,title,sub,els,ids){
   return d;
 }
 function invAll(){
-  const set=v=>()=>document.querySelectorAll('details.invg').forEach(d=>{if(d.style.display!=='none'){d.open=v}});
+  const set=v=>()=>document.querySelectorAll('details.invg:not(.disc)').forEach(d=>{if(d.style.display!=='none'){d.open=v}});
   return h('div',{class:'invall','data-nosearch':'1'},h('button',{class:'tab',onclick:set(true)},'Open all'),h('button',{class:'tab',onclick:set(false)},'Close all'));
 }
 const invPct=v=>v==null?'—':(v>0?'+':'')+v+'%';
@@ -2054,6 +2055,69 @@ function invSpa(){
     h('details',{class:'tryd'},h('summary',{},h('span',{class:'tlabel'},'What each supply costs'),h('span',{class:'tplus','aria-hidden':'true'},'+')),...spaSupplies(D.supplies||[],false,true))];
 }
 
+/* Discontinued Retail (Alexandra, Nov 16 2026): Biologique Recherche's own discontinued list (BR PDF "Discontinued Products 11.02.26",
+   from their November 2026 newsletter, sent by Megan Feeney Nov 13). Shows for the skincare team (estheticians and anyone with
+   Skincare Stock) on Home and on Skincare Stock. Tap the plus sign to open. Update BR_DISC when BR sends a new list. */
+const BR_DISC_DATE='Nov 2, 2026';
+const BR_DISC=[
+  ['Ending Soon','Sell what we have. Do not reorder.',[
+    ['Sérum Teinte N°1–6 (Cool And Warm)','1 oz and samples. Almost gone, being phased out.'],
+    ['Sérum Collagène Originel (0.3, 1 And 4.2 oz)','Last day to order was Nov 15. New version: Collagène Originel II.']]],
+  ['Replaced By A New One','Offer the new product instead.',[
+    ['Lait VIP O2 (Old)','Now: Lait VIP O2 (New)'],
+    ['Masque VIP O2 (Old)','Now: Masque VIP O2 (New)'],
+    ['Crème VIP O2 (Old)','Now: Crème VIP O2 (New)'],
+    ['Crème Contour Des Yeux VIP O2 (Old)','Now: Crème Contour Des Yeux VIP O2 (New)'],
+    ['Fluide VIP O2 (Old)','Now: Fluide VIP O2 (New)'],
+    ['Booster VIP O2','Now: Soin VIP O2 (New)'],
+    ['Sérum Yall O2 (Old)','Now: Sérum Yall O2 (New)'],
+    ['L’Eauxygénante (Old)','Now: L’Eauxygénante (New)'],
+    ['Émulsion Corps VIP O2 (Old)','Now: Émulsion Corps VIP O2 (New), 3.4 oz'],
+    ['Crème Verte Espoir A.R.','Now: Crème V. Espoir'],
+    ['Crème MSR-H 1.7 oz (Old)','Now: Crème MSR-H (New)'],
+    ['Tolèskin C 1.4 oz','Now: Tolèskin C 1.7 oz'],
+    ['Crème ADN Métamorphique','Now: Crème PTO Métamorphique'],
+    ['Masque Biologique Capillaire','Now: Crème De Soin'],
+    ['Baume Capillaire','Now: Crème De Soin'],
+    ['Gel D’Algues (Both Kinds)','Now: Enveloppement Marin'],
+    ['Masque PIGM 400 (4 Sachets)','Now: Masque PIGM 400 (1 Sheet)']]],
+  ['One Size Gone','Other sizes are still sold.',[
+    ['Solution Démaquillante Pour Les Yeux 3.4 oz','The eye makeup remover. Pro size stays (out of stock now).'],
+    ['Shampooing Dermo-Apaisant','2.5 and 16.9 oz gone. 6.8 oz stays.'],
+    ['Shampooing Nutri-K','2.5 and 16.9 oz gone. 6.8 oz stays.'],
+    ['Shampooing Sébo-Rééquilibrant','2.5 and 16.9 oz gone. 6.8 oz stays.'],
+    ['Shampooing VIP O2','2.5 and 16.9 oz gone. 6.8 oz stays.'],
+    ['Crème De Soin 16.9 oz','6.8 oz stays.']]],
+  ['Gone For Good','No new version. Do not offer.',[
+    ['Eye Care Concealer N°1–4',''],
+    ['Lipogen AC (100 And 500 ml)',''],
+    ['Complexe CEGABA + Bioproline',''],
+    ['Crème Contour Des Yeux Biosensible',''],
+    ['Crème B-Stria',''],
+    ['Crème Collagène (1.7 And 3.4 oz)',''],
+    ['Crème Défatigante',''],
+    ['Huile Dermotonique',''],
+    ['Huile Sous-Ombilicale',''],
+    ['Huile Détente',''],
+    ['Émulsion Rénovatrice Mains',''],
+    ['Émulsion Mains PIGM 400',''],
+    ['Émulsion Originelle Régénérante Corps',''],
+    ['Masque Gommage Mains',''],
+    ['Préparation U.V. And Réparation U.V.',''],
+    ['Sérum 3R 125 ml',''],
+    ['Helios (30 Caps)','']]]];
+const isSkinTeam=p=>!!p&&(isEsti(p)||!!(p.skin&&p.skin.file));
+function discCard(){
+  const n=BR_DISC.reduce((a,g)=>a+g[2].length,0);
+  const d=h('details',{class:'section invg disc','data-key':'disc'},
+    h('summary',{},h('h2',{},'Discontinued Retail'),h('span',{class:'invc soft'},n+' items'),h('span',{class:'tplus','aria-hidden':'true'},'+')),
+    h('small',{class:'soft',style:'margin-top:-8px'},'Biologique Recherche list from '+BR_DISC_DATE+'.'),
+    ...BR_DISC.map(([t,sub,xs])=>h('div',{class:'sec2'},h('span',{class:'lbl'},t),h('small',{class:'soft'},sub),
+      xs.map(([a,b])=>h('div',{class:'lrow'},h('span',{},h('b',{},a),b?h('small',{},b):null))))));
+  if(INVOPEN.disc) d.open=true;
+  d.addEventListener('toggle',()=>{INVOPEN.disc=d.open});
+  return d;
+}
 /* estheticians: Skincare stock (Biologique Recherche on-hand counts, no costs) */
 let SKIN={data:null,err:null,loading:false,key:null};
 /* Send To Alex (Alexandra, Oct 30 2026): a guest's retail product order (to Alex and Rose), an Easi Hair Pro extension order
@@ -2137,6 +2201,7 @@ function skinView(){
     const e=h('div',{class:'lrow','data-grp':n>0?'skin1':'skin0'},h('span',{},h('b',{},item),h('small',{},retail?'retail '+money(retail):''),edit?stockBox(id,item,oh!=null&&oh>=0?oh:null):null),right);
     e.dataset.q=item.toLowerCase(); e.dataset.id=id; rows.push(e); (n>0?inS:outS).push(e);});
   return [h('div',{class:'hub'},head,h('p',{class:'soft',style:'font-size:13px;margin:-14px 0 0'},edit?'Type the count you see on the shelf. It saves for the whole spa team.':'On hand right now. Tell Carolyn, Alexandra or Rose when something runs low.'),
+    h('div',{'data-nosearch':'1'},discCard()),
     invSearch('Search a product',rows),
     invAll(),
     invGroup('skin1','skin|in','In stock',null,inS,inS.map(e=>e.dataset.id)),
