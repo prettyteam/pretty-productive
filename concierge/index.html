@@ -14,6 +14,20 @@ html,body{background:#f8f6f0}
 .input{border-color:#2b2a28;background:#fff}
 .sec>.eyebrow{display:flex;align-items:center;justify-content:center;gap:12px;color:#121212;border-bottom:0;padding-bottom:0;text-align:center}
 .sec>.eyebrow::before,.sec>.eyebrow::after{content:"";width:28px;height:1px;background:#2b2a28;flex:none}
+/* Quick Add-Ons (Alexandra, Nov 16 2026): tap a group to open it */
+.ao{border-top:1px solid var(--line)}
+.ao:last-of-type{border-bottom:1px solid var(--line)}
+.ao>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:12px;padding:15px 2px;min-height:44px}
+.ao>summary::-webkit-details-marker{display:none}
+.ao>summary b{flex:1;font-weight:400;font-family:var(--display);font-size:19px}
+.ao>summary .n{font-size:13px;color:var(--soft)}
+.ao>summary .pl{font-family:var(--display);font-size:24px;line-height:1;transition:transform .15s}
+.ao[open]>summary .pl{transform:rotate(45deg)}
+.ao .opts{padding:0 0 10px 12px}
+.ao .opt:first-child{border-top:0}
+.ao .opt:last-child{border-bottom:0}
+.ao .pr{font-size:15px;white-space:nowrap;align-self:center}
+.ao .pr.ask{font-size:13px;color:var(--soft)}
 </style>
 <script src="../g/config.js?v=2"></script>
 <script src="/g/life.js?v=1"></script>
@@ -52,6 +66,12 @@ html,body{background:#f8f6f0}
   </div>
 </section>
 
+<section class="group" id="addons">
+  <h2>Quick Add-Ons</h2>
+  <p style="margin:-4px 0 4px;color:var(--soft);font-size:14.5px">Small extras that fit right into your visit. Tap a group to see them. Your artist will let you know if there's time.</p>
+  <div id="aoList"></div>
+</section>
+
 <section class="group">
   <h2>Before you go</h2>
   <div class="opts">
@@ -81,11 +101,28 @@ html,body{background:#f8f6f0}
   const r=await fetch(window.TAFFETA_ENDPOINT+'?artists=1'),j=await r.json(),L=(j&&j.artists)||[];if(!L.length)return;
   const sel=document.getElementById('artist');L.forEach(x=>{const o=document.createElement('option');o.value=x.a;o.textContent=x.n;sel.append(o)});
   document.getElementById('artistWrap').hidden=false}catch(e){}})();
+/* Quick Add-Ons (Alexandra, Nov 16 2026). Prices match the menu (g/prices.js). '' = not on the menu yet: "Ask your artist".
+   Never list massage (house rule). Picks ride along in "before" as "Add-on: …" so the desk, the sheet and staff phone alerts all show them. */
+const AO=[
+  ['Brows',[['Brow Sculpt','$25','A clean, shaped brow.'],['Brow Tint','$25','Fuller, richer brows that last for weeks.'],
+    ['Brow Lamination','$85','Brushed-up, full brows. Comes with a kit to keep them set.'],['Lip or Chin Wax','$15','A quick, smooth finish.']]],
+  ['Skin',[['Express Targeted Treatment','$99','30 min. We focus on the one thing your skin needs most.'],['Taffeta HydroDiamond Express','$99','30 min. Clean, bright, glowing skin.'],
+    ['Dermaplaning','$40','Smooth skin, so makeup goes on beautifully.'],['LED Light Therapy','$50','Calms redness and helps clear breakouts.'],
+    ['Cold Seaweed Masque','$50','Cools and calms. Perfect before an event.'],['High Frequency','$25','Helps clear and calm breakouts.']]],
+  ['Hair',[['Color Lock','$20','Seals in your color so it stays rich longer.'],['K18 Bond Protection','$45','Protects and repairs your hair during color.'],
+    ['Oribe Mirror Glass Shine','$35','Glassy, mirror-like shine.'],['Scalp Treatment','','A soothing, clarifying treatment at the shampoo bowl.'],
+    ['Gloss','$45+','Refreshes your tone and adds shine.'],['Face Frame Highlight','$100+','Brightens the pieces around your face.']]],
+  ['Nails',[['Express Manicure','$15 / $25','Polish or gel. Shaped and polished, fast.'],['Express Pedicure','$35 / $45+','Polish or gel. Pretty toes in a hurry.'],
+    ['Taffeta Signature Manicure','$35','Our full manicure.'],['Taffeta Signature Pedicure','$60','Our full pedicure.'],['French Tip','$10','Add to any manicure or pedicure.']]],
+  ['Lashes & Makeup',[['Individual False Lashes','$25','A little extra for a night out.'],['Just Eyes','$70','Shadow and a strip lash, ready for your event.']]]];
+(()=>{const box=document.getElementById('aoList'),esc=t=>String(t).replace(/[<>&"]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'})[c]);
+  box.innerHTML=AO.map(([g,L])=>`<details class="ao"><summary><b>${esc(g)}</b><span class="n">${L.length}</span><span class="pl" aria-hidden="true">+</span></summary><div class="opts">`+
+    L.map(([n,p,w])=>`<label class="opt"><input type="checkbox" name="addons" value="${esc(n)}"><span class="box"></span><span class="t"><b>${esc(n)}</b><small>${esc(w)}</small></span><span class="pr${p?'':' ask'}">${p?esc(p):'Ask your artist'}</span></label>`).join('')+'</div></details>').join('')})();
 const $=s=>document.querySelector(s), vals=n=>[...document.querySelectorAll(`[name="${n}"]:checked`)].map(i=>i.value);
 $('#f').addEventListener('submit',async e=>{
   e.preventDefault(); const err=$('#err'); err.textContent='';
   const name=$('#name').value.trim();
-  const d={type:'concierge',name,sips:vals('sips'),comforts:vals('comforts'),before:vals('before'),note:$('#note').value.trim(),artist:$('#artist').value,website:document.querySelector('[name=website]').value};
+  const d={type:'concierge',name,sips:vals('sips'),comforts:vals('comforts'),before:vals('before').concat(vals('addons').map(n=>'Add-on: '+n)),note:$('#note').value.trim(),artist:$('#artist').value,website:document.querySelector('[name=website]').value};
   if(!name){err.textContent='Please add your name so we know who to bring it to.';$('#name').focus();return}
   if(!d.sips.length&&!d.comforts.length&&!d.before.length&&!d.note){err.textContent='Tap at least one thing you’d love.';return}
   if(!window.TAFFETA_ENDPOINT){err.textContent='Almost ready! Please let the front desk know what you’d like for now.';return}
