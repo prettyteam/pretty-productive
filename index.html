@@ -2084,7 +2084,9 @@ function askView(){
     if(need.length){HUB.toast='Fill in '+need.map(k=>ASK_FIELDS[ASK.kind].find(x=>x[0]===k)[1].toLowerCase()).join(' and ')+' first.';render();setTimeout(()=>{HUB.toast='';render()},4000);return}
     /* Nov 13 2026: a clear "Sent to Alexandra" card stays on screen after sending (the old 4-second line was easy to miss).
        The form keeps what she typed if it didn't go through. */
-    const body={type:'req',kind:ASK.kind,...f}, kind=ASK.kind, what=askWhat({kind,...f});
+    /* Nov 16 2026: the Easi Hair Pro "Type" field (f.type) used to overwrite type:'req', so the script never saw a
+       request and those orders were dropped while the app still said Sent. Hair type now goes as hairType, type last. */
+    const {type:hairType,...rest}=f, body={...rest,hairType:hairType||'',kind:ASK.kind,type:'req'}, kind=ASK.kind, what=askWhat({kind,...f});
     hubPost(body,'',()=>{ASK.f={};ASK.sent={kind,what,at:Date.now()};scrollTo({top:0,behavior:'smooth'})})};
   if(ASK.sent){const s=ASK.sent, rose=s.kind==='retail';
     out.push(h('div',{class:'asksent',role:'status'},h('div',{class:'chk','aria-hidden':'true'},'✓'),
