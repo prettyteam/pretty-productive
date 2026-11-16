@@ -783,7 +783,7 @@ function rxBuild(R,me){
 /* Categories for the editor's Add picker (Alexandra, Oct 20 2026) */
 const RX_ADDCAT=new WeakMap(), RX_ADDOPEN=new WeakSet();
 function rxSvcCats(kind,svc){
-  const groups=kind==='skin'?[['Facials',/Facial|Lift & Remodel|Cure All|Microdermabrasion/],['Targeted Treatments',/Express|Boost|Mini|Reversal/],['Add-Ons',/Dermaplaning|^Masque: /],['Brows & Wax',/Brow|Wax/]]
+  const groups=kind==='skin'?[['Facials',/Facial|Lift & Remodel|Cure All|Microdermabrasion/],['Targeted Treatments',/Express|Boost|Mini|Reversal|^Dermaplaning$/],['Add-Ons',/Dermaplaning Add-On|^Masque: /],['Brows & Wax',/Brow|Wax/]]  /* Nov 16 2026 (Carolyn): Dermaplaning on its own is a service (often with a brow wax), not only an add-on */
     :[['Cuts & Styling',/Haircut|Leave Wet|Blow|Formal/],['Color',/Single Process|Shadow Root|Glaze|Additional Mix|Base Lightener/],['Foils & Balayage',/Foil|Highlight|Balayage/],['Treatments',/K18|Goldwell|Wave/]];
   const out=groups.map(([c,re])=>['Services · '+c,svc.filter(([n])=>re.test(n)&&(c==='Add-Ons'||!n.startsWith(RX_MQ)))]);
   const left=svc.filter(([n])=>!groups.some(([,re])=>re.test(n))); if(left.length) out.push(['Services · Other',left]);
@@ -1067,7 +1067,9 @@ function rxTakeHomeView(me){
      sees them on her Home Care card and rings them up. One already in the option she chose isn't offered again. */
   const svcOpt=(opts[ch]?opts[ch].lines:[]).filter(l=>l.t==='s').map(l=>l.n), inOpt=n=>svcOpt.includes(n);
   if(!Array.isArray(x.addons)) x.addons=[];
-  const addL=kind==='skin'?RX_SVC.skin.filter(([n])=>n==='Dermaplaning Add-On'&&!inOpt(n)):[];
+  /* Nov 16 2026 (Carolyn): with a facial it's the $40 Dermaplaning Add-On; with only brows or wax it's Dermaplaning on its own */
+  const hasFacial=svcOpt.some(n=>/Facial|Lift & Remodel|Cure All|Microdermabrasion|Express|Boost|Mini|Reversal/.test(n));
+  const addL=kind==='skin'?RX_SVC.skin.filter(([n])=>n===(hasFacial?'Dermaplaning Add-On':'Dermaplaning')&&!inOpt(n)&&!inOpt('Dermaplaning')&&!inOpt('Dermaplaning Add-On')):[];
   /* one Masque line with a drop-down of which masque; picking another swaps it */
   const mqOn=x.addons.find(a=>a.n.startsWith(RX_MQ)), mq=kind==='skin'?h('select',{'aria-label':'Which masque'},h('option',{value:''},'Masque · $50: Pick One'),
     RX_MASQUES.map(m=>h('option',Object.assign({value:RX_MQ+m},mqOn&&mqOn.n===RX_MQ+m?{selected:''}:{}),m))):null;
