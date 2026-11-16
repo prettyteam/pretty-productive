@@ -268,6 +268,30 @@ body{padding-bottom:110px}
 .fld{display:flex;flex-direction:column;gap:5px;font-size:14px}
 .fld input,.fld select{font:inherit;font-size:16px;height:44px;border:1px solid var(--line);border-radius:4px;background:#fbfaf7;padding:0 10px;color:var(--ink);width:100%;min-width:0;-webkit-appearance:none;appearance:none}
 .fld2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}.hub,.card2,.fld{min-width:0}
+/* Today's To Do under the Time Clock (Alexandra, Nov 16 2026) */
+.todo{border:1.5px solid var(--ink);gap:10px}
+.todo .tdhead{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap}
+.todo h2{font-family:var(--display);font-weight:400;font-size:24px;margin:0;line-height:1.1}
+.todo .tdcount{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.todo .tdbar{height:5px;background:var(--line);border-radius:3px;overflow:hidden}
+.todo .tdbar i{display:block;height:100%;background:var(--choc);border-radius:3px;transition:width .3s}
+.tditem{display:flex;align-items:center;gap:12px;width:100%;text-align:left;font:inherit;font-size:16px;color:var(--ink);background:#fff;border:1px solid var(--line);border-radius:8px;padding:12px;cursor:pointer;min-height:54px}
+.tditem .tdbox{flex:0 0 26px;height:26px;border:1.5px solid var(--ink);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;color:#fff}
+.tditem .tdtx{flex:1;min-width:0;line-height:1.3}
+.tditem .tdtx small{display:block;font-size:12px;color:var(--muted);letter-spacing:.04em}
+.tditem .tdwho{flex:0 0 auto;font-size:12px;letter-spacing:.06em;color:var(--choc);text-align:right;line-height:1.25}
+.tditem .tdwho b{display:block;font-size:15px;letter-spacing:.08em}
+.tditem[aria-pressed="true"]{background:var(--marshmallow)}
+.tditem[aria-pressed="true"] .tdbox{background:var(--choc);border-color:var(--choc)}
+.tditem[aria-pressed="true"] .tdtx>span{text-decoration:line-through;color:var(--muted)}
+.tdini{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;background:var(--marshmallow);border-radius:8px;padding:12px}
+.tdini input{font:inherit;font-size:20px;letter-spacing:.2em;text-transform:uppercase;width:90px;height:44px;text-align:center;border:1px solid var(--ink);border-radius:4px;background:#fff}
+.tddays{display:flex;gap:6px;flex-wrap:wrap}
+.tddays button{font:inherit;font-size:13px;border:1px solid var(--line);background:#fff;border-radius:999px;padding:6px 11px;cursor:pointer}
+.tddays button[aria-pressed="true"]{background:var(--ink);color:#fff;border-color:var(--ink)}
+.tdall .lrow{align-items:flex-start}
+.tdall .lrow span{min-width:0}
+.tdlink{font:inherit;font-size:13.5px;background:none;border:0;padding:4px;color:var(--ink);text-decoration:underline;text-underline-offset:3px;cursor:pointer;align-self:center}
 .stat{font-size:12px;border:1px solid var(--line);border-radius:999px;padding:1px 10px;white-space:nowrap}
 .stat.ok{border-color:var(--choc);color:var(--choc)}
 .toast{font-size:14px;color:var(--choc);min-height:1.4em;text-align:center}
@@ -894,6 +918,7 @@ function render(){
   else if(!S.isAdmin) parts=[h('div',{class:'empty'},h('h3',{},'This board is for the leadership team'),h('p',{},'Your own goals live on your personal Employee Experience App link.'))];
   else if(S.rtab==='home') parts=reportHome();
   else if(S.rtab==='payroll') parts=payrollView();
+  else if(S.rtab==='todo') parts=todoAdminView();
   else if(S.rtab==='off') parts=adminOffView();
   else if(S.rtab==='reqs') parts=reqsView();
   else if(S.rtab==='month') parts=monthView();
@@ -1089,6 +1114,125 @@ function tpProfileCard(){
       h('button',{class:'obtn',style:'background:none;color:inherit;border:1px solid var(--line)',disabled:TP.busy?'':null,onclick:tpTurnOff},TP.busy?'One moment…':'Turn off on this phone'),
       TP.msg?h('p',{class:'toast'},TP.msg):null]:tpSteps()));
 }
+/* ---- Today's To Do (Alexandra, Nov 16 2026) ----
+   Under the Time Clock for everyone who clocks in, on days she works. Tasks are shared: when one girl checks one off,
+   everyone sees it done with her initials and the time. Alexandra adds tasks in The Pretty Report; Rose can add them in her app. */
+let TD={ask:null,iniDraft:'',busy:'',msg:'',add:null,showAll:false};
+const TD_DAYS=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+const TD_ERR={tdone:b=>'Already done by '+(b||'a teammate')+'.',tnotyours:b=>'Only '+(b||'the person who checked it')+' can uncheck this.',gone:()=>'That task was just taken off the list.',text:()=>'Type the task first.',days:()=>'Pick at least one day.',date:()=>'Pick the day.',todo:()=>'That didn’t go through. Try again.'};
+function tdIni(){const t=HUB.data&&HUB.data.todo;return store.get('pp-ini:'+ID)||(t&&t.ini)||''}
+async function tdSend(body,onOk){
+  const st=S.mine.staff; let j=null;
+  try{const r=await fetch(API(),{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({...body,slug:st.slug,t:st.t})});j=await r.json()}catch(e){}
+  TD.busy=''; TD.msg=!j?'Can’t connect right now. Check your signal and try again.':j.ok?'':(TD_ERR[j.error]||TD_ERR.todo)(j.by);
+  if(j&&j.ok&&onOk) onOk();
+  await hubGet(); render(); if(TD.msg) setTimeout(()=>{TD.msg='';render()},5000);
+}
+function tdToggle(it){
+  if(TD.busy) return;
+  const ini=tdIni();
+  if(!it.done&&!ini){TD.ask=it;TD.iniDraft=(HUB.data.todo.guess||'');render();return}
+  TD.busy=it.id;
+  it.done=it.done?null:{ini,name:S.mine.name,at:new Date().toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}),slug:S.mine.staff.slug};   // shows right away
+  render(); tdSend({type:'todo',id:it.id,done:!!it.done,ini});
+}
+function tdItem(it,opts){
+  const d=it.done, ro=opts&&opts.readOnly;
+  const kids=[h('span',{class:'tdbox','aria-hidden':'true'},d?'✓':''),
+    h('span',{class:'tdtx'},h('span',{},it.text),
+      (opts&&opts.sub)?h('small',{},opts.sub):it.mine?h('small',{},'Just for you'):null),
+    d?h('span',{class:'tdwho'},h('b',{},d.ini),(opts&&opts.full?d.name+' · ':'')+d.at):null];
+  return ro?h('div',{class:'tditem','aria-pressed':String(!!d),style:'cursor:default'},...kids)
+    :h('button',{type:'button',class:'tditem','aria-pressed':String(!!d),disabled:TD.busy===it.id?'':null,
+      'aria-label':it.text+(d?', done by '+d.ini:''),onclick:()=>tdToggle(it)},...kids);
+}
+function tdRepeatText(t){return t.repeat==='Every day'?'Every day':t.repeat==='One day'?'Only '+niceDay(t.date):'Every '+t.repeat}
+/* the Add A Task form, shared by Rose's app and The Pretty Report */
+function tdForm(F,people,save,cancel,busy){
+  const set=k=>e=>{F[k]=e.target.value};
+  return h('div',{class:'card2',style:'border-color:var(--ink)'},h('span',{class:'lbl'},'Add A Task'),
+    h('label',{class:'fld'},'What needs doing?',h('input',{type:'text',value:F.text,maxlength:'200',placeholder:'Example: Wipe down the color bar',oninput:set('text')})),
+    h('label',{class:'fld'},'Who is it for?',h('select',{onchange:e=>{F.for=e.target.value}},
+      [['Everyone','Everyone working that day']].concat((people||[]).map(p=>[p.slug,'Just '+p.name])).map(([v,l])=>h('option',{value:v,selected:F.for===v?'':null},l)))),
+    h('div',{class:'fld'},'How often?',h('div',{class:'seg'},[['every','Every day'],['days','Some days'],['once','One day']].map(([k,l])=>
+      h('button',{type:'button','aria-pressed':String(F.repeat===k),onclick:()=>{F.repeat=k;render()}},l)))),
+    F.repeat==='days'?h('div',{class:'tddays'},TD_DAYS.map(x=>h('button',{type:'button','aria-pressed':String(F.days.includes(x)),
+      onclick:()=>{F.days=F.days.includes(x)?F.days.filter(y=>y!==x):F.days.concat(x);render()}},x))):null,
+    F.repeat==='once'?h('label',{class:'fld'},'Which day?',h('input',{type:'date',value:F.date,oninput:set('date')})):null,
+    h('div',{style:'display:flex;gap:10px;flex-wrap:wrap;justify-content:center'},
+      h('button',{class:'obtn',disabled:busy?'':null,onclick:save},busy?'One moment…':'Add Task'),
+      h('button',{class:'obtn',style:'background:#fff;color:var(--ink)',onclick:cancel},'Cancel')));
+}
+const tdNewForm=()=>({text:'',for:'Everyone',repeat:'every',days:[],date:ymd(new Date())});
+function tdFormCheck(F){if(!F.text.trim())return'text';if(F.repeat==='days'&&!F.days.length)return'days';if(F.repeat==='once'&&!F.date)return'date';return''}
+function tdAllList(all,onRemove,busy){
+  return h('div',{class:'sec2 tdall'},h('span',{class:'lbl'},'All Tasks · '+all.length),
+    all.length?all.map(t=>h('div',{class:'lrow'},h('span',{},h('b',{},t.text),h('small',{},tdRepeatText(t)+' · '+(t.forName||'Everyone'))),
+      h('button',{class:'obtn sm',disabled:busy?'':null,onclick:()=>onRemove(t)},'Remove'))):h('p',{class:'soft',style:'padding-top:8px'},'No tasks yet.'));
+}
+function todoCard(){
+  const T=HUB.data&&HUB.data.todo; if(!T) return null;
+  const ed=T.edit, items=T.items||[];
+  if(!ed&&(!T.working||!items.length)) return null;   // nothing on days off, or when there's nothing to do
+  const done=items.filter(x=>x.done).length, out=[];
+  out.push(h('div',{class:'tdhead'},h('h2',{},'Today’s To Do'),items.length&&T.working?h('span',{class:'tdcount'},done===items.length?'All done ✓':done+' of '+items.length+' done'):null));
+  if(T.working&&items.length){
+    out.push(h('div',{class:'tdbar'},h('i',{style:'width:'+Math.round(100*done/items.length)+'%'})));
+    if(TD.ask){
+      const inp=h('input',{type:'text',maxlength:'3',value:TD.iniDraft,autocomplete:'off','aria-label':'Your initials',oninput:e=>{TD.iniDraft=e.target.value}});
+      out.push(h('div',{class:'tdini'},h('label',{class:'fld',style:'flex:1;min-width:150px'},'Type your initials once. They show next to what you finish.',inp),
+        h('button',{class:'obtn sm',onclick:()=>{const v=String(inp.value||'').toUpperCase().replace(/[^A-Z]/g,'').slice(0,3);if(!v)return;
+          store.set('pp-ini:'+ID,v);const it=TD.ask;TD.ask=null;tdToggle(it)}},'Save')));
+    }
+    items.forEach(it=>out.push(tdItem(it)));
+  }else if(ed) out.push(h('p',{class:'soft',style:'margin:0'},T.working?'Nothing on the list for today.':'Your list shows on days you work.'));
+  if(TD.msg) out.push(h('p',{class:'toast'},TD.msg));
+  if(ed){
+    if(TD.add) out.push(tdForm(TD.add,ed.people,()=>{const e=tdFormCheck(TD.add);if(e){TD.msg=TD_ERR[e]();render();return}
+        TD.busy='add';render();tdSend({type:'todoadd',task:TD.add},()=>{TD.add=null})},()=>{TD.add=null;TD.msg='';render()},TD.busy==='add'));
+    else out.push(h('div',{style:'display:flex;gap:14px;justify-content:center;flex-wrap:wrap'},
+      h('button',{class:'tdlink',onclick:()=>{TD.add=tdNewForm();render()}},'+ Add a task'),
+      h('button',{class:'tdlink',onclick:()=>{TD.showAll=!TD.showAll;render()}},TD.showAll?'Hide all tasks':'See all tasks')));
+    if(TD.showAll&&!TD.add) out.push(tdAllList(ed.all,t=>{TD.busy='del';render();tdSend({type:'tododel',id:t.id})},!!TD.busy));
+  }
+  return h('div',{class:'card2 todo'},out);
+}
+/* The Pretty Report → Team → To Do List: what got done each day and who did it, plus add and remove tasks */
+let TDA={day:null,data:null,err:null,busy:false,add:null,msg:''};
+async function tdaLoad(extra){
+  if(!S.hubKey||!API()){TDA.err='setup';render();return}
+  TDA.busy=true;render();
+  try{const r=await fetch(API()+'?admin='+encodeURIComponent(S.hubKey)+'&todo='+TDA.day+(extra||'')+'&by='+encodeURIComponent(prWho()||'Alexandra')+'&_='+Date.now());
+    const j=await r.json();if(!j.ok){TDA.msg=(TD_ERR[j.error]||TD_ERR.todo)();throw 0}TDA.data=j;TDA.err=null;if(extra)TDA.add=null}
+  catch(e){if(!TDA.msg)TDA.err='offline'}
+  TDA.busy=false;render();
+}
+function todoAdminView(){
+  if(!TDA.day){TDA.day=ymd(new Date());tdaLoad()}
+  const D=TDA.data&&TDA.data.day===TDA.day?TDA.data:null, items=D?D.items:[], done=items.filter(x=>x.done).length;
+  const step=n=>{const [y,m,d]=TDA.day.split('-').map(Number);TDA.day=ymd(new Date(y,m-1,d+n));tdaLoad()};
+  const isToday=TDA.day===ymd(new Date());
+  const lab=(([y,m,d])=>new Date(y,m-1,d))(TDA.day.split('-').map(Number)).toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
+  const msg=TDA.err==='setup'?'The To Do list isn’t connected yet.':TDA.err?'Can’t reach the To Do list right now.':'Loading…';
+  const out=[h('h1',{style:'font-size:28px;text-align:center'},'To Do List'),
+    h('div',{style:'display:flex;justify-content:space-between;align-items:center;gap:8px'},
+      h('button',{class:'obtn sm',onclick:()=>step(-1)},'‹ Day'),h('b',{style:'font-family:var(--display);font-weight:400;font-size:18px;text-align:center'},isToday?'Today':lab),
+      h('button',{class:'obtn sm',disabled:isToday?'':null,onclick:()=>step(1)},'Day ›'))];
+  if(!D) out.push(h('p',{class:'soft',style:'text-align:center'},msg));
+  else{
+    out.push(h('div',{class:'card2 todo'},h('div',{class:'tdhead'},h('h2',{},isToday?'Today’s To Do':'To Do'),
+        items.length?h('span',{class:'tdcount'},done===items.length?'All done ✓':done+' of '+items.length+' done'):null),
+      items.length?h('div',{class:'tdbar'},h('i',{style:'width:'+Math.round(100*done/items.length)+'%'})):null,
+      items.length?items.map(it=>tdItem(it,{readOnly:true,full:true,sub:it.forName==='Everyone'?'':'Just '+it.forName})):h('p',{class:'soft',style:'margin:0'},'No tasks this day.')));
+    if(TDA.msg) out.push(h('p',{class:'toast'},TDA.msg));
+    if(TDA.add) out.push(tdForm(TDA.add,D.people,()=>{const e=tdFormCheck(TDA.add);if(e){TDA.msg=TD_ERR[e]();render();setTimeout(()=>{TDA.msg='';render()},4000);return}
+      tdaLoad('&todoadd='+encodeURIComponent(JSON.stringify(TDA.add)))},()=>{TDA.add=null;TDA.msg='';render()},TDA.busy));
+    else out.push(h('button',{class:'obtn',onclick:()=>{TDA.add=tdNewForm();render()}},'+ Add A Task'));
+    out.push(tdAllList(D.all,t=>tdaLoad('&tododel='+encodeURIComponent(t.id)),TDA.busy));
+  }
+  out.push(h('p',{class:'soft',style:'text-align:center;font-size:13px'},'Tasks show under the Time Clock for the girls who clock in, on days they work. When one of them checks a task off, everyone sees her initials and the time. Rose can add tasks from her app too.'));
+  return [h('div',{class:'hub'},out)];
+}
 function homeView(){
   const st=S.mine.staff||{}, d=HUB.data;
   const out=[hello()];
@@ -1099,11 +1243,12 @@ function homeView(){
   if(isHub()&&HUB_OPEN!=='salon'){out.push(HUB_OPEN==='social'?hubSocial():hubMenu());return out}
   /* Clock in above the Menu for everyone who clocks in (Alexandra, Nov 13 2026) */
   const clockTop=!!st.clock;
-  if(clockTop){out.push(clockCard()); if(HUB.fx) out.push(fixCard());}
+  if(clockTop){out.push(clockCard()); if(HUB.fx) out.push(fixCard()); const td=todoCard(); if(td) out.push(td);}
   const hm=homeMenu(); if(hm) out.push(hm);
   if(isSkinTeam(S.mine)) out.push(discCard());   /* Discontinued Retail for the skincare team (Nov 16 2026) */
   if(st.clock&&!clockTop) out.push(clockCard());
   if(st.clock&&!clockTop&&HUB.fx) out.push(fixCard());
+  if(st.clock&&!clockTop){const td=todoCard(); if(td) out.push(td);}
   const shifts=(d&&d.shifts)||[];
   if(st.clock||shifts.length) out.push(h('div',{class:'sec2'},h('span',{class:'lbl'},'Next shifts'),
     shifts.length?shifts.map(s=>h('div',{class:'lrow'},h('b',{},niceDay(s.date)),h('span',{},s.start+' – '+s.end))):h('p',{class:'soft',style:'padding-top:8px'},'Your shifts will show here soon.')));
@@ -2906,9 +3051,9 @@ function prPhotoKey(){return 'pp-photo:'+ID+':'+prWho()}
 function reportGroups(){
   // always 6 squares (Alexandra, Oct 17 2026): Access sits under Team; without the Color Room, Payroll and Month & Trends share one
   return [['Today',['today']]].concat(S.inv?[['Payroll',['payroll','trends']],['Month & Trends',['month']],['Color Room',['color']]]:[['Payroll & Trends',['payroll','trends','month']]])
-    .concat([['Team',['reqs','off','photos','guide','sendguide','access']],['Marketing Proofs',['mkt']]]);
+    .concat([['Team',['reqs','todo','off','photos','guide','sendguide','access']],['Marketing Proofs',['mkt']]]);
 }
-const PR_LABEL={reqs:'Requests',mkt:'Marketing Proofs',photos:'Team Work',home:'Home',today:'Today',payroll:'Payroll',month:'Month & Trends',trends:'Sunday Trends',color:'Color Room',off:'Time Off',guide:'Culture',sendguide:'Send App Guide',access:'Access'};
+const PR_LABEL={reqs:'Requests',todo:'To Do List',mkt:'Marketing Proofs',photos:'Team Work',home:'Home',today:'Today',payroll:'Payroll',month:'Month & Trends',trends:'Sunday Trends',color:'Color Room',off:'Time Off',guide:'Culture',sendguide:'Send App Guide',access:'Access'};
 let PR_OPEN='',PR_NAV=false;
 function prGo(k,fromHistory){
   if(k==='mkt'){PR_NAV=false;PR_OPEN='';openMkt();render();return}
@@ -2916,6 +3061,7 @@ function prGo(k,fromHistory){
   PR_OPEN='';PR_NAV=false;S.rtab=k;S.open=null;render();window.scrollTo(0,0);
   if(k==='photos'&&!ALB.loading){ALB.err=null;albLoad()}
   if(k==='reqs'&&!RQ.busy){RQ.err=null;rqLoad()}
+  if(k==='todo'&&!TDA.busy){TDA.err=null;TDA.msg='';TDA.day=ymd(new Date());tdaLoad()}
 }
 addEventListener('popstate',e=>{const st=e.state;if(EDITION==='team'&&S.isAdmin){prGo(st&&st.pr?st.pr:'home',true)}});
 /* Refresh reopens the page you were on (refresh.js, Oct 23 2026): s:<tab> on a staff page, r:<tab>[:<person>] on The Pretty Report */
