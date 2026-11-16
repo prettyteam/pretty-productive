@@ -171,7 +171,7 @@
     ]
   },
   "pk": {
-    "week": "Nov 9",
+    "week": "Nov 16",
     "groups": [
       {
         "name": "Hair Care",
@@ -210,11 +210,11 @@
           },
           {
             "name": "Rossano Ferretti",
-            "title": "Five lines, five hair types",
-            "blurb": "Prodigio, Intenso, Vita, Dolce, Grandioso. Learn which one fits each guest.",
-            "url": "https://www.fourseasons.com/philadelphia/spa/rossano-ferretti-hair-care/",
+            "title": "The Method, Explained",
+            "blurb": "How the invisible cut removes bulk without visible short layers.",
+            "url": "https://hauteliving.com/hautebeauty/marco-norma-rossano-ferretti-explains-the-method/",
             "cta": "Read",
-            "week": "Oct 17"
+            "week": "Nov 16"
           },
           {
             "name": "IGK",
@@ -275,7 +275,8 @@
       "https://www.oribe.com/blogs/community/bond-building-in-the-big-apple",
       "https://www.k18hair.com/blogs/consumer/how-to-use-the-k18-mask-correctly-step-by-step",
       "https://davinespro.com/en/international/blog/discover-our-new-naturaltech-energizing-overnight-serum",
-      "https://coveteur.com/winter-2026-makeup-trends"
+      "https://coveteur.com/winter-2026-makeup-trends",
+      "https://hauteliving.com/hautebeauty/marco-norma-rossano-ferretti-explains-the-method/"
     ]
   },
   "promo": {
