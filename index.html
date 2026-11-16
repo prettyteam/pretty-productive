@@ -1464,7 +1464,7 @@ function advView(adv0){
   const c=ph[cur], left=c.need-c.got, started=ph.some(x=>x.got>0);
   const next=c.sk.find(x=>(adv[x[0]]||0)<x[2]);
   const sub=!started?'Your first step: '+(next?next[1].toLowerCase():'basic blowdry')+'. Ask Alexandra to set up your first model.':
-    left===0?'Every phase complete!':c.got+' of '+c.need+' models done — '+left+' to go'+(cur<ph.length-1?' to unlock '+ph[cur+1].name.replace(/^Phase \d · /,'').replace(/ \+.*/,''):'');
+    left===0?'Every phase complete!':c.got+' of '+c.need+' models done — '+left+' to go'+(cur<ph.length-1?' to finish this phase':'');
   const stars=(n,of)=>'★'.repeat(Math.min(n,of))+'☆'.repeat(Math.max(0,of-n));
   return [canTap?h('button',{type:'button',class:'mpadd',onclick:()=>navGo('mph')},'Add photos or videos of your models'):null,
     h('div',{class:'gcard',style:'align-items:center;text-align:center'},
@@ -1473,8 +1473,8 @@ function advView(adv0){
       h('div',{style:'font-family:var(--display);font-size:22px'},c.name),
       h('div',{class:'soft',style:'font-size:13.5px'},sub)),
     h('div',{class:'gcard',style:'gap:6px'},ph.map((x,i)=>h('div',{class:'gph'},
-      h('h3',{},x.name,h('small',{},i>cur?'locked':x.got+' / '+x.need)),
-      i>cur?h('div',{class:'gsk dim'},h('span',{},x.sk.slice(0,4).map(k=>k[1]).join(' · ')+(x.sk.length>4?' …':'')),h('span',{},x.sk.length+' skills')):
+      h('h3',{},x.name,h('small',{},x.got+' / '+x.need)),
+      /* Nov 16 2026 (Kat asked, Alexandra OK'd): every phase is open, so a model can be checked off in any order */
       x.sk.map(([id,l,n])=>{const have=adv[id]||0, tap=canTap&&have<n, last=lastOf(id);
         return h('div',{class:'gsk'+(canTap?' mk':'')},h('span',{},l,last?h('small',{},'last model '+niceDay(last)):null),h('span',{class:'gst'},stars(have,n)),
           canTap?(tap?h('button',{class:'mbtn','aria-label':'I did a '+l.toLowerCase()+' model',title:'I did a model',onclick:()=>modelTap(id,l)},'+'):h('span',{style:'width:34px;text-align:center'},'✓')):null)})))),
