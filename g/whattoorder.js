@@ -8,8 +8,8 @@
    The full store page (g/ordering.js: every store, logins, Amazon lists, Rossano Ferretti) folds in at the bottom. */
 (function(){
   const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-  /* where each retail brand is bought (Alexandra, Oct 28 2026). A brand not listed here shows under "Ask Alex Where To Order". */
-  const STORE_OF=[[/k18/i,'SalonCentric'],[/davines/i,'Ethos'],[/igk/i,'DePasquale'],[/goldwell|alter ego/i,'DePasquale'],[/brazilian blowout/i,'Paramount'],
+  /* where each retail brand is bought (Alexandra, Oct 28 2026; Hot Like Me from DePasquale, Nov 16). A brand not listed here shows under "Ask Alex Where To Order". */
+  const STORE_OF=[[/k18/i,'SalonCentric'],[/davines/i,'Ethos'],[/igk/i,'DePasquale'],[/hot like me|\bhlm\b/i,'DePasquale'],[/goldwell|alter ego/i,'DePasquale'],[/brazilian blowout/i,'Paramount'],
     [/blondor|wella/i,'CosmoProf'],[/rossano|ferretti/i,'Rossano Ferretti']];
   const URL={DePasquale:'https://cl.depasqualesalonsystems.com',SalonCentric:'https://www.saloncentric.com',Paramount:'https://www.paramountbeauty.com',
     Ethos:'https://www.ethosbeauty.com',CosmoProf:'https://www.cosmoprofbeauty.com/login'};
