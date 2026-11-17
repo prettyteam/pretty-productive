@@ -591,6 +591,7 @@ input,select,textarea{background:#fff;border-radius:0}
           </div>
           <div class="row pdfrow">
             <button class="btn" id="txBride">Text Bride</button>
+            <button class="btn ghost" id="txPreview">Preview Reminder</button>
             <button class="btn ghost" id="txPrep">Prep Tips</button>
             <button class="btn ghost" id="txExt">Extensions Info</button>
             <button class="btn" id="txTeam">Text Team</button>
@@ -1936,6 +1937,8 @@ const PREP=[
   ["Timing","Have everyone ready at the start time. The bride and whoever helps her into the dress go in the middle of the timeline, so everyone is done before the photographer arrives."],
   ["Hair","Wash it 1 to 2 days before. Come with it clean and 100% dry. Wet hair is an extra charge."],
   ["Skin","Come with a clean face and no makeup."],
+  ["Spray Tan","Get your spray tan 2-3 days before. Not the day before or the day of."],
+  ["Curly Hair","Come with your hair clean and blown out, but not flat ironed."],
   ["Extensions","Wash and fully dry clip-ins before the day, not fresh out of the pack."],
   ["Inspiration","Bring realistic photos of the looks you love."],
   ["Allergies","Tell us about any product allergies before we start."]];
@@ -1971,12 +1974,33 @@ $("#txPrep").onclick=()=>{
   const body="Hi "+(firstName(S)||"there")+"! 🤍 Here are a few tips to get you and your girls ready for your preview and wedding day. Please share them with your bridal party!";
   textWith(firstName(S)||"the bride",[n],body,prepHTML(),[],"prep tips picture");
 };
+/* Dom's reminder texts (Alexandra, Nov 17 2026): her own words, filled in from the wedding. Blank details are left out, never shown as placeholders.
+   Preview Reminder goes with the prep tips picture; Text Bride (wedding day) goes with the timeline picture. */
+const REM_TIPS="Spray tan: Please get your spray tan 2-3 days before. Not the day before or the day of.\n\nCurly hair: Please come with your hair clean and blown out, but not flat ironed.";
+const dayLong=d=>{if(!d)return"";const[y,m,dd]=d.split("-").map(Number);return new Date(y,m-1,dd).toLocaleDateString("en-US",{weekday:"long",month:"long",day:"numeric"})};
+function previewRemText(s){
+  const loc=(s.previewLoc||"").trim(),t=s.previewTime?fmt(Number(s.previewTime.split(":")[0])*60+Number(s.previewTime.split(":")[1]||0)):"";
+  const when=s.previewDate?" on "+dayLong(s.previewDate)+(t?" at "+t:""):"";
+  const where=loc?" at "+loc+".":" at 219 Bellevue Ave., Hammonton. We're located on the floor above Lolio Architecture.";
+  return "Hi "+(firstName(s)||"there")+",\nWe are so excited to see you for your preview"+when+where+"\n\n"+REM_TIPS+"\n\nPlease let me know if you have any questions.";
+}
+function weddingRemText(s){
+  const loc=(s.location||"").trim(),cn=(s.contactName||"").trim().split(/\s+/)[0],cp=(s.contactPhone||"").trim();
+  const poc=cn||cp?" Your day-of contact is "+[cn,cp].filter(Boolean).join(" ")+".":"";
+  return "Hi "+(firstName(s)||"there")+",\nWe are so excited for your wedding day"+(s.date?" on "+dayLong(s.date):"")+(loc?" at "+loc:"")+". Your team will arrive 15-30 minutes early to set up."+poc
+    +"\n\n"+REM_TIPS+"\n\nPlease let us know if you have any questions or need anything at all! Cheers!";
+}
+$("#txPreview").onclick=()=>{
+  const n=digits(S.bridePhone);
+  if(!n){toast("Add the bride's cell in the Wedding section first");const c=$("#bridePhone");c.closest(".card").classList.remove("closed");c.focus();return}
+  if(!S.previewDate)toast("Tip: add the preview date so it's in the text");
+  textWith(firstName(S)||"the bride",[n],previewRemText(S),prepHTML(),[],"prep tips picture");
+};
 const mdOf=d=>{if(!d)return"";const[,m,dd]=d.split("-");return Number(m)+"/"+Number(dd)};
 $("#txBride").onclick=()=>{
   const n=digits(S.bridePhone);
   if(!n){toast("Add the bride's cell in the Wedding section first");const c=$("#bridePhone");c.closest(".card").classList.remove("closed");c.focus();return}
-  const body="Hi "+(firstName(S)||"there")+"! 🤍 Here is your wedding day timeline"+(S.date?" for "+mdOf(S.date):"")+". Please look it over and let us know if anything needs to change. We can’t wait!";
-  textWith(firstName(S)||"the bride",[n],body,sheetHTML(S,"bride",false).html,[]);
+  textWith(firstName(S)||"the bride",[n],weddingRemText(S),sheetHTML(S,"bride",false).html,[]);
 };
 /* Text team (Alexandra, Oct 23 2026): Messages opens to the wedding's girls (their cells from Team on site or Team records),
    the picture of the team timeline goes first, then Dom's confirmation words as a second text. */
