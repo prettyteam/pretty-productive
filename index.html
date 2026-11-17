@@ -573,6 +573,7 @@ details.days summary::-webkit-details-marker{display:none}
 <script src="g/qr.js?v=1"></script>
 <script src="g/jokes.js?v=2"></script>
 <script src="g/rx.js?v=126"></script>
+<script src="g/extq.js?v=1"></script>
 <script src="g/prices.js?v=10"></script>
 <script src="g/ordering.js?v=4"></script>
 <script src="g/inventory.js?v=2"></script>
@@ -2444,6 +2445,7 @@ function staffTabs(){
   if(isGoalsPerson(p)) t.push(['tomorrow',st.clock?'Tomorrow':'Coming Up']);
   if(isGoalsPerson(p)||CC_SLUGS.includes(st.slug)) t.push(['rx','RX Card']);
   if(isGoalsPerson(p)||CC_SLUGS.includes(st.slug)) t.push(['reg','Home Care']);
+  if(isGoalsPerson(p)||CC_SLUGS.includes(st.slug)) t.push(['ext','Extension Quote']);   // Alexandra, Nov 17 2026
   if(isGoalsPerson(p)||p.adv) t.push(['growth',p.adv?'Associate Program':'Growth']);
   if(st.slug) t.push(['mph',MW_NAME]);
   if(p.binder&&p.binder.length) t.push(['binder','My Binder']);
@@ -2463,7 +2465,7 @@ function staffTabs(){
   return t;
 }
 /* One menu instead of a row of tabs (Alexandra, Oct 2026). Sections are grouped; Customer cards holds RX card and Home care. */
-const NAV_GROUPS=[['Guest Requests',['greq']],['Appointments',['home','today','tomorrow','tip']],['Customer Cards',['rx','reg']],[MW_NAME,['mph']],['Goals',['growth','binder','cr']],
+const NAV_GROUPS=[['Guest Requests',['greq']],['Appointments',['home','today','tomorrow','tip']],['Customer Cards',['rx','reg','ext']],[MW_NAME,['mph']],['Goals',['growth','binder','cr']],
   ['Salon & Spa',['prices','order','pk','inv','skin','cards','off']],['Taffeta',['guide','hb','fg']],['Send To Alex',['ask']],['Self Promotion',['promo']],['Marketing Proofs',['mkt']],['Bridal App',['wed']],['My Profile',['me']]];
 let NAV_OPEN=false;
 /* Disco ball = Home, Back arrow = the page before (Alexandra, Oct 15 2026). Each page change is a browser history step,
@@ -2599,6 +2601,7 @@ function staffRender(){
   if(S.tab==='tomorrow') return tomorrowView();
   if(S.tab==='reg') return regimenView();
   if(S.tab==='rx') return rxView();
+  if(S.tab==='ext') return extQuoteView();
   if(S.tab==='prices') return pricesView();
   if(S.tab==='order') return orderView();
   if(S.tab==='ask') return askView();

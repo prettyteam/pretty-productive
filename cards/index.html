@@ -386,6 +386,7 @@ button{color:var(--ink)}
 <script src="../g/regimen.js?v=47"></script>
 <script src="../g/qr.js?v=1"></script>
 <script src="../g/rx.js?v=124"></script>
+<script src="../g/extq.js?v=1"></script>
 <script src="/g/life.js?v=1"></script>
 <script src="../g/topnav.js?v=4"></script>
 <style>/* match the team app look (Alexandra, Oct 15 2026): black and soft black on ivory, Lora titles, menus as plain words with the
@@ -479,10 +480,11 @@ function render(){
       h('section',{class:'card2',style:'align-items:stretch'},
         h('button',{type:'button',class:'obtn',onclick:()=>{CARD='rx';render()}},'RX Consultation Card'),
         h('button',{type:'button',class:'obtn',onclick:()=>{CARD='reg';render()}},'Home maintenance'),
-        h('small',{class:'soft',style:'text-align:center'},'RX: two options for today, based on her budget. Home maintenance: her routine at home after the service.'))));
+        h('button',{type:'button',class:'obtn',onclick:()=>{CARD='ext';render()}},'Extension Quote'),
+        h('small',{class:'soft',style:'text-align:center'},'RX: two options for today, based on her budget. Home maintenance: her routine at home after the service. Extension Quote: her hair and application price.'))));
     return;
   }
-  const parts=CARD==='rx'?rxView():regimenView();
+  const parts=CARD==='rx'?rxView():CARD==='ext'?extQuoteView():regimenView();
   app.append(...parts);
 }
 render();
