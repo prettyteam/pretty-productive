@@ -1982,8 +1982,15 @@ function previewRemText(s){
   const loc=(s.previewLoc||"").trim(),t=s.previewTime?fmt(Number(s.previewTime.split(":")[0])*60+Number(s.previewTime.split(":")[1]||0)):"";
   const when=s.previewDate?" on "+dayLong(s.previewDate)+(t?" at "+t:""):"";
   const where=loc?" at "+loc+".":" at 219 Bellevue Ave., Hammonton. We're located on the floor above Lolio Architecture.";
-  return "Hi "+(firstName(s)||"there")+",\nWe are so excited to see you for your preview"+when+where+"\n\n"+REM_TIPS+"\n\nPlease let me know if you have any questions.";
+  return "Hi "+(firstName(s)||"there")+",\nWe are so excited to see you for your preview"+when+where+"\n\n"+REM_TIPS+headLinkText(s)+"\n\nPlease let me know if you have any questions.";
 }
+/* Headcount link (Alexandra, Nov 17 2026): a bride at her preview had no way to send her headcount from her messages.
+   Until her Final Headcount is in, the preview reminder carries her own link to the /headcount/ page, with her name and wedding date filled in. */
+function headLink(s){
+  const q=new URLSearchParams();if((s.bride||"").trim())q.set("name",s.bride.trim());if(s.date)q.set("date",s.date);
+  const qs=q.toString();return "https://prettyteam.taffetadesign.com/headcount/"+(qs?"?"+qs:"");
+}
+const headLinkText=s=>s.finalHeadcount?"":"\n\nPlease send us your final headcount before or at your preview. Tap here, it takes a minute:\n"+headLink(s);
 function weddingRemText(s){
   const loc=(s.location||"").trim(),cn=(s.contactName||"").trim().split(/\s+/)[0],cp=(s.contactPhone||"").trim();
   const poc=cn||cp?" Your day-of contact is "+[cn,cp].filter(Boolean).join(" ")+".":"";
