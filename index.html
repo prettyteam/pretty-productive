@@ -696,6 +696,7 @@ function stylistPage(p){
           h('span',{class:'muted num',style:'font-size:14px'},money(c.services.reduce((a,s)=>a+s.price,0)))),
         c.services.length?h('div',{class:'chips'},c.services.map(s=>h('span',{class:'chip'+(s.addon?' add':'')},s.name+(s.addon?' · add-on':'')))):null,
         needsConsult(c)?h('p',{style:'font-size:14px;margin:6px 0 0;padding:8px 10px;border:1px solid #121212;border-radius:10px;background:#fff'},h('b',{},'Consult first. '),'New guest getting '+(CONSULT_RE().skin.test((c.services||[]).map(s=>s.name).join(' '))?'a treatment':'color')+': do her consultation and RX card before you start, then Save & Send To Desk.'):null,
+        mixNote(c),
         c.retail.length?h('p',{class:'muted',style:'font-size:14px'},'Took home: '+c.retail.map(r=>r.name).join(', ')):null,
         c.services.length?checkIn():null,
         (c.suggestion||(c.suggestions&&c.suggestions.length))?h('details',{class:'tryd'},h('summary',{},h('span',{class:'tico','aria-hidden':'true'}),h('span',{class:'tlabel'},'Suggestion'),h('span',{class:'tplus','aria-hidden':'true'},'+')),tipList(c)):null,
@@ -2535,6 +2536,9 @@ function weekCard(p){
 /* Consult first (Alexandra, Oct 17 2026): a new guest booked for color or a treatment must get her consultation and RX card
    before the service starts. The same rule makes the front desk's reminder list (tools/publish.mjs). */
 function CONSULT_RE(){return {hair:/color|process|balayage|foil|highlight|glaze|gloss|toner|root|gr[ae]y|lighten|blond|keratin|brazilian|smooth|perm|extension|treatment/i,skin:/facial|peel|dermaplan|microneedl|nano|hydrafacial|acne|lash lift|brow lam|treatment/i}}
+/* Color mix reminder (Alexandra, Nov 17 2026): guests on the Team Hub "Mix Watch" list whose color mixes have been undercharged before.
+   The daily update sets c.mixAlert (e.g. "Her bowls run ~105 g. Weigh the whole bowl and ring 80 ML color mix + Additional Mix ($50).") */
+function mixNote(c){return c&&c.mixAlert?h('p',{style:'font-size:14px;margin:6px 0 0;padding:8px 10px;border:1px solid #121212;border-radius:10px;background:#fff'},h('b',{},'Color mix reminder. '),String(c.mixAlert)):null}
 function needsConsult(c){const n=(c&&c.services||[]).map(s=>s.name).join(' '),R=CONSULT_RE();return !!(c&&c.isNew&&(R.hair.test(n)||R.skin.test(n)))}
 function tomorrowView(){
   const p=S.mine||{}, t=p.tomorrow, today=ymd(new Date());
@@ -2564,6 +2568,7 @@ function tomorrowView(){
           h('span',{class:'muted num',style:'font-size:14px'},money((c.services||[]).reduce((a,s)=>a+s.price,0)))),
         (c.services||[]).length?h('div',{class:'chips'},c.services.map(s=>h('span',{class:'chip'+(s.addon?' add':'')},s.name+(s.addon?' · add-on':'')))):null,
         needsConsult(c)?h('p',{style:'font-size:14px;margin:6px 0 0;padding:8px 10px;border:1px solid #121212;border-radius:10px;background:#fff'},h('b',{},'Consult first. '),'New guest getting '+(CONSULT_RE().skin.test((c.services||[]).map(s=>s.name).join(' '))?'a treatment':'color')+': do her consultation and RX card before you start, then Save & Send To Desk.'):null,
+        mixNote(c),
         est&&c.needsWaiver?h('p',{class:'muted',style:'font-size:14px'},'Needs a signed waiver before the service.'):null,
         (c.services||[]).length?checkIn():null,
         c.last?h('p',{class:'muted',style:'font-size:14px'},'Last visit: '+c.last):null,
