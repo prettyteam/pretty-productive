@@ -11,6 +11,7 @@ self.addEventListener('push', e => {
     body: d.body || 'Open the app to see what changed.',
     icon: '../icon.png', badge: '../icon.png',
     tag: (d.tab || 'team') + '-' + title, renotify: true,
+    vibrate: [300, 150, 300, 150, 300], silent: false,  /* buzz (Alexandra, Nov 17 2026); iPhones buzz per their own Notification settings */
     data: { tab: d.tab || 'team' }
   }));
 });
