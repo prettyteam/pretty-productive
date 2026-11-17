@@ -10,7 +10,9 @@ self.addEventListener('push', e => {
   e.waitUntil(self.registration.showNotification(title, {
     body: d.body || 'Open your app to see it.',
     icon: 'briefing/icons/employee-experience-180.png', badge: 'icon.png',
-    tag: 'guest-' + Date.now(), renotify: true, data: { tab: d.tab || 'home' }
+    tag: 'guest-' + Date.now(), renotify: true,
+    vibrate: [300, 150, 300, 150, 300], silent: false,  /* buzz (Alexandra, Nov 17 2026); iPhones buzz per their own Notification settings */
+    data: { tab: d.tab || 'home' }
   }));
 });
 
