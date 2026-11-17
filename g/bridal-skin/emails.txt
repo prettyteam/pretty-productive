@@ -1,0 +1,241 @@
+TAFFETA SPA · BRIDAL SKIN CONSULT EMAILS (approved by Alexandra Nov 17 2026)
+
+LINKS
+- "Book your bridal skin consult" and "Book nano needling" buttons: https://ppweb.prosoinc.com/?ac=16288
+- "Join the membership" button: https://taffetadesign.com/beauty-membership
+- Images: https://prettyteam.taffetadesign.com/g/bridal-skin/<file name>
+
+DESIGN
+- Background light ivory #FBFAF8. Black text. Thin black lines (hairlines), no thick boxes, no brown.
+- Headings: Playfair Display (or the closest Flodesk serif). Body: Work Sans Light (or the closest light sans).
+- Buttons: NOT filled. Thin black outline, black spaced capital letters, transparent background.
+- The membership and nano needling blocks sit at the bottom, each between thin lines, membership first.
+- "[first name]" = Flodesk first-name merge tag, with fallback "there".
+
+Email 1 · The day after she books (pays her deposit)
+
+ Subject: Your skin is part of your wedding look
+
+ Preview text: One small step to take before your preview.
+
+ From: Taffeta Spa
+
+[IMAGE: bow.png, small, centered]
+
+ Taffeta Spa
+
+[IMAGE: congratulations.png, script word "Congratulations", centered, about 260px wide]
+
+ Your skin is part of your wedding look
+
+ Hi [first name],
+
+ We are so happy you picked Taffeta for your wedding day.
+
+ Here is something most brides think about too late. Your makeup can only look as good as the skin underneath it.
+
+ That is why every Taffeta bride meets with our bridal skin experts at the spa before her preview. Your consult is a 1-hour facial. We will:
+
+ Look closely at your skin.
+
+ Give you a facial matched to your skin that day.
+
+ Send you home with your own Biologique Recherche Skin Box, a routine that lasts about a month. We are the only Biologique Recherche partner in South Jersey.
+
+ Make a simple plan around your preview and your wedding date.
+
+ When you book, pick the Taffeta Facial with the take-home Skin Box. It is $180, and as a Taffeta bride you get 15% off. Just say you are a Taffeta bride when you book.
+
+ Already booked your consult? You are all set. We can't wait to see you.
+
+ Book your bridal skin consult
+
+[IMAGE: with-love.png, script word "With love", centered, about 260px wide]
+The Taffeta Spa Team
+
+ Join the Beauty Membership
+
+ For anyone who visits us for any service, not just hair.
+
+ $75 a month, and $50 of it comes back to you as service credit
+$50 on your birthday
+10% off retail
+Earn points on every service and product: $5 back for every $200 you spend
+Just $20 to sign up
+
+ Join the membership
+
+ Nano needling at the spa
+
+ All the results of micro needling, at a fraction of the cost.
+No downtime. No pain. Just relaxation.
+
+ 4 sessions for $600.
+
+ Book nano needling
+
+[IMAGE: bow.png, small, centered]
+
+Email 2 · 3 weeks after she books
+
+ Subject: Have you booked your bridal skin facial?
+
+ Preview text: Your skin plan starts with one visit.
+
+ From: Taffeta Spa
+
+[IMAGE: bow.png, small, centered]
+
+ Taffeta Spa
+
+[IMAGE: your-glow.png, script word "Your glow", centered, about 260px wide]
+
+ Have you booked your bridal skin facial?
+
+ Hi [first name],
+
+ We hope wedding planning is fun so far!
+
+ A little reminder to book your bridal skin consult. It is a 1-hour facial with our bridal skin experts, and you go home with your own Biologique Recherche Skin Box.
+
+ Starting early gives your skin the most time to look its best at your preview and on your wedding day.
+
+ Pick the Taffeta Facial with the take-home Skin Box. Taffeta brides get 15% off. Just say you are a Taffeta bride when you book.
+
+ Book your bridal skin consult
+
+ Already booked? You are all set. See you soon.
+
+[IMAGE: with-love.png, script word "With love", centered, about 260px wide]
+The Taffeta Spa Team
+
+ Join the Beauty Membership
+
+ For anyone who visits us for any service, not just hair.
+
+ $75 a month, and $50 of it comes back to you as service credit
+$50 on your birthday
+10% off retail
+Earn points on every service and product: $5 back for every $200 you spend
+Just $20 to sign up
+
+ Join the membership
+
+ Nano needling at the spa
+
+ All the results of micro needling, at a fraction of the cost.
+No downtime. No pain. Just relaxation.
+
+ 4 sessions for $600.
+
+ Book nano needling
+
+[IMAGE: bow.png, small, centered]
+
+Email 3 · 8 weeks before her preview
+
+ Subject: Your preview is 8 weeks away
+
+ Preview text: Now is the best time to start your skin plan.
+
+ From: Taffeta Spa
+
+[IMAGE: bow.png, small, centered]
+
+ Taffeta Spa
+
+[IMAGE: almost-time.png, script word "Almost time", centered, about 260px wide]
+
+ Your preview is 8 weeks away
+
+ Hi [first name],
+
+ Your bridal hair and makeup preview is coming up. This is the best time to get your skin ready.
+
+ Skin takes time to change. We like to start skin prep about 3 months before the wedding, so starting now gives your skin time to look its best at your preview and on your wedding day.
+
+ If you have not met our bridal skin experts yet, book your consult this week. Pick the Taffeta Facial with the take-home Skin Box.
+
+ As a Taffeta bride, you and your bridal party get 15% off salon and spa services up to your wedding day. Just say you are a Taffeta bride when you book. Excludes retail and extensions.
+
+ Book your bridal skin consult
+
+ Already booked? You are all set. See you soon.
+
+[IMAGE: with-love.png, script word "With love", centered, about 260px wide]
+The Taffeta Spa Team
+
+ Join the Beauty Membership
+
+ For anyone who visits us for any service, not just hair.
+
+ $75 a month, and $50 of it comes back to you as service credit
+$50 on your birthday
+10% off retail
+Earn points on every service and product: $5 back for every $200 you spend
+Just $20 to sign up
+
+ Join the membership
+
+ Nano needling at the spa
+
+ All the results of micro needling, at a fraction of the cost.
+No downtime. No pain. Just relaxation.
+
+ 4 sessions for $600.
+
+ Book nano needling
+
+[IMAGE: bow.png, small, centered]
+
+Email 4 · 2 weeks later, a gentle reminder
+
+ Subject: A quick note before your preview
+
+ Preview text: There is still time to book your skin consult.
+
+ From: Taffeta Spa
+
+[IMAGE: bow.png, small, centered]
+
+ Taffeta Spa
+
+[IMAGE: just-a-reminder.png, script word "Just a reminder", centered, about 260px wide]
+
+ A quick note before your preview
+
+ Hi [first name],
+
+ Just a friendly reminder. If you have not booked your bridal skin consult yet, there is still time.
+
+ One facial now, plus your take-home Skin Box, helps your makeup look its best at your preview and in every wedding photo.
+
+ One tip from our team: skip anything new or strong on your skin in the last two weeks before the wedding.
+
+ Book your bridal skin consult
+
+[IMAGE: with-love.png, script word "With love", centered, about 260px wide]
+The Taffeta Spa Team
+
+ Join the Beauty Membership
+
+ For anyone who visits us for any service, not just hair.
+
+ $75 a month, and $50 of it comes back to you as service credit
+$50 on your birthday
+10% off retail
+Earn points on every service and product: $5 back for every $200 you spend
+Just $20 to sign up
+
+ Join the membership
+
+ Nano needling at the spa
+
+ All the results of micro needling, at a fraction of the cost.
+No downtime. No pain. Just relaxation.
+
+ 4 sessions for $600.
+
+ Book nano needling
+
+[IMAGE: bow.png, small, centered]
