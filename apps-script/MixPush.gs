@@ -1,54 +1,57 @@
 /**
  * Color mix reminders on artists' phones (Alexandra, Nov 17 2026).
  * Guests on the Team Hub "Mix Watch" tab have had their color mixes undercharged more than once.
- * Each morning the daily Pretty Productive update adds one row per booked Mix Watch guest to the
- * "Mix alerts" tab of the Team Hub sheet. Every 10 minutes mixPushCheck() sends each new row to the
- * phones of the artist named by App ID (same phones as the guest request alerts, TeamPush.gs) and
- * stamps the Sent column, so nobody gets the same reminder twice.
- * The Front Desk side needs nothing here: the run also adds a To Do row, and deskTodoCheck() pushes it.
+ * Each morning the daily Pretty Productive update adds a Front Desk To Do row for every booked Mix Watch guest
+ * (List "Color mix check", Detail "<time> with <artist>: bowls run …, ring … ($…). …"). deskTodoCheck() already
+ * pushes that row to the Front Desk. Every 10 minutes mixPushCheck() sends the same reminder to that artist's
+ * phones (same phones as the guest request alerts, TeamPush.gs). Rows it has handled are remembered for 3 days,
+ * so nobody gets the same reminder twice.
  * Setup once from the editor: run installMixPush.
  */
-const MIX_TAB = 'Mix alerts';
-const MIX_HEADERS = ['Added', 'Date', 'Time', 'Guest', 'Artist App ID', 'Reminder', 'Sent'];
+const MIX_LIST = 'Color mix check';
 
-function mixSheet_() {
-  const ss = tss_();
-  let sh = ss.getSheetByName(MIX_TAB);
-  if (!sh) {
-    sh = ss.insertSheet(MIX_TAB);
-    sh.getRange(1, 1, 1, MIX_HEADERS.length).setValues([MIX_HEADERS]).setFontWeight('bold').setBackground('#121212').setFontColor('#f8f6f0');
-    sh.setFrozenRows(1);
-    sh.getRange('A:G').setNumberFormat('@');
-  }
-  return sh;
+/** Team tab artist whose first name (or "First L.") matches the name in the To Do detail. */
+function mixArtistSlug_(name) {
+  const want = String(name || '').trim().toLowerCase().replace(/\.$/, '');
+  if (!want) return '';
+  const rows = tvals_(TT.team).filter(r => r[1] && String(r[4]).toLowerCase() !== 'no');
+  const full = r => String(r[0]).trim().toLowerCase();
+  let hit = rows.filter(r => full(r) === want || String(r[1]).toLowerCase() === want);
+  if (!hit.length) hit = rows.filter(r => full(r).split(/\s+/)[0] === want.split(/\s+/)[0] &&
+    (want.split(/\s+/).length < 2 || (full(r).split(/\s+/)[1] || '').charAt(0) === want.split(/\s+/)[1].charAt(0)));
+  return hit.length === 1 ? String(hit[0][1]) : '';
 }
 
-/** Every 10 minutes: send today's unsent rows. Rows for other days are left alone. Never throws. */
 function mixPushCheck() {
   try {
-    const sh = mixSheet_(), n = sh.getLastRow();
+    const t = TABS.todo, sh = tab_(t), n = sh.getLastRow();
     if (n < 2) return 0;
-    const today = Utilities.formatDate(new Date(), 'America/New_York', 'yyyy-MM-dd');
-    const vals = sh.getRange(2, 1, n - 1, MIX_HEADERS.length).getValues();
-    const phones = teamPushRows_();
-    let sent = 0;
-    vals.forEach((r, i) => {
-      const date = r[1] instanceof Date ? Utilities.formatDate(r[1], 'America/New_York', 'yyyy-MM-dd') : String(r[1]).trim();
-      const slug = String(r[4]).trim().toLowerCase();
-      if (r[6] || date !== today || !slug || !r[5]) return;
-      const toks = phones.filter(t => String(t.slug).toLowerCase() === slug);
-      const body = deskFirst_(r[3]) + (r[2] ? ' at ' + r[2] : '') + ' · ' + String(r[5]);
-      const ok = teamPushSend_(toks, 'Color mix reminder', body);
-      sh.getRange(i + 2, 7).setValue(ok ? new Date().toISOString() : (toks.length ? 'Failed ' : 'No phone ') + new Date().toISOString());
-      sent += ok;
+    const props = PropertiesService.getScriptProperties();
+    const done = JSON.parse(props.getProperty('MIX_PUSH_DONE') || '{}'), cut = Date.now() - 3 * 864e5;
+    Object.keys(done).forEach(k => { if (done[k] < cut) delete done[k]; });
+    const iList = t.keys.indexOf('group'), iGuest = t.keys.indexOf('guest'), iDetail = t.keys.indexOf('detail'), iStatus = t.keys.indexOf('status');
+    const vals = sh.getRange(2, 1, n - 1, t.headers.length).getValues();
+    let phones = null, sent = 0;
+    vals.forEach(r => {
+      const at = r[0] instanceof Date ? r[0].getTime() : 0;
+      if (!at || at < cut || String(r[iList]).trim() !== MIX_LIST || String(r[iStatus]) === 'Done') return;
+      const key = at + '|' + r[iGuest];
+      if (done[key]) return;
+      done[key] = Date.now();
+      const detail = String(r[iDetail] || ''), m = detail.match(/^(.*?)\s+with\s+([^:]+):\s*(.*)$/);
+      const slug = m ? mixArtistSlug_(m[2]) : '';
+      if (!slug) { console.warn('Mix reminder: no artist found in "' + detail.slice(0, 80) + '"'); return; }
+      phones = phones || teamPushRows_();
+      const toks = phones.filter(p => String(p.slug).toLowerCase() === slug.toLowerCase());
+      sent += teamPushSend_(toks, 'Color mix reminder', deskFirst_(r[iGuest]) + ' at ' + m[1] + ' · ' + m[3]);
     });
+    props.setProperty('MIX_PUSH_DONE', JSON.stringify(done));
     return sent;
   } catch (e) { console.warn(e); return 0; }
 }
 
-/** Run once from the editor: makes the tab and switches on the 10-minute check. */
+/** Run once from the editor: switches on the 10-minute check. */
 function installMixPush() {
-  mixSheet_();
   ScriptApp.getProjectTriggers().filter(tr => tr.getHandlerFunction() === 'mixPushCheck').forEach(tr => ScriptApp.deleteTrigger(tr));
   ScriptApp.newTrigger('mixPushCheck').timeBased().everyMinutes(10).create();
   Logger.log('Color mix reminders are on (checked every 10 minutes).');
