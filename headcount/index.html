@@ -49,6 +49,13 @@ input:focus{outline:none;border-bottom-width:2px}
 // The Flodesk "Send My Final Headcount" button lands here, because Flodesk won't take a mailto link with a CC, subject or body.
 // The subject always starts "Final Headcount" so the Weddings script can find these emails.
 const TO = 'info@taffetadesign.com', CC = 'sales@taffetadesign.com';
+// Personal links (Nov 17 2026): ?name=<bride>&date=<YYYY-MM-DD> fills in her name and wedding date, so she only types the counts.
+(() => {
+  const q = new URLSearchParams(location.search), f = document.getElementById('f');
+  const name = (q.get('name') || '').trim().slice(0, 80), date = q.get('date') || '';
+  if (name) f.elements.name.value = name;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(date)) f.elements.date.value = date;
+})();
 document.getElementById('f').addEventListener('submit', e => {
   e.preventDefault();
   const v = Object.fromEntries(new FormData(e.target)), n = k => String(Math.max(0, parseInt(v[k], 10) || 0));
