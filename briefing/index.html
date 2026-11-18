@@ -53,6 +53,9 @@ function show(P){
     +'<script>document.addEventListener("click",function(e){var a=e.target.closest&&e.target.closest("a[href]");if(!a)return;try{var u=new URL(a.href);'
     +'if(/(^|\\.)(taffetadesign\\.com|github\\.io)$/.test(u.hostname)&&!/\\.pdf$/i.test(u.pathname)&&u.pathname.indexOf("/briefing/")<0){u.searchParams.set("from","life");a.href=u.toString()}}catch(_){}},true)<\/script>'
     +'<script>window.addEventListener("hashchange",function(){if(location.hash.length<2)history.replaceState(null,"",location.pathname+"'+L+'")})<\/script>'
+    /* Bride links (Alexandra, Nov 18 2026): Copy and Share for the /bride and /bride-photos forms, near the bottom of her page */
+    +'<div id="bride-links" style="padding:28px 16px 8px;max-width:420px;margin:0 auto"></div>'
+    +'<script src="../g/bride-links.js?v=1" onload="BrideLinks.mount(document.getElementById(\'bride-links\'))"><\/script>'
     +'<p style="text-align:center;margin:0 0 40px"><a href="#" onclick="try{localStorage.removeItem(\''+PINKEY+'\')}catch(e){};location.reload();return false" style="font-size:12px;color:#6d6868">Lock this page on this device</a></p></body></html>');
   document.close();
 }

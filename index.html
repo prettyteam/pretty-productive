@@ -576,6 +576,7 @@ details.days summary::-webkit-details-marker{display:none}
 <script src="g/extq.js?v=1"></script>
 <script src="g/prices.js?v=10"></script>
 <script src="g/ordering.js?v=4"></script>
+<script src="g/bride-links.js?v=1"></script>
 <script src="g/inventory.js?v=2"></script>
 <script src="g/whattoorder.js?v=13"></script>
 <link rel="stylesheet" href="g/rx.css?v=9">
@@ -2437,7 +2438,9 @@ const HUB_TILES=[
 function hubMenu(){
   return h('div',{class:'hmenu hub'},h('div',{class:'mhead'},'My Apps'),
     h('div',{class:'cgrid'},HUB_TILES.map(([k,t,sub,go])=>h('button',{type:'button',onclick:go},
-      h('span',{class:'ht'},t),h('span',{class:'hs'},sub.map(x=>h('span',{},x)))))));
+      h('span',{class:'ht'},t),h('span',{class:'hs'},sub.map(x=>h('span',{},x)))))),
+    /* Bride links under My Apps (Alexandra, Nov 18 2026): Copy or Share the /bride and /bride-photos forms to text a bride */
+    window.BrideLinks?h('div',{style:'margin-top:18px;padding:0 4px'},BrideLinks.el()):null);
 }
 function hubSocial(){
   const label=Object.fromEntries(staffTabs());

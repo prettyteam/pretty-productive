@@ -865,6 +865,8 @@ input,select,textarea{background:#fff;border-radius:0}
       <label class="f">Message<textarea id="tp-f-text" rows="6" placeholder="Use [Name] for the bride's name and [Me] for yours."></textarea></label>
       <div class="row"><button class="btn" id="tp-f-save">Save</button><button class="btn ghost" id="tp-f-cancel">Cancel</button><button class="btn ghost" id="tp-f-archive" hidden>Remove template</button></div>
     </div>
+    <!-- Bride links (Alexandra, Nov 18 2026): Copy and Share for /bride and /bride-photos, office only -->
+    <div id="tp-bride-links" style="margin-bottom:14px"></div>
     <div class="card" id="tp-price-card" style="margin-bottom:14px">
       <h2 data-open>À la carte price sheet</h2>
       <div class="tp-price">
@@ -960,6 +962,7 @@ input,select,textarea{background:#fff;border-radius:0}
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="../g/bride-links.js"></script>
 <script>
 (function(){
 const $=s=>document.querySelector(s);
@@ -3786,6 +3789,7 @@ $("#tp-f-archive").onclick=async()=>{
   catch(e){toast("That didn't save. Try again.")}
 };
 // price sheet: Share on phones (when the browser can share files), Copy image where the clipboard takes pictures
+if(window.BrideLinks)BrideLinks.mount($("#tp-bride-links"));
 const TP_PRICE="a-la-carte-pricing-2027.jpg";
 const tpPriceBlob=async()=>{const r=await fetch(TP_PRICE);if(!r.ok)throw new Error("load");return r.blob()};
 (()=>{try{const f=new File([new Blob()],"x.jpg",{type:"image/jpeg"});$("#tp-price-share").hidden=!(navigator.canShare&&navigator.canShare({files:[f]}))}catch(e){}
