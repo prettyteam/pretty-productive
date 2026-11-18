@@ -1,7 +1,7 @@
 /* Taffeta Weddings bridal look (Alexandra, Nov 18 2026): black and white, dainty, thin black lines, black buttons,
    her Canva script as pictures. Shared by bride/ and bride-photos/. All bridal pieces should match this. */
-@font-face{font-family:Fraunces;src:url(../g/fraunces-latin-400-normal.woff2) format("woff2");font-weight:400}
-@font-face{font-family:Fraunces;src:url(../g/fraunces-latin-400-italic.woff2) format("woff2");font-style:italic;font-weight:400}
+@font-face{font-family:Fraunces;src:url(../g/fraunces-latin-300-normal.woff2) format("woff2");font-weight:300}
+@font-face{font-family:Fraunces;src:url(../g/fraunces-latin-300-italic.woff2) format("woff2");font-style:italic;font-weight:300}
 @font-face{font-family:"Libertinus Sans";src:url(../g/libertinus-sans-latin-400-normal.woff2) format("woff2")}
 :root{--ink:#111;--soft:#6b6b6b;--line:#d9d9d9;--display:Fraunces,Georgia,serif;--body:"Libertinus Sans",system-ui,sans-serif}
 *,*::before,*::after{box-sizing:border-box}
@@ -15,8 +15,8 @@ form{display:flex;flex-direction:column;gap:22px}
 .lede{text-align:center;margin:0 auto;font-size:15.5px;color:#333;max-width:360px}
 .steps{display:flex;gap:5px;align-items:center}.steps i{flex:1;height:1px;background:var(--line)}.steps i.on{background:var(--ink);height:2px}
 .eyebrow{display:block;font-size:10.5px;letter-spacing:.28em;text-align:center;color:var(--soft);margin-top:-10px}
-h2{font-family:var(--display);font-weight:400;font-size:24px;text-align:center;line-height:1.25;margin:0}
-h2 em{font-style:italic}
+h2{font-family:var(--display);font-weight:300;font-size:24px;text-align:center;line-height:1.25;margin:0}
+h2 em{font-style:italic;font-weight:300}
 .step{display:flex;flex-direction:column;gap:20px}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 .field{display:flex;flex-direction:column;gap:6px}
@@ -33,7 +33,8 @@ input[type=date].input{min-height:40px}
 .pills input:checked+span{background:var(--ink);color:#fff}
 .pills input:focus-visible+span{outline:2px solid var(--ink);outline-offset:2px}
 .hint{font-size:13px;color:var(--soft);margin:-8px 0 0}
-.btn{display:block;width:100%;background:var(--ink);color:#fff;border:0;border-radius:0;font:inherit;font-size:12.5px;letter-spacing:.24em;padding:15px;cursor:pointer}
+/* small, centered buttons (Alexandra, Nov 18 2026: the full-width ones looked wide and bulky) */
+.btn{display:block;align-self:center;min-width:170px;margin:0 auto;background:var(--ink);color:#fff;border:0;border-radius:0;font:inherit;font-size:11px;letter-spacing:.26em;padding:11px 30px;cursor:pointer}
 .btn:disabled{opacity:.6}
 .back{background:none;border:0;font:inherit;font-size:13.5px;color:var(--soft);text-decoration:underline;cursor:pointer;margin-top:-8px}
 .err{color:#8a2a1a;font-size:14px;text-align:center;margin:0;min-height:1px}
