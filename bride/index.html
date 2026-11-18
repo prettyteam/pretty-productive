@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#ffffff"><meta name="robots" content="noindex">
+<title>Taffeta Weddings · Tell us about your day</title>
+<meta property="og:title" content="Taffeta Weddings · Tell us about your day">
+<meta property="og:description" content="A few quick questions about your wedding day.">
+<meta property="og:site_name" content="Taffeta Weddings">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://prettyteam.taffetadesign.com/bride/">
+<meta property="og:image" content="https://prettyteam.taffetadesign.com/bride/card.png">
+<meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="../weddings/icon-192.png"><link rel="apple-touch-icon" href="../weddings/apple-touch-icon.png">
+<link rel="stylesheet" href="bride.css">
+<script src="../weddings/config.js"></script>
+</head><body><main id="app">
+
+<!-- Bride inquiry (Alexandra, Nov 18 2026). She texts this link to brides who text her. Answers land on the
+     "Bride inquiries" tab of the Taffeta Weddings Team App sheet; a Zap turns each new row into a HoneyBook inquiry.
+     Look: black and white, dainty, her Canva script ("Pretty Life title (script)") as pictures. All bridal pieces match. -->
+
+<div class="top">
+  <img class="script" src="congrats.png" alt="Congratulations" width="421" height="154">
+  <div class="brand">TAFFETA WEDDINGS</div><div class="hair"></div>
+  <p class="lede" id="lede">We can’t wait to hear about your day. Just a few quick questions.</p>
+</div>
+
+<div class="steps" aria-hidden="true"><i></i><i></i><i></i></div>
+<span class="eyebrow" id="stepNo">STEP 1 OF 3</span>
+
+<form id="f" novalidate>
+<section class="step" data-step="1">
+  <h2>First, <em>about you</em></h2>
+  <div class="row2">
+    <div class="field"><label for="first">First name</label><input class="input" id="first" autocomplete="given-name"></div>
+    <div class="field"><label for="last">Last name</label><input class="input" id="last" autocomplete="family-name"></div>
+  </div>
+  <div class="field"><label for="phone">Mobile number</label><input class="input" id="phone" type="tel" inputmode="tel" autocomplete="tel"></div>
+  <div class="field"><label for="email">Email</label><input class="input" id="email" type="email" inputmode="email" autocomplete="email"></div>
+</section>
+
+<section class="step" data-step="2" hidden>
+  <h2>Tell us about <em>the big day</em></h2>
+  <div class="field"><label for="date">Wedding date</label><input class="input" id="date" type="date"></div>
+  <div class="field"><label for="ceremony">Ceremony time</label><input class="input" id="ceremony" placeholder="4:30 PM"></div>
+  <div class="field"><label>Is there a first look?</label>
+    <div class="pills" id="firstlook">
+      <label><input type="radio" name="fl" value="Yes"><span>Yes</span></label>
+      <label><input type="radio" name="fl" value="No"><span>No</span></label>
+      <label><input type="radio" name="fl" value="Not sure yet"><span>Not sure yet</span></label>
+    </div>
+  </div>
+</section>
+
+<section class="step" data-step="3" hidden>
+  <h2>Getting <em>ready</em></h2>
+  <div class="field"><label for="ready">Where are you getting ready?</label><input class="input" id="ready" placeholder="Venue, hotel or home, and the town"></div>
+  <div class="row2">
+    <div class="field"><label for="hair">How many for hair?</label><select class="input" id="hair"></select></div>
+    <div class="field"><label for="makeup">How many for makeup?</label><select class="input" id="makeup"></select></div>
+  </div>
+  <p class="hint">Count yourself too. A best guess is perfect.</p>
+</section>
+
+<input class="hp" id="website" tabindex="-1" autocomplete="off" aria-hidden="true">
+<p class="err" id="err" role="alert"></p>
+<button class="btn" id="go" type="submit">NEXT</button>
+<button class="back" id="back" type="button" hidden>Back</button>
+</form>
+</main>
+<script>
+(function(){
+const $=s=>document.querySelector(s), clean=v=>String(v||'').trim();
+const counts='<option value="">Pick one</option>'+Array.from({length:15},(_,i)=>`<option>${i+1}</option>`).join('')+'<option>16 or more</option><option>Not sure yet</option>';
+$('#hair').innerHTML=counts; $('#makeup').innerHTML=counts;
+let step=1;const LAST=3;
+function show(n){
+  step=n;
+  document.querySelectorAll('.step').forEach(s=>s.hidden=+s.dataset.step!==n);
+  document.querySelectorAll('.steps i').forEach((b,i)=>b.classList.toggle('on',i<n));
+  $('#stepNo').textContent='STEP '+n+' OF '+LAST;
+  $('#go').textContent=n===LAST?'SEND TO TAFFETA WEDDINGS':'NEXT';
+  $('#back').hidden=n===1; $('#lede').hidden=n!==1; $('#err').textContent='';
+  if(n>1)scrollTo(0,0);
+}
+const v=id=>clean($('#'+id).value);
+function check(n){
+  const need={1:[['first','your first name'],['last','your last name'],['phone','your mobile number'],['email','your email']],
+              2:[['date','your wedding date']],3:[['ready','where you’re getting ready'],['hair','how many for hair'],['makeup','how many for makeup']]}[n];
+  for(const [id,l] of need){if(!v(id)){$('#err').textContent='Please add '+l+'.';$('#'+id).focus();return false}}
+  if(n===1){
+    if(v('phone').replace(/\D/g,'').length<10){$('#err').textContent='Please add a 10-digit mobile number.';$('#phone').focus();return false}
+    if(!/^\S+@\S+\.\S+$/.test(v('email'))){$('#err').textContent='That email doesn’t look quite right.';$('#email').focus();return false}
+  }
+  return true;
+}
+$('#back').addEventListener('click',()=>show(step-1));
+$('#f').addEventListener('submit',async e=>{
+  e.preventDefault();$('#err').textContent='';
+  if(!check(step))return;
+  if(step<LAST){show(step+1);return}
+  const fl=document.querySelector('input[name=fl]:checked');
+  const d={action:'brideInquiry',first:v('first'),last:v('last'),phone:v('phone'),email:v('email'),date:v('date'),ceremony:v('ceremony'),
+    firstLook:fl?fl.value:'',ready:v('ready'),hair:v('hair'),makeup:v('makeup'),website:v('website')};
+  const b=$('#go');b.disabled=true;b.textContent='SENDING…';
+  try{
+    const r=await fetch(window.TW_ENDPOINT,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(d)}).then(r=>r.json());
+    if(!r.ok)throw new Error(r.error||'not_ok');
+    const first=d.first.replace(/[<>&"]/g,'');
+    $('#app').innerHTML=`<div class="done"><img class="script" src="withlove.png" alt="With love" width="387" height="130" style="width:190px">
+      <div class="brand">TAFFETA WEDDINGS</div><div class="hair"></div><h2>Thank you, <em>${first}.</em></h2>
+      <p class="lede">Your details are with our bridal team. We’ll text you back within 24 hours.</p></div>`;
+    scrollTo(0,0);
+  }catch(x){b.disabled=false;b.textContent='SEND TO TAFFETA WEDDINGS';$('#err').textContent='That didn’t go through. Please try again, or text us your details.'}
+});
+show(1);
+})();
+</script>
+</body></html>

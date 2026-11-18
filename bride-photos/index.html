@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#ffffff"><meta name="robots" content="noindex">
+<title>Taffeta Weddings · Show us your look</title>
+<meta property="og:title" content="Taffeta Weddings · Show us your look">
+<meta property="og:description" content="Share a few photos so we can pair you with the right artist.">
+<meta property="og:site_name" content="Taffeta Weddings">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://prettyteam.taffetadesign.com/bride-photos/">
+<meta property="og:image" content="https://prettyteam.taffetadesign.com/bride/card-photos.png">
+<meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="../weddings/icon-192.png"><link rel="apple-touch-icon" href="../weddings/apple-touch-icon.png">
+<link rel="stylesheet" href="../bride/bride.css">
+<script src="../weddings/config.js"></script>
+</head><body><main id="app">
+
+<!-- Bride photo form (Alexandra, Nov 18 2026): a separate link from the inquiry form. Photos go to a Google Drive folder
+     named for the bride (inside "Taffeta Bride Photos" on info@), and the office gets one email with the folder link. -->
+
+<div class="top">
+  <div class="brand">TAFFETA WEDDINGS</div><div class="hair"></div>
+  <h2>Show us <em>your look</em></h2>
+  <p class="lede">Photos in natural light help us pair you with the right artist. No filters, please.</p>
+</div>
+
+<form id="f" novalidate>
+  <div class="row2">
+    <div class="field"><label for="first">First name</label><input class="input" id="first" autocomplete="given-name"></div>
+    <div class="field"><label for="last">Last name</label><input class="input" id="last" autocomplete="family-name"></div>
+  </div>
+  <div class="field"><label for="phone">Mobile number</label><input class="input" id="phone" type="tel" inputmode="tel" autocomplete="tel"></div>
+
+  <div id="slots"></div>
+
+  <input class="hp" id="website" tabindex="-1" autocomplete="off" aria-hidden="true">
+  <div class="bar" id="bar" hidden><i></i></div>
+  <p class="err" id="err" role="alert"></p>
+  <button class="btn" id="go" type="submit">SEND MY PHOTOS</button>
+</form>
+</main>
+<script>
+(function(){
+const $=s=>document.querySelector(s), clean=v=>String(v||'').trim();
+const SLOTS=[['hair','Your hair','Natural light, hair down'],['skin','Your skin','No makeup if you can'],
+  ['love','Looks you love','Add as many as you like'],['skip','Looks you don’t love','So we know what to skip']];
+const MAX=10, picked={};
+$('#slots').innerHTML=SLOTS.map(([k,t,s])=>`<div class="slot" style="margin-bottom:12px"><div class="row"><div><b>${t}</b><small>${s}</small></div>
+  <label class="add">+ ADD<input type="file" accept="image/*" multiple data-k="${k}"></label></div><div class="thumbs" id="t-${k}"></div></div>`).join('');
+SLOTS.forEach(([k])=>picked[k]=[]);
+function draw(k){
+  $('#t-'+k).innerHTML=picked[k].map((p,i)=>`<div style="background-image:url(${p.url})"><button type="button" aria-label="Remove" data-k="${k}" data-i="${i}">×</button></div>`).join('');
+}
+document.addEventListener('change',e=>{
+  const inp=e.target;if(!inp.dataset||!inp.dataset.k)return;const k=inp.dataset.k;
+  for(const f of inp.files){if(picked[k].length>=MAX)break;if(/^image\//.test(f.type)||/\.(heic|heif)$/i.test(f.name))picked[k].push({file:f,url:URL.createObjectURL(f)})}
+  inp.value='';draw(k);
+});
+document.addEventListener('click',e=>{const b=e.target.closest('.thumbs button');if(!b)return;picked[b.dataset.k].splice(+b.dataset.i,1);draw(b.dataset.k)});
+
+/** Shrinks a photo to 1800px on its long side, as a JPEG, so it sends quickly from a phone. */
+function shrink(file){return new Promise((ok,no)=>{const img=new Image();img.onload=()=>{
+  const m=1800,s=Math.min(1,m/Math.max(img.width,img.height)),c=document.createElement('canvas');
+  c.width=Math.round(img.width*s);c.height=Math.round(img.height*s);c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+  ok(c.toDataURL('image/jpeg',.86).split(',')[1])};img.onerror=no;img.src=URL.createObjectURL(file)})}
+const post=d=>fetch(window.TW_ENDPOINT,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(d)}).then(r=>r.json());
+
+$('#f').addEventListener('submit',async e=>{
+  e.preventDefault();const err=$('#err');err.textContent='';
+  const v=id=>clean($('#'+id).value);
+  for(const [id,l] of [['first','your first name'],['last','your last name'],['phone','your mobile number']]){if(!v(id)){err.textContent='Please add '+l+'.';$('#'+id).focus();return}}
+  if(v('phone').replace(/\D/g,'').length<10){err.textContent='Please add a 10-digit mobile number.';$('#phone').focus();return}
+  const all=SLOTS.flatMap(([k])=>picked[k].map(p=>({k,file:p.file})));
+  if(!all.length){err.textContent='Please add at least one photo.';return}
+  const b=$('#go'),bar=$('#bar');b.disabled=true;bar.hidden=false;
+  const who={first:v('first'),last:v('last'),phone:v('phone'),website:v('website')};
+  try{
+    const s=await post(Object.assign({action:'bridePhotoStart'},who));if(!s.ok)throw new Error(s.error);
+    let done=0,failed=0;
+    for(const p of all){
+      b.textContent='SENDING '+(done+failed+1)+' OF '+all.length+'…';
+      try{const data=await shrink(p.file);const r=await post({action:'bridePhoto',token:s.token,group:p.k,data});if(!r.ok)throw 0;done++}catch(x){failed++}
+      bar.firstChild.style.width=Math.round((done+failed)/all.length*100)+'%';
+    }
+    if(!done)throw new Error('none');
+    const counts={};SLOTS.forEach(([k])=>counts[k]=picked[k].length);
+    await post(Object.assign({action:'bridePhotosDone',token:s.token,sent:done,failed,counts},who));
+    const first=who.first.replace(/[<>&"]/g,'');
+    $('#app').innerHTML=`<div class="done"><img class="script" src="../bride/withlove.png" alt="With love" width="387" height="130" style="width:190px">
+      <div class="brand">TAFFETA WEDDINGS</div><div class="hair"></div><h2>Thank you, <em>${first}.</em></h2>
+      <p class="lede">${failed?`We got ${done} of your ${all.length} photos. Please text us the rest.`:'We got your photos. Our bridal team will be in touch soon.'}</p></div>`;
+    scrollTo(0,0);
+  }catch(x){b.disabled=false;b.textContent='SEND MY PHOTOS';bar.hidden=true;err.textContent='That didn’t go through. Please try again, or text us your photos.'}
+});
+})();
+</script>
+</body></html>
