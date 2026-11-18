@@ -889,6 +889,12 @@ input,select,textarea{background:#fff;border-radius:0}
       <div class="status" id="pp-note">Loading…</div>
       <button class="btn ghost" id="pp-refresh">Refresh</button>
     </div>
+    <div id="pp-links" style="margin-bottom:24px">
+      <h3 style="margin:4px 0 4px;font:500 12px var(--sans);letter-spacing:.14em;text-transform:uppercase">Links To Text Brides</h3>
+      <p class="hint" style="margin:0 0 8px">When a bride texts you, tap <b>Copy</b>, then paste the link into your text to her.</p>
+      <div class="row" style="align-items:center;flex-wrap:wrap;gap:8px"><button class="btn ghost small" type="button" data-blink="https://prettyteam.taffetadesign.com/bride/" style="flex:0 0 auto">Copy</button><span><b>Bride inquiry form</b>: her date, times and what she needs. It goes into HoneyBook.</span></div>
+      <div class="row" style="align-items:center;flex-wrap:wrap;gap:8px;margin-top:8px"><button class="btn ghost small" type="button" data-blink="https://prettyteam.taffetadesign.com/bride-photos/" style="flex:0 0 auto">Copy</button><span><b>Bride photo form</b>: her hair, skin and the looks she loves.</span></div>
+    </div>
     <div id="pp-vm" hidden>
       <h3 style="margin:4px 0 4px;font:500 12px var(--sans);letter-spacing:.14em;text-transform:uppercase">Venmo Payments to Match</h3>
       <p class="hint" style="margin:0 0 8px">Venmo payments to sales@ that Claude couldn't match to a bride (a mom or fiancé paying, or a name that isn't on the Pipeline). Tap <b>Add</b> to put her in Booked weddings, or <b>Not a Booking</b> to clear it.</p>
@@ -2774,6 +2780,7 @@ $("#ed-save").onclick=async()=>{
   }catch(e){st.textContent="That didn't save. Try again."}
   finally{$("#ed-save").disabled=false}
 };
+document.querySelectorAll("[data-blink]").forEach(b=>b.onclick=()=>copy(b.dataset.blink));
 $("#adm-copy").onclick=()=>copy([ADM_COLS.map(c=>c[1]).join("\t"),...profiles.map(d=>ADM_COLS.map(c=>String(cell(d,c[0])).replace(/[\t\n]/g," ")).join("\t"))].join("\n"));
 
 
