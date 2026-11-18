@@ -1833,10 +1833,18 @@ function meView(){
   if(HUB.data&&HUB.data.rx) out.push(rxPinCard());
   return [h('div',{class:'hub'},out)];
 }
+/* Links To Copy (Alexandra, Nov 18 2026): the links the team pastes into Story link stickers, bios and texts. */
+const PROMO_LINKS=[
+  ['Book online','Salon and spa booking. Guests pick you and a time.',window.TAFFETA_BOOKING||''],
+  ['Free consultation','Guests share their hair or skin goals and photos before they book.','https://prettyteam.taffetadesign.com/consultation/'],
+  ['Main website','Taffeta Salon & Spa home page.','https://taffetadesign.com/'],
+  ['Salon and spa menu','Every service and price.','https://taffetadesign.com/salon-and-spa-menu'],
+  ['Beauty membership','Our monthly membership.','https://taffetadesign.com/beauty-membership'],
+  ['Hi Pretty shop','Our online shop.','https://hipretty.taffetadesign.com/']];
 /* Self Promotion (Alexandra, Oct 21 2026): the weekly post ideas get their own page and square on Home, moved off My Profile.
    The ideas still come from team.json social (hair or skin, by role) and refresh every Sunday. */
 function promoView(){
-  const soc=S.mine.social, posts=(soc&&soc.posts)||[], ig=((HUB.data&&HUB.data.info)||{}).instagram||'', book=window.TAFFETA_BOOKING||'';
+  const soc=S.mine.social, posts=(soc&&soc.posts)||[], ig=((HUB.data&&HUB.data.info)||{}).instagram||'';
   return [h('div',{class:'hub'},
     h('div',{},h('span',{class:'lbl'},'Grow your book'),h('h1',{style:'font-size:28px'},'Self Promotion'),
       h('p',{class:'soft',style:'margin:6px 0 0'},'Fresh post ideas for you every Sunday. '+(soc&&soc.week?soc.week+'.':''))),
@@ -1844,8 +1852,11 @@ function promoView(){
       posts.length?posts.map(([t,x],i)=>h('div',{class:'grule'},h('div',{class:'gn'},String(i+1)),h('p',{},t,h('small',{},x)))):
         h('p',{class:'soft'},'New ideas go up Sunday. Check back then.')),
     h('div',{class:'gcard'},h('h2',{},gIcon('♡'),'Every post'),
-      book?h('div',{class:'grule'},h('div',{class:'gn'},'→'),h('p',{},'Add the booking link',h('small',{},'Tag @taffetasalonandspa, and put this link in your Story with a link sticker so guests can book you right away.'),copyBtn(book))):null,
+      h('div',{class:'grule'},h('div',{class:'gn'},'→'),h('p',{},'Add a link',h('small',{},'Tag @taffetasalonandspa. In your Story, add a link sticker and paste a link from Links To Copy below.'))),
       ig?null:h('div',{class:'grule'},h('div',{class:'gn'},'✎'),h('p',{},'Add your Instagram',h('small',{},'Put your page name on My Profile so we can find and share your posts.')))),
+    h('div',{class:'gcard'},h('h2',{},gIcon('⧉'),'Links To Copy'),
+      h('p',{class:'soft',style:'margin:0 0 4px'},'Tap Copy link, then paste it into a Story link sticker, your bio or a text.'),
+      PROMO_LINKS.filter(([,,u])=>u).map(([t,x,u])=>h('div',{class:'grule'},h('div',{class:'gn'},'↗'),h('p',{},t,h('small',{},x),copyBtn(u))))),
     h('div',{class:'gcard'},h('h2',{},gIcon('✓'),'Keep your look cohesive'),
       SOCIAL_RULES.map(([t,x])=>h('div',{class:'grule'},h('div',{class:'gn'},'✓'),h('p',{},t,h('small',{},x))))))];
 }
