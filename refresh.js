@@ -54,3 +54,5 @@ body{padding-bottom:calc(56px + env(safe-area-inset-bottom))}
   document.addEventListener('visibilitychange',()=>{if(!document.hidden) check()});
   setInterval(check,5*60*1000);
 })();
+/* Auto-update while open (Nov 9 2026): see g/autoupdate.js */
+(function(){if(window.__ppAuto)return;var s=document.createElement('script');s.src='/g/autoupdate.js';(document.head||document.documentElement).appendChild(s)})();
