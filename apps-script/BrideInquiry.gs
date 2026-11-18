@@ -49,7 +49,7 @@ function brideTab_(name, head) {
   return sh;
 }
 
-const brideName_ = d => (clean_(d.first, 40) + ' ' + clean_(d.last, 40)).trim();
+const brideFullName_ = d => (clean_(d.first, 40) + ' ' + clean_(d.last, 40)).trim();
 const bridePhoneOk_ = p => String(p || '').replace(/\D/g, '').length >= 10;
 
 function brideInquiry_(d) {
@@ -89,7 +89,7 @@ function bridePhotoRoot_() {
 
 /** Makes the bride's folder ("Emily Smith · Nov 18, 2026") and hands back a token for her photos (good for 6 hours). */
 function bridePhotoStart_(d) {
-  const name = brideName_(d);
+  const name = brideFullName_(d);
   if (!clean_(d.first, 40) || !clean_(d.last, 40) || !bridePhoneOk_(d.phone)) return { ok: false, error: 'missing' };
   const folder = bridePhotoRoot_().createFolder((name + ' · ' + Utilities.formatDate(new Date(), TZ, 'MMM d, yyyy')).replace(/[\/\\]/g, '-'));
   const token = Utilities.getUuid().replace(/-/g, '');
@@ -119,7 +119,7 @@ function bridePhoto_(d) {
 function bridePhotosDone_(d) {
   const folder = brideFolder_(d.token);
   if (!folder) return { ok: false, error: 'not_found' };
-  const name = brideName_(d), phone = clean_(d.phone, 30), c = d.counts || {};
+  const name = brideFullName_(d), phone = clean_(d.phone, 30), c = d.counts || {};
   const parts = Object.keys(BRIDE_GROUPS).filter(k => +c[k] > 0).map(k => BRIDE_GROUPS[k] + ': ' + (+c[k]));
   const sent = +d.sent || 0, failed = +d.failed || 0;
   const lock = LockService.getScriptLock();
