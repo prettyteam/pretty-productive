@@ -62,7 +62,7 @@ function pricesView(){
       mine.length?h('section',{class:'card2'},h('span',{class:'lbl'},'★ Your Go-Tos'),...mine.map(([n,p])=>srow(n,p))):
         (q?null:h('small',{class:'soft',style:'text-align:center'},'Tap ☆ on the products you reach for most. They move to the top here, on her take-home card and on Home Care, on your phone and the salon iPad.')),
       h('section',{class:'card2'},h('span',{class:'lbl'},'Sample Bottles'),row('Try Me Bottle · 1 oz of any hair backbar product','$6'),
-        row('Taffeta BR Bottle · a BR product, about 2 weeks','$25'),h('small',{class:'soft'},'Skin has no Try Me bottles: the Taffeta BR Bottle is the skin version.')),...lines];
+        row('Taffeta BR Bottle · one BR sample in a glass dropper or screw tub, about 2 weeks','$25'),h('small',{class:'soft'},'Skin has no Try Me bottles: the Taffeta BR Bottle is the skin version.')),...lines];
     body.push(h('small',{class:'soft',style:'text-align:center'},'Retail prices from Paired Plus. Always ring up from the POS.'));
   }
   return [h('div',{class:'hub'},h('div',{},h('span',{class:'lbl'},'Salon & spa'),h('h1',{style:'font-size:28px'},'Prices'),
