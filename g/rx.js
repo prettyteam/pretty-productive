@@ -553,8 +553,6 @@ function rxGenerateSkin(R,g){
     const sv=o2.filter(l=>l.t==='s'), s2=rxTotal(sv), amt=Math.min(200,Math.ceil((b+50-s2)/5)*5);
     if(amt>=RX_SK_MIN&&s2+amt>rxTotal(o2)) o2=[...sv,hc(amt)];
   }
-  /* All In carries the $75 Skin Box even when that runs up to $75 over her budget (Alexandra, Nov 18 2026) */
-  if(b!=null){const sv=o2.filter(l=>l.t==='s'), h2=rxTotal(o2)-rxTotal(sv); if(h2>0&&h2<RX_SK_BOX&&rxTotal(sv)+RX_SK_BOX<=b+75) o2=[...sv,hc(RX_SK_BOX)]}
   /* Carolyn's specialty: Nano Needling is suggested for her to swap into All In when it's right for the guest */
   const spec=rxArtist()==='carolyn'&&(gl.includes('Anti-Aging (Fine Lines & Firmness)')||nw.includes('Fine lines'))
     ?{n:'Nano Needling Facial',p:rxPrice('skin','Nano Needling Facial'),why:'Your specialty for fine lines and firmness. If it’s right for her, swap it into All In.'}:null;
