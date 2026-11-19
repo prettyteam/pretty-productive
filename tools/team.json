@@ -171,7 +171,7 @@
     ]
   },
   "pk": {
-    "week": "Nov 17",
+    "week": "Nov 19",
     "groups": [
       {
         "name": "Hair Care",
@@ -194,11 +194,11 @@
           },
           {
             "name": "Brazilian Blowout",
-            "title": "Why guests love it",
-            "blurb": "10 reasons the service sells. Send every guest home with the aftercare shampoo.",
-            "url": "https://behindthechair.com/articles/10-reasons-why-you-should-be-doing-brazilian-blowouts/",
+            "title": "Fix the Damage, Fix the Frizz",
+            "blurb": "Damaged hair frizzes; add a Glass Hair leave-in after every color or highlight.",
+            "url": "https://www.brazilianblowout.com/blogs/news/does-damaged-hair-cause-frizz",
             "cta": "Read",
-            "week": "Oct 17"
+            "week": "Nov 19"
           },
           {
             "name": "Davines",
@@ -285,7 +285,8 @@
       "https://davinespro.com/en/international/blog/discover-our-new-naturaltech-energizing-overnight-serum",
       "https://coveteur.com/winter-2026-makeup-trends",
       "https://hauteliving.com/hautebeauty/marco-norma-rossano-ferretti-explains-the-method/",
-      "https://maneprint.com/products/hot-like-me-sheer-glass"
+      "https://maneprint.com/products/hot-like-me-sheer-glass",
+      "https://www.brazilianblowout.com/blogs/news/does-damaged-hair-cause-frizz"
     ]
   },
   "promo": {
