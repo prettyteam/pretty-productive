@@ -108,6 +108,7 @@ function doPost(e) {
   if (d.action === 'favVideoCheck') { const w0 = who_(d); return json_(w0 ? favVideoCheck_(w0, d) : { ok: false, error: 'signin' }); }   // after a straight-to-Drive send (Favorites.gs)
   if (d.action === 'addFav') { const w0 = who_(d); return json_(w0 ? addFav_(w0, d.id, d.photo) : { ok: false, error: 'signin' }); }   // takes the lock itself, only for the list (Favorites.gs)
   if (d.action === 'wedPhotoData') { const w0 = who_(d); return json_(w0 ? wedPhotoData_(w0, d.id, d.ids, !!d.full) : { ok: false, error: 'signin' }); }   // small pictures only read, so they skip the lock and never wait on uploads
+  if (/^bride(Inquiry|PhotoStart|Photo|PhotosDone)$/.test(d.action || '')) return json_(bridePost_(d));   // bride text links, no sign-in (BrideInquiry.gs)
   const who = who_(d);
   if (!who) return json_({ ok: false, error: 'signin' });
   const lock = LockService.getScriptLock();

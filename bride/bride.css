@@ -1,0 +1,56 @@
+/* Taffeta Weddings bridal look (Alexandra, Nov 18 2026): black and white, dainty, thin black lines, black buttons,
+   her Canva script as pictures. Shared by bride/ and bride-photos/. All bridal pieces should match this. */
+@font-face{font-family:Fraunces;src:url(../g/fraunces-latin-300-normal.woff2) format("woff2");font-weight:300}
+@font-face{font-family:Fraunces;src:url(../g/fraunces-latin-300-italic.woff2) format("woff2");font-style:italic;font-weight:300}
+@font-face{font-family:"Libertinus Sans";src:url(../g/libertinus-sans-latin-400-normal.woff2) format("woff2")}
+:root{--ink:#111;--soft:#6b6b6b;--line:#d9d9d9;--display:Fraunces,Georgia,serif;--body:"Libertinus Sans",system-ui,sans-serif}
+*,*::before,*::after{box-sizing:border-box}
+html,body{margin:0;background:#fff;color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.5}
+main{max-width:480px;margin:0 auto;padding:30px 24px 48px;display:flex;flex-direction:column;gap:22px}
+form{display:flex;flex-direction:column;gap:22px}
+.top{display:flex;flex-direction:column;align-items:center;gap:12px}
+.script{display:block;margin:0 auto;width:220px;height:auto}
+.brand{text-align:center;font-size:11px;letter-spacing:.32em}
+.hair{width:40px;height:1px;background:var(--ink);margin:0 auto}
+.lede{text-align:center;margin:0 auto;font-size:15.5px;color:#333;max-width:360px}
+.steps{display:flex;gap:5px;align-items:center}.steps i{flex:1;height:1px;background:var(--line)}.steps i.on{background:var(--ink);height:2px}
+.eyebrow{display:block;font-size:10.5px;letter-spacing:.28em;text-align:center;color:var(--soft);margin-top:-10px}
+h2{font-family:var(--display);font-weight:300;font-size:24px;text-align:center;line-height:1.25;margin:0}
+h2 em{font-style:italic;font-weight:300}
+.step{display:flex;flex-direction:column;gap:20px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.field{display:flex;flex-direction:column;gap:6px}
+.field>label{font-size:10.5px;letter-spacing:.2em;text-transform:uppercase}
+.input{font:inherit;font-size:16px;color:var(--ink);background:#fff;border:0;border-bottom:1px solid var(--ink);border-radius:0;height:40px;padding:0 2px;width:100%;-webkit-appearance:none;appearance:none}
+.input::placeholder{color:#a3a3a3}
+.input:focus{outline:none;border-bottom-width:2px}
+select.input{background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%23111' stroke-width='1.2'/%3E%3C/svg%3E") no-repeat right 4px center}
+input[type=date].input{min-height:40px}
+.pills{display:flex;gap:8px;flex-wrap:wrap}
+.pills label{flex:1;min-width:90px}
+.pills input{position:absolute;opacity:0;pointer-events:none}
+.pills span{display:block;text-align:center;border:1px solid var(--ink);padding:10px 6px;font-size:14.5px;cursor:pointer}
+.pills input:checked+span{background:var(--ink);color:#fff}
+.pills input:focus-visible+span{outline:2px solid var(--ink);outline-offset:2px}
+.hint{font-size:13px;color:var(--soft);margin:-8px 0 0}
+/* small, centered buttons (Alexandra, Nov 18 2026: the full-width ones looked wide and bulky) */
+.btn{display:block;align-self:center;min-width:170px;margin:0 auto;background:var(--ink);color:#fff;border:0;border-radius:0;font:inherit;font-size:11px;letter-spacing:.26em;padding:11px 30px;cursor:pointer}
+.btn:disabled{opacity:.6}
+.back{background:none;border:0;font:inherit;font-size:13.5px;color:var(--soft);text-decoration:underline;cursor:pointer;margin-top:-8px}
+.err{color:#8a2a1a;font-size:14px;text-align:center;margin:0;min-height:1px}
+.hp{position:absolute;left:-9999px;opacity:0}
+.done{display:flex;flex-direction:column;align-items:center;text-align:center;gap:14px;padding-top:90px}
+.fine{font-size:12.5px;color:var(--soft);text-align:center;margin:0}
+/* photo slots (bride-photos/) */
+.slot{border:1px solid var(--ink);padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+.slot .row{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.slot b{font-weight:400;font-size:15.5px;display:block}
+.slot small{display:block;color:var(--soft);font-size:12.5px}
+.slot .add{font-size:11px;letter-spacing:.2em;white-space:nowrap;cursor:pointer;border:0;background:none;color:var(--ink);padding:6px 0}
+.slot input[type=file]{display:none}
+.thumbs{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.thumbs:empty{display:none}
+.thumbs div{position:relative;aspect-ratio:1;background:#f3f3f3 center/cover no-repeat}
+.thumbs button{position:absolute;top:2px;right:2px;width:22px;height:22px;border:0;border-radius:50%;background:rgba(255,255,255,.9);color:var(--ink);font-size:14px;line-height:22px;padding:0;cursor:pointer}
+.bar{height:2px;background:var(--line)}.bar i{display:block;height:2px;background:var(--ink);width:0;transition:width .3s}
+[hidden]{display:none!important}

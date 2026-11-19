@@ -573,8 +573,10 @@ details.days summary::-webkit-details-marker{display:none}
 <script src="g/qr.js?v=1"></script>
 <script src="g/jokes.js?v=2"></script>
 <script src="g/rx.js?v=127"></script>
+<script src="g/extq.js?v=1"></script>
 <script src="g/prices.js?v=11"></script>
 <script src="g/ordering.js?v=4"></script>
+<script src="g/bride-links.js?v=1"></script>
 <script src="g/inventory.js?v=2"></script>
 <script src="g/whattoorder.js?v=13"></script>
 <link rel="stylesheet" href="g/rx.css?v=9">
@@ -1832,10 +1834,18 @@ function meView(){
   if(HUB.data&&HUB.data.rx) out.push(rxPinCard());
   return [h('div',{class:'hub'},out)];
 }
+/* Links To Copy (Alexandra, Nov 18 2026): the links the team pastes into Story link stickers, bios and texts. */
+const PROMO_LINKS=[
+  ['Book online','Salon and spa booking. Guests pick you and a time.',window.TAFFETA_BOOKING||''],
+  ['Free consultation','Guests share their hair or skin goals and photos before they book.','https://prettyteam.taffetadesign.com/consultation/'],
+  ['Main website','Taffeta Salon & Spa home page.','https://taffetadesign.com/'],
+  ['Salon and spa menu','Every service and price.','https://taffetadesign.com/salon-and-spa-menu'],
+  ['Beauty membership','Our monthly membership.','https://taffetadesign.com/beauty-membership'],
+  ['Hi Pretty shop','Our online shop.','https://hipretty.taffetadesign.com/']];
 /* Self Promotion (Alexandra, Oct 21 2026): the weekly post ideas get their own page and square on Home, moved off My Profile.
    The ideas still come from team.json social (hair or skin, by role) and refresh every Sunday. */
 function promoView(){
-  const soc=S.mine.social, posts=(soc&&soc.posts)||[], ig=((HUB.data&&HUB.data.info)||{}).instagram||'', book=window.TAFFETA_BOOKING||'';
+  const soc=S.mine.social, posts=(soc&&soc.posts)||[], ig=((HUB.data&&HUB.data.info)||{}).instagram||'';
   return [h('div',{class:'hub'},
     h('div',{},h('span',{class:'lbl'},'Grow your book'),h('h1',{style:'font-size:28px'},'Self Promotion'),
       h('p',{class:'soft',style:'margin:6px 0 0'},'Fresh post ideas for you every Sunday. '+(soc&&soc.week?soc.week+'.':''))),
@@ -1843,8 +1853,11 @@ function promoView(){
       posts.length?posts.map(([t,x],i)=>h('div',{class:'grule'},h('div',{class:'gn'},String(i+1)),h('p',{},t,h('small',{},x)))):
         h('p',{class:'soft'},'New ideas go up Sunday. Check back then.')),
     h('div',{class:'gcard'},h('h2',{},gIcon('♡'),'Every post'),
-      book?h('div',{class:'grule'},h('div',{class:'gn'},'→'),h('p',{},'Add the booking link',h('small',{},'Tag @taffetasalonandspa, and put this link in your Story with a link sticker so guests can book you right away.'),copyBtn(book))):null,
+      h('div',{class:'grule'},h('div',{class:'gn'},'→'),h('p',{},'Add a link',h('small',{},'Tag @taffetasalonandspa. In your Story, add a link sticker and paste a link from Links To Copy below.'))),
       ig?null:h('div',{class:'grule'},h('div',{class:'gn'},'✎'),h('p',{},'Add your Instagram',h('small',{},'Put your page name on My Profile so we can find and share your posts.')))),
+    h('div',{class:'gcard'},h('h2',{},gIcon('⧉'),'Links To Copy'),
+      h('p',{class:'soft',style:'margin:0 0 4px'},'Tap Copy link, then paste it into a Story link sticker, your bio or a text.'),
+      PROMO_LINKS.filter(([,,u])=>u).map(([t,x,u])=>h('div',{class:'grule'},h('div',{class:'gn'},'↗'),h('p',{},t,h('small',{},x),copyBtn(u))))),
     h('div',{class:'gcard'},h('h2',{},gIcon('✓'),'Keep your look cohesive'),
       SOCIAL_RULES.map(([t,x])=>h('div',{class:'grule'},h('div',{class:'gn'},'✓'),h('p',{},t,h('small',{},x))))))];
 }
@@ -2425,7 +2438,9 @@ const HUB_TILES=[
 function hubMenu(){
   return h('div',{class:'hmenu hub'},h('div',{class:'mhead'},'My Apps'),
     h('div',{class:'cgrid'},HUB_TILES.map(([k,t,sub,go])=>h('button',{type:'button',onclick:go},
-      h('span',{class:'ht'},t),h('span',{class:'hs'},sub.map(x=>h('span',{},x)))))));
+      h('span',{class:'ht'},t),h('span',{class:'hs'},sub.map(x=>h('span',{},x)))))),
+    /* Bride links under My Apps (Alexandra, Nov 18 2026): Copy or Share the /bride and /bride-photos forms to text a bride */
+    window.BrideLinks?h('div',{style:'margin-top:18px;padding:0 4px'},BrideLinks.el()):null);
 }
 function hubSocial(){
   const label=Object.fromEntries(staffTabs());
@@ -2444,6 +2459,7 @@ function staffTabs(){
   if(isGoalsPerson(p)) t.push(['tomorrow',st.clock?'Tomorrow':'Coming Up']);
   if(isGoalsPerson(p)||CC_SLUGS.includes(st.slug)) t.push(['rx','RX Card']);
   if(isGoalsPerson(p)||CC_SLUGS.includes(st.slug)) t.push(['reg','Home Care']);
+  if(isGoalsPerson(p)||CC_SLUGS.includes(st.slug)) t.push(['ext','Extension Quote']);   // Alexandra, Nov 17 2026
   if(isGoalsPerson(p)||p.adv) t.push(['growth',p.adv?'Associate Program':'Growth']);
   if(st.slug) t.push(['mph',MW_NAME]);
   if(p.binder&&p.binder.length) t.push(['binder','My Binder']);
@@ -2463,7 +2479,7 @@ function staffTabs(){
   return t;
 }
 /* One menu instead of a row of tabs (Alexandra, Oct 2026). Sections are grouped; Customer cards holds RX card and Home care. */
-const NAV_GROUPS=[['Guest Requests',['greq']],['Appointments',['home','today','tomorrow','tip']],['Customer Cards',['rx','reg']],[MW_NAME,['mph']],['Goals',['growth','binder','cr']],
+const NAV_GROUPS=[['Guest Requests',['greq']],['Appointments',['home','today','tomorrow','tip']],['Customer Cards',['rx','reg','ext']],[MW_NAME,['mph']],['Goals',['growth','binder','cr']],
   ['Salon & Spa',['prices','order','pk','inv','skin','cards','off']],['Taffeta',['guide','hb','fg']],['Send To Alex',['ask']],['Self Promotion',['promo']],['Marketing Proofs',['mkt']],['Bridal App',['wed']],['My Profile',['me']]];
 let NAV_OPEN=false;
 /* Disco ball = Home, Back arrow = the page before (Alexandra, Oct 15 2026). Each page change is a browser history step,
@@ -2599,6 +2615,7 @@ function staffRender(){
   if(S.tab==='tomorrow') return tomorrowView();
   if(S.tab==='reg') return regimenView();
   if(S.tab==='rx') return rxView();
+  if(S.tab==='ext') return extQuoteView();
   if(S.tab==='prices') return pricesView();
   if(S.tab==='order') return orderView();
   if(S.tab==='ask') return askView();
