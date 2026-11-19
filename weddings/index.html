@@ -18,7 +18,23 @@
 <link rel="stylesheet" href="../g/coach.css?v=1">
 <script src="../g/qr.js?v=1"></script>
 <script src="../g/config.js?v=4"></script>
-<style>:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;padding:0}img{max-width:100%}</style>
+<style>:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;padding:0}img{max-width:100%}/* Bridal Team Updates (Nov 19 2026) */
+.tupd{background:#fff;border:1px solid var(--line);border-radius:6px;padding:16px;margin:14px 0;display:flex;flex-direction:column;gap:10px}
+.tupd[hidden]{display:none}
+.tu-head{display:flex;flex-direction:column;align-items:center;text-align:center;gap:2px}
+.tu-head h2{font-family:"TaffetaJ",Georgia,serif;font-weight:400;font-size:24px;margin:0;line-height:1.15;text-wrap:balance}
+.tu-head .lbl,.tu-new .lbl{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:#121212}
+.tu-it{border-left:2px solid #121212;padding:2px 0 2px 12px}.tu-it.old{opacity:.7}
+.tu-it p{margin:0;font-size:15px;line-height:1.5;white-space:pre-line}
+.tu-it small{font-size:12px;color:var(--muted)}
+.tu-none{margin:0;color:var(--muted);text-align:center}
+.tu-link,.tu-del{background:none;border:0;padding:4px 0;font:inherit;font-size:13px;color:#121212;text-decoration:underline;text-underline-offset:3px;cursor:pointer;align-self:flex-start}
+.tu-del{font-size:12px;padding:0}
+.tu-new{border-top:1px solid var(--line);padding-top:12px;display:flex;flex-direction:column;gap:8px}
+.tu-new textarea{font-size:15px;min-height:80px}
+.tu-row{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}.tu-row small{color:var(--muted);font-size:12.5px}
+.tu-msg{margin:0;text-align:center;font-size:14px}
+</style>
 <script src="/refresh.js?v=5" defer></script>
 <script src="/g/bats.js?v=2" defer></script>
 <style>/* match the team app look (Alexandra, Oct 15 2026): black and soft black on ivory, Lora titles, menus as plain words with the
@@ -2061,6 +2077,7 @@ function renderHome(){
   }
   h+='<div class="hgig"><span class="lbl">'+esc(today)+'</span><p>'+esc(window.dayJoke?dayJoke("bridal"):"")+'</p></div>';
   {const wx=wxHTML();h+='<div class="hwx" id="hWx"'+(wx?'':' hidden')+'>'+wx+'</div>'}
+  h+='<div class="tupd" id="hUpd">'+tuHTML()+'</div>';
   const gs=homeGroups();
   h+='<div class="hmenu"><div class="mhead">Menu</div><div class="cgrid">';
   gs.forEach(([g,keys],i)=>{
@@ -2077,7 +2094,48 @@ function renderHome(){
   box.querySelectorAll(".cgrid>button[data-g]").forEach(b=>b.onclick=()=>{const g=b.dataset.g,keys=(gs.find(x=>x[0]===g)||[0,[]])[1];
     if(keys.length===1)goTab(keys[0]);else{HOME_OPEN=HOME_OPEN===g?"":g;renderHome();if(HOME_OPEN)setTimeout(()=>{const p=document.querySelector(".hpages");if(p)p.scrollIntoView({behavior:"smooth",block:"center"})},30)}});
   box.querySelectorAll(".hpages button").forEach(b=>b.onclick=()=>goTab(b.dataset.p));
-  loadWx();
+  loadWx();tuWire();tuLoad();
+}
+/* Bridal Team Updates From The Admin Team (Alexandra, Nov 19 2026): Alexandra, Dominique or Cherish post from the office
+   side; every artist sees them on Home with who sent it (the office phone's "Who's this?" name). Each shows 5 days, then
+   moves to Past Updates. Server: weddings/TeamUpdates.js. */
+let TU={items:null,past:false,busy:false,msg:"",draft:"",at:0};
+function tuWhen(t){const d=new Date(t),n=new Date();n.setHours(0,0,0,0);const x=new Date(d);x.setHours(0,0,0,0);const k=Math.round((n-x)/864e5);
+  return k===0?"Today":k===1?"Yesterday":d.toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric"})}
+function tuItem(u,old){return '<div class="tu-it'+(old?' old':'')+'"><p>'+esc(u.text)+'</p><small>From '+esc(u.from)+' · '+esc(tuWhen(u.at))+
+  (ROLE==="office"?' · <button type="button" class="tu-del" data-tud="'+esc(u.id)+'">Remove</button>':'')+'</small></div>'}
+function tuHTML(){
+  const it=TU.items;if(!it&&ROLE!=="office")return"";
+  const fresh=(it||[]).filter(u=>!u.old),old=(it||[]).filter(u=>u.old);
+  if(ROLE!=="office"&&!fresh.length&&!old.length)return"";
+  let h='<div class="tu-head"><h2>Bridal Team Updates</h2><span class="lbl">From The Admin Team</span></div>';
+  h+=fresh.length?fresh.map(u=>tuItem(u)).join(""):'<p class="tu-none">'+(it?'No new updates.':'Loading…')+'</p>';
+  if(old.length){h+='<button type="button" class="tu-link" id="tuPast">'+(TU.past?'Hide Past Updates':'Past Updates ('+old.length+')')+'</button>';if(TU.past)h+=old.map(u=>tuItem(u,true)).join("")}
+  if(ROLE==="office"){const who=officeWho();
+    h+='<div class="tu-new"><label class="lbl" for="tuText">Post An Update For The Bridal Team</label><textarea id="tuText" rows="3" maxlength="1500" placeholder="Example: New trial forms are in the app. Please use them starting Monday.">'+esc(TU.draft)+'</textarea>'+
+      '<div class="tu-row"><small>'+(who?'Shows as from '+esc(who):'Pick who you are at the top first')+'</small><button type="button" class="btn" id="tuPost"'+(TU.busy||!who?' disabled':'')+'>'+(TU.busy?'One moment…':'Post Update')+'</button></div>'+
+      (TU.msg?'<p class="tu-msg">'+esc(TU.msg)+'</p>':'')+'</div>'}
+  return h;
+}
+function tuPaint(){const b=$("#hUpd");if(b){b.innerHTML=tuHTML();b.hidden=!b.innerHTML;tuWire()}}
+function tuWire(){
+  const b=$("#hUpd");if(!b)return;b.hidden=!b.innerHTML;
+  const p=$("#tuPast");if(p)p.onclick=()=>{TU.past=!TU.past;tuPaint()};
+  const t=$("#tuText");if(t)t.oninput=e=>{TU.draft=e.target.value};
+  const go=$("#tuPost");if(go)go.onclick=()=>tuSend("postUpdate",{update:{from:officeWho(),text:TU.draft}},"Posted. The bridal team sees it on their Home.");
+  b.querySelectorAll("[data-tud]").forEach(x=>x.onclick=()=>{if(confirm("Take this update down for everyone?"))tuSend("delUpdate",{id:x.dataset.tud},"Taken down.")});
+}
+async function tuLoad(force){
+  if(!ROLE||!API||(!force&&Date.now()-TU.at<60000))return;TU.at=Date.now();
+  try{const j=await api("teamUpdates");TU.items=j.items||[];}catch(e){if(!TU.items)TU.items=[]}
+  tuPaint();
+}
+async function tuSend(action,data,ok){
+  if(action==="postUpdate"&&!String(TU.draft).trim()){TU.msg="Type the update first.";tuPaint();return}
+  TU.busy=true;TU.msg="";tuPaint();
+  try{const j=await api(action,data);TU.items=j.items||[];TU.msg=ok;if(action==="postUpdate")TU.draft=""}
+  catch(e){TU.msg=e.code==="who"?"Pick who you are at the top first.":"That didn’t go through. Try again."}
+  TU.busy=false;tuPaint();setTimeout(()=>{TU.msg="";tuPaint()},5000);
 }
 /* wedding day forecasts (Alexandra, Oct 24 2026): the team works on location, so instead of Hammonton the home page shows
    the weather at each wedding in the next 7 days, at its getting-ready location, on the wedding day. Artists see their own
