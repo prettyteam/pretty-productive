@@ -14,7 +14,52 @@
 <meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<style>@font-face{font-family:TaffetaJ;src:url(g/lora-latin-400-normal.woff2) format("woff2");font-weight:400;font-style:normal}@font-face{font-family:TaffetaJ;src:url(g/lora-latin-500-normal.woff2) format("woff2");font-weight:500;font-style:normal}@font-face{font-family:TaffetaJ;src:url(g/lora-latin-600-normal.woff2) format("woff2");font-weight:600;font-style:normal}@font-face{font-family:TaffetaJ;src:url(g/lora-latin-400-italic.woff2) format("woff2");font-weight:400;font-style:italic}@font-face{font-family:TaffetaJ;src:url(g/lora-latin-500-italic.woff2) format("woff2");font-weight:500;font-style:italic}</style>
+<style>@font-face{font-family:TaffetaJ;src:url(g/lora-latin-400-normal.woff2) format("woff2");font-weight:400;font-style:normal}@font-face{font-family:TaffetaJ;src:url(g/lora-latin-500-normal.woff2) format("woff2");font-weight:500;font-style:normal}@font-face{font-family:TaffetaJ;src:url(g/lora-latin-600-normal.woff2) format("woff2");font-weight:600;font-style:normal}@font-face{font-family:TaffetaJ;src:url(g/lora-latin-400-italic.woff2) format("woff2");font-weight:400;font-style:italic}@font-face{font-family:TaffetaJ;src:url(g/lora-latin-500-italic.woff2) format("woff2");font-weight:500;font-style:italic}/* Taffeta Calendar (Nov 19 2026) */
+.obtn.ghost{background:#fff;color:var(--ink)}
+.tcal .tc-head{display:flex;flex-direction:column;align-items:center;text-align:center;gap:2px}
+.tcal h2{font-family:var(--display);font-weight:400;font-size:26px;margin:0;line-height:1.1}
+.tcal .tc-sub{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+.tc-invite{border:1px solid var(--ink);border-radius:6px;padding:14px;display:flex;flex-direction:column;gap:4px;background:var(--ivory)}
+.tc-yn{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}.tc-yn .obtn{margin:0;flex:1 1 120px}
+.tc-ups{display:flex;flex-direction:column;gap:4px}.ann.old{opacity:.7}.tc-ups .ann p{white-space:pre-line}
+.tc-title,.tcal h2,.tc-invite b{text-wrap:balance}
+.tc-month{border-top:1px solid var(--line);padding-top:10px}
+.tc-mhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.tc-mhead b{font-family:var(--display);font-weight:400;font-size:19px}
+.tc-arrow{border:1px solid var(--line);background:#fff;border-radius:999px;width:36px;height:36px;font-size:20px;line-height:1;color:var(--ink);cursor:pointer}
+.tc-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px}
+.tc-dow{font-size:11px;letter-spacing:.12em;text-align:center;color:var(--muted);padding:2px 0}
+.tc-cell{aspect-ratio:1/1;min-height:38px;border:1px solid var(--line);background:#fff;border-radius:6px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:0;font:inherit;color:var(--ink);cursor:pointer}
+.tc-cell.blank{border:0;background:none;cursor:default}
+.tc-cell .n{font-size:14px;line-height:1}
+.tc-cell.today{border-color:var(--ink);border-width:1.5px}
+.tc-cell.has{background:var(--ivory)}
+.tc-cell.sel{background:var(--ink);color:#fff}
+.tc-cell .dots{display:flex;gap:2px}.tc-cell .dots i{width:5px;height:5px;border-radius:50%;background:var(--choc)}
+.tc-cell .dots i.need{background:#b0412e}.tc-cell .dots i.std{background:#b08d3c}
+.tc-cell.sel .dots i{background:#fff}
+.tc-list{display:flex;flex-direction:column;gap:2px}
+.tc-ev{display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--line);align-items:flex-start}
+.tc-ev.past{opacity:.6}
+.tc-date{flex:0 0 46px;border:1px solid var(--ink);border-radius:6px;text-align:center;padding:4px 0;line-height:1.1}
+.tc-date small{display:block;font-size:10px;letter-spacing:.14em;text-transform:uppercase}.tc-date b{font-family:var(--display);font-weight:400;font-size:22px}
+.tc-evtx{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1}
+.tc-kind{font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+.tc-title{font-family:var(--display);font-weight:400;font-size:18px;line-height:1.2}
+.tc-evtx small{font-size:13px;color:var(--muted)}.tc-det{font-size:14px;margin:2px 0 0;white-space:pre-line}
+.tc-acts{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:4px}.tc-acts .tdlink{align-self:auto;padding:4px 0;font-size:13px}
+.tc-pill{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;border:1px solid var(--line);border-radius:999px;padding:3px 10px}
+.tc-pill.on{border-color:var(--ink)}.tc-pill.wait{background:var(--ink);color:#fff;border-color:var(--ink)}
+.tc-adds{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}.tc-adds .obtn{margin:0}
+.tc-form{border-color:var(--ink)}
+.tc-kinds{flex-wrap:wrap}
+.tc-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+.tc-chip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:6px 12px;font:inherit;font-size:13px;color:var(--ink);cursor:pointer}
+.tc-chip[aria-pressed=true]{background:var(--ink);color:#fff;border-color:var(--ink)}
+.tc-chip.grp{background:var(--ivory);font-size:12px;letter-spacing:.06em}
+.tc-check{display:flex;gap:10px;align-items:flex-start;font-size:14px}.tc-check input{margin-top:4px;width:18px;height:18px}
+.tc-form textarea{font:inherit;font-size:15px;border:1px solid var(--line);border-radius:6px;padding:10px}
+</style>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@1,500;1,600&display=swap">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libertinus+Sans:ital,wght@0,400;0,700;1,400&display=swap">
 <style>
@@ -577,6 +622,7 @@ details.days summary::-webkit-details-marker{display:none}
 <script src="g/prices.js?v=11"></script>
 <script src="g/ordering.js?v=4"></script>
 <script src="g/bride-links.js?v=1"></script>
+<script src="g/tcal.js?v=1"></script>
 <script src="g/inventory.js?v=2"></script>
 <script src="g/whattoorder.js?v=13"></script>
 <link rel="stylesheet" href="g/rx.css?v=9">
@@ -923,6 +969,7 @@ function render(){
   else if(S.rtab==='home') parts=reportHome();
   else if(S.rtab==='payroll') parts=payrollView();
   else if(S.rtab==='todo') parts=todoAdminView();
+  else if(S.rtab==='cal') parts=window.TCal?TCal.adminView():[];
   else if(S.rtab==='off') parts=adminOffView();
   else if(S.rtab==='reqs') parts=reqsView();
   else if(S.rtab==='month') parts=monthView();
@@ -1244,10 +1291,13 @@ function homeView(){
   {const rc=tpReqCard(); if(rc) out.push(rc);}
   const jk=S.daily&&S.daily.joke, today=new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
   out.push(h('div',{class:'hgig'},h('span',{class:'lbl'},today),jk?h('p',{},jk):null));
-  if(isHub()&&HUB_OPEN!=='salon'){out.push(HUB_OPEN==='social'?hubSocial():hubMenu());return out}
+  /* Taffeta Calendar (Updates From Alex & Events), Nov 19 2026: under the clock and To Do, above the Menu */
+  const tcal=window.TCal?TCal.card():null;
+  if(isHub()&&HUB_OPEN!=='salon'){if(tcal&&!HUB_OPEN)out.push(tcal);out.push(HUB_OPEN==='social'?hubSocial():hubMenu());return out}
   /* Clock in above the Menu for everyone who clocks in (Alexandra, Nov 13 2026) */
   const clockTop=!!st.clock;
   if(clockTop){out.push(clockCard()); if(HUB.fx) out.push(fixCard()); const td=todoCard(); if(td) out.push(td);}
+  if(tcal) out.push(tcal);
   const hm=homeMenu(); if(hm) out.push(hm);
   if(isSkinTeam(S.mine)) out.push(discCard());   /* Discontinued Retail for the skincare team (Nov 16 2026) */
   if(st.clock&&!clockTop) out.push(clockCard());
@@ -1261,7 +1311,7 @@ function homeView(){
     open.map(s=>h('div',{class:'lrow'},h('div',{},h('b',{},niceDay(s.date)+(s.time?' · '+s.time:'')),h('small',{},s.name+(s.note?' · '+s.note:''))),
       h('button',{class:'obtn sm',disabled:HUB.busy?'':null,onclick:()=>hubPost({type:'take',row:s.row},'It’s yours. Thank you for covering!')},'I’ll take it')))));
   const ann=(d&&d.ann)||[];
-  if(ann.length) out.push(h('div',{class:'sec2'},h('span',{class:'lbl'},'From Alexandra'),
+  if(ann.length&&!tcal) out.push(h('div',{class:'sec2'},h('span',{class:'lbl'},'From Alexandra'),
     ann.slice(0,3).map(a=>h('div',{class:'ann'},h('p',{},a.text),h('small',{},a.date?niceDay(a.date):'')))));
   if(!st.clock&&HUB.toast) out.push(h('p',{class:'toast'},HUB.toast));
   return [h('div',{class:'hub'},out)];
@@ -3076,9 +3126,9 @@ function prPhotoKey(){return 'pp-photo:'+ID+':'+prWho()}
 function reportGroups(){
   // always 6 squares (Alexandra, Oct 17 2026): Access sits under Team; without the Color Room, Payroll and Month & Trends share one
   return [['Today',['today']]].concat(S.inv?[['Payroll',['payroll','trends']],['Month & Trends',['month']],['Color Room',['color']]]:[['Payroll & Trends',['payroll','trends','month']]])
-    .concat([['Team',['reqs','todo','off','photos','guide','sendguide','access']],['Marketing Proofs',['mkt']]]);
+    .concat([['Team',['reqs','cal','todo','off','photos','guide','sendguide','access']],['Marketing Proofs',['mkt']]]);
 }
-const PR_LABEL={reqs:'Requests',todo:'To Do List',mkt:'Marketing Proofs',photos:'Team Work',home:'Home',today:'Today',payroll:'Payroll',month:'Month & Trends',trends:'Sunday Trends',color:'Color Room',off:'Time Off',guide:'Culture',sendguide:'Send App Guide',access:'Access'};
+const PR_LABEL={reqs:'Requests',cal:'Taffeta Calendar',todo:'To Do List',mkt:'Marketing Proofs',photos:'Team Work',home:'Home',today:'Today',payroll:'Payroll',month:'Month & Trends',trends:'Sunday Trends',color:'Color Room',off:'Time Off',guide:'Culture',sendguide:'Send App Guide',access:'Access'};
 let PR_OPEN='',PR_NAV=false;
 function prGo(k,fromHistory){
   if(k==='mkt'){PR_NAV=false;PR_OPEN='';openMkt();render();return}
@@ -3086,6 +3136,7 @@ function prGo(k,fromHistory){
   PR_OPEN='';PR_NAV=false;S.rtab=k;S.open=null;render();window.scrollTo(0,0);
   if(k==='photos'&&!ALB.loading){ALB.err=null;albLoad()}
   if(k==='reqs'&&!RQ.busy){RQ.err=null;rqLoad()}
+  if(k==='cal'&&window.TCal) TCal.reload();
   if(k==='todo'&&!TDA.busy){TDA.err=null;TDA.msg='';TDA.day=ymd(new Date());tdaLoad()}
 }
 addEventListener('popstate',e=>{const st=e.state;if(EDITION==='team'&&S.isAdmin){prGo(st&&st.pr?st.pr:'home',true)}});
