@@ -1,4 +1,4 @@
-/* Holiday party (Alexandra, Nov 20 2026): "Sips, Sleigh & Play" on Sunday Dec 20.
+/* Holiday party (Alexandra, Nov 20 2026): "Sip, Sleigh & Play" on Sunday Dec 20.
    On Pretty Life only. A Party List button that opens her RSVP sheet (private to her Google account),
    plus Copy and Share for the two invite links: guests (asks about a +1) and staff (no +1 question).
    The guest list itself is never in this file. Use: PartyLinks.mount(element). */
@@ -35,7 +35,7 @@ function el(){
   css();
   const box=document.createElement('div');box.className='pl';
   const k=document.createElement('p');k.className='pl-k';k.textContent='HOLIDAY PARTY';box.appendChild(k);
-  const h=document.createElement('p');h.className='pl-h';h.textContent='Sips, Sleigh & Play';box.appendChild(h);
+  const h=document.createElement('p');h.className='pl-h';h.textContent='Sip, Sleigh & Play';box.appendChild(h);
   const d=document.createElement('p');d.className='pl-d';d.textContent='Sunday, Dec 20 \u00b7 RSVP by Dec 10';box.appendChild(d);
   const big=document.createElement('a');big.className='pl-big';big.href=SHEET;big.target='_blank';big.rel='noopener';big.textContent='OPEN PARTY LIST';box.appendChild(big);
   const note=document.createElement('p');note.className='pl-n';note.setAttribute('role','status');
