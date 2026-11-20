@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sips, Sleigh &amp; Play</title>
+<meta property="og:title" content="You're invited to Taffeta's Annual Holiday Soirée ✨">
+<meta property="og:description" content="Sips, Sleigh &amp; Play. Sunday, December 20th, 7 o'clock. Tap to RSVP.">
+<meta property="og:image" content="https://prettyteam.taffetadesign.com/soiree-aae8a7/og.jpg">
+<meta name="robots" content="noindex,nofollow">
+<link href="https://fonts.googleapis.com/css2?family=Pinyon+Script&family=La+Belle+Aurore&family=Cormorant+Garamond:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--ivory:#f2f1ec;--ink:#1f1a17;--cherry:#b3202c;--velvet:#7d0f1c;--blush:#e9a6a4;--silver:#c8ccd1}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--ivory:#f2f1ec;--ink:#1f1a17}}
+:root[data-theme="dark"]{--ivory:#f2f1ec;--ink:#1f1a17}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--ivory);color:var(--ink);font-family:'Cormorant Garamond',Georgia,serif}
+.wrap{max-width:560px;margin:0 auto;padding:16px 16px 48px}
+.stage{position:relative;width:100%;aspect-ratio:700/906;overflow:hidden;border-radius:6px;box-shadow:0 10px 30px rgba(60,40,30,.15)}
+.card{position:absolute;left:0;top:0;width:700px;height:906px;transform-origin:0 0;background:url(art.jpg) 0 0/700px 906px no-repeat}
+.t{position:absolute;color:var(--ink);font-family:'La Belle Aurore',cursive;text-align:center;line-height:1.25}
+.inv{left:420px;top:56px;width:260px;font-size:19px}
+.head{left:398px;top:58px;width:284px;font-family:'Pinyon Script',cursive;color:var(--cherry);font-size:75px;line-height:1.12}
+.det{left:446px;top:354px;width:236px;font-size:21px;line-height:1.42}
+.foot{left:470px;top:484px;width:226px;font-size:19px;line-height:1.32}
+.rsvp{color:var(--cherry)}
+/* write-in */
+.head span{display:block;clip-path:inset(-30px 100% -40px -20px);animation:write 1.1s ease-out forwards}
+.head span:nth-child(2){animation-delay:.9s}.head span:nth-child(3){animation-delay:1.8s}
+@keyframes write{to{clip-path:inset(-30px -20px -40px -20px)}}
+.fade{opacity:0;animation:fade 1.2s ease forwards}
+@keyframes fade{to{opacity:1}}
+/* disco ball */
+.ball{position:absolute;width:72px;height:72px;background:url(ball-spin.png) 0 0/1728px 72px no-repeat;animation:spin 1.6s steps(24) infinite}
+@keyframes spin{to{background-position:-1728px 0}}
+.glint{position:absolute;width:16px;height:16px;margin:-8px 0 0 -8px;opacity:0;animation:glint 2.4s ease-in-out infinite}
+.glint::before,.glint::after{content:"";position:absolute;left:7px;top:0;width:2px;height:16px;background:#fff;border-radius:2px;box-shadow:0 0 6px #fff,0 0 10px var(--blush)}
+.glint::after{transform:rotate(90deg)}
+@keyframes glint{0%,100%{opacity:0;transform:scale(.3) rotate(0)}45%{opacity:1;transform:scale(1) rotate(45deg)}60%{opacity:0}}
+.fleck{position:absolute;width:5px;height:5px;border-radius:1px;background:rgba(255,255,255,.95);box-shadow:0 0 6px #fff;mix-blend-mode:screen;animation:fleck 6s linear infinite;opacity:0}
+@keyframes fleck{0%{opacity:0;transform:translate(0,0)}15%{opacity:.9}85%{opacity:.7}100%{opacity:0;transform:translate(var(--dx),var(--dy))}}
+/* tree lights */
+.light{position:absolute;width:7px;height:7px;margin:-3.5px 0 0 -3.5px;border-radius:50%;animation:tw 1.8s ease-in-out infinite}
+@keyframes tw{0%,100%{opacity:.15;transform:scale(.6)}50%{opacity:1;transform:scale(1.15)}}
+/* star + flames */
+.halo{position:absolute;left:403px;top:256px;width:70px;height:70px;margin:-35px 0 0 -35px;border-radius:50%;background:radial-gradient(circle,rgba(255,236,160,.85),rgba(255,220,120,0) 65%);mix-blend-mode:screen;animation:halo 2.6s ease-in-out infinite}
+@keyframes halo{0%,100%{opacity:.35;transform:scale(.8)}50%{opacity:1;transform:scale(1.15)}}
+.flame{position:absolute;width:18px;height:24px;margin:-12px 0 0 -9px;border-radius:50%;background:radial-gradient(circle,rgba(255,214,120,.9),rgba(255,180,80,0) 70%);mix-blend-mode:screen;animation:flick .5s ease-in-out infinite alternate}
+@keyframes flick{from{opacity:.45;transform:scale(.85,.95)}to{opacity:1;transform:scale(1.1,1.15)}}
+.sway{position:absolute;left:0;top:0;width:700px;height:906px;pointer-events:none}
+/* RSVP */
+h2{font-family:'Pinyon Script',cursive;color:var(--cherry);font-weight:400;font-size:44px;text-align:center;margin:28px 0 4px}
+.lead{text-align:center;font-size:19px;margin:0 0 18px}
+form{display:grid;gap:14px;font-size:19px}
+label{font-weight:600}
+select,input[type=text],textarea{width:100%;font:inherit;padding:12px;border:1.5px solid var(--ink);border-radius:10px;background:#fff;color:var(--ink)}
+.choices{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.choices input{position:absolute;opacity:0}
+.choices label{display:block;text-align:center;padding:14px 8px;border:1.5px solid var(--ink);border-radius:999px;cursor:pointer;font-weight:500;background:#fff}
+.choices input:checked+label{background:var(--cherry);border-color:var(--cherry);color:#fff}
+.choices input:focus-visible+label{outline:3px solid var(--blush);outline-offset:2px}
+button{font:inherit;font-weight:600;font-size:21px;padding:16px;border:0;border-radius:999px;background:var(--cherry);color:#fff;cursor:pointer}
+button:disabled{opacity:.5}
+.hidden{display:none}
+.thanks{text-align:center;font-size:21px;padding:24px 8px}
+.thanks b{font-family:'Pinyon Script',cursive;font-weight:400;color:var(--cherry);font-size:44px;display:block}
+.small{font-size:16px;text-align:center;opacity:.8}
+@media (prefers-reduced-motion:reduce){*{animation:none!important}.head span{clip-path:none}.fade{opacity:1}}
+</style></head>
+<body><div class="wrap">
+<div class="stage" id="stage"><div class="card" id="card">
+  <div class="sway" id="fx"></div>
+  <div class="t head"><span>Sips,</span><span>Sleigh</span><span>&amp; Play</span></div>
+  <div class="t det fade" style="animation-delay:2.6s">Sunday<br>December 20th<br>7 o'clock<br><span class="addr"></span></div>
+  <div class="t foot fade" style="animation-delay:3.1s">attire<br>festive, flirty,<br>feathers &amp; sparkle<span style="display:block;height:10px"></span>bring a white<br>elephant gift<br>$25–$50<br><span class="rsvp" style="display:block;margin-top:10px;padding-left:10px">kindly RSVP below<br>by December 10th</span></div>
+</div></div>
+
+<h2>Will you be there?</h2>
+<p class="lead">Let Alexandra know by tapping below.</p>
+<form id="f">
+  <div id="nameWrap"><label for="other">Your name</label><input id="other" type="text" autocomplete="name"></div>
+  <div><label>Are you coming?</label>
+  <div class="choices"><input type="radio" name="c" id="yes" value="yes" required><label for="yes">Yes! I'm coming 🥂</label>
+  <input type="radio" name="c" id="no" value="no"><label for="no">Can't make it</label></div></div>
+  <div id="plusWrap" class="hidden"><label>Bringing your +1?</label>
+  <div class="choices"><input type="radio" name="p" id="p1" value="1"><label for="p1">Yes, +1</label>
+  <input type="radio" name="p" id="p0" value="0"><label for="p0">Just me</label></div></div>
+  <div><label for="note">A note for Alexandra (optional)</label><textarea id="note" rows="2"></textarea></div>
+  <button id="go">Send my RSVP</button>
+</form>
+<div id="thanks" class="thanks hidden"></div>
+<p class="small">Sunday, December 20th · 7 o'clock · <span class="addr"></span></p>
+</div>
+<script>
+// ---- two links: guest link (?invite=guest) asks about a +1; plain link is the staff link ----
+const ENDPOINT="https://hooks.zapier.com/hooks/catch/25186094/4pKaNK9gh3EptF3J/";
+const isGuest=new URLSearchParams(location.search).get('invite')==='guest';
+const plusWrap=document.getElementById('plusWrap'),other=document.getElementById('other');
+other.required=true;
+function upd(){plusWrap.classList.toggle('hidden',!(isGuest&&document.getElementById('yes').checked));}
+document.getElementById('f').addEventListener('change',upd);
+document.getElementById('f').addEventListener('submit',async e=>{e.preventDefault();
+ const n=other.value.trim(); if(!n)return;
+ const coming=document.getElementById('yes').checked;
+ const plus=isGuest&&coming&&document.getElementById('p1').checked;
+ const count=!coming?0:(plus?2:1);
+ const data={name:n,coming:coming?"Yes":"No",plusOne:plus?"Yes":"No",count,note:document.getElementById('note').value,group:isGuest?'guest':'staff',at:new Date().toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})};
+ const b=document.getElementById('go');b.disabled=true;b.textContent="Sending…";
+ try{ if(ENDPOINT) await fetch(ENDPOINT,{method:'POST',mode:'no-cors',body:new URLSearchParams(data)}); }catch(err){}
+ document.getElementById('f').classList.add('hidden');
+ const t=document.getElementById('thanks');t.classList.remove('hidden');
+ const first=n.split(/[ &]/)[0];
+ t.innerHTML=coming?'<b>Yay, '+first+'!</b>See you Sunday, December 20th at 7. Bring your sparkle ✨':'<b>We\'ll miss you!</b>Thanks for letting us know.';
+});
+// ---- scale card to fit ----
+const stage=document.getElementById('stage'),card=document.getElementById('card');
+function fit(){card.style.transform='scale('+stage.clientWidth/700+')'}addEventListener('resize',fit);fit();
+// ---- effects ----
+const fx=document.getElementById('fx');
+function add(cls,x,y,style){const d=document.createElement('div');d.className=cls;d.style.left=x+'px';d.style.top=y+'px';if(style)Object.assign(d.style,style);fx.appendChild(d);return d}
+add('ball',294,75);
+[[300,92,0],[358,100,.6],[332,140,1.2],[310,125,1.8],[350,80,.9]].forEach(([x,y,dl])=>add('glint',x,y,{animationDelay:dl+'s'}));
+for(let i=0;i<22;i++){const a=Math.random()*Math.PI*2,r=120+Math.random()*260;
+ add('fleck',329+Math.cos(a)*30,110+Math.sin(a)*30,{'--dx':Math.cos(a)*r+'px','--dy':Math.abs(Math.sin(a))*r+'px',animationDelay:(Math.random()*6)+'s',animationDuration:(4+Math.random()*4)+'s'});}
+const L=[[382.6, 527.3], [452.7, 688.3], [327.7, 672.3], [397.8, 454.1], [339.4, 602.5], [400.3, 692.0], [363.4, 646.5], [438.6, 699.4], [397.5, 406.3], [375.2, 692.6], [410.6, 344.3], [400.3, 762.6], [386.3, 644.8], [364.9, 674.8], [354.9, 525.9], [370.0, 506.1], [468.7, 726.6], [432.6, 645.1], [392.6, 670.8], [371.7, 762.1], [400.3, 613.9], [408.3, 704.3], [417.8, 484.4], [404.3, 524.7], [389.2, 702.9], [342.3, 664.3], [426.1, 610.5], [304.5, 732.6], [374.0, 714.6], [336.6, 740.6], [402.6, 489.8], [392.0, 736.3], [302.5, 688.0], [391.2, 384.9], [365.7, 564.7], [428.9, 741.2], [414.1, 369.7], [359.2, 754.9], [412.9, 541.6], [346.6, 689.1], [336.3, 726.0], [453.2, 743.2], [384.6, 628.2], [371.4, 747.2], [468.7, 684.0], [352.0, 635.1], [425.8, 457.8], [392.3, 600.2], [420.1, 432.9], [425.5, 535.3], [406.3, 564.5], [448.9, 625.9], [422.3, 593.6], [346.0, 619.6], [340.8, 547.6], [322.8, 721.2], [454.4, 580.2], [403.8, 437.5], [427.8, 709.7], [425.8, 515.6], [311.4, 702.3], [445.2, 540.2], [330.6, 704.3], [347.4, 589.9], [304.0, 747.2], [359.2, 484.7], [449.8, 559.6], [415.8, 628.2], [408.0, 738.6], [489.0, 726.9]];
+const cols=['#fff3c4','#ffd36b','#ffffff','#f7b6c2','#ffe9a8'];
+L.forEach(([x,y],i)=>{const c=cols[i%cols.length];add('light',x,y,{background:'radial-gradient(circle,'+c+' 30%,rgba(255,255,255,0) 70%)',boxShadow:'0 0 8px 2px '+c,animationDelay:(Math.random()*1.8)+'s',animationDuration:(1.2+Math.random()*1.4)+'s'})});
+add('halo',403,256);
+[[114,142],[139,131],[181,140],[212,129],[236,142]].forEach(([x,y],i)=>add('flame',x,y,{animationDelay:(i*.13)+'s'}));
+[[150,722,0],[128,712,.7],[165,740,1.3]].forEach(([x,y,dl])=>add('glint',x,y,{animationDelay:dl+'s',width:'12px',height:'12px'}));
+</script>
+<script>document.querySelectorAll('.addr').forEach(e=>e.textContent=atob('MjM5IExha2VzaG9yZSBEcml2ZQ=='))</script>
+</body></html>
