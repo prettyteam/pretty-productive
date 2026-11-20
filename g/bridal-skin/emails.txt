@@ -7,7 +7,8 @@ LINKS
 
 DESIGN
 - Background light ivory #FBFAF8. Black text. Thin black lines (hairlines), no thick boxes, no brown.
-- Headings: Playfair Display (or the closest Flodesk serif). Body: Work Sans Light (or the closest light sans).
+- Headings (email title and the "Join the Beauty Membership" / "Nano needling at the spa" titles): Playfair Display regular, ALL CAPS, small, widely spaced letters. NOT bold, NOT italic. Body: Work Sans Light (or the closest light sans).
+- Do NOT put the words "Taffeta Spa" at the top of the email.
 - Buttons: NOT filled. Thin black outline, black spaced capital letters, transparent background.
 - The membership and nano needling blocks sit at the bottom, each between thin lines, membership first.
 - "[first name]" = Flodesk first-name merge tag, with fallback "there".
@@ -21,8 +22,6 @@ Email 1 · The day after she books (pays her deposit)
  From: Taffeta Spa
 
 [IMAGE: bow.png, tiny, centered, about 50px wide]
-
- Taffeta Spa
 
 [IMAGE: congratulations.png, script word "Congratulations", centered, about 260px wide]
 
@@ -86,8 +85,6 @@ Email 2 · 3 weeks after she books
 
 [IMAGE: bow.png, tiny, centered, about 50px wide]
 
- Taffeta Spa
-
 [IMAGE: your-glow.png, script word "Your glow", centered, about 260px wide]
 
  Have you booked your bridal skin facial?
@@ -142,8 +139,6 @@ Email 3 · 8 weeks before her preview
 
 [IMAGE: bow.png, tiny, centered, about 50px wide]
 
- Taffeta Spa
-
 [IMAGE: almost-time.png, script word "Almost time", centered, about 260px wide]
 
  Your preview is 8 weeks away
@@ -197,8 +192,6 @@ Email 4 · 2 weeks later, a gentle reminder
  From: Taffeta Spa
 
 [IMAGE: bow.png, tiny, centered, about 50px wide]
-
- Taffeta Spa
 
 [IMAGE: just-a-reminder.png, script word "Just a reminder", centered, about 260px wide]
 
