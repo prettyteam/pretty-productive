@@ -482,6 +482,8 @@ input,select,textarea{background:#fff;border-radius:0}
           <label class="f">Preview location<input id="previewLoc" placeholder="Blank = salon. NY: bride's address"></label>
           <div class="f" id="pvWhoWrap" hidden><span>At the Preview (Gets the Calendar Invite)</span><div id="pvWho" class="row" style="gap:6px 16px"></div></div>
           <p class="hint">NY previews happen at the bride's location, so add travel and parking.</p>
+          <label class="chk"><input type="checkbox" id="skinConsult"> Bridal skin consult booked</label>
+          <p class="hint">Check this when she books her skin consult at the spa. It stops the bridal skin reminder emails.</p>
         </div>
         <div class="card" id="awCard">
           <h2>After the Wedding</h2>
@@ -1474,6 +1476,7 @@ function fillForm(){
   renderArtists();renderPeople();renderSheet();renderExt();
   $("#askedForm").hidden=true;$("#askedNote").textContent="";renderAsked();
   renderAw();
+  $("#skinConsult").checked=!!S.skinConsult;
 }
 /* an artist's answer: the invite the app sent, else her answer on the wedding's own Google Calendar event
    (artists added straight from the calendar, like Kat on Katie Leyden, Oct 15 2026) */
@@ -3454,6 +3457,8 @@ function renderAw(){
   box.innerHTML=awSteps(S).map(st=>awStepHTML("__cur",st)).join("");
   awBind(box);
 }
+/* Bridal skin consult booked (Alexandra, Nov 20 2026): saved as d.skinConsult; the Weddings script then stops the Flodesk bridal skin emails */
+$("#skinConsult").addEventListener("change",e=>{S.skinConsult=e.target.checked||null;queueSave()});
 $("#albumIn").addEventListener("change",e=>{S.albumIn=e.target.checked;renderAw();queueSave();renderAwDue()});
 $("#date").addEventListener("input",()=>renderAw());
 /* one wedding's data, whether it is open on the Timeline or not */
