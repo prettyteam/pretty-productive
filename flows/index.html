@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex"><meta name="theme-color" content="#f2f1ec">
+<title>My Email Flows</title>
+<link rel="stylesheet" href="../g/base.css">
+<link rel="icon" href="../icon.png">
+<style>
+:root{--ink:#121212;--soft:#555250;--line:#dcd6cb;--white:#fff}
+main{max-width:640px;gap:30px}
+.top h1{font-size:32px}
+.lede{color:var(--soft);font-size:15.5px;text-wrap:balance}
+.rule{background:#000}
+.key{display:flex;flex-wrap:wrap;justify-content:center;gap:8px 16px;font-size:13px;color:var(--soft)}
+.tag{display:inline-block;font-size:11px;letter-spacing:.14em;text-transform:uppercase;padding:3px 8px;border:1px solid #000;white-space:nowrap}
+.tag.on{background:#000;color:var(--white)}
+.tag.off{color:var(--soft);border-color:var(--soft)}
+section{display:flex;flex-direction:column;gap:14px}
+section>h2{font-size:13px;font-family:var(--body);letter-spacing:.16em;text-transform:uppercase;padding-bottom:8px;border-bottom:1px solid #000}
+.flow{background:var(--white);padding:20px;display:flex;flex-direction:column;gap:12px}
+.flow .head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.flow h3{font-family:var(--display);font-weight:400;font-size:21px;line-height:1.2;margin:0;text-wrap:balance}
+.flow .what{font-size:15px}
+.flow .who{font-size:13.5px;color:var(--soft)}
+.flow .who b{font-weight:700;color:var(--ink)}
+ol{list-style:none;margin:0;padding:0;border-top:1px solid var(--line)}
+li{display:grid;grid-template-columns:92px 1fr;gap:12px;padding:11px 0;border-bottom:1px solid var(--line)}
+li .when{font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--soft);padding-top:3px}
+li .subj{font-family:var(--display);font-size:16px;line-height:1.3}
+li .sum{font-size:13.5px;color:var(--soft);margin-top:2px}
+li.check .subj{font-family:var(--body);font-style:italic;font-size:14px;color:var(--soft)}
+.note{font-size:13px;color:var(--soft);font-style:italic}
+.open{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:#000;align-self:flex-start;text-decoration:none;border-bottom:1px solid #000;padding-bottom:1px}
+.fine{color:var(--soft)}
+@media (max-width:420px){li{grid-template-columns:76px 1fr}.flow{padding:16px}}
+</style>
+</head>
+<body>
+<main>
+<header class="top">
+  <img src="../g/logo.png" alt="Taffeta">
+  <span class="eyebrow">Flodesk</span>
+  <h1>My Email Flows</h1>
+  <div class="rule"></div>
+  <p class="lede">Every automatic email we send, who gets it, and when. Updated <span id="upd"></span>.</p>
+  <div class="key"><span><span class="tag on">On</span> sending now</span><span><span class="tag">Being Built</span> not sending yet</span><span><span class="tag off">Off</span> old, not sending</span></div>
+</header>
+<div id="list"></div>
+<p class="fine">To change an email, tap "Open In Flodesk" or ask Claude.</p>
+</main>
+<script>
+/* Keep this list matching Flodesk. Any thread that changes a Flodesk workflow updates it here (rule saved 2026-11-20). */
+var UPDATED='November 20, 2026';
+var FD='https://app.flodesk.com/workflow/';
+var FLOWS=[
+{group:'Brides',name:'Booked Brides Welcome Series',status:'on',id:'6ae3c00ca8d91e98de401cfa',
+ what:'Welcomes a bride after she books and walks her through the next month.',
+ who:'Every bride who books and pays. The Weddings app adds her to the "2026 Brides Who Booked" or "2027 Brides Who Booked" list.',
+ steps:[
+  ['Right away','Welcome to Taffeta Weddings','Thank you for booking, what happens next, and a link to text you.'],
+  ['3 days later','Your Bridal Preview, Explained','When to book her preview, what to bring, and a link to text you to set it up.'],
+  ['11 days later','Wedding Wellness Starts Now','15% off salon and spa for her and her party, plus skin plans before the wedding.'],
+  ['16 days later','Planning Your Bridal Party','Getting the whole party ready, the guys too (Barber Club).']]},
+{group:'Brides',name:'Bridal Preview Booked',status:'on',id:'6ae4f5dc1dd31d96f29b6268',
+ what:'Confirms her bridal preview.',
+ who:'A bride whose preview date is saved on her Timeline in the Weddings app.',
+ steps:[['Right away','It’s A Date! Your Bridal Preview Is Booked 🤍','Her preview date, time, place and services, and how to send her final headcount.']]},
+{group:'Brides',name:'Bridal Preview Coming Up',status:'on',id:'6ae50a8a9f71b730b5608fdd',
+ what:'Reminds her that her preview is close.',
+ who:'A bride whose preview is 7 days away.',
+ steps:[['7 days before','Almost Preview Day! 🤍','How to get ready (clean, dry hair and a bare face) and a headcount reminder.']]},
+{group:'Brides',name:'Bridal Headcount Reminder',status:'on',id:'6ae7819b6e4a3ea820398800',
+ what:'Asks for her final bridal party headcount.',
+ who:'A bride whose preview is 2 days away and who has not sent her final headcount yet.',
+ steps:[['2 days before','Just A Friendly Reminder 🤍','A button to send her final headcount.']]},
+{group:'Website Quizzes',name:'Hair Quiz',status:'on',id:'69170d822588f3da15f8f6cd',
+ what:'Thanks people for taking the hair quiz.',
+ who:'Anyone who finishes the hair quiz on the website.',
+ steps:[['Right away','Enjoy 10% Off Your Next Purchase','A thank you and a 10% off code.']]},
+{group:'Website Quizzes',name:'Skin Quiz',status:'on',id:'69b097f94823c59be5ade566',
+ what:'Thanks people for taking the skin quiz.',
+ who:'Anyone who finishes the skin quiz on the website.',
+ steps:[['Right away','Enjoy 10% Off Your Next Purchase','A thank you and a 10% off code.']]},
+{group:'Website Quizzes',name:'Plain Text Purchase Follow-Up',status:'on',id:'69a6544a8072f2c597a13ac1',
+ what:'Sends the hair quiz gift.',
+ who:'Anyone added by the quiz app (the "RevenueHunt" list).',
+ steps:[['1 hour later','Your 10% Off Hair Quiz Gift 💝','Her 10% off hair quiz gift. Skipped if she already got the Hair Quiz email, so nobody gets two.']]},
+{group:'Brides',name:'Bridal Skin 1: After Booking',status:'on',id:'6b007319c22e9b48bb5bac2b',
+ what:'Invites newly booked brides to a bridal skin facial.',
+ who:'Every newly booked bride (the Weddings app adds her). Stops when "Bridal skin consult booked" is checked on her Timeline.',
+ steps:[
+  ['1 day later','Your Skin Is Part Of Your Wedding Look','Why skin matters for her wedding look. Skipped if she already booked a skin consult.'],
+  ['21 days later','Have You Booked Your Bridal Skin Facial?','A friendly nudge to book. Skipped if she already booked.']]},
+{group:'Brides',name:'Bridal Skin 2: Before Preview',status:'on',id:'6b00785efac871796baed3d1',
+ what:'Reminds brides about skin before their preview.',
+ who:'Brides whose preview on their Timeline is 8 weeks away (the Weddings app adds her). Stops when "Bridal skin consult booked" is checked.',
+ steps:[
+  ['Right away','Your Preview Is 8 Weeks Away','Time to start her skin plan. Skipped if she already booked a skin consult.'],
+  ['14 days later','A Quick Note Before Your Preview','One last nudge to book. Skipped if she already booked.']]},
+{group:'Old',name:'Welcome Sequence',status:'off',id:'6606dd5192f1a7810b8a1989',
+ what:'An old welcome series for wedding vendors from 2024.',
+ who:'The "2024 Wedding Vendors" list. Never turned on.',
+ steps:[
+  ['Right away','Welcome Letter',''],
+  ['30 days later','About Me',''],
+  ['30 days later','What To Expect',''],
+  ['30 days later','A Personal, Vulnerable Story','']]}
+];
+var TAG={on:['on','On'],build:['','Being Built'],off:['off','Off']};
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+document.getElementById('upd').textContent=UPDATED;
+var html='',groups=[];
+FLOWS.forEach(function(f){if(groups.indexOf(f.group)<0)groups.push(f.group)});
+groups.forEach(function(g){
+  html+='<section><h2>'+esc(g)+'</h2>';
+  FLOWS.filter(function(f){return f.group===g}).forEach(function(f){
+    var t=TAG[f.status];
+    html+='<article class="flow"><div class="head"><h3>'+esc(f.name)+'</h3><span class="tag '+t[0]+'">'+t[1]+'</span></div>'
+      +'<p class="what">'+esc(f.what)+'</p><p class="who"><b>Who gets it:</b> '+esc(f.who)+'</p><ol>';
+    f.steps.forEach(function(s){html+='<li><span class="when">'+esc(s[0])+'</span><div><div class="subj">'+esc(s[1])+'</div>'+(s[2]?'<div class="sum">'+esc(s[2])+'</div>':'')+'</div></li>'});
+    html+='</ol>'+(f.note?'<p class="note">'+esc(f.note)+'</p>':'')+'<a class="open" href="'+FD+f.id+'/build" target="_blank" rel="noopener">Open In Flodesk</a></article>';
+  });
+  html+='</section>';
+});
+document.getElementById('list').innerHTML=html;
+</script>
+<script src="/g/life.js?v=1"></script>
+</body></html>
