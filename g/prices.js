@@ -49,16 +49,22 @@ function pricesView(){
       const th=(a,b,c)=>h('div',{class:'exg-r exg-h'},h('span',{},a),h('span',{},b),h('span',{},c));
       const tr=(a,b,c)=>c===''?h('div',{class:'exg-r exg-2'},h('span',{},a),h('b',{class:'num'},b)):h('div',{class:'exg-r'},h('span',{},a),h('b',{class:'num'},b),h('b',{class:'num'},c));
       const meth=Object.entries(G.hair).map(([k,L])=>h('div',{class:'exg-m'},h('h3',{},k),th('Length','Solid','Rooted'),...L.map(r=>tr(r[0],m(r[1]),m(r[2])))));
-      const look=G.look.map(([n,l,a,r])=>tr(l.replace(/^\w+ volume\/length /,n+' '),rg(a),rg(r)));
+      const BOX={Minimal:'1–1.5 boxes (some pieces left over)',Medium:'2 boxes',Full:'3–5 boxes'};
+      const look=G.look.map(([n,l,a,r])=>h('div',{class:'exg-r'},h('span',{},n,h('small',{class:'soft',style:'display:block'},BOX[n]||'')),h('b',{class:'num'},rg(a)),h('b',{class:'num'},rg(r))));
       const hasExt=typeof staffTabs==='function'&&staffTabs().some(x=>x[0]==='ext');
+      /* Alexandra, Nov 22 2026: guests are quoted per LOOK, never per box, so the card leads with the look. */
       const card=h('section',{class:'card2 exg'},h('span',{class:'lbl'},'Extension Cost Guide'),
-        h('small',{class:'soft'},'Hair cost per box. The color code does not change the price: a solid color uses the Solid price, and a two-tone color (like 7NA/11N) uses the Rooted (balayage) price.'),
+        h('div',{class:'exg-look'},h('h3',{},'Quote Per Look, Never Per Box'),
+          h('ol',{},h('li',{},'Pick her look (see below).'),h('li',{},'Add the hair: the price per box times the boxes her look needs.'),
+            h('li',{},'Add the application for that look, plus the $'+G.kit+' Home Maintenance Kit.')),
+          h('small',{class:'soft'},'Give her one price for her whole look. Never tell a guest a price per box.')),
+        h('div',{class:'exg-m'},h('h3',{},'1. Pick The Look'),th('Look','New hair','Re-app'),...look,
+          tr('Tape Row, 1 row','$250',''),tr('Tape Row, 2 rows','$300–$350',''),tr('Hand-Tied, per row','$200–$250','')),
+        h('div',{class:'exg-m'},h('h3',{},'2. Hair For The Look'),h('small',{class:'soft'},'Price per box, for your math only. Times it by the boxes her look needs. A solid color uses Solid. A two-tone color (like 7NA/11N) uses Rooted. The color code does not change the price.')),
         ...meth,
         h('div',{class:'exg-m'},h('h3',{},'Color Pops'),tr('1 sandwich','$25',''),tr('Bundle of 6','$125',''),tr('Application','$0–$100',''),tr('Re-application','$50–$150','')),
-        h('div',{class:'exg-m'},h('h3',{},'Application'),th('Look','New hair','Re-app'),...look,
-          tr('Tape Row, 1 row','$250',''),tr('Tape Row, 2 rows','$300–$350',''),tr('Hand-Tied, per row','$200–$250','')),
         h('div',{class:'exg-m'},h('h3',{},'Good To Know'),tr('Home Maintenance Kit','$'+G.kit,''),tr('Deposit to order new hair','$'+G.dep,''),tr('Extension removal','$75','')),
-        h('small',{class:'soft'},'A suggested guideline. Quote per look, never per box. The final price depends on the look she wants.'),
+        h('small',{class:'soft'},'A suggested guideline. The final price depends on the look she wants.'),
         hasExt?h('button',{type:'button',class:'obtn',style:'width:100%',onclick:()=>{S.tab='ext';render();window.scrollTo(0,0)}},'Build An Extension Quote'):null);
       const i=groups.findIndex(g=>g&&g.textContent.startsWith('Extensions'));
       groups.splice(i>=0?i+1:groups.length,0,card);
