@@ -65,6 +65,8 @@ button:disabled{opacity:.5}
 .thanks b{font-family:'Pinyon Script',cursive;font-weight:400;color:var(--cherry);font-size:44px;display:block}
 .small{font-size:16px;text-align:center;opacity:.8}
 @media (prefers-reduced-motion:reduce){*{animation:none!important}.head span{clip-path:none}.fade{opacity:1}}
+.plusbox{border:1.5px solid var(--cherry,#b3202c);border-radius:14px;padding:14px 14px 16px;background:#fff8f6}
+.plusbox>label{color:var(--cherry,#b3202c);font-weight:600}
 </style></head>
 <body><div class="wrap">
 <div class="stage" id="stage"><div class="card" id="card">
@@ -81,9 +83,10 @@ button:disabled{opacity:.5}
   <div><label>Are you coming?</label>
   <div class="choices"><input type="radio" name="c" id="yes" value="yes" required><label for="yes">Yes! I'm coming 🥂</label>
   <input type="radio" name="c" id="no" value="no"><label for="no">Can't make it</label></div></div>
-  <div id="plusWrap" class="hidden"><label>Bringing your +1?</label>
-  <div class="choices"><input type="radio" name="p" id="p1" value="1"><label for="p1">Yes, +1</label>
-  <input type="radio" name="p" id="p0" value="0"><label for="p0">Just me</label></div></div>
+  <div id="plusWrap" class="hidden plusbox"><label>Are you bringing a +1?</label>
+  <div class="choices"><input type="radio" name="p" id="p1" value="1"><label for="p1">Yes, bringing a +1</label>
+  <input type="radio" name="p" id="p0" value="0"><label for="p0">Just me</label></div>
+  <div id="plusNameWrap" class="hidden" style="margin-top:12px"><label for="plusName">Your +1's name (optional)</label><input id="plusName" type="text" autocomplete="off"></div></div>
   <div><label for="note">A note for Alexandra (optional)</label><textarea id="note" rows="2"></textarea></div>
   <button id="go">Send my RSVP</button>
 </form>
@@ -96,14 +99,19 @@ const ENDPOINT="https://hooks.zapier.com/hooks/catch/25186094/4pKaNK9gh3EptF3J/"
 const isGuest=new URLSearchParams(location.search).get('invite')==='guest';
 const plusWrap=document.getElementById('plusWrap'),other=document.getElementById('other');
 other.required=true;
-function upd(){plusWrap.classList.toggle('hidden',!(isGuest&&document.getElementById('yes').checked));}
+const plusNameWrap=document.getElementById('plusNameWrap');
+if(isGuest){const lead=document.querySelector('.lead');if(lead)lead.innerHTML='Let Alexandra know by tapping below.<br><b>You\'re welcome to bring a +1!</b>';}
+function upd(){const no=document.getElementById('no').checked;plusWrap.classList.toggle('hidden',!isGuest||no);
+ const p1=document.getElementById('p1');plusWrap.querySelectorAll('input[name=p]').forEach(r=>r.required=isGuest&&!no);
+ plusNameWrap.classList.toggle('hidden',!(isGuest&&!no&&p1.checked));}
+upd();
 document.getElementById('f').addEventListener('change',upd);
 document.getElementById('f').addEventListener('submit',async e=>{e.preventDefault();
  const n=other.value.trim(); if(!n)return;
  const coming=document.getElementById('yes').checked;
  const plus=isGuest&&coming&&document.getElementById('p1').checked;
  const count=!coming?0:(plus?2:1);
- const data={name:n,coming:coming?"Yes":"No",plusOne:plus?"Yes":"No",count,note:document.getElementById('note').value,group:isGuest?'guest':'staff',at:new Date().toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})};
+ const data={name:n,coming:coming?"Yes":"No",plusOne:plus?"Yes":"No",count,note:[(plus&&document.getElementById('plusName').value.trim())?('+1 is '+document.getElementById('plusName').value.trim()):'',document.getElementById('note').value.trim()].filter(Boolean).join(' · '),group:isGuest?'guest':'staff',at:new Date().toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})};
  const b=document.getElementById('go');b.disabled=true;b.textContent="Sending…";
  try{ if(ENDPOINT) await fetch(ENDPOINT,{method:'POST',mode:'no-cors',body:new URLSearchParams(data)}); }catch(err){}
  document.getElementById('f').classList.add('hidden');
