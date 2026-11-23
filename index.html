@@ -1017,7 +1017,13 @@ async function hubPost(body,ok,onOk){
     const j=await r.json(); HUB.toast=j.ok?(ok||'Saved'):(j.error==='taken'?'Someone already picked that one up.':FIX_ERR[j.error]||'That didn’t go through. Try again.');
     if(j.ok&&body.type==='clockfix') HUB.fx=null; done=!!j.ok;}
   catch(e){HUB.toast='Can’t connect right now. Check your signal and try again.'}
-  HUB.busy=false; if(done&&onOk) onOk(); await hubGet(); setTimeout(()=>{HUB.toast='';render()},4000);
+  /* Faster saves (Alexandra, Nov 23 2026): show "Saved" the moment the save lands, then refresh in the background.
+     It used to wait for a second full reload before the button let go. Clock in/out updates the clock right away. */
+  if(done&&body.type==='clock'&&HUB.data&&HUB.data.clock){const c=HUB.data.clock,now=Date.now(),gone=(now-(HUB.at||now))/6e4;
+    if(body.action==='in'&&!c.in){c.in=true;c.since=now;c.sinceLabel=new Date(now).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})}
+    else if(body.action==='out'&&c.in){c.todayMin+=gone;c.weekMin+=gone;c.in=false;c.since=null;c.sinceLabel=null}
+    HUB.at=now}
+  HUB.busy=false; if(done&&onOk) onOk(); render(); hubGet(); setTimeout(()=>{HUB.toast='';render()},4000);
   return done;
 }
 function liveClock(){const c=HUB.data&&HUB.data.clock; if(!c) return null;
