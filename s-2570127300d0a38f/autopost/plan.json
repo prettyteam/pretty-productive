@@ -686,7 +686,7 @@
   }
  ],
  "proofs": {
-  "canStart": false,
+  "canStart": true,
   "synced": {}
  }
 }
