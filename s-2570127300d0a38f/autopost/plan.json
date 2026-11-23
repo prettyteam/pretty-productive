@@ -1,5 +1,5 @@
 {
- "note": "Instagram auto-post plan read by Zapier every hour. stories = Stories; firstComments = hashtag comments for grid posts queued elsewhere; feed = grid posts Zapier posts itself, only when ok is true. reels = Reels Zapier posts itself (video with baked-in song), only when ok is true.",
+ "note": "Instagram auto-post plan read by Zapier every hour. stories = Stories; firstComments = hashtag comments for grid posts queued elsewhere; feed = grid posts Zapier posts itself, only when ok is true. reels = Reels Zapier posts itself (video with baked-in song), only when ok is true. proofs = Marketing Proofs link (Nov 23 2026): Zapier reads her saved Proofs each hour and right before each post; unchecked posts are skipped, caption edits are used, and a picture/text edit holds the post until its key is listed in proofs.synced (edit key -> hash) after the new image is in this plan.",
  "stories": [
   {
    "id": "spa-1109",
@@ -131,85 +131,85 @@
    "id": "spa-1123",
    "account": "spa.taffeta",
    "at": "2026-11-23T17:30:00-05:00",
-   "url": "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/spa-1123.jpg"
+   "url": "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/tg-spa-1123.jpg"
   },
   {
    "id": "salon-1123-s",
    "account": "taffetasalonandspa",
    "at": "2026-11-23T17:30:00-05:00",
-   "url": "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/salon-1123-s.jpg"
+   "url": "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/tg-salon-1123.jpg"
   },
   {
    "id": "spa-1124",
    "account": "spa.taffeta",
    "at": "2026-11-24T17:30:00-05:00",
-   "url": "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/spa-1124.jpg"
+   "url": "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/tg-spa-1124.jpg"
   },
   {
    "id": "salon-1124-s",
    "account": "taffetasalonandspa",
    "at": "2026-11-24T17:30:00-05:00",
-   "url": "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/salon-1124-s.jpg"
+   "url": "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/tg-salon-1124.jpg"
   },
   {
    "id": "salon-1125-s",
    "account": "taffetasalonandspa",
    "at": "2026-11-25T12:30:00-05:00",
-   "url": "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/salon-1125-s.jpg"
+   "url": "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/tg-salon-1125.jpg"
   },
   {
    "id": "spa-1125",
    "account": "spa.taffeta",
    "at": "2026-11-25T17:30:00-05:00",
-   "url": "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/spa-1125.jpg"
+   "url": "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/tg-spa-1125.jpg"
   },
   {
    "id": "spa-1126",
    "account": "spa.taffeta",
    "at": "2026-11-26T12:00:00-05:00",
-   "url": "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/spa-1126.jpg"
+   "url": "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/tg-spa-1126.jpg"
   },
   {
    "id": "salon-1126-s",
    "account": "taffetasalonandspa",
    "at": "2026-11-26T17:30:00-05:00",
-   "url": "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/salon-1126-s.jpg"
+   "url": "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/tg-salon-1126.jpg"
   },
   {
    "id": "spa-1127",
    "account": "spa.taffeta",
    "at": "2026-11-27T17:30:00-05:00",
-   "url": "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/spa-1127.jpg"
+   "url": "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/tg-spa-1127.jpg"
   },
   {
    "id": "salon-1127-s",
    "account": "taffetasalonandspa",
    "at": "2026-11-27T17:30:00-05:00",
-   "url": "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/salon-1127-s.jpg"
+   "url": "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/tg-salon-1127.jpg"
   },
   {
    "id": "spa-1128",
    "account": "spa.taffeta",
    "at": "2026-11-28T12:00:00-05:00",
-   "url": "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/spa-1128.jpg"
+   "url": "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/tg-spa-1128.jpg"
   },
   {
    "id": "salon-1128-s",
    "account": "taffetasalonandspa",
    "at": "2026-11-28T17:30:00-05:00",
-   "url": "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/salon-1128-s.jpg"
+   "url": "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/tg-salon-1128.jpg"
   },
   {
    "id": "spa-1129",
    "account": "spa.taffeta",
    "at": "2026-11-29T17:30:00-05:00",
-   "url": "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/spa-1129.jpg"
+   "url": "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/tg-spa-1129.jpg"
   },
   {
    "id": "salon-1129-s",
    "account": "taffetasalonandspa",
    "at": "2026-11-29T17:30:00-05:00",
-   "url": "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/salon-1129-s.jpg"
+   "url": "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/tg-salon-1129.jpg"
   },
   {
    "id": "spa-1130",
@@ -681,5 +681,9 @@
    "caption": "The best part of every nail appointment? That last little drop. 🤍\n\nFresh nails, one tiny bow, and a swipe of cuticle oil on every finger to finish.\n\nNails are every Wednesday at Taffeta. Book in the link in our bio. ✂️",
    "tags": "#nails #nailart #bownails #cuticleoil #satisfying #asmr #nailsofinstagram #southjerseynails #njnails #taffetasalonandspa"
   }
- ]
+ ],
+ "proofs": {
+  "canStart": false,
+  "synced": {}
+ }
 }
