@@ -639,6 +639,17 @@
    ],
    "caption": "Skipped microneedling because of the pain, the price, or the days of hiding at home? 🤍\n\nNano needling gives you the same results at a fraction of the cost. No numbing, no downtime, no pain. Just an hour of relaxing and skin that looks smoother and brighter.\n\nStart your series before the holidays. Book in the link in our bio.",
    "tags": "#nanoneedling #microneedling #nodowntime #skincare #glowingskin #holidayskin #southjerseyspa #njspa #taffetaspa"
+  },
+  {
+   "id": "nhipretty-13p",
+   "account": "hiprettybrand",
+   "at": "2026-11-29T17:30:00-05:00",
+   "ok": true,
+   "urls": [
+    "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/feed/nhipretty-13p-1.jpg"
+   ],
+   "caption": "Night in, the Hi Pretty way: pajamas, popcorn and zero plans. 🍿\n\nWhat’s your perfect night in? Tell me in the comments.",
+   "tags": "#HiPretty #NightIn #CozySeason #SelfCare #WomenSupportingWomen"
   }
  ],
  "reels": [
@@ -646,10 +657,11 @@
    "id": "nhipretty-13",
    "account": "hiprettybrand",
    "at": "2026-11-29T17:30:00-05:00",
-   "ok": true,
+   "ok": false,
    "video": "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/reels/hp-reel-popcorn-bath.mp4",
    "caption": "Night in, the Hi Pretty way: pajamas, popcorn and zero plans. 🍿\n\nWhat’s your perfect night in? Tell me in the comments.",
-   "tags": "#HiPretty #NightIn #CozySeason #SelfCare #WomenSupportingWomen"
+   "tags": "#HiPretty #NightIn #CozySeason #SelfCare #WomenSupportingWomen",
+   "note": "held 11-22: video soft (upscaled); swapped for sharp photo post nhipretty-13p"
   },
   {
    "id": "nhipretty-14",
