@@ -3167,6 +3167,13 @@ function reportHome(){
     const end=i%2===1||i===gs.length-1,row=gs.slice(i-(i%2),i+1).map(([x])=>x);
     if(end&&row.includes(PR_OPEN)){const o=gs.find(([x])=>x===PR_OPEN);cells.push(h('div',{class:'hpages'},o[1].map(p=>h('button',{type:'button',onclick:()=>prGo(p)},PR_LABEL[p]))))}
   });
+  /* New Hire (Alexandra, Nov 23 2026): text new team members the private new hire form (welcome/). Answers go only to Alexandra + Rick. */
+  const NH='https://prettyteam.taffetadesign.com/welcome/', nhMsg='Welcome to Taffeta! Please fill out our new hire form so we can set you up for payroll: '+NH;
+  cells.push(h('button',{type:'button','aria-expanded':String(PR_OPEN==='__nh'),onclick:()=>{PR_OPEN=PR_OPEN==='__nh'?'':'__nh';render()}},'New Hire'));
+  if(PR_OPEN==='__nh')cells.push(h('div',{class:'hpages'},
+    h('button',{type:'button',onclick:()=>{location.href='sms:?&body='+encodeURIComponent(nhMsg)}},'Text The Form'),
+    h('button',{type:'button',onclick:async()=>{try{await navigator.clipboard.writeText(NH);if(window.TUp)TUp.saved(null,'','Link copied.')}catch(e){prompt('Copy this link:',NH)}}},'Copy Link'),
+    h('button',{type:'button',onclick:()=>window.open(NH,'_blank','noopener')},'See The Form')));
   return [h('div',{class:'hub'},h('div',{class:'hhome'},crest,...top,file),
     h('div',{class:'hgig'},h('span',{class:'lbl'},today),h('p',{},window.dayJoke?dayJoke('business'):'')),
     h('div',{class:'hmenu'},h('div',{class:'mhead'},'Menu'),h('div',{class:'cgrid'},cells)))];

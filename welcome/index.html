@@ -1,0 +1,266 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#f2f1ec"><meta name="robots" content="noindex,nofollow">
+<meta name="referrer" content="no-referrer">
+<title>Taffeta · Welcome To The Team</title>
+<meta property="og:title" content="Welcome To The Team">
+<meta property="og:description" content="Your new hire form for Taffeta. It takes about 5 minutes.">
+<meta property="og:site_name" content="Taffeta Salon &amp; Spa">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://prettyteam.taffetadesign.com/welcome/">
+<meta property="og:image" content="https://prettyteam.taffetadesign.com/g/logo.png">
+<link rel="icon" href="../g/logo.png"><link rel="apple-touch-icon" href="../g/logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;1,400&family=Libertinus+Sans:wght@400;700&display=swap" rel="stylesheet">
+<script src="../weddings/config.js"></script>
+<style>
+/* Taffeta Design System (Nov 20 2026): ivory + black, Playfair Display titles, Libertinus Sans body,
+   square corners, thin black hairlines, eyebrow labels, lots of empty space. Titles in Title Case, never one word alone on a line. */
+:root{--ivory:#f2f1ec;--white:#fff;--ink:#000;--soft:#555250;--hair:#dcd6cb;--err:#8a2a1a;
+  --display:"Playfair Display",Georgia,serif;--body:"Libertinus Sans","Work Sans",system-ui,sans-serif}
+*,*::before,*::after{box-sizing:border-box}
+html,body{margin:0;background:var(--ivory);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.5}
+main{max-width:500px;margin:0 auto;padding:36px 16px 64px;display:flex;flex-direction:column;gap:24px}
+form{display:flex;flex-direction:column;gap:24px}
+.top{display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center}
+.logo{width:116px;height:auto;display:block}
+.eyebrow{font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:var(--soft);text-align:center;display:block}
+h1,h2{font-family:var(--display);font-weight:400;text-align:center;margin:0;text-wrap:balance}
+h1{font-size:32px;line-height:38px}
+h2{font-size:24px;line-height:30px}
+h1 em,h2 em{font-style:italic}
+.rule{width:40px;height:1px;background:var(--ink);margin:0 auto}
+.lede{margin:0 auto;max-width:380px;color:var(--soft);font-size:15.5px;text-align:center}
+.lock{display:flex;gap:10px;align-items:flex-start;background:var(--white);padding:14px 16px;font-size:14px;color:var(--soft)}
+.lock svg{flex:none;margin-top:2px}
+.steps{display:flex;gap:6px}.steps i{flex:1;height:1px;background:var(--hair)}.steps i.on{background:var(--ink);height:2px}
+.card{background:var(--white);padding:24px 18px;display:flex;flex-direction:column;gap:20px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.row3{display:grid;grid-template-columns:2fr 1fr 1.2fr;gap:12px}
+.field{display:flex;flex-direction:column;gap:6px;min-width:0}
+.field>label,.field>.lbl{font-size:11px;letter-spacing:.16em;text-transform:uppercase}
+.opt{color:var(--soft);letter-spacing:.06em;text-transform:none;font-size:12px}
+.input{font:inherit;font-size:16px;color:var(--ink);background:transparent;border:0;border-bottom:1px solid var(--ink);border-radius:0;height:42px;padding:0 2px;width:100%;-webkit-appearance:none;appearance:none}
+.input::placeholder{color:#9a958f}
+.input:focus{outline:none;border-bottom-width:2px}
+input[type=date].input{min-height:42px}
+.pills{display:flex;gap:10px}
+.pills label{flex:1}
+.pills input{position:absolute;opacity:0;pointer-events:none}
+.pills span{display:block;text-align:center;border:1px solid var(--ink);padding:10px 6px;font-size:15px;cursor:pointer}
+.pills input:checked+span{background:var(--ink);color:var(--white)}
+.pills input:focus-visible+span{outline:2px solid var(--ink);outline-offset:2px}
+.hint{font-size:13px;color:var(--soft);margin:-10px 0 0}
+.show{background:none;border:0;padding:0;font:inherit;font-size:12.5px;color:var(--soft);text-decoration:underline;cursor:pointer;align-self:flex-start}
+.slot{border:1px solid var(--ink);padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+.slot .row{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.slot b{font-weight:400;font-size:16px;display:block}
+.slot small{display:block;color:var(--soft);font-size:13px}
+.slot .add{font-size:11px;letter-spacing:.18em;white-space:nowrap;cursor:pointer;border:1px solid var(--ink);padding:8px 12px}
+.slot input[type=file]{display:none}
+.thumbs{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.thumbs:empty{display:none}
+.thumbs div{position:relative;aspect-ratio:4/3;background:var(--ivory) center/cover no-repeat;display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--soft)}
+.thumbs button{position:absolute;top:3px;right:3px;width:24px;height:24px;border:0;border-radius:50%;background:rgba(255,255,255,.92);color:var(--ink);font-size:15px;line-height:24px;padding:0;cursor:pointer}
+.wa{display:flex;flex-direction:column;gap:12px;align-items:center;text-align:center}
+.wa p{margin:0;color:var(--soft);font-size:15px}
+.links{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+.ghost{display:inline-block;border:1px solid var(--ink);color:var(--ink);text-decoration:none;font-size:11px;letter-spacing:.18em;padding:10px 16px}
+.check{display:flex;gap:10px;align-items:flex-start;font-size:15px;cursor:pointer;text-align:left}
+.check input{width:20px;height:20px;accent-color:#000;margin:1px 0 0;flex:none}
+.btn{display:block;align-self:center;min-width:190px;margin:0 auto;background:var(--ink);color:var(--white);border:0;border-radius:0;font:inherit;font-size:11.5px;letter-spacing:.24em;padding:13px 30px;cursor:pointer}
+.btn:disabled{opacity:.6}
+.back{background:none;border:0;font:inherit;font-size:14px;color:var(--soft);text-decoration:underline;cursor:pointer;margin-top:-10px}
+.err{color:var(--err);font-size:14.5px;text-align:center;margin:0;min-height:1px}
+.hp{position:absolute;left:-9999px;opacity:0}
+.bar{height:2px;background:var(--hair)}.bar i{display:block;height:2px;background:var(--ink);width:0;transition:width .3s}
+.done{display:flex;flex-direction:column;align-items:center;text-align:center;gap:16px;padding-top:60px}
+.fine{font-size:12.5px;color:var(--soft);text-align:center;margin:0}
+[hidden]{display:none!important}
+@media (max-width:380px){.row3{grid-template-columns:1fr 1fr}.row3 .city{grid-column:1/-1}}
+</style>
+</head><body><main id="app">
+
+<!-- New hire form (Alexandra, Nov 23 2026). She texts this link to new team members. The info list came from her dad Rick
+     (payroll). Answers post to the Weddings web app (NewHire.js), which saves them in a PRIVATE Google Sheet and Drive folder
+     shared only with Alexandra and Rick. Nothing is ever read back out to this page. -->
+
+<div class="top">
+  <img class="logo" src="../g/logo.png" alt="Taffeta Salon and Spa" width="360" height="360">
+  <h1>Welcome To The&nbsp;Team</h1>
+  <div class="rule"></div>
+  <p class="lede" id="lede">We’re so happy you’re here. This quick form sets you up for payroll. It takes about 5&nbsp;minutes.</p>
+</div>
+
+<div class="steps" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
+<span class="eyebrow" id="stepNo">STEP 1 OF 5</span>
+
+<form id="f" novalidate autocomplete="on">
+<section class="step card" data-step="1">
+  <h2>About&nbsp;You</h2>
+  <div class="row2">
+    <div class="field"><label for="first">First name</label><input class="input" id="first" autocomplete="given-name"></div>
+    <div class="field"><label for="last">Last name</label><input class="input" id="last" autocomplete="family-name"></div>
+  </div>
+  <div class="field"><label for="phone">Phone number</label><input class="input" id="phone" type="tel" inputmode="tel" autocomplete="tel"></div>
+  <div class="field"><label for="email">Email</label><input class="input" id="email" type="email" inputmode="email" autocomplete="email"></div>
+  <div class="field"><label for="dob">Date of birth</label><input class="input" id="dob" type="date" autocomplete="bday"></div>
+</section>
+
+<section class="step card" data-step="2" hidden>
+  <h2>Your Home&nbsp;Address</h2>
+  <div class="field"><label for="street">Street address</label><input class="input" id="street" autocomplete="address-line1" placeholder="123 Main St, Apt 2"></div>
+  <div class="row3">
+    <div class="field city"><label for="city">Town</label><input class="input" id="city" autocomplete="address-level2"></div>
+    <div class="field"><label for="state">State</label><input class="input" id="state" autocomplete="address-level1" value="NJ" maxlength="2" style="text-transform:uppercase"></div>
+    <div class="field"><label for="zip">Zip</label><input class="input" id="zip" inputmode="numeric" autocomplete="postal-code" maxlength="10"></div>
+  </div>
+</section>
+
+<section class="step card" data-step="3" hidden>
+  <h2>Getting You&nbsp;Paid</h2>
+  <div class="lock"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><rect x="2.5" y="7" width="11" height="8" fill="none" stroke="#000"/><path d="M5 7V5a3 3 0 0 1 6 0v2" fill="none" stroke="#000"/></svg>
+    <span>This part is private. Only Alexandra and our payroll person can see&nbsp;it.</span></div>
+  <div class="field"><label for="ssn">Social Security number</label>
+    <input class="input" id="ssn" type="password" inputmode="numeric" autocomplete="off" placeholder="123-45-6789" maxlength="11">
+    <button class="show" type="button" data-show="ssn">Show</button></div>
+  <span class="eyebrow" style="text-align:left;margin-top:6px">Direct Deposit</span>
+  <div class="field"><label for="bank">Bank name</label><input class="input" id="bank" autocomplete="off"></div>
+  <div class="field"><label for="routing">Routing number</label><input class="input" id="routing" inputmode="numeric" autocomplete="off" maxlength="9" placeholder="9 numbers"></div>
+  <div class="field"><label for="acct">Account number</label>
+    <input class="input" id="acct" type="password" inputmode="numeric" autocomplete="off">
+    <button class="show" type="button" data-show="acct">Show</button></div>
+  <div class="field"><span class="lbl">Type of account</span>
+    <div class="pills"><label><input type="radio" name="acctType" value="Checking"><span>Checking</span></label>
+      <label><input type="radio" name="acctType" value="Savings"><span>Savings</span></label></div></div>
+  <p class="hint">Tip: the routing and account numbers are on the bottom of a check or in your bank&nbsp;app.</p>
+  <div class="field"><label for="venmo">Venmo account name <span class="opt">(if you have one)</span></label><input class="input" id="venmo" autocomplete="off" placeholder="@yourname"></div>
+</section>
+
+<section class="step card" data-step="4" hidden>
+  <h2>Emergency&nbsp;Contact</h2>
+  <p class="hint" style="margin:-8px 0 0;text-align:center">Who should we call if something happens at&nbsp;work?</p>
+  <div class="field"><label for="ecName">Name</label><input class="input" id="ecName" autocomplete="off"></div>
+  <div class="field"><label for="ecPhone">Phone</label><input class="input" id="ecPhone" type="tel" inputmode="tel" autocomplete="off"></div>
+</section>
+
+<section class="step card" data-step="5" hidden>
+  <h2>Licenses And&nbsp;WhatsApp</h2>
+  <div id="slots"></div>
+  <div class="wa">
+    <span class="eyebrow">Please Download WhatsApp</span>
+    <p>Our team talks on WhatsApp. Please download it with the same phone number you gave&nbsp;us.</p>
+    <div class="links"><a class="ghost" href="https://apps.apple.com/app/whatsapp-messenger/id310633997" target="_blank" rel="noopener">IPHONE</a>
+      <a class="ghost" href="https://play.google.com/store/apps/details?id=com.whatsapp" target="_blank" rel="noopener">ANDROID</a></div>
+    <label class="check"><input type="checkbox" id="wa"><span>I downloaded WhatsApp</span></label>
+  </div>
+</section>
+
+<input class="hp" id="website" tabindex="-1" autocomplete="off" aria-hidden="true">
+<div class="bar" id="bar" hidden><i></i></div>
+<p class="err" id="err" role="alert"></p>
+<button class="btn" id="go" type="submit">NEXT</button>
+<button class="back" id="back" type="button" hidden>Back</button>
+<p class="fine">Questions? Text Alexandra at <a href="sms:+18564986682" style="color:inherit">(856)&nbsp;498-6682</a>.</p>
+</form>
+</main>
+<script>
+(function(){
+const $=s=>document.querySelector(s), clean=v=>String(v||'').trim(), digits=v=>String(v||'').replace(/\D/g,'');
+const LAST=5; let step=1;
+const SLOTS=[['dl','Driver’s license','A clear photo of the front',true],['cos','Cosmetology or esthetics&nbsp;license','Skip if you don’t have one',false]];
+const picked={dl:[],cos:[]}, MAX=4;
+$('#slots').innerHTML=SLOTS.map(([k,t,s])=>`<div class="slot" style="margin-bottom:12px"><div class="row"><div><b>${t}</b><small>${s}</small></div>
+  <label class="add">+ ADD<input type="file" accept="image/*,application/pdf" multiple data-k="${k}"></label></div><div class="thumbs" id="t-${k}"></div></div>`).join('');
+function draw(k){$('#t-'+k).innerHTML=picked[k].map((p,i)=>`<div style="${p.url?`background-image:url(${p.url})`:''}">${p.url?'':'PDF'}<button type="button" aria-label="Remove" data-k="${k}" data-i="${i}">×</button></div>`).join('')}
+document.addEventListener('change',e=>{
+  const inp=e.target;if(!inp.dataset||!inp.dataset.k)return;const k=inp.dataset.k;
+  for(const f of inp.files){if(picked[k].length>=MAX)break;
+    const pdf=f.type==='application/pdf'||/\.pdf$/i.test(f.name);
+    if(pdf||/^image\//.test(f.type)||/\.(heic|heif)$/i.test(f.name))picked[k].push({file:f,pdf,url:pdf?'':URL.createObjectURL(f)})}
+  inp.value='';draw(k);
+});
+document.addEventListener('click',e=>{
+  const b=e.target.closest('.thumbs button');if(b){picked[b.dataset.k].splice(+b.dataset.i,1);draw(b.dataset.k);return}
+  const s=e.target.closest('[data-show]');if(s){const i=$('#'+s.dataset.show);const hide=i.type==='text';i.type=hide?'password':'text';s.textContent=hide?'Show':'Hide'}
+});
+$('#ssn').addEventListener('input',e=>{const d=digits(e.target.value).slice(0,9);e.target.value=d.length>5?d.slice(0,3)+'-'+d.slice(3,5)+'-'+d.slice(5):d.length>3?d.slice(0,3)+'-'+d.slice(3):d});
+$('#routing').addEventListener('input',e=>e.target.value=digits(e.target.value).slice(0,9));
+
+function show(n){
+  step=n;
+  document.querySelectorAll('.step').forEach(s=>s.hidden=+s.dataset.step!==n);
+  document.querySelectorAll('.steps i').forEach((b,i)=>b.classList.toggle('on',i<n));
+  $('#stepNo').textContent='STEP '+n+' OF '+LAST;
+  $('#go').textContent=n===LAST?'SEND MY FORM':'NEXT';
+  $('#back').hidden=n===1;$('#lede').hidden=n!==1;$('#err').textContent='';
+  if(n>1)scrollTo(0,0);
+}
+const v=id=>clean($('#'+id).value);
+function bad(msg,id){$('#err').textContent=msg;if(id)$('#'+id).focus();return false}
+function check(n){
+  const need={1:[['first','your first name'],['last','your last name'],['phone','your phone number'],['email','your email'],['dob','your date of birth']],
+    2:[['street','your street address'],['city','your town'],['state','your state'],['zip','your zip code']],
+    3:[['ssn','your Social Security number'],['bank','your bank name'],['routing','your routing number'],['acct','your account number']],
+    4:[['ecName','your emergency contact’s name'],['ecPhone','your emergency contact’s phone']],5:[]}[n];
+  for(const [id,l] of need)if(!v(id))return bad('Please add '+l+'.',id);
+  if(n===1){
+    if(digits(v('phone')).length<10)return bad('Please add a 10-digit phone number.','phone');
+    if(!/^\S+@\S+\.\S+$/.test(v('email')))return bad('That email doesn’t look quite right.','email');
+  }
+  if(n===2&&!/^\d{5}(-?\d{4})?$/.test(v('zip')))return bad('Please add a 5-digit zip code.','zip');
+  if(n===3){
+    if(digits(v('ssn')).length!==9)return bad('A Social Security number has 9 numbers.','ssn');
+    if(digits(v('routing')).length!==9)return bad('A routing number has 9 numbers.','routing');
+    if(digits(v('acct')).length<4)return bad('Please check your account number.','acct');
+    if(!document.querySelector('input[name=acctType]:checked'))return bad('Please pick checking or savings.');
+  }
+  if(n===4&&digits(v('ecPhone')).length<10)return bad('Please add a 10-digit phone number.','ecPhone');
+  if(n===5){
+    if(!picked.dl.length)return bad('Please add a photo of your driver’s license.');
+    if(!$('#wa').checked)return bad('Please download WhatsApp, then check the box.');
+  }
+  return true;
+}
+
+/** Photos shrink to 1800px JPEG so they send fast from a phone. PDFs go as they are (up to 8 MB). */
+function shrink(file){return new Promise((ok,no)=>{const img=new Image();img.onload=()=>{
+  const m=1800,s=Math.min(1,m/Math.max(img.width,img.height)),c=document.createElement('canvas');
+  c.width=Math.round(img.width*s);c.height=Math.round(img.height*s);c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+  ok({data:c.toDataURL('image/jpeg',.88).split(',')[1],type:'image/jpeg'})};img.onerror=no;img.src=URL.createObjectURL(file)})}
+function raw(file){return new Promise((ok,no)=>{if(file.size>8e6)return no('big');const r=new FileReader();
+  r.onload=()=>ok({data:String(r.result).split(',')[1],type:'application/pdf'});r.onerror=no;r.readAsDataURL(file)})}
+const post=d=>fetch(window.TW_ENDPOINT,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(d)}).then(r=>r.json());
+
+$('#back').addEventListener('click',()=>show(step-1));
+$('#f').addEventListener('submit',async e=>{
+  e.preventDefault();$('#err').textContent='';
+  if(!check(step))return;
+  if(step<LAST){show(step+1);return}
+  const d={action:'newHireStart',first:v('first'),last:v('last'),phone:v('phone'),email:v('email'),dob:v('dob'),
+    street:v('street'),city:v('city'),state:v('state').toUpperCase(),zip:v('zip'),
+    ssn:digits(v('ssn')),bank:v('bank'),routing:digits(v('routing')),acct:v('acct'),acctType:document.querySelector('input[name=acctType]:checked').value,
+    venmo:v('venmo'),ecName:v('ecName'),ecPhone:v('ecPhone'),whatsapp:'Yes',website:v('website')};
+  const all=SLOTS.flatMap(([k])=>picked[k].map(p=>({k,p})));
+  const b=$('#go'),bar=$('#bar');b.disabled=true;b.textContent='SENDING…';bar.hidden=false;
+  try{
+    const s=await post(d);if(!s.ok)throw new Error(s.error||'not_ok');
+    let done=0,failed=0;
+    for(const {k,p} of all){
+      b.textContent='SENDING PHOTO '+(done+failed+1)+' OF '+all.length+'…';
+      try{const f=p.pdf?await raw(p.file):await shrink(p.file);const r=await post({action:'newHireFile',token:s.token,kind:k,data:f.data,type:f.type});if(!r.ok)throw 0;done++}catch(x){failed++}
+      bar.firstChild.style.width=Math.round((done+failed)/all.length*100)+'%';
+    }
+    await post({action:'newHireDone',token:s.token,sent:done,failed});
+    const first=d.first.replace(/[<>&"]/g,'');
+    $('#app').innerHTML=`<div class="done"><img class="logo" src="../g/logo.png" alt="Taffeta Salon and Spa" width="360" height="360">
+      <h1>Thank You, <em>${first}</em></h1><div class="rule"></div>
+      <p class="lede">${failed?`Your form is in. ${failed} photo${failed>1?'s':''} didn’t send, so please text it to Alexandra.`:'Your form is in. We can’t wait to work with&nbsp;you.'}</p></div>`;
+    scrollTo(0,0);
+  }catch(x){b.disabled=false;b.textContent='SEND MY FORM';bar.hidden=true;$('#err').textContent='That didn’t go through. Please try again, or text Alexandra.'}
+});
+show(1);
+})();
+</script>
+</body></html>
