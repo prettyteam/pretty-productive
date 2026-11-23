@@ -185,7 +185,7 @@
    "id": "salon-1127-s",
    "account": "taffetasalonandspa",
    "at": "2026-11-27T17:30:00-05:00",
-   "url": "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/tg2-salon-1127.jpg"
+   "url": "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/tg3-salon-1127.jpg"
   },
   {
    "id": "spa-1128",
@@ -458,7 +458,7 @@
    "ok": true,
    "urls": [
     "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/feed/nspa-11-tg1.jpg",
-    "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/feed/nspa-11-tg2.jpg"
+    "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/feed/nspa-11-tg3.jpg"
    ],
    "caption": "Happy Thanksgiving. Thank you for trusting us with your quiet hour this year. 🤍\n\nIf a visit with us helped, a Google review helps others find us. The link is in our bio.",
    "tags": "#HappyThanksgiving #Grateful #SmallBusiness #SouthJerseySpa #TaffetaSpa"
@@ -469,7 +469,7 @@
    "at": "2026-11-28T12:00:00-05:00",
    "ok": true,
    "urls": [
-    "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/feed/nspa-12-1.jpg"
+    "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/feed/nspa-12-p1.jpg"
    ],
    "caption": "Small Business Saturday. Thank you for choosing a local spa. It means everything to us.\n\nStart December with your skin in a good place: book a $99 express treatment at the link in bio.",
    "tags": "#SmallBusinessSaturday #ShopSmall #ShopLocal #SouthJerseySpa #TaffetaSpa"
@@ -638,7 +638,7 @@
    "at": "2026-11-29T17:30:00-05:00",
    "ok": false,
    "urls": [
-    "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/feed/nspa-14-1.jpg"
+    "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/feed/nspa-14-p1.jpg"
    ],
    "caption": "Skipped microneedling because of the pain, the price, or the days of hiding at home? 🤍\n\nNano needling gives you the same results at a fraction of the cost. No numbing, no downtime, no pain. Just an hour of relaxing and skin that looks smoother and brighter.\n\nStart your series before the holidays. Book in the link in our bio.",
    "tags": "#nanoneedling #microneedling #nodowntime #skincare #glowingskin #holidayskin #southjerseyspa #njspa #taffetaspa"
@@ -687,6 +687,11 @@
  ],
  "proofs": {
   "canStart": true,
-  "synced": {}
+  "synced": {
+   "img:nspa-11:1": "a0e3dbf0",
+   "img:nspa-12:0": "dca16167",
+   "img:nspa-14:0": "9ce1920d",
+   "stx-nds-salon-1127": "30ff4e02"
+  }
  }
 }
