@@ -171,7 +171,7 @@
     ]
   },
   "pk": {
-    "week": "Nov 19",
+    "week": "Nov 23",
     "groups": [
       {
         "name": "Hair Care",
@@ -239,11 +239,11 @@
         "brands": [
           {
             "name": "Cool as a Cucumber",
-            "title": "The calm-skin line",
-            "blurb": "Soothe Operator cleanser and Hydralixir serum: know who each one is for.",
-            "url": "https://shop.advancedderm.com/collections/cool-as-a-cucumber",
+            "title": "Hydration vs. Moisture",
+            "blurb": "Every skin type needs water and oil, even oily, acne-prone guests.",
+            "url": "https://www.becoolasacucumber.com/blogs/news/hydrating-ingredients-101",
             "cta": "Read",
-            "week": "Oct 17"
+            "week": "Nov 23"
           },
           {
             "name": "Biologique Recherche",
@@ -286,7 +286,8 @@
       "https://coveteur.com/winter-2026-makeup-trends",
       "https://hauteliving.com/hautebeauty/marco-norma-rossano-ferretti-explains-the-method/",
       "https://maneprint.com/products/hot-like-me-sheer-glass",
-      "https://www.brazilianblowout.com/blogs/news/does-damaged-hair-cause-frizz"
+      "https://www.brazilianblowout.com/blogs/news/does-damaged-hair-cause-frizz",
+      "https://www.becoolasacucumber.com/blogs/news/hydrating-ingredients-101"
     ]
   },
   "promo": {
