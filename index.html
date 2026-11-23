@@ -2604,7 +2604,10 @@ function weekCard(p){
 function CONSULT_RE(){return {hair:/color|process|balayage|foil|highlight|glaze|gloss|toner|root|gr[ae]y|lighten|blond|keratin|brazilian|smooth|perm|extension|treatment/i,skin:/facial|peel|dermaplan|microneedl|nano|hydrafacial|acne|lash lift|brow lam|treatment/i}}
 /* Color mix reminder (Alexandra, Nov 17 2026): guests on the Team Hub "Mix Watch" list whose color mixes have been undercharged before.
    The daily update sets c.mixAlert (e.g. "Her bowls run ~105 g. Weigh the whole bowl and ring 80 ML color mix + Additional Mix ($50).") */
-function mixNote(c){return c&&c.mixAlert?h('p',{style:'font-size:14px;margin:6px 0 0;padding:8px 10px;border:1px solid #121212;border-radius:10px;background:#fff'},h('b',{},'Color mix reminder. '),String(c.mixAlert)):null}
+/* Scale reminder (Alexandra, Nov 23 2026): every guest with a color service gets a reminder to weigh each bowl on the scale and update her client profile so the mix rings right. */
+const SCALE_RE=/colou?r|process|foil|balayage|highlight|glaze|gloss|toner|root|lighten|blond|face frame|additional mix/i;
+const SCALE_TXT='Weigh every bowl (color + developer) on the scale. Then update her client profile with today\u2019s formula and bowl grams so her mix is right next time.';
+function mixNote(c){if(!c)return null;const col=SCALE_RE.test((c.services||[]).map(s=>s.name).join(' '));if(!c.mixAlert&&!col)return null;const st='font-size:14px;margin:6px 0 0;padding:8px 10px;border:1px solid #121212;border-radius:10px;background:#fff';return c.mixAlert?h('p',{style:st},h('b',{},'Color mix reminder. '),String(c.mixAlert)+(col?' '+SCALE_TXT:'')):h('p',{style:st},h('b',{},'Use the scale. '),SCALE_TXT)}
 function needsConsult(c){const n=(c&&c.services||[]).map(s=>s.name).join(' '),R=CONSULT_RE();return !!(c&&c.isNew&&(R.hair.test(n)||R.skin.test(n)))}
 function tomorrowView(){
   const p=S.mine||{}, t=p.tomorrow, today=ymd(new Date());
