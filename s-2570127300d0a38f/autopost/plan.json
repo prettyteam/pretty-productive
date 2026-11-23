@@ -247,13 +247,6 @@
    "tags": "#HolidaySeason #HolidayHair #HammontonNJ #SouthJerseySalon #TaffetaSalonAndSpa"
   },
   {
-   "id": "nsalon-10",
-   "account": "taffetasalonandspa",
-   "at": "2026-11-24T17:30:00-05:00",
-   "start": "Thank you for sitting in our chairs this",
-   "tags": "#Thankful #SmallBusinessLove #HammontonNJ #SouthJerseySalon #TaffetaSalonAndSpa"
-  },
-  {
    "id": "nspa-3",
    "account": "spa.taffeta",
    "at": "2026-11-09T17:30:00-05:00",
@@ -684,6 +677,16 @@
    "video": "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/reels/salon-reel-cuticle-water-drops.mp4",
    "caption": "The best part of every nail appointment? That last little drop. 🤍\n\nFresh nails, one tiny bow, and a swipe of cuticle oil on every finger to finish.\n\nNails are every Wednesday at Taffeta. Book in the link in our bio. ✂️",
    "tags": "#nails #nailart #bownails #cuticleoil #satisfying #asmr #nailsofinstagram #southjerseynails #njnails #taffetasalonandspa"
+  },
+  {
+   "id": "nsalon-10",
+   "account": "taffetasalonandspa",
+   "at": "2026-11-24T17:30:00-05:00",
+   "ok": true,
+   "video": "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/reels/salon-reel-thank-you-nov24.mp4",
+   "caption": "Thank you for sitting in our chairs this year, for the laughs, the trust and every “I love it.” 🤍\n\nIf we made your week a little better, a Google review helps our neighbors find us. The link is in our bio. We read every single one.",
+   "tags": "#Thankful #SmallBusinessLove #HammontonNJ #SouthJerseySalon #TaffetaSalonAndSpa",
+   "note": "moved from Meta Business Suite to Zapier 11-23 with her new picture 3; free-to-use music baked in"
   }
  ],
  "proofs": {
