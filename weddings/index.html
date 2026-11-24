@@ -354,6 +354,19 @@ details.more .menu .btn:last-child{border-bottom:0}
 .aw-due .aw-row{border-top:1px solid var(--line);padding-top:10px;display:flex;flex-direction:column;gap:6px}
 .aw-due .aw-row a{color:var(--ink);text-decoration:none}
 .pill{display:inline-block;font-size:11px;padding:1px 8px;border:1px solid var(--line);color:var(--ink);margin:2px 4px 0 0}
+/* Previews tab (Alexandra, Nov 24 2026): every preview in one list, black and white, thin lines */
+.pvs-wrap{max-width:760px;margin:0 auto}
+.pvs-tools{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:flex-end}
+.pvs-tools .f{flex:1 1 180px;margin:0}
+.pvs-h{font-family:var(--serif);font-weight:400;font-size:17px;letter-spacing:.02em;margin:22px 0 8px;padding-bottom:6px;border-bottom:1px solid var(--ink)}
+.pvs-h small{font-family:var(--sans,inherit);font-size:12px;color:var(--muted);margin-left:6px}
+.pvs-list{display:flex;flex-direction:column;gap:8px}
+.pvs-row{cursor:default}
+.pvs-row .d b{font-size:20px}
+.pvs-row.nos .d b{font-size:18px;color:var(--muted)}
+.pvs-row .acts{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.pvs-row .acts button{font-size:12px;padding:3px 10px}
+.pill.nos{border-style:dashed;color:var(--muted)}
 .empty-state{padding:28px;text-align:center;color:var(--muted);border:1px dashed var(--line)}
 .toast{position:fixed;z-index:70;left:50%;bottom:calc(72px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--accent);color:var(--accent-ink);padding:8px 16px;font-size:13px;opacity:0;transition:opacity .2s;pointer-events:none}
 .toast.on{opacity:1}
@@ -423,7 +436,8 @@ input,select,textarea{background:#fff;border-radius:0}
       <button id="tab-team" role="tab" aria-selected="false" hidden>Schedule</button>
       <button id="tab-cal" role="tab" aria-selected="false" hidden>Calendar</button>
       <button id="tab-jobs" role="tab" aria-selected="false" hidden>Jobs</button>
-      <button id="tab-prev" role="tab" aria-selected="false" hidden>Bridal preview</button>
+      <button id="tab-pvs" role="tab" aria-selected="false" hidden>Previews</button>
+      <button id="tab-prev" role="tab" aria-selected="false" hidden>Preview photos &amp; notes</button>
       <button id="tab-info" role="tab" aria-selected="false" hidden>My info</button>
       <button id="tab-pay" role="tab" aria-selected="false" hidden>Payout form</button>
       <button id="tab-ask" role="tab" aria-selected="false" hidden>Ask The Office</button>
@@ -787,6 +801,21 @@ input,select,textarea{background:#fff;border-radius:0}
           <div id="po-mine"><p class="hint">Requests you send show here.</p></div>
         </div>
       </div>
+    </div>
+  </section>
+
+  <section id="view-pvs" hidden>
+    <div class="pvs-wrap">
+      <div class="card">
+        <h2 data-open>All previews</h2>
+        <p class="hint" id="pvs-hint">Every bridal preview in one place, soonest first. No more digging through weddings and years.</p>
+        <div class="pvs-tools">
+          <label class="f">Find a bride<input id="pvs-q" type="search" placeholder="Type a name" autocomplete="off"></label>
+          <label class="f" id="pvs-whoWrap">Show previews for<select id="pvs-who"><option value="">Everyone</option></select></label>
+        </div>
+        <label class="chk" style="margin-top:8px"><input type="checkbox" id="pvs-past"> Show past previews</label>
+      </div>
+      <div id="pvs-body"><div class="empty-state">Loading previews…</div></div>
     </div>
   </section>
 
@@ -2056,11 +2085,11 @@ $("#txTeam").onclick=textTeam;
 $("#cf-text-team").onclick=textTeam;
 
 /* ---------- homepage (Alexandra, Oct 17 2026) ---------- */
-const PAGE_LABEL={booked:"Booked Weddings",build:"Timeline",team:"Schedule",cal:"Calendar",pipe:"Pipeline",coach:"Call Coach",todo:"To Do",tpl:"Texts",jobs:"Jobs",admin:"Team Records",pay:"Payout Form",prev:"Bridal Preview",ask:"Ask The Office",addon:"Add-On Services",tip:"Gratuity",info:"My Info"};
+const PAGE_LABEL={booked:"Booked Weddings",build:"Timeline",team:"Schedule",cal:"Calendar",pipe:"Pipeline",coach:"Call Coach",todo:"To Do",tpl:"Texts",jobs:"Jobs",admin:"Team Records",pay:"Payout Form",pvs:"Previews",prev:"Preview Photos & Notes",ask:"Ask The Office",addon:"Add-On Services",tip:"Gratuity",info:"My Info"};
 function homeGroups(){
-  if(ROLE==="office")return [["Weddings",["booked","build","team","cal"]],["Sales",["pipe","coach","todo","tpl"]],["Bridal Team",["jobs","admin","pay"]],["Preview & Add-Ons",["prev","addon"]]];   // always an even number of squares (Alexandra, Oct 17 2026)
+  if(ROLE==="office")return [["Weddings",["booked","build","team","cal"]],["Sales",["pipe","coach","todo","tpl"]],["Bridal Team",["jobs","admin","pay"]],["Preview & Add-Ons",["pvs","prev","addon"]]];   // always an even number of squares (Alexandra, Oct 17 2026)
   PAGE_LABEL.team="My Weddings";PAGE_LABEL.jobs="Job Offers";
-  return [["My Weddings",["team"]],["Job Offers",["jobs"]],["Add-Ons & Gratuity",["addon","tip"]],["Bridal Preview",["prev"]],["Ask The Office",["ask"]],["Get Paid & My Profile",["pay","info"]]];
+  return [["My Weddings",["team"]],["Job Offers",["jobs"]],["Add-Ons & Gratuity",["addon","tip"]],["Previews",["pvs","prev"]],["Ask The Office",["ask"]],["Get Paid & My Profile",["pay","info"]]];
 }
 const NAME_PICS=['adriana','alexandra','alyssa','amanda','angelina','ashley','carolyn','dominique','emily','isabella','jen','jennifer','joanna','kelly','lexi','mia','neva','sara'];
 const OFFICE_PEOPLE=["Alexandra","Dominique","Cherish"];   // Cherish runs payroll (Alexandra, Oct 17 2026)
@@ -2415,7 +2444,7 @@ function renderAsk(){
 }
 
 /* ---------- tabs ---------- */
-const TABS=["home","addon","tip","build","team","cal","jobs","prev","booked","pipe","coach","todo","tpl","info","pay","ask","admin"];
+const TABS=["home","addon","tip","build","team","cal","jobs","pvs","prev","booked","pipe","coach","todo","tpl","info","pay","ask","admin"];
 function showTab(t){if(!TABS.includes(t))t="home";document.body.classList.toggle("tw-home",t==="home");if(t==="home")renderHome();if(t==="addon")renderAddon();if(t==="tip"){delete ACT_DONE.tip;renderTip()}TABS.forEach(k=>{$("#tab-"+k).setAttribute("aria-selected",k===t);$("#view-"+k).hidden=k!==t});$("#pageTitle").textContent=$("#tab-"+t).textContent;try{localStorage.setItem("tt-tab",t)}catch(e){}}
 TABS.forEach(k=>$("#tab-"+k).onclick=()=>showTab(k));
 
@@ -2982,7 +3011,7 @@ const pvWhen=p=>{const d=pvDay(p);const day=d.toLocaleDateString(undefined,{week
 async function loadPreviews(force){
   if(!ROLE||pvLoading||(pvLoaded&&!force))return;
   pvLoading=true;
-  try{const j=await api("previews");previews=j.previews||[];const first=!pvLoaded;pvLoaded=true;renderPreviews();if(pvSel&&first)renderPreview()}
+  try{const j=await api("previews");previews=j.previews||[];const first=!pvLoaded;pvLoaded=true;renderPreviews();if(pvSel&&first)renderPreview();renderPvs()}
   catch(e){if(!pvLoaded)$("#pv-list").innerHTML='<div class="empty-state">Couldn\'t load previews. Refresh to try again.</div>'}
   finally{pvLoading=false}
 }
@@ -3377,6 +3406,109 @@ function bpRender(){
 }
 {const wr=wpRender;wpRender=function(w){wr(w);if(w==="build")bpRender()}}
 {const so=$("#saved").onchange;$("#saved").onchange=e=>{so(e);bpRender()}}
+
+/* ---------- Previews tab (Alexandra, Nov 24 2026) ----------
+   "so we don't have to scroll looking for the wedding in the lists and years to find the preview info".
+   One list for everyone: each wedding's preview from its Timeline, plus "preview" events on Google Calendar.
+   A wedding whose Timeline has no preview date yet (like a calendar draft that was never saved, e.g. Emily McCarthy)
+   uses a matching calendar preview if there is one; if not, it is listed under "Not scheduled yet". */
+const PVS_SKIP=new Set(["the","and","bride","preview","previews","bridal","taffeta","hair","makeup","trial","with","for"]);
+const pvsWords=t=>String(t||"").toLowerCase().replace(/[^a-z\s]/g," ").split(/\s+/).filter(x=>x.length>=3&&!PVS_SKIP.has(x));
+const pvsLong=d=>{if(!d)return"";const[y,m,dd]=d.split("-").map(Number);return new Date(y,m-1,dd).toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric",year:"numeric"})};
+const pvsYmd=dt=>dt.getFullYear()+"-"+String(dt.getMonth()+1).padStart(2,"0")+"-"+String(dt.getDate()).padStart(2,"0");
+function pvsWho(d){
+  const named=(d.artists||[]).filter(a=>(a.name||"").trim());
+  if(Array.isArray(d.previewWho))return named.filter(a=>d.previewWho.includes(a.id)).map(a=>a.name.trim());
+  try{if(Array.isArray(d.people)&&d.people.length){const plan=build(Object.assign(starter(),d)),bid=(d.people.find(p=>p.role==="Bride")||{}).id;
+    const w=named.filter(a=>plan.cols.some(c=>c.artist.id===a.id&&c.cells.includes(bid))).map(a=>a.name.trim());if(w.length)return w}}catch(e){}
+  return [];
+}
+/* which wedding a calendar preview belongs to: the bride's last name (or another name word) in the title,
+   and the preview comes before the wedding. The nearest wedding after the preview wins. */
+function pvsMatch(ev){
+  const t=" "+String(ev.title||"").toLowerCase().replace(/[^a-z\s]/g," ")+" ",day=pvsYmd(pvDay(ev));
+  let best=null;
+  allWeddings.forEach(w=>{
+    const words=pvsWords(w.d.bride);if(!words.length||!w.d.date)return;
+    const last=words[words.length-1];
+    const hit=t.includes(" "+last+" ")?2:words.some(x=>t.includes(" "+x+" "))?1:0;
+    if(!hit||w.d.date<day)return;
+    if(!best||hit>best.hit||(hit===best.hit&&w.d.date<best.w.d.date))best={w,hit};
+  });
+  return best&&best.w;
+}
+function pvsItems(){
+  const items=[],byW={},loose={};
+  (previews||[]).forEach(ev=>{
+    const w=pvsMatch(ev);
+    if(w){(byW[w.id]=byW[w.id]||[]).push(ev);return}
+    const k=pvsYmd(pvDay(ev))+"|"+pvsWords(ev.title).join(" ");
+    (loose[k]=loose[k]||[]).push(ev);
+  });
+  allWeddings.forEach(w=>{
+    const d=w.d,evs=(byW[w.id]||[]).slice().sort((a,b)=>a.start<b.start?-1:1);
+    const ev=evs[0];
+    const it={wid:w.id,bride:d.bride||"Untitled",wedDate:d.date||"",evKey:ev?ev.key:"",cal:false};
+    if(d.previewDate){
+      it.date=d.previewDate;it.time=d.previewTime?fmt(toMin(d.previewTime)):"";
+      it.loc=(d.previewLoc||"").trim()||"Taffeta Salon";it.who=pvsWho(d);
+    }else if(ev){
+      const dt=pvDay(ev);it.date=pvsYmd(dt);it.time=ev.allDay?"":dt.toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"});
+      it.loc=ev.location||"";it.who=[...new Set(evs.flatMap(e=>e.artists||[]))];it.cal=true;
+    }else it.who=pvsWho(d);
+    if(!it.who.length&&evs.length)it.who=[...new Set(evs.flatMap(e=>e.artists||[]))];
+    items.push(it);
+  });
+  Object.values(loose).forEach(evs=>{
+    const ev=evs[0],dt=pvDay(ev);
+    const nm=String(ev.title||"").replace(/\b(taffeta|bridal|wedding|hair|makeup|&|and)?\s*(preview|previews|trial)\b/ig," ").replace(/\s*[·|:\-–—]+\s*$|^\s*[·|:\-–—]+\s*/g,"").replace(/\s+/g," ").trim();
+    items.push({wid:"",bride:nm||ev.title,wedDate:"",evKey:ev.key,cal:true,date:pvsYmd(dt),time:ev.allDay?"":dt.toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"}),
+      loc:ev.location||"",who:[...new Set(evs.flatMap(e=>e.artists||[]))]});
+  });
+  return items;
+}
+function pvsOpenWedding(id){
+  if(ROLE==="office"){const s=$("#saved");s.value=id;s.onchange({target:s});goTab("build");return}
+  teamSel=id;goTab("team");renderTeam();renderTeamSheet();
+}
+function pvsOpenPhotos(key){pvSel=key;goTab("prev");renderPreviews();renderPreview()}
+function renderPvs(){
+  const body=$("#pvs-body");if(!body||!ROLE||$("#view-pvs").hidden)return;
+  const office=ROLE==="office",today=new Date().toISOString().slice(0,10);
+  const all=pvsItems();
+  $("#pvs-whoWrap").hidden=!office;
+  if(office){const f=$("#pvs-who"),cur=f.value,names=[...new Set(all.flatMap(i=>i.who))].sort();
+    f.innerHTML='<option value="">Everyone</option>'+names.map(n=>'<option'+(n===cur?' selected':'')+'>'+esc(n)+'</option>').join("")}
+  const q=$("#pvs-q").value.trim().toLowerCase(),who=office?$("#pvs-who").value:"",past=$("#pvs-past").checked;
+  const ok=i=>(!q||i.bride.toLowerCase().includes(q))&&(!who||i.who.includes(who));
+  const sched=all.filter(i=>i.date&&ok(i)&&i.date>=today).sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time));
+  const gone=past?all.filter(i=>i.date&&ok(i)&&i.date<today).sort((a,b)=>b.date.localeCompare(a.date)):[];   // newest first
+  const nos=all.filter(i=>!i.date&&ok(i)&&i.wedDate>=today).sort((a,b)=>a.wedDate.localeCompare(b.wedDate));
+  const row=(i,n)=>{
+    let dt=null;if(i.date){const[y,m,dd]=i.date.split("-").map(Number);dt=new Date(y,m-1,dd)}
+    const pills=[];if(!i.date)pills.push('<span class="pill nos">Not scheduled yet</span>');if(i.cal)pills.push('<span class="pill">From Google Calendar</span>');
+    const acts=[];if(i.wid)acts.push('<button type="button" class="btn ghost small" data-w="'+esc(i.wid)+'">'+(office?"Open Timeline":"Open wedding")+'</button>');
+    if(i.evKey)acts.push('<button type="button" class="btn ghost small" data-k="'+esc(i.evKey)+'">Photos &amp; notes</button>');
+    return '<div class="wed pvs-row'+(n?' nos':'')+'"><div class="d">'+(dt?'<small>'+esc(dt.toLocaleDateString("en-US",{month:"short"}))+'</small><b>'+dt.getDate()+'</b><small>'+dt.getFullYear()+'</small>':'<small>Preview</small><b>–</b>')+'</div><div>'
+      +'<div class="who">'+esc(i.bride)+'</div>'
+      +(i.date?'<div class="sub">'+esc(pvsLong(i.date))+(i.time?' · '+esc(i.time):' · Time not set')+'</div>':'<div class="sub">Preview date and time not set</div>')
+      +(i.loc?'<div class="sub">'+esc(i.loc)+'</div>':'')
+      +'<div class="sub">At the preview: '+esc(i.who.length?i.who.join(", "):"Not picked yet")+'</div>'
+      +(i.wedDate?'<div class="sub">Wedding: '+esc(pvsLong(i.wedDate))+'</div>':'')
+      +(pills.length?'<div>'+pills.join("")+'</div>':'')+(acts.length?'<div class="acts">'+acts.join("")+'</div>':'')+'</div></div>';
+  };
+  let h='<h3 class="pvs-h">Coming up<small>'+sched.length+'</small></h3>';
+  h+=sched.length?'<div class="pvs-list">'+sched.map(i=>row(i,false)).join("")+'</div>':'<div class="empty-state">'+(q||who?"No previews match.":office?"No previews scheduled yet.":"No previews for you yet. When the office adds you to one, it shows up here.")+'</div>';
+  if(nos.length||!q){h+='<h3 class="pvs-h">Not scheduled yet<small>'+nos.length+'</small></h3>';
+    h+=nos.length?'<p class="hint" style="margin:0 0 8px">Upcoming weddings with no preview date or time saved'+(office?". Open the Timeline to add it.":".")+'</p><div class="pvs-list">'+nos.map(i=>row(i,true)).join("")+'</div>':'<div class="empty-state">Every upcoming wedding has a preview date.</div>'}
+  if(past){h+='<h3 class="pvs-h">Past previews<small>'+gone.length+'</small></h3>';
+    h+=gone.length?'<div class="pvs-list">'+gone.map(i=>row(i,false)).join("")+'</div>':'<div class="empty-state">No past previews.</div>'}
+  if(!pvLoaded)h+='<p class="hint" style="margin-top:10px">Checking Google Calendar for more previews…</p>';
+  body.innerHTML=h;
+  body.querySelectorAll("[data-w]").forEach(b=>b.onclick=()=>pvsOpenWedding(b.dataset.w));
+  body.querySelectorAll("[data-k]").forEach(b=>b.onclick=()=>pvsOpenPhotos(b.dataset.k));
+}
+$("#pvs-q").oninput=renderPvs;$("#pvs-who").onchange=renderPvs;$("#pvs-past").onchange=renderPvs;
 
 /* ---------- booked weddings (office) ---------- */
 function bkRows(){
@@ -4055,7 +4187,7 @@ function showSignIn(msg){
   $("#view-signin").hidden=false;$("#signOut").hidden=true;setStatus("");
   if(msg)$("#si-msg").textContent=msg;
 }
-function signOut(msg){ROLE=null;document.body.classList.remove("tw-in","tw-home");canWrite=false;previews=[];pvSel=null;pvLoaded=false;pvThumbs={};$("#pv-detail").innerHTML="";try{const k=authKind(AUTH);localStorage.removeItem(SKEY);if(k)localStorage.removeItem(SKEYS[k])}catch(e){}AUTH=null;showSignIn(msg)}
+function signOut(msg){ROLE=null;document.body.classList.remove("tw-in","tw-home");canWrite=false;previews=[];pvSel=null;pvLoaded=false;$("#pvs-body").innerHTML="";pvThumbs={};$("#pv-detail").innerHTML="";try{const k=authKind(AUTH);localStorage.removeItem(SKEY);if(k)localStorage.removeItem(SKEYS[k])}catch(e){}AUTH=null;showSignIn(msg)}
 $("#signOut").onclick=()=>{if(confirm(ROLE==="artist"?"Sign out? You'll need your link to get back in.":"Sign out? You'll need the office code to get back in."))signOut()};
 $("#si-go").onclick=async()=>{
   const code=$("#si-code").value.trim().toUpperCase();if(!code)return;
@@ -4071,7 +4203,7 @@ function applyData(j){
   else{myPayouts=j.payouts||[];renderMine()}
   if(docId&&S.cal){const w=allWeddings.find(x=>x.id===docId);if(w&&w.d.cal)S.cal=w.d.cal}
   if(ROLE==="office"&&docId)mergeNewArtists();
-  refreshSavedSelect();poBrides();renderTeam();renderTeamSheet();renderBooked();
+  refreshSavedSelect();poBrides();renderTeam();renderTeamSheet();renderBooked();renderPvs();
   if(!$("#view-home").hidden)loadWx();
 }
 /* an artist who said Yes since this Timeline was opened shows up on Team on site without a reload */
@@ -4091,7 +4223,7 @@ async function start(){
   const j=await api("load");
   ROLE=j.role;canWrite=ROLE==="office";
   $("#view-signin").hidden=true;$("#signOut").hidden=false;
-  const tabs=ROLE==="office"?["home","booked","pipe","coach","todo","tpl","build","team","cal","jobs","prev","admin","pay","addon"]:["home","team","jobs","addon","tip","prev","info","pay","ask"];
+  const tabs=ROLE==="office"?["home","booked","pipe","coach","todo","tpl","build","team","cal","jobs","pvs","prev","admin","pay","addon"]:["home","team","jobs","addon","tip","pvs","prev","info","pay","ask"];
   TABS.forEach(k=>$("#tab-"+k).hidden=!tabs.includes(k));
   $("#tab-team").textContent=ROLE==="office"?"Schedule":"My weddings";
   $("#tab-jobs").textContent=ROLE==="office"?"Jobs":"Job offers";
@@ -4187,12 +4319,13 @@ async function jbCheckNew(){
   }catch(e){}
 }
 showTab=function(t){
-  const allowed=ROLE==="office"?["home","booked","pipe","coach","todo","tpl","build","team","cal","jobs","prev","admin","pay","addon"]:["home","team","jobs","addon","tip","prev","info","pay","ask"];
+  const allowed=ROLE==="office"?["home","booked","pipe","coach","todo","tpl","build","team","cal","jobs","pvs","prev","admin","pay","addon"]:["home","team","jobs","addon","tip","pvs","prev","info","pay","ask"];
   if(!allowed.includes(t))t="home";
   document.body.classList.toggle("tw-home",t==="home");if(t==="home")renderHome();if(t==="addon")renderAddon();if(t==="tip")renderTip();if(t==="ask")renderAsk();
   TABS.forEach(k=>{$("#tab-"+k).setAttribute("aria-selected",k===t);$("#view-"+k).hidden=k!==t});
   $("#pageTitle").textContent=$("#tab-"+t).textContent;
   if(t==="prev")loadPreviews();
+  if(t==="pvs"){renderPvs();loadPreviews()}
   if(t==="pipe")loadPipeline();
   if(t==="coach")loadCoach();
   if(t==="todo")loadTodos();
@@ -4213,7 +4346,7 @@ async function liveRefresh(){
     if(ROLE==="artist"){const r=await api("myJobs");jbJobs=r.jobs||[];renderMyJobs()}
     else{const r=await api("jobs");jbJobs=r.jobs||[];jbLoaded=true;renderJobs();if(docId)renderAsked()}
   }catch(e){}
-  if(pvLoaded&&!$("#view-prev").hidden)loadPreviews(true);
+  if(pvLoaded&&(!$("#view-prev").hidden||!$("#view-pvs").hidden))loadPreviews(true);
   liveBusy=false;
 }
 setInterval(liveRefresh,90000);
