@@ -665,13 +665,13 @@
    "id": "nhipretty-tg",
    "account": "hiprettybrand",
    "at": "2026-11-26T14:30:00-05:00",
-   "ok": false,
+   "ok": true,
    "urls": [
     "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/feed/nhipretty-tg-1.jpg"
    ],
    "caption": "Happy Thanksgiving from Hi Pretty. 🤍\n\nGo have the pie. You earned it. Thank you for every order, every share and every kind word this year.",
    "tags": "#HappyThanksgiving #HiPretty #Grateful #ShopSmall #SmallBusiness",
-   "note": "added 11-23 held: posts only if Alexandra checks it in Proofs"
+   "note": "added 11-23; checked in Proofs by Alexandra, set ok 11-24"
   },
   {
    "id": "nhipretty-12",
@@ -715,7 +715,7 @@
    "id": "nsalon-15",
    "account": "taffetasalonandspa",
    "at": "2026-11-24T12:30:00-05:00",
-   "ok": false,
+   "ok": true,
    "urls": [
     "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/feed/nsalon-15-p1.jpg"
    ],
@@ -726,7 +726,7 @@
    "id": "nspa-14",
    "account": "spa.taffeta",
    "at": "2026-11-29T17:30:00-05:00",
-   "ok": false,
+   "ok": true,
    "urls": [
     "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/feed/nspa-14-p1.jpg"
    ],
