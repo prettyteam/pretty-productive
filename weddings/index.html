@@ -98,6 +98,11 @@ body.tw-home header.top{display:none}
 .ask .askseg button small{display:block;font-size:12.5px;opacity:.75}
 .ask .askseg button[aria-pressed="true"]{background:#121212;color:#fff;border-color:#121212}
 .ask .askf{width:100%;max-width:360px;text-align:left;align-items:stretch}
+.ask .asktolbl{font:400 11px var(--sans);letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+.ask .askto{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 6px}
+.ask .askto button{border:1px solid var(--line);background:#fff;color:#121212;padding:6px 12px;font:400 14px var(--sans);cursor:pointer}
+.ask .askto button small{font-size:11.5px;opacity:.75}
+.ask .askto button[aria-pressed="true"]{background:#121212;color:#fff;border-color:#121212}
 .ask .askf .pay{align-self:center;width:100%}
 .ask .askf textarea,.ask .askf select{font:inherit;font-size:15px;border:1px solid var(--line);padding:8px 10px;background:#fff;color:#121212;width:100%}
 .ask .asklist{width:100%;max-width:360px;text-align:left}
@@ -421,7 +426,7 @@ input,select,textarea{background:#fff;border-radius:0}
       <button id="tab-prev" role="tab" aria-selected="false" hidden>Bridal preview</button>
       <button id="tab-info" role="tab" aria-selected="false" hidden>My info</button>
       <button id="tab-pay" role="tab" aria-selected="false" hidden>Payout form</button>
-      <button id="tab-ask" role="tab" aria-selected="false" hidden>Ask Alex</button>
+      <button id="tab-ask" role="tab" aria-selected="false" hidden>Ask The Office</button>
       <button id="tab-admin" role="tab" aria-selected="false" hidden>Team records</button>
     </div>
   </header>
@@ -2051,11 +2056,11 @@ $("#txTeam").onclick=textTeam;
 $("#cf-text-team").onclick=textTeam;
 
 /* ---------- homepage (Alexandra, Oct 17 2026) ---------- */
-const PAGE_LABEL={booked:"Booked Weddings",build:"Timeline",team:"Schedule",cal:"Calendar",pipe:"Pipeline",coach:"Call Coach",todo:"To Do",tpl:"Texts",jobs:"Jobs",admin:"Team Records",pay:"Payout Form",prev:"Bridal Preview",ask:"Ask Alex",addon:"Add-On Services",tip:"Gratuity",info:"My Info"};
+const PAGE_LABEL={booked:"Booked Weddings",build:"Timeline",team:"Schedule",cal:"Calendar",pipe:"Pipeline",coach:"Call Coach",todo:"To Do",tpl:"Texts",jobs:"Jobs",admin:"Team Records",pay:"Payout Form",prev:"Bridal Preview",ask:"Ask The Office",addon:"Add-On Services",tip:"Gratuity",info:"My Info"};
 function homeGroups(){
   if(ROLE==="office")return [["Weddings",["booked","build","team","cal"]],["Sales",["pipe","coach","todo","tpl"]],["Bridal Team",["jobs","admin","pay"]],["Preview & Add-Ons",["prev","addon"]]];   // always an even number of squares (Alexandra, Oct 17 2026)
   PAGE_LABEL.team="My Weddings";PAGE_LABEL.jobs="Job Offers";
-  return [["My Weddings",["team"]],["Job Offers",["jobs"]],["Add-Ons & Gratuity",["addon","tip"]],["Bridal Preview",["prev"]],["Ask Alex",["ask"]],["Get Paid & My Profile",["pay","info"]]];
+  return [["My Weddings",["team"]],["Job Offers",["jobs"]],["Add-Ons & Gratuity",["addon","tip"]],["Bridal Preview",["prev"]],["Ask The Office",["ask"]],["Get Paid & My Profile",["pay","info"]]];
 }
 const NAME_PICS=['adriana','alexandra','alyssa','amanda','angelina','ashley','carolyn','dominique','emily','isabella','jen','jennifer','joanna','kelly','lexi','mia','neva','sara'];
 const OFFICE_PEOPLE=["Alexandra","Dominique","Cherish"];   // Cherish runs payroll (Alexandra, Oct 17 2026)
@@ -2372,35 +2377,41 @@ const ASK_K={ask:["Question Or Request","Anything you need from Alex"],easi:["Ea
 const ASK_F={ask:[["note","Your question or request","area"]],
   easi:[["for","For (bride or client)"],["link","Paste the Easi Hair Pro link"],["item","What to order","","Like Tape-In 20\" 3 packs"],["color","Color"],["length","Length"],
     ["type","Type",["Tape-In","K-Tip","I-Tip","Clip-In","Halo","Wefts","Other"]],["qty","Packs"],["need","Need it by"],["note","Note","","Optional"]]};
-let ASKW={kind:"ask",f:{},asks:null,busy:false,sent:null};
+/* Nov 24 2026 (Alexandra): a question can go to Alex, Dom or Cherish (payroll questions). Easi Hair Pro orders still go to Alex. */
+const ASK_TO={alex:["Alexandra","Alex"],dom:["Dom","Dom"],cherish:["Cherish","Cherish","Payroll questions"]};
+let ASKW={kind:"ask",to:"alex",f:{},asks:null,busy:false,sent:null,sentTo:"alex"};
 function renderAsk(){
   const box=$("#view-ask");if(!box)return;
   if(ASKW.asks===null&&!ASKW.busy){ASKW.busy=true;api("myAsks").then(j=>{ASKW.asks=j.asks||[]}).catch(()=>{ASKW.asks=[]}).finally(()=>{ASKW.busy=false;if(!$("#view-ask").hidden)renderAsk()})}
   const f=ASKW.f,K=ASK_K[ASKW.kind];
-  let h='<div class="ao ask"><div class="mhead">Ask Alex</div><p>Questions and order requests go straight to Alex.</p>';
+  const to=ASKW.kind==="ask"?ASKW.to:"alex",T=ASK_TO[to];
+  let h='<div class="ao ask"><div class="mhead">Ask The Office</div><p>Send a question to Alex, Dom or Cherish. Extension orders go to Alex.</p>';
   /* Nov 13 2026: a clear "Sent To Alexandra" card stays on screen after sending (the old 2-second line was easy to miss). */
-  if(ASKW.sent)h+='<div class="asksent" role="status"><div class="chk" aria-hidden="true">✓</div><b>Sent To Alexandra</b><p>“'+esc(ASKW.sent)+'”</p>'
-    +'<p>It is in The Pretty Report and her email now. Her answer shows under Your Requests below.</p><button type="button" class="pay" id="askAgain">Send Another</button></div>';
+  if(ASKW.sent)h+='<div class="asksent" role="status"><div class="chk" aria-hidden="true">✓</div><b>Sent To '+esc(ASK_TO[ASKW.sentTo][0])+'</b><p>“'+esc(ASKW.sent)+'”</p>'
+    +'<p>It is in The Pretty Report and '+(ASKW.sentTo==="dom"?"his":"her")+' email now. The answer shows under Your Requests below.</p><button type="button" class="pay" id="askAgain">Send Another</button></div>';
   else{h+='<div class="askseg">'
-    +Object.keys(ASK_K).map(k=>'<button type="button" data-k="'+k+'" aria-pressed="'+(ASKW.kind===k)+'">'+esc(ASK_K[k][0])+'<small>'+esc(ASK_K[k][1])+'</small></button>').join("")+'</div><div class="card askf">';
+    +Object.keys(ASK_K).map(k=>'<button type="button" data-k="'+k+'" aria-pressed="'+(ASKW.kind===k)+'">'+esc(ASK_K[k][0])+'<small>'+esc(k==="ask"?"Anything you need from the office":ASK_K[k][1])+'</small></button>').join("")+'</div><div class="card askf">';
+  if(ASKW.kind==="ask")h+='<span class="asktolbl">Send to</span><div class="askto" role="group" aria-label="Send to">'
+    +Object.keys(ASK_TO).map(k=>'<button type="button" data-to="'+k+'" aria-pressed="'+(to===k)+'">'+esc(ASK_TO[k][0])+(ASK_TO[k][2]?' <small>('+esc(ASK_TO[k][2].toLowerCase())+')</small>':'')+'</button>').join("")+'</div>';
   ASK_F[ASKW.kind].forEach(([k,l,t,ph])=>{
     h+='<label class="f">'+esc(l)+(Array.isArray(t)?'<select data-f="'+k+'">'+t.map(o=>'<option'+((f[k]||t[0])===o?' selected':'')+'>'+esc(o)+'</option>').join("")+'</select>'
       :t==="area"?'<textarea rows="5" data-f="'+k+'">'+esc(f[k]||"")+'</textarea>':'<input data-f="'+k+'" value="'+esc(f[k]||"")+'" placeholder="'+esc(ph||"")+'">')+'</label>'});
-  h+='<button type="button" class="pay" id="askSend">Send To Alex</button></div>';}
+  h+='<button type="button" class="pay" id="askSend">Send To '+esc(T[1])+'</button></div>';}
   const a=ASKW.asks||[];
   if(a.length)h+='<div class="mhead" style="margin-top:8px">Your Requests</div><div class="asklist">'+a.map((x,i)=>'<div class="askrow'+(ASKW.sent&&i===0?' asknew':'')+'"><div><b>'+esc(x.kind==="ask"?x.note:(x.item||"Easi Hair Pro")+(x.qty?" ×"+x.qty:"")+(x.for?" · "+x.for:""))+'</b><small>Sent '
-    +new Date(x.sent).toLocaleDateString("en-US",{month:"short",day:"numeric"})+'</small></div><span class="askst'+(x.status==="Sent"?"":" ok")+'">'+esc(x.status)+'</span></div>').join("")+'</div>';
+    +new Date(x.sent).toLocaleDateString("en-US",{month:"short",day:"numeric"})+(x.to&&ASK_TO[x.to]?' · to '+esc(ASK_TO[x.to][1]):'')+'</small></div><span class="askst'+(x.status==="Sent"?"":" ok")+'">'+esc(x.status)+'</span></div>').join("")+'</div>';
   box.innerHTML=h+'</div>';
   box.querySelectorAll("[data-k]").forEach(b=>b.onclick=()=>{ASKW.kind=b.dataset.k;renderAsk()});
+  box.querySelectorAll("[data-to]").forEach(b=>b.onclick=()=>{ASKW.to=b.dataset.to;renderAsk()});
   box.querySelectorAll("[data-f]").forEach(el=>{if(el.tagName==="SELECT"&&!f[el.dataset.f])f[el.dataset.f]=el.value;el.oninput=el.onchange=()=>{f[el.dataset.f]=el.value}});
   if(ASKW.sent){$("#askAgain").onclick=()=>{ASKW.sent=null;renderAsk()};return}
   $("#askSend").onclick=async()=>{
     const need=ASKW.kind==="ask"?["note"]:["item"];
     if(need.some(k=>!(f[k]||"").trim())){toast(ASKW.kind==="ask"?"Write your question first.":"Write what to order first.");return}
     const b=$("#askSend");b.disabled=true;b.textContent="Sending…";
-    try{const j=await api("askAlex",{ask:Object.assign({kind:ASKW.kind},f)});ASKW.asks=j.asks||[];ASKW.f={};
+    try{const j=await api("askAlex",{ask:Object.assign({kind:ASKW.kind,to},f)});ASKW.asks=j.asks||[];ASKW.f={};ASKW.sentTo=to;
       ASKW.sent=ASKW.kind==="ask"?f.note:(f.item||"Easi Hair Pro")+(f.qty?" ×"+f.qty:"")+(f.for?" · "+f.for:"");renderAsk();box.scrollIntoView({behavior:"smooth",block:"start"})}
-    catch(e){b.disabled=false;b.textContent="Send To Alex";toast(e.message&&e.message!=="error"?e.message:"That didn’t go through. Try again.")}};
+    catch(e){b.disabled=false;b.textContent="Send To "+T[1];toast(e.message&&e.message!=="error"?e.message:"That didn’t go through. Try again.")}};
 }
 
 /* ---------- tabs ---------- */
