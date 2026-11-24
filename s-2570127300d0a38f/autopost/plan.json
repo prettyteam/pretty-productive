@@ -143,13 +143,13 @@
    "id": "spa-1124",
    "account": "spa.taffeta",
    "at": "2026-11-24T17:30:00-05:00",
-   "url": "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/tg2-spa-1124.jpg"
+   "url": "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/spa-1124-r.jpg"
   },
   {
    "id": "salon-1124-s",
    "account": "taffetasalonandspa",
    "at": "2026-11-24T17:30:00-05:00",
-   "url": "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/tg2-salon-1124.jpg"
+   "url": "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/salon-1124-s-r.jpg"
   },
   {
    "id": "salon-1125-s",
@@ -167,13 +167,13 @@
    "id": "spa-1126",
    "account": "spa.taffeta",
    "at": "2026-11-26T12:00:00-05:00",
-   "url": "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/tg2-spa-1126.jpg"
+   "url": "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/spa-1126-r.jpg"
   },
   {
    "id": "salon-1126-s",
    "account": "taffetasalonandspa",
    "at": "2026-11-26T17:30:00-05:00",
-   "url": "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/tg2-salon-1126.jpg"
+   "url": "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/salon-1126-s-r.jpg"
   },
   {
    "id": "spa-1127",
@@ -191,25 +191,25 @@
    "id": "spa-1128",
    "account": "spa.taffeta",
    "at": "2026-11-28T12:00:00-05:00",
-   "url": "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/tg2-spa-1128.jpg"
+   "url": "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/spa-1128-r.jpg"
   },
   {
    "id": "salon-1128-s",
    "account": "taffetasalonandspa",
    "at": "2026-11-28T17:30:00-05:00",
-   "url": "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/tg4-salon-1128.jpg"
+   "url": "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/salon-1128-s-r.jpg"
   },
   {
    "id": "spa-1129",
    "account": "spa.taffeta",
    "at": "2026-11-29T17:30:00-05:00",
-   "url": "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/tg2-spa-1129.jpg"
+   "url": "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/spa-1129-r.jpg"
   },
   {
    "id": "salon-1129-s",
    "account": "taffetasalonandspa",
    "at": "2026-11-29T17:30:00-05:00",
-   "url": "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/tg2-salon-1129.jpg"
+   "url": "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/salon-1129-s-r.jpg"
   },
   {
    "id": "spa-1130",
@@ -300,6 +300,12 @@
    "account": "hiprettybrand",
    "at": "2026-11-30T14:30:00-05:00",
    "url": "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/nds-hipretty-1130-t.jpg"
+  },
+  {
+   "id": "nst-1125",
+   "account": "hiprettybrand",
+   "at": "2026-11-25T08:00:00-05:00",
+   "url": "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/nst-1125.jpg"
   }
  ],
  "firstComments": [
@@ -528,7 +534,7 @@
    "at": "2026-11-26T12:00:00-05:00",
    "ok": true,
    "urls": [
-    "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/feed/nspa-11-tg1.jpg",
+    "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/feed/nspa-11-r1.jpg",
     "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/feed/nspa-11-tg3.jpg"
    ],
    "caption": "Happy Thanksgiving. Thank you for trusting us with your quiet hour this year. 🤍\n\nIf a visit with us helped, a Google review helps others find us. The link is in our bio.",
