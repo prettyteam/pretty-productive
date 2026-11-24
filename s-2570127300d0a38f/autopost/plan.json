@@ -233,13 +233,13 @@
    "id": "nds-hipretty-1124",
    "account": "hiprettybrand",
    "at": "2026-11-24T17:30:00-05:00",
-   "url": "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/nds-hipretty-1124.jpg"
+   "url": "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/nds-hipretty-1124-t.jpg"
   },
   {
    "id": "nds-hipretty-1125",
    "account": "hiprettybrand",
    "at": "2026-11-25T17:30:00-05:00",
-   "url": "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/nds-hipretty-1125.jpg"
+   "url": "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/nds-hipretty-1125-t.jpg"
   },
   {
    "id": "nst-1126",
@@ -251,7 +251,7 @@
    "id": "nds-hipretty-1126",
    "account": "hiprettybrand",
    "at": "2026-11-26T17:30:00-05:00",
-   "url": "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/nds-hipretty-1126.jpg"
+   "url": "https://prettyteam.taffetadesign.com/s-2570127300d0a38f/nds-hipretty-1126-t.jpg"
   },
   {
    "id": "nst-1127",
@@ -775,7 +775,11 @@
    "img:nspa-14:0": "9ce1920d",
    "stx-nds-salon-1127": "30ff4e02",
    "img:nsalon-10:2": "f56e28f2",
-   "img:nsalon-15:0": "f2346e66"
+   "img:nsalon-15:0": "f2346e66",
+   "img:nds-hipretty-1124:0": "7dc4a7f2",
+   "stx-nds-hipretty-1124": "3ab6580b",
+   "stx-nds-hipretty-1125": "84905570",
+   "stx-nds-hipretty-1126": "71f56456"
   }
  }
 }
