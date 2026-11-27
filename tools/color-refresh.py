@@ -195,6 +195,34 @@ def count_name(man, line, prod):
     return line + ' ' + prod
 
 
+def merge_same_shade(rows, keys):
+    """One row per shade (Nov 27 2026): SureTint names a shade '10VV Lavender Ice' and the shelf count '010VV Lavender
+    Ice', and the weekly report kept both, so the list ordered 10VV x7 next to 010VV x1 with 5 on the shelf. Rows with the
+    same brand, line and shade code (leading zeros ignored) become one: the shelf's name (the one with a count), the
+    newest count, use, on hand and weekly pace added together."""
+    out, at = [], {}
+    for r, k in zip(rows, keys):
+        c = co.code_of(k[2])
+        g = (k[0], k[1], c) if c else None
+        if g is None or g not in at:
+            if g is not None:
+                at[g] = len(out)
+            out.append([list(r), k])
+            continue
+        i = at[g]
+        a, ka = out[i]
+        b = list(r) + [None] * 7
+        a = a + [None] * (7 - len(a))
+        keep_b = (a[2] in (None, 0, 0.0)) and b[2] not in (None, 0, 0.0)
+        name_k = k if keep_b or (k[2].startswith('0') and not ka[2].startswith('0') and a[2] in (None, 0, 0.0)) else ka
+        num = lambda x: float(x or 0)
+        cnt = b[2] if keep_b else a[2]
+        used, oh, pace = num(a[3]) + num(b[3]), num(a[4]) + num(b[4]), num(a[5]) + num(b[5])
+        out[i] = [[a[0], name_k[2], cnt, round(used, 2), round(oh, 2), round(pace, 2),
+                   round(oh / pace, 1) if pace > 0 else None], name_k]
+    return [r for r, _ in out], [k for _, k in out]
+
+
 def daily_usage(rows, keys):
     """({(key, date): units}, {weighed dates}, [unmatched products]) from Scale Usage rows."""
     full = {co.norm(k[0] + k[1] + k[2]): k for k in keys}
@@ -291,6 +319,7 @@ def refresh(inv, stock_rows, order_rows, now=None, year=2026, usage_rows=None):
     extra, nocount = counted_extras(keys, counts, products, R.get('usage4'), scale_products=scale)
     rows = rows + extra
     keys = keys + [(*key_of(r[0]), r[1]) for r in extra]
+    rows, keys = merge_same_shade(rows, keys)
     # color Rose orders that the list has never seen (Nov 12 2026: Colorance 8BA, 9BA, 6A, Topchic 9GB): counted on
     # Count These First -> joins the list from that count; not counted yet -> goes on Count These First
     # Not counted yet but on order (Rose, Nov 12 2026: "she already ordered those"): start at 0, so the boxes are added

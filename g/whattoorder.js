@@ -46,7 +46,7 @@
      "Shades EQ 06N Moroccan Sand" and "Shades EQ 6N" are the same shade (leading zero and the color's name don't count),
      and every Blondor item (Free Lites powder and so on) is one row, "Wella Blondor". */
   const BRANDS=[[/shades\s*eq/i,'Redken Shades EQ'],[/colorance/i,'Goldwell Colorance'],[/topchic/i,'Goldwell Topchic'],[/alter\s*ego/i,'Alter Ego'],
-    [/blondor/i,'Wella Blondor'],[/developer|\bvol\b/i,'Developer']];
+    [/blondor(?!plex)/i,'Wella Blondor'],[/developer|\bvol\b/i,'Developer']];
   /* brand found last-to-first, so "Topchic 20 vol developer" lands under Developer */
   /* Alexandra, Nov 3 2026: Shades EQ lightest to darkest (level 10 first); the other color lines darkest to lightest */
   const SHADE_DIR=b=>b==='Redken Shades EQ'?1:-1;
@@ -113,7 +113,7 @@
        WhatToOrder.saveCount(id, item, n); o.counts = {id: {n, at}} shows the last count. */
     const C=o.counts||{};
     /* Nov 9 2026: Rose's Backbar counts ('b:Brand|Line|Shade', from her Inventory tab) count here too, and the newest count wins (ts from the script) */
-    const BLBL=(b,l)=>b==='Redken'?'Shades EQ':/^Colorance Canister$/.test(l)?'Colorance':/^Topchic Canister/.test(l)?'Topchic':l==='Fast Color 10'?'Alter Ego 10-minute':/blondor/i.test(l+b)?'Wella Blondor':'';
+    const BLBL=(b,l)=>b==='Redken'?'Shades EQ':/^Colorance Canister$/.test(l)?'Colorance':/^Topchic Canister/.test(l)?'Topchic':l==='Fast Color 10'?'Alter Ego 10-minute':/blondor(?!plex)/i.test(l+b)?'Wella Blondor':'';
     const bIds={};Object.keys(C).forEach(k=>{if(k.slice(0,2)!=='b:')return;const [b,l,sh]=k.slice(2).split('|');const lb=BLBL(b,l||'');if(!lb||!sh)return;
       const key=shadeOf(lb==='Wella Blondor'?'Wella Blondor':lb+' '+sh.split(' ')[0]).key;(bIds[key]||=[]).push(k)});
     const crow=(name,detail,ids)=>{const id='c:'+norm(name),all=(ids||[id]).concat(bIds[shadeOf(name).key]||[]),

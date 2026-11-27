@@ -119,6 +119,10 @@ def start_count(key, counts):
     found = [(*counts[bid], 'backbar')] if bid else []
     # desk names use the short shade ('Shades EQ 09V'); Backbar keys carry the full name ('09V Platinum Iced')
     ids = {'c:' + norm(x + ' ' + y) for x in (l, b + ' ' + l, b, l.split(' ')[0], '') for y in {s, s.split(' ')[0]}} | {'c:' + norm(item_name(key))}
+    # leading zeros ignored on desk counts too (Nov 27 2026: Rose's "Shades EQ 10P" count is the shelf's 010P)
+    c, nm = code_of(s), item_name(key)
+    if c and ' ' in nm:
+        ids |= {'c:' + norm(nm.rsplit(' ', 1)[0] + ' ' + z + c) for z in ('', '0')}
     for cid in ids:
         if cid in counts:
             found.append((*counts[cid], 'desk'))
