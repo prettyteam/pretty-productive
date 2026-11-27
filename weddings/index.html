@@ -2362,7 +2362,7 @@ function venmoUser(v){return String(v||"").trim().replace(/^https?:\/\/(www\.|ac
 // in $30, add-ons included) and Venmo opens with that tip. A blank total lets the guest type her own amount.
 const TIP_PCT=.2; let TIP_TOTAL="150";
 const tipOf=t=>Math.round((parseFloat(String(t).replace(/[^0-9.]/g,""))||0)*TIP_PCT);
-function venmoTipUrl(v,amt){return amt?"https://venmo.com/"+encodeURIComponent(v)+"?txn=pay&amount="+amt+"&note="+encodeURIComponent("Thank you! ✨"):"https://venmo.com/u/"+encodeURIComponent(v)}
+function venmoTipUrl(v,amt){return amt?"https://venmo.com/u/"+encodeURIComponent(v)+"?txn=pay&amount="+amt+"&note="+encodeURIComponent("Thank you! ✨"):"https://venmo.com/u/"+encodeURIComponent(v)}
 /* My Card (Alexandra, Oct 21 2026): in place of the review code, a thank-you card from the artist (hello/). The guest scans
    it or the artist AirDrops it, so nobody collects phone numbers. The card has the review stars. Artists who also work in
    the salon get the salon booking button on theirs. */
