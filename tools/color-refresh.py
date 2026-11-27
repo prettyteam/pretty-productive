@@ -255,6 +255,11 @@ def used_between(k, start, end, pace, use, days):
 def refresh(inv, stock_rows, order_rows, now=None, year=2026, usage_rows=None):
     now = now or datetime.now()
     R = inv['report']
+    # Technofruit color isn't carried (Rose buys Fast Color 10): scale bowls logged under Technofruit are the same
+    # Fast Color 10 shade, even one the list has never seen (Alexandra Nov 27 2026: "yes for 3/0 fast color 10"),
+    # so a new one shows up in Count These First as New.
+    usage_rows = [(list(r[:2]) + ['Fast Color 10'] + list(r[3:])) if len(r) > 3 and str(r[2]).strip() == 'Technofruit'
+                  and 'coactivator' not in str(r[3]).lower() else r for r in usage_rows or []]
     ran = co.when(str(R.get('ran', '')).replace(', %d' % year, ''), year) or co.when(R.get('ran', ''), year)
     ran = (ran or now).replace(hour=12, minute=0)
     counts = co.latest_counts(stock_rows, year)
