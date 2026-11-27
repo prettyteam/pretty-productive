@@ -202,8 +202,11 @@ def merge_same_shade(rows, keys):
     newest count, use, on hand and weekly pace added together."""
     out, at = [], {}
     for r, k in zip(rows, keys):
+        if re.sub(r'\s+', ' ', str(k[2]).strip().lower()) == 'high lift pearl ash':   # same as Ash Pearl (Nov 27 2026)
+            k = (k[0], k[1], 'High Lift Ash Pearl') + tuple(k[3:])
+            r = [r[0], 'High Lift Ash Pearl'] + list(r[2:])
         c = co.code_of(k[2])
-        g = (k[0], k[1], c) if c else None
+        g = (k[0], k[1], c) if c else (k[0], k[1], re.sub(r'\s+', ' ', str(k[2]).strip().lower()))
         if g is None or g not in at:
             if g is not None:
                 at[g] = len(out)
