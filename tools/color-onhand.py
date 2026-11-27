@@ -240,7 +240,9 @@ def unused(*t):
             # Alexandra Nov 27 2026: the scale's "Generic Developer" button has no volume, and the general developers
             # are counted by volume (10vol, 20vol), so it's never counted or ordered on its own
             or bool(re.search(r'general developers generic developer', j))
-            or 'redken developers shades eq processing solution' in j)
+            or 'redken developers shades eq processing solution' in j
+            # Alexandra Nov 27 2026: "so can the silk lift condition developer" (10 and 20 vol): take it off
+            or 'silk lift condition' in j)
 
 
 # Discontinued shades (Alexandra Nov 27 2026: "8k we have 1 and its discontinued"): stay on hand with their count,
