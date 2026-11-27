@@ -230,6 +230,8 @@ PAR = [  # (line test, floor, {shade: floor})
     (lambda l, s: l.startswith('Colorance Canister'), 1, {'6A': 3, '2A': 3, '5NB': 3, '7NA': 3, '6N': 3}),
     (lambda l, s: l.startswith('Topchic Canister') and l != 'Topchic Canister Blonding Cream', 1, {'4NN': 3, '5NN': 3, '6NN': 3, '7NN': 3, '4G': 3}),
     (lambda l, s: l in ('Fast Color 10', 'Technofruit') and 'Coactivator' not in s, 1, {}),
+    # Alexandra Nov 27 2026: "its ok to have 5 blondor from cosmoprof in stock": keep 5 tubs of Blondor Multi, no more
+    (lambda l, s: l == 'Wella Lighteners' and re.match(r'(?i)blondor multi', s) is not None, 5, {}),
 ]
 STORE = {'Redken': 'SalonCentric', 'Goldwell': 'DePasquale', 'Alter Ego': 'DePasquale', 'Wella': 'CosmoProf'}
 
@@ -287,7 +289,7 @@ def order_qty(key, oh, pace, counted=None, fresh=True):
     if par is not None:
         if zero and pace <= 0:
             return 0
-        target = max(par, WEEKS * pace)
+        target = par if key[1] == 'Wella Lighteners' else max(par, WEEKS * pace)
         # less than a quarter can short doesn't buy another can (Nov 10 2026)
         return max(0, math.ceil(round(target - oh - 0.25, 2)))
     wl = oh / pace if pace > 0 else None

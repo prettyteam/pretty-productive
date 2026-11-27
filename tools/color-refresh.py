@@ -379,7 +379,7 @@ def refresh(inv, stock_rows, order_rows, now=None, year=2026, usage_rows=None):
         if co.unused(*k) or co.discontinued(k):
             keep, q = 0, 0
         else:
-            keep = max(0, math.ceil(round(max(par, co.WEEKS * pace) - 0.25, 2))) if par is not None else (math.ceil(round(6 * pace, 2)) if pace > 0 else 0)
+            keep = (par if k[1] == 'Wella Lighteners' else max(0, math.ceil(round(max(par, co.WEEKS * pace) - 0.25, 2)))) if par is not None else (math.ceil(round(6 * pace, 2)) if pace > 0 else 0)
             q = co.order_qty(k, now_oh + way.get(k, 0), pace, counted, fresh_count)
         new_rows.append([line, shade, counted, round(float(used or 0) + extra_use, 2), now_oh, round(pace, 2),
                          round(now_oh / pace, 1) if pace > 0 else None, keep, round(way.get(k, 0), 2), -1 if q is None else q])
@@ -393,7 +393,9 @@ def refresh(inv, stock_rows, order_rows, now=None, year=2026, usage_rows=None):
         if stores.get(s):
             order.append([s, ', '.join('%s ×%d' % (n, q) for n, q in stores[s]) + '. Skip anything already on order.'])
     for s, x in R['base']['order']:
-        if s not in COLOR_STORES or (s == 'CosmoProf' and not stores.get('CosmoProf')):
+        # Nov 27 2026: the weekly report's own CosmoProf line is no longer kept when the counts say nothing is needed
+        # (it kept "Blondor ×2" on the list after Alexandra counted 5 on the shelf). Blondor is tracked like the rest.
+        if s not in COLOR_STORES:
             order.append([s, x])
     if recount:
         order.append(['Recount first', 'The scale used more of these than the last count showed. A new box likely came in that was never logged. Count them before ordering: '
