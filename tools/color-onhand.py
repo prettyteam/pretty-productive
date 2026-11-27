@@ -270,7 +270,15 @@ def discontinued(key):
     return (key[0], key[1], code_of(key[2]) or key[2]) in {(b, l, code_of(c) or c) for b, l, c in DISCONTINUED}
 
 
+# Keep numbers Alexandra or Rose typed in the app's Full Color List (Nov 27 2026: "an option for us to adjust those
+# counts when we want"). Saved on Stock Counts as 'k:Brand|Line|Shade'; color-refresh.py fills this per run.
+# A typed Keep is exact: the list orders up to that number, not up to 6 weeks of use.
+KEEP_OV = {}
+
+
 def par_of(key):
+    if key in KEEP_OV:
+        return KEEP_OV[key]
     b, l, s = key
     c = code_of(s)
     for test, dflt, ex in PAR:
@@ -282,6 +290,8 @@ def par_of(key):
 
 def set_par(key):
     """True when Alexandra or Rose named this shade's own number in PAR (not just the brand's floor): always carried."""
+    if key in KEEP_OV:
+        return True
     b, l, s = key
     c = code_of(s)
     for test, dflt, ex in PAR:
@@ -304,7 +314,7 @@ def order_qty(key, oh, pace, counted=None, fresh=True):
     if par is not None:
         if zero and pace <= 0 and not set_par(key):
             return 0
-        target = par if key[1] == 'Wella Lighteners' else max(par, WEEKS * pace)
+        target = par if key[1] == 'Wella Lighteners' or key in KEEP_OV else max(par, WEEKS * pace)
         # less than a quarter can short doesn't buy another can (Nov 10 2026)
         return max(0, math.ceil(round(target - oh - 0.25, 2)))
     wl = oh / pace if pace > 0 else None

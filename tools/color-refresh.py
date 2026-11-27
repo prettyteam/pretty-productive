@@ -357,6 +357,20 @@ def refresh(inv, stock_rows, order_rows, now=None, year=2026, usage_rows=None):
                 use_ran = wk_end
         except ValueError:
             pass
+    # Keep numbers typed in the app (Stock Counts id 'k:Brand|Line|Shade', newest wins): exact keep for that shade.
+    ov = {}
+    for r in stock_rows:
+        if len(r) < 6 or not str(r[3]).startswith('k:') or str(r[3]).count('|') != 2:
+            continue
+        try:
+            n = int(float(r[5]))
+        except (TypeError, ValueError):
+            continue
+        d = co.when(r[0], year) or datetime(2000, 1, 1)
+        if r[3][2:] not in ov or d >= ov[r[3][2:]][1]:
+            ov[r[3][2:]] = (n, d)
+    co.KEEP_OV.clear()
+    co.KEEP_OV.update({k: ov['%s|%s|%s' % k][0] for k in keys if '%s|%s|%s' % k in ov})
     new_rows, items, fresh, added = [], [], 0, 0
     counted_names = []      # counted since the weekly report: off Count These First (Alexandra Nov 27 2026)
     for r, k in zip(rows, keys):
@@ -379,10 +393,11 @@ def refresh(inv, stock_rows, order_rows, now=None, year=2026, usage_rows=None):
         if co.unused(*k) or co.discontinued(k):
             keep, q = 0, 0
         else:
-            keep = (par if k[1] == 'Wella Lighteners' else max(0, math.ceil(round(max(par, co.WEEKS * pace) - 0.25, 2)))) if par is not None else (math.ceil(round(6 * pace, 2)) if pace > 0 else 0)
+            keep = co.KEEP_OV[k] if k in co.KEEP_OV else (par if k[1] == 'Wella Lighteners' else max(0, math.ceil(round(max(par, co.WEEKS * pace) - 0.25, 2)))) if par is not None else (math.ceil(round(6 * pace, 2)) if pace > 0 else 0)
             q = co.order_qty(k, now_oh + way.get(k, 0), pace, counted, fresh_count)
         new_rows.append([line, shade, counted, round(float(used or 0) + extra_use, 2), now_oh, round(pace, 2),
-                         round(now_oh / pace, 1) if pace > 0 else None, keep, round(way.get(k, 0), 2), -1 if q is None else q])
+                         round(now_oh / pace, 1) if pace > 0 else None, keep, round(way.get(k, 0), 2), -1 if q is None else q,
+                         '%s|%s|%s' % k])   # [10] id the app saves a typed Keep ('k:') or count ('b:') under
         items.append((k, counted, now_oh + way.get(k, 0), pace, fresh_count))
         if st and st[1] > ran and not co.unused(*k):
             counted_names.append(co.item_name(k))

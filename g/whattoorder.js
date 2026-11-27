@@ -37,7 +37,7 @@
     +'.wto .wcbtn{cursor:pointer;border:0;font-family:inherit;min-height:36px}.wto .wcin{display:flex;gap:6px;flex:none}.wto .wcin[hidden],.wto .cdone[hidden]{display:none}'
     +'.wto .wcin input{width:72px;font:inherit;font-size:18px;padding:6px 8px;border:1px solid var(--ink,#121212);border-radius:6px}.wto .wcsave{font:inherit;font-size:12px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;background:var(--ink,#121212);color:#fff;border:0;border-radius:6px;padding:0 12px;cursor:pointer}'
     +'.wto .cdone{color:#2f5d46!important;font-weight:600}.wto .wbr{margin:12px 0 0;font-size:12px;letter-spacing:.14em;text-transform:uppercase;font-weight:600;color:var(--green,#2f5d46)}.wto .wc.err .cdone{color:#8a2a22!important}'
-    +'.wto .wfr{display:grid;grid-template-columns:1fr 52px 64px;gap:6px;align-items:center;padding:9px 0;border-top:1px solid var(--line,#e2ded5);font-size:14px}.wto .wfr>span:first-child{min-width:0}.wto .wfr small{display:block;color:var(--soft,#5f5b55);font-size:12px}.wto .wfr .wfv{text-align:center;font-family:var(--display,Georgia,serif);font-size:18px;line-height:1.1}.wto .wfr .wfv em{font-style:normal;font-family:inherit;font-size:13px;display:inline-block;min-width:30px;padding:3px 8px}.wto .wfhd{font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--soft,#5f5b55);padding:6px 0;border-top:0}.wto .wfhd span:not(:first-child){text-align:center}'+'.wto .wfam>summary{gap:10px}.wto .wfam .wfn{margin-left:auto;font-size:10.5px;padding:3px 9px}.wto .wfam .wfn+*{margin-left:0}.wto .wfam>summary:has(.wfn):after{margin-left:0}.wto .wfo b{color:#8a2a22}.wto .wfh{margin-top:8px}'
+    +'.wto .wfr{display:grid;grid-template-columns:1fr 52px 64px;gap:6px;align-items:center;padding:9px 0;border-top:1px solid var(--line,#e2ded5);font-size:14px}.wto .wfr>span:first-child{min-width:0}.wto .wfr small{display:block;color:var(--soft,#5f5b55);font-size:12px}.wto .wfr .wfv{text-align:center;font-family:var(--display,Georgia,serif);font-size:18px;line-height:1.1}.wto .wfr .wfv em{font-style:normal;font-family:inherit;font-size:13px;display:inline-block;min-width:30px;padding:3px 8px}.wto .wfhd{font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--soft,#5f5b55);padding:6px 0;border-top:0}.wto .wfhd span:not(:first-child){text-align:center}'+'.wto .wfe{cursor:pointer}.wto .wfe:focus-visible{outline:2px solid currentColor;outline-offset:2px}.wto .wfe[aria-expanded=true]{background:rgba(0,0,0,.03)}.wto .wfed{padding:10px 0 14px;font-size:14px}.wto .wfed p{margin:0 0 10px}.wto .wfed label{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px}.wto .wfed input{width:120px;font:inherit;padding:8px 10px;border:1px solid var(--line,#e2ded5);border-radius:8px;background:#fff}.wto .wfk{display:flex;align-items:center;gap:12px;margin-bottom:12px}.wto .wfk span{flex:1}.wto .wfk b{font-family:var(--display,Georgia,serif);font-size:20px;min-width:28px;text-align:center}.wto .wfk button{width:40px;height:40px;border-radius:50%;border:1px solid var(--line,#e2ded5);background:#fff;font-size:20px;line-height:1;color:inherit}.wto .wfb{display:flex;gap:10px}.wto .wfb button{flex:1;padding:10px;border-radius:8px;font:inherit;font-weight:600;border:1px solid var(--ink,#2b2722)}.wto .wfs{background:var(--ink,#2b2722);color:#fff}.wto .wfx{background:transparent;color:inherit}.wto .wfmsg{display:block;margin-top:8px;color:var(--soft,#5f5b55)}.wto .wfed.err .wfmsg{color:#8a2a22}'+'.wto .wfam>summary{gap:10px}.wto .wfam .wfn{margin-left:auto;font-size:10.5px;padding:3px 9px}.wto .wfam .wfn+*{margin-left:0}.wto .wfam>summary:has(.wfn):after{margin-left:0}.wto .wfo b{color:#8a2a22}.wto .wfh{margin-top:8px}'
     +'.wto .wpick button:focus-visible,.wto .wst a:focus-visible{outline:2px solid var(--gold,#4a3426);outline-offset:2px}</style>';
   /* not used at Taffeta, never on a list (Alexandra, Nov 2 2026) */
   const NOUSE=/color\s*renew|6n\s*@\s*gb/i;
@@ -181,25 +181,30 @@
       /alter\s*ego/i.test(l)?'Alter Ego':/wella|blondor/i.test(l)?'Wella Blondor & Lighteners':/developer/i.test(l)?'Developers':l;
     const FAMS=['Redken Shades EQ','Redken Blonde Idol','Goldwell Colorance','Goldwell Topchic','Alter Ego','Wella Blondor & Lighteners','Developers'];
     const fams={};
-    OH.forEach(r=>{const [l,sh,c,u,oh,pw,wl,keep,way,q]=r,f=FAM(String(l)),
+    OH.forEach(r=>{const [l,sh,c,u,oh,pw,wl,keep0,way,q,fid]=r,keep=fid&&C['k:'+fid]?+C['k:'+fid].n:keep0,f=FAM(String(l)),
         sub=String(l).replace(/^(Redken|Goldwell|Wella|Alter Ego|General)\s+/,'').replace(/^(Shades EQ|Blonde Idol|Colorance Canister|Topchic Canister|Fast Color 10|Goldwell Developers|General Developers|Wella Lighteners)\s*/i,''),
         sub2=sub.replace(/^Topchic\s+/i,'').replace(/^Tubes\b/i,'Tube').replace(/^Canister\s*/i,''),
         nm=(sub2&&!String(sh).toLowerCase().startsWith(sub2.toLowerCase())?sub2+' ':'')+sh,
         key=shadeOf((f==='Developers'?'':String(l).replace(/^(Redken|Goldwell|Wella)\s+/,'')+' ')+sh).key,
         ord=q==null?(reQ.has(key)?-1:(ordQ[key]||0)):+q;
       if(!(+pw>=0.05)&&!(+oh>0)&&!ord&&!(+way>0))return;   /* not on the shelf, not used, not ordered: not carried */
-      (fams[f]||=[]).push({nm,oh:+oh||0,keep,way:+way||0,pw:+pw||0,ord,sh:shadeOf(f+' '+sh)})});
+      (fams[f]||=[]).push({nm,oh:+oh||0,keep,way:+way||0,pw:+pw||0,ord,sh:shadeOf(f+' '+sh),fid:fid||'',cnt:fid?C['b:'+fid]:null})});
     const famCards=Object.keys(fams).sort((a,b)=>((FAMS.indexOf(a)+1)||99)-((FAMS.indexOf(b)+1)||99)||a.localeCompare(b)).map(f=>{
       const rs=fams[f].sort((a,b)=>f==='Developers'?a.nm.localeCompare(b.nm):((a.sh.lvl?0:1)-(b.sh.lvl?0:1))||(SHADE_DIR(f)*(b.sh.lvl-a.sh.lvl))||a.sh.code.localeCompare(b.sh.code)||a.nm.localeCompare(b.nm));
       const nOrd=rs.filter(r=>r.ord>0).length,nRe=rs.filter(r=>r.ord<0).length;
       return '<details class="wmore wfam"><summary>'+esc(f)+' ('+rs.length+')'+(nOrd?'<span class="q wfn">'+nOrd+' to order</span>':'')+'</summary><div>'
         +'<div class="wfr wfhd"><span>Shade</span><span>Keep</span><span>To order</span></div>'
         +rs.map(r=>{const sub=[r.way?fmt(r.way)+' on the way':'',r.pw>=0.05?'uses about '+fmt(r.pw)+' a week':''].filter(Boolean).join(' · ');
-          return '<div class="wfr'+(r.ord>0?' wfo':'')+'"><span><b>'+esc(r.nm)+'</b>'+(sub?'<small>'+sub+'</small>':'')+'</span>'
+          const ed=o.canCount&&r.fid;
+          return '<div class="wfr'+(r.ord>0?' wfo':'')+(ed?' wfe':'')+'"'+(ed?' role="button" tabindex="0" aria-expanded="false" data-fid="'+esc(r.fid)+'" data-nm="'+esc(r.nm)+'" data-oh="'+r.oh+'" data-way="'+r.way+'" data-keep="'+(r.keep!=null?r.keep:'')+'"':'')+'><span><b>'+esc(r.nm)+'</b>'+(sub?'<small>'+sub+'</small>':'')+'</span>'
           +'<span class="wfv">'+(r.keep!=null?fmt(r.keep):'–')+'</span>'
-          +'<span class="wfv">'+(r.ord<0?'<em class="q b">Count</em>':r.ord>0?'<em class="q r">'+r.ord+'</em>':'<em class="q g">0</em>')+'</span></div>'}).join('')
+          +'<span class="wfv">'+(r.ord<0?'<em class="q b">Count</em>':r.ord>0?'<em class="q r">'+r.ord+'</em>':'<em class="q g">0</em>')+'</span></div>'
+          +(ed?'<div class="wfed" hidden><p>In stock now: about <b>'+fmt(r.oh)+'</b>'+(r.cnt?' · last count '+esc(r.cnt.n)+(r.cnt.at?' on '+esc(r.cnt.at):''):'')+'</p>'
+            +'<label>Shelf count<input type="number" inputmode="numeric" min="0" max="9999" placeholder="Count"></label>'
+            +'<div class="wfk"><span>Keep</span><button type="button" class="wfm" aria-label="Keep one less">−</button><b>'+(r.keep!=null?r.keep:0)+'</b><button type="button" class="wfp" aria-label="Keep one more">+</button></div>'
+            +'<div class="wfb"><button type="button" class="wfs">Save</button><button type="button" class="wfx">Cancel</button></div><small class="wfmsg" hidden></small></div>':'')}).join('')
         +'</div></details>'});
-    const ohCard=famCards.length?'<h2 class="wfh">Full Color List</h2><p>Every shade we carry, by brand. Tap a brand to open it. Each shade shows 2 numbers: <b>Keep</b> is how many we always want on the shelf. <b>To order</b> is how many to buy to get back to that number.'
+    const ohCard=famCards.length?'<h2 class="wfh">Full Color List</h2><p>Every shade we carry, by brand. Tap a brand to open it. Each shade shows 2 numbers: <b>Keep</b> is how many we always want on the shelf. <b>To order</b> is how many to buy to get back to that number.'+(o.canCount?' Tap a shade to change its shelf count or its Keep number.':'')+''
       +'</p>'+famCards.join(''):'';
     const backCards=byStore(back).filter(([s])=>!(countFirst&&/recount/i.test(s))).map(([s,rs])=>storeCard(s,rs.map(r=>typeof r==='string'?r:crow(r.cnt,'Count the shelf and back room')).concat(prices.filter(p=>String(p[1]).toLowerCase()===s.toLowerCase()).map(([i,,p])=>row(i,'Best price here',p,'g')))));
     /* On The Way: one card per order */
@@ -243,6 +248,33 @@
       .catch(()=>{r.classList.add('err');done.textContent='Didn’t save. Check the Wi-Fi and tap Save again.';done.hidden=false})
       .then(()=>{t.disabled=false;t.textContent='Save'});
   });
+  /* Full Color List edits (Alexandra, Nov 27 2026: "an option for us to adjust those counts when we want"): tap a shade to
+     type a new shelf count (saved as 'b:Brand|Line|Shade', same as Backbar counts) or change its Keep (saved as
+     'k:Brand|Line|Shade'; the color refresh orders up to exactly that number). To Order updates here right away. */
+  document.addEventListener('click',e=>{
+    const t=e.target.closest&&e.target.closest('.wfe,.wfm,.wfp,.wfs,.wfx'); if(!t) return;
+    if(t.classList.contains('wfe')){const ed=t.nextElementSibling;if(!ed||!ed.classList.contains('wfed'))return;
+      ed.hidden=!ed.hidden;t.setAttribute('aria-expanded',String(!ed.hidden));if(!ed.hidden){const i=ed.querySelector('input');if(i)i.focus()}return}
+    const ed=t.closest('.wfed'),row=ed.previousElementSibling,kb=ed.querySelector('.wfk b'),msg=ed.querySelector('.wfmsg'),inp=ed.querySelector('input');
+    if(t.classList.contains('wfm')||t.classList.contains('wfp')){kb.textContent=String(Math.max(0,Math.min(99,(+kb.textContent||0)+(t.classList.contains('wfp')?1:-1))));return}
+    if(t.classList.contains('wfx')){ed.hidden=true;row.setAttribute('aria-expanded','false');kb.textContent=row.dataset.keep||'0';inp.value='';msg.hidden=true;return}
+    const keep=+kb.textContent, keepCh=String(keep)!==String(row.dataset.keep), cnt=inp.value===''?null:Number(inp.value);
+    if(cnt!=null&&!(cnt>=0&&cnt<=9999&&Math.floor(cnt)===cnt)){inp.focus();return}
+    if(!keepCh&&cnt==null){ed.hidden=true;row.setAttribute('aria-expanded','false');return}
+    const save=window.WhatToOrder.saveCount, id=row.dataset.fid, nm=row.dataset.nm;
+    if(!save) return;
+    t.disabled=true;t.textContent='Saving';
+    Promise.all([cnt!=null?save('b:'+id,nm,cnt):null,keepCh?save('k:'+id,'Keep: '+nm,keep):null])
+      .then(()=>{const oh=cnt!=null?cnt:+row.dataset.oh,q=Math.max(0,Math.ceil(Math.round((keep-oh-(+row.dataset.way||0)-0.25)*100)/100)),v=row.querySelectorAll('.wfv');
+        row.dataset.keep=String(keep);row.dataset.oh=String(oh);v[0].textContent=String(keep);
+        v[1].innerHTML=q>0?'<em class="q r">'+q+'</em>':'<em class="q g">0</em>';row.classList.toggle('wfo',q>0);
+        ed.classList.remove('err');inp.value='';ed.querySelector('p').innerHTML='In stock now: about <b>'+oh+'</b>'+(cnt!=null?' · counted '+cnt+' just now':'');
+        msg.textContent='Saved. The order list catches up within the hour.';msg.hidden=false})
+      .catch(()=>{ed.classList.add('err');msg.textContent='Didn’t save. Check the Wi-Fi and tap Save again.';msg.hidden=false})
+      .then(()=>{t.disabled=false;t.textContent='Save'});
+  });
+  document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.classList&&e.target.classList.contains('wfe')){e.preventDefault();e.target.click()}
+    else if(e.key==='Enter'&&e.target.closest&&e.target.closest('.wfed')&&e.target.tagName==='INPUT'){e.target.closest('.wfed').querySelector('.wfs').click()}});
   /* Got It (Nov 27 2026): marks the whole order Received on the On Order sheet; the counts and color list pick it up from there */
   document.addEventListener('click',e=>{
     const b=e.target.closest&&e.target.closest('.wgotb'); if(!b) return;
