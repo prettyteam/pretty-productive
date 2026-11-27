@@ -132,12 +132,13 @@ function addSwap(){
     +'#mk-swp .ph{display:inline-flex;align-items:center;justify-content:center;font-weight:600;font-size:16px;padding:12px 22px;min-height:46px;background:var(--ink,#111);color:var(--paper,#fff);cursor:pointer;position:relative;align-self:flex-start}'
     +'#mk-swp .ph input{position:absolute;width:1px;height:1px;opacity:0}#mk-swp .sf{display:flex;flex-wrap:wrap;gap:10px}'
     +'#mk-swp .sf button{font:inherit;font-size:14px;padding:8px 14px;min-height:40px;border:1px solid var(--ink,#111);background:none;color:var(--ink,#111);cursor:pointer}'
+    +'#mk-swp .sg button{position:relative}#mk-swp .vp{position:absolute;left:4px;bottom:4px;background:rgba(0,0,0,.7);color:#fff;font-size:11px;padding:2px 6px}'
     +'#mk-swp .sm{margin:0;font-size:14px;color:var(--gold,#8b6b4c)}#mk-swp .sm:empty{display:none}#mk-swp .se{color:var(--soft,#5c5c5c);font-size:14px;margin:0;padding:12px 0}';
   document.head.append(st);
   const d=document.createElement('dialog');d.id='mk-swp';d.setAttribute('aria-labelledby','mk-swh');
   d.innerHTML='<div class="si"><h2 id="mk-swh">Change photo</h2>'
     +'<div id="mk-sw1" hidden><p class="sp">Tap the photo you want to change.</p><div class="sg" id="mk-swc"></div></div>'
-    +'<div id="mk-sw2" hidden><p class="sp" id="mk-swp2">Pick the new photo.</p><label class="ph">Use a photo from my phone<input type="file" id="mk-swf" accept="image/*"></label>'
+    +'<div id="mk-sw2" hidden><p class="sp" id="mk-swp2">Pick the new photo.</p><label class="ph"><span id="mk-swfl">Use a photo from my phone</span><input type="file" id="mk-swf" accept="image/*"></label>'
     +'<p class="sp">Or pick one from an album:</p><div class="sr" id="mk-swa"></div><div class="sg" id="mk-swg"></div></div>'
     +'<p class="sm" id="mk-swm" role="status" aria-live="polite"></p>'
     +'<div class="sf"><button type="button" id="mk-swb" hidden>Back</button><button type="button" id="mk-swr" hidden>Put the original back</button><button type="button" id="mk-swx">Close</button></div></div>';
@@ -164,26 +165,30 @@ function addSwap(){
       all.filter(x=>x.parent===a.id).forEach(x=>out.push({id:x.id,name:String(a.name||'Album')+' \u00b7 '+String(x.name||'Album')}))});
     return out}
   function parentOf(id){const a=((MK._state||{}).albums||[]).find(x=>x.id===id);return a?(a.parent||(a.model?'team':'')):''}
-  function items(id){const s=MK._state||{},hide={};(s.hidden||[]).forEach(x=>hide[x]=1);
+  // Reels (Alexandra, Nov 27 2026): a Reel post can take a video, from the phone or from an album's videos.
+  const isReel=p=>!!p&&(/reel/i.test(p.dataset.fmt||'')||!!p.querySelector('.chip.reel'));
+  function items(id){const s=MK._state||{},hide={},rv=isReel(post);(s.hidden||[]).forEach(x=>hide[x]=1);
     const inA=a=>a===id||parentOf(a)===id;
-    const out=(s.photos||[]).filter(p=>!p.video&&!hide[p.id]&&inA(p.album)).map(p=>({at:p.addedAt||0,v:'d:'+p.id,d:p.id}))
+    const out=(s.photos||[]).filter(p=>(rv||!p.video)&&!hide[p.id]&&inA(p.album)).map(p=>({at:p.addedAt||0,v:'d:'+p.id,d:p.id,vid:!!p.video}))
       .concat((MK.migrated||[]).filter(p=>!hide[p.id]&&inA(p.album)&&MK.files['alb/'+p.id+'.jpg']).map(p=>({at:p.addedAt||0,v:'e:alb/'+p.id+'.jpg',e:'alb/t/'+p.id+'.jpg'})))
       .sort((a,b)=>b.at-a.at);
     if(id==='branding')document.querySelectorAll('#v-branding section:not(#phone) .ptile img').forEach(im=>{const p=im.dataset.e;if(p)out.push({v:'e:'+p,e:p})});
     return out}
   function thumb(it){const im=document.createElement('img');im.alt='';if(it.d)im.dataset.d=it.d;else im.dataset.e=it.e;return im}
+  const play=()=>{const t=document.createElement('span');t.className='vp';t.textContent='\u25B6 Video';return t};
   function renderAlbums(){const r=$('mk-swa');r.textContent='';albums().forEach(a=>{const b=document.createElement('button');b.type='button';b.textContent=a.name;
     b.setAttribute('aria-current',a.id===album?'true':'false');b.onclick=()=>{album=a.id;try{localStorage.setItem('mk-swalbum',a.id)}catch(e){}renderAlbums();renderGrid()};r.append(b)})}
   function renderGrid(){const g=$('mk-swg');g.textContent='';const list=items(album);
     if(!list.length){const p=document.createElement('p');p.className='se';p.textContent='No photos in this album yet.';g.append(p);return}
-    list.forEach(it=>{const b=document.createElement('button');b.type='button';b.setAttribute('aria-label','Use this photo');b.append(thumb(it));b.onclick=()=>use(it.v);g.append(b)});
+    list.forEach(it=>{const b=document.createElement('button');b.type='button';b.setAttribute('aria-label',it.vid?'Use this video':'Use this photo');b.append(thumb(it));if(it.vid)b.append(play());b.onclick=()=>use(it.v);g.append(b)});
     g.scrollTop=0;MK.scan(g)}
   function step1(){const list=pics(post);$('mk-sw2').hidden=true;$('mk-swb').hidden=true;$('mk-swr').hidden=true;
     if(list.length<2){idx=0;return step2()}
     $('mk-sw1').hidden=false;const g=$('mk-swc');g.textContent='';
     list.forEach((im,i)=>{const b=document.createElement('button');b.type='button';b.setAttribute('aria-label','Photo '+(i+1));const t=document.createElement('img');t.alt='';if(im.src)t.src=im.src;b.append(t);b.onclick=()=>{idx=i;step2()};g.append(b)})}
   function step2(){$('mk-sw1').hidden=true;$('mk-sw2').hidden=false;const n=pics(post).length;
-    $('mk-swb').hidden=n<2;$('mk-swp2').textContent=n<2?'Pick the new photo.':'Pick the new photo for photo '+(idx+1)+'.';
+    const rv=isReel(post);$('mk-swf').accept=rv?'image/*,video/*':'image/*';$('mk-swfl').textContent=rv?'Use a video or photo from my phone':'Use a photo from my phone';
+    $('mk-swb').hidden=n<2;$('mk-swp2').textContent=rv?'Pick the video (or a cover photo) for this Reel.':n<2?'Pick the new photo.':'Pick the new photo for photo '+(idx+1)+'.';
     $('mk-swr').hidden=!cur[key(post,idx)];renderAlbums();renderGrid()}
   async function use(v){if(!post||busy)return;const im=pics(post)[idx];if(!im)return;
     if(v==='e:'+im.dataset.oe||im.dataset.od&&v==='d:'+im.dataset.od)v='';
@@ -192,7 +197,8 @@ function addSwap(){
     if(v&&post.closest('#mk-fdx')){const w=v,o=[...document.querySelectorAll('#mk-fdx .post')].find(x=>x!==post&&pics(x).some(y=>y.dataset.sw===w));
       if(o){msg('That photo is already on \u201c'+o.querySelector('h4').textContent+'\u201d. Pick a different one.');return}}
     busy=true;msg('Saving…');
-    try{const s=await MK.api('save',{text:{[key(post,idx)]:v},ok:{}});MK.applyState(s);msg('Done. Photo changed and saved.');setTimeout(()=>d.close(),900)}
+    const isV=v&&v.startsWith('d:')&&((MK._state||{}).photos||[]).some(x=>x.id===v.slice(2)&&x.video);
+    try{const s=await MK.api('save',{text:{[key(post,idx)]:v},ok:{}});MK.applyState(s);msg(isV?'Done. Video added to this Reel and saved.':'Done. Photo changed and saved.');setTimeout(()=>d.close(),isV?1500:900)}
     catch(e){msg(e&&e.message==='offline'?'No connection. Try again in a moment.':'Could not save. Try again.')}
     busy=false}
   function open(p){post=p;msg('');if(p.dataset.album&&albums().some(a=>a.id===p.dataset.album))album=p.dataset.album;d.showModal();step1()}
@@ -204,7 +210,29 @@ function addSwap(){
     c.width=Math.round(im.naturalWidth*k);c.height=Math.round(im.naturalHeight*k);c.getContext('2d').drawImage(im,0,0,c.width,c.height);
     return new Promise((res,rej)=>c.toBlob(b=>b?res({b,w:c.width,h:c.height}):rej(new Error('encode')),'image/jpeg',q))}
   const b64=b=>new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(String(r.result).split(',')[1]);r.onerror=rej;r.readAsDataURL(b)});
+  // a video from the phone: same upload as the Videos tab (straight to Drive, then any missing pieces), into the open album
+  function vCover(file){return new Promise(res=>{const v=document.createElement('video'),u=URL.createObjectURL(file);let done=false;
+    const fin=r=>{if(done)return;done=true;URL.revokeObjectURL(u);res(r)};v.muted=true;v.playsInline=true;v.preload='auto';
+    v.onloadeddata=()=>{try{v.currentTime=Math.min(.5,(v.duration||1)/2)}catch(e){fin(null)}};
+    v.onseeked=()=>{try{const k=Math.min(1,480/Math.max(v.videoWidth,v.videoHeight)),c=document.createElement('canvas');c.width=Math.round(v.videoWidth*k);c.height=Math.round(v.videoHeight*k);
+      c.getContext('2d').drawImage(v,0,0,c.width,c.height);fin({thumb:c.toDataURL('image/jpeg',.8).split(',')[1],w:v.videoWidth,h:v.videoHeight})}catch(e){fin(null)}};
+    v.onerror=()=>fin(null);setTimeout(()=>fin(null),8000);v.src=u})}
+  function vSend(url,file,pct){return new Promise(res=>{try{const x=new XMLHttpRequest();x.open('PUT',url);x.setRequestHeader('Content-Type',file.type||'video/mp4');
+    x.upload.onprogress=e=>{if(e.lengthComputable)pct(Math.floor(100*e.loaded/e.total))};x.onload=x.onerror=x.onabort=x.ontimeout=()=>res();x.send(file)}catch(e){res()}})}
+  async function addVideo(f){
+    if(f.size>1024*1048576){msg('That video is over 1 GB. Trim it on your phone first.');return}
+    busy=true;msg('Getting your video ready…');
+    try{const c=await vCover(f)||{};const to=album==='branding'||album==='team'?'salon':album;
+      const st=await MK.api('vidStart',{album:to,by:MK.who||'',video:{name:f.name,type:f.type||'video/mp4',size:f.size,thumb:c.thumb||'',w:c.w||0,h:c.h||0}});
+      await vSend(st.url,f,p=>msg('Uploading your video: '+p+'%. Keep this page open.'));
+      let r=await MK.api('vidCheck',{token:st.token});
+      while(!r.done){const off=r.next||0;msg('Uploading your video: '+Math.round(100*off/f.size)+'%. Keep this page open.');
+        const d64=await b64(f.slice(off,Math.min(f.size,off+16*1048576)));r=await MK.api('vidChunk',{token:st.token,offset:off,data:d64})}
+      if(c.thumb)MK._thumbs.set(r.photo.id,'data:image/jpeg;base64,'+c.thumb);
+      await MK.refresh();busy=false;await use('d:'+r.photo.id)}
+    catch(e){busy=false;msg('That video did not upload. Check your connection and try again.')}}
   $('mk-swf').addEventListener('change',async function(){const f=this.files&&this.files[0];this.value='';if(!f||busy)return;
+    if(/^video\//.test(f.type)||/\.(mov|mp4|m4v|hevc)$/i.test(f.name||''))return addVideo(f);
     busy=true;msg('Adding your photo…');const u=URL.createObjectURL(f);
     try{const im=await new Promise((res,rej)=>{const i=new Image();i.onload=()=>res(i);i.onerror=rej;i.src=u});
       const [m,t]=await Promise.all([shrink(im,2048,.86),shrink(im,480,.82)]);
