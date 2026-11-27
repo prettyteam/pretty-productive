@@ -66,6 +66,9 @@ def item_name(key):
         return 'Topchic ' + tok
     if l == 'Fast Color 10':
         return 'Alter Ego 10-minute ' + tok
+    if l == 'Technofruit' and 'coactivator' in s.lower():   # the developer mixed with Fast Color 10 (Nov 27 2026)
+        v = re.search(r'(\d+)\s*vol', s, re.I)
+        return 'Alter Ego Fast 10 Coactivator' + (' %s Vol' % v.group(1) if v else '')
     if l == 'Technofruit' and par_of(key):
         return 'Alter Ego Technofruit ' + tok
     return s
