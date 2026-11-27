@@ -228,7 +228,7 @@ STORE = {'Redken': 'SalonCentric', 'Goldwell': 'DePasquale', 'Alter Ego': 'DePas
 
 def unused(*t):
     j = ' '.join(map(str, t)).lower()
-    return ('color renew' in j or '6n@gb' in j or bool(re.search(r'colorance canister\S* 0*(?!4nn\b)\d+nn\b', j))
+    return ('color renew' in j or '6n@gb' in j or bool(re.search(r'colorance canister\S* (?!0*4nn\b)0*\d+nn\b', j))
             or ('technofruit' in j and 'coactivator' not in j)
             # Alexandra Nov 27 2026: Colorance 3NA and 4R aren't real Colorance colors (scale mis-picks): never count or order them
             or bool(re.search(r'colorance canister\S* 0*(3na|4r)\b', j)))
