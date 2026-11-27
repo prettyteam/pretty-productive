@@ -15,7 +15,7 @@
 <script src="../g/topnav.js?v=4"></script>
 <script src="../g/ordering.js?v=3"></script>
 <script src="../g/inventory.js?v=2"></script>
-<script src="../g/whattoorder.js?v=14"></script>
+<script src="../g/whattoorder.js?v=15"></script>
 <script src="../g/jokes.js?v=2"></script>
 <script src="../g/coach.js?v=1"></script>
 <link rel="stylesheet" href="../g/coach.css?v=1">
@@ -506,6 +506,11 @@ function loadDeskStock(){
   fetch(window.TAFFETA_ENDPOINT+'?key='+encodeURIComponent(KEY)+'&stock=1&t='+Date.now(),{cache:'no-store'}).then(r=>r.json())
     .then(j=>{if(j.ok&&j.stock){DESKSTOCK=j.stock;dsAt=Date.now();if(area==='O')render()}}).catch(()=>{}).then(()=>{dsBusy=false});
 }
+if(window.WhatToOrder)WhatToOrder.notHere=(date,store,num)=>{
+  if(DEMO)return Promise.resolve();
+  return fetch(window.TAFFETA_ENDPOINT,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({type:'ordernot',key:KEY,date,store,num})})
+    .then(r=>r.json()).then(j=>{if(!j.ok)throw new Error('no');invAt=0});
+};
 if(window.WhatToOrder)WhatToOrder.gotIt=(date,store,num)=>{
   const drop=()=>{if(invD&&invD.onOrder) invD.onOrder=invD.onOrder.filter(q=>!(q[0]===date&&q[1]===store&&q[2]===num))};
   if(DEMO){drop();return Promise.resolve()}

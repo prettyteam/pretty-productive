@@ -26,7 +26,7 @@
     +'.wto .wpick b{font-family:var(--display,Georgia,serif);font-size:30px;font-weight:400;line-height:1}.wto .wpick span{font-size:12px;letter-spacing:.12em;text-transform:uppercase;font-weight:600}'
     +'.wto .wpick small{color:var(--soft,#5f5b55);font-size:12.5px}.wto .wpick button[aria-pressed="true"]{background:var(--ink,#121212);color:#fff;border-color:var(--ink,#121212)}.wto .wpick button[aria-pressed="true"] small{color:#fff;opacity:.75}'
     +'.wto .wback{font:inherit;font-size:12px;letter-spacing:.12em;text-transform:uppercase;font-weight:600;cursor:pointer;background:none;color:var(--ink,#121212);border:1px solid var(--ink,#121212);border-radius:6px;padding:12px;justify-self:start}'
-    +'.wto .wgot{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:8px}.wto .wgotb{font:inherit;font-size:12px;letter-spacing:.12em;text-transform:uppercase;font-weight:600;cursor:pointer;background:var(--ink,#121212);color:#fff;border:1px solid var(--ink,#121212);border-radius:6px;padding:12px 18px;min-height:44px}.wto .wgotb:disabled{opacity:.6;cursor:default}.wto .wgotm{font-size:13px;color:var(--soft,#5f5b55)}.wto .wst.wgone{opacity:.55}'
+    +'.wto .wgot{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:8px}.wto .wgotb{font:inherit;font-size:12px;letter-spacing:.12em;text-transform:uppercase;font-weight:600;cursor:pointer;background:var(--ink,#121212);color:#fff;border:1px solid var(--ink,#121212);border-radius:6px;padding:12px 18px;min-height:44px}.wto .wnotb{background:none;color:var(--ink,#121212)}.wto .wgotb:disabled{opacity:.6;cursor:default}.wto .wgotm{font-size:13px;color:var(--soft,#5f5b55)}.wto .wst.wgone{opacity:.55}'
     +'.wto .wv{display:grid;gap:12px}.wto .wv[hidden]{display:none}.wto .wst{background:var(--card,#fff);border:1px solid var(--line,#e2ded5);border-radius:6px;padding:14px;display:grid;gap:4px}'
     +'.wto .wst .top{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:4px}.wto h2{margin:0;font-family:var(--display,Georgia,serif);font-weight:500;font-size:19px;letter-spacing:0;text-transform:none}'
     +'.wto .wst a{text-decoration:none;font-size:12px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;background:var(--ink,#121212);color:#fff;border-radius:4px;padding:8px 12px;white-space:nowrap}'
@@ -155,6 +155,14 @@
       return '<div class="wst"><div class="top"><h2>'+esc(st)+'</h2><span class="q '+(a?'g':'b')+'">'+esc(a?'Arrives '+a:/ship/i.test(s)?'Shipped':s)+'</span></div><p>Ordered '+esc(day(d))+(num?' · #'+esc(num):'')+'</p>'
         +its.map(q=>row(q[3],'',q[4]?'Qty '+q[4]:'','g')).join('')
         +(window.WhatToOrder&&window.WhatToOrder.gotIt?'<div class="wgot"><button type="button" class="wgotb" data-gd="'+esc(d)+'" data-gs="'+esc(st)+'" data-gn="'+esc(num)+'">Got It</button><span class="wgotm" hidden></span></div>':'')+'</div>'});
+    /* Just Came In (Nov 27 2026): orders marked received, or past their normal delivery time, in the last 10 days.
+       Not Delivered puts one back on On The Way. D.arrived rows: [date, store, order #, item, qty, how ('got'|'auto')] */
+    const arr={};((D&&D.arrived)||[]).forEach(q=>(arr[q[1]+'|'+q[2]+'|'+q[0]]||=[]).push(q));
+    const gotCards=Object.keys(arr).map(k=>{const [st,num,d]=k.split('|'),its=arr[k],auto=its.some(q=>q[5]==='auto');
+      return '<div class="wst"><div class="top"><h2>'+esc(st)+'</h2><span class="q g">'+(auto?'Should be here':'Came in')+'</span></div><p>Ordered '+esc(day(d))+(num?' · #'+esc(num):'')+'</p>'
+        +its.map(q=>row(q[3],'',q[4]?'Qty '+q[4]:'','g')).join('')
+        +(window.WhatToOrder&&window.WhatToOrder.notHere?'<div class="wgot"><button type="button" class="wgotb wnotb" data-gd="'+esc(d)+'" data-gs="'+esc(st)+'" data-gn="'+esc(num)+'">Not Delivered</button><span class="wgotm" hidden></span></div>':'')+'</div>'});
+    const gotSec=gotCards.length?'<details class="wmore"><summary>Just Came In ('+gotCards.length+')</summary><div><p>Orders from the last 10 days that came in, or should have by now. If one never showed up, tap Not Delivered and it goes back on the list.</p>'+gotCards.join('')+'</div></details>':'';
     /* Nov 2 2026: the Color & Backbar button always shows, even when this week's report has no order list or this app has no color report */
     const noColor=!R?'<p>The color list comes from the weekly color report, which opens in Rose’s app and Alex’s. Ask Rose what color to order this week.</p>':'';
     const btn=(k,label,count,sub)=>'<button type="button" data-wto="'+k+'" aria-pressed="'+(view===k)+'"><span>'+label+'</span><b>'+count+'</b><small>'+sub+'</small></button>';
@@ -166,7 +174,7 @@
       +btn('back','Color & Backbar',backN,'color and supplies')+btn('way','On The Way',Object.keys(ords).length,Object.keys(ords).length===1?'order':'orders')+'</div>'
       +v('retail',loading||(retailCards.length?'<p>Grouped by where we buy it. Open the store and order the amount shown.</p>'+retailCards.join(''):'<p>Nothing to reorder this week.</p>'))
       +v('back',noColor||(countFirst+(backCards.length?'<p>Suggested from this week’s color report. Check the shelf and back room first, and only order what we really don’t have.</p>'+backCards.join(''):'<p>Nothing on this week’s color order list.</p>')+ohCard))
-      +v('way',wayCards.length?'<p>From the order emails in info@. Don’t order these again. When a box comes in, tap Got It and receive it in Paired Plus. An order also leaves this list on its own once its normal delivery time has passed.</p>'+wayCards.join(''):'<p>Nothing on the way right now.</p>')
+      +v('way',(wayCards.length?'<p>From the order emails in info@. Don’t order these again. When a box comes in, tap Got It and receive it in Paired Plus. An order also leaves this list on its own once its normal delivery time has passed.</p>'+wayCards.join(''):'<p>Nothing on the way right now.</p>')+gotSec)
       +(o.countsHint?'<p>'+esc(o.countsHint)+'</p>':'');
     if(window.Ordering) h+='<details class="wmore"><summary>All Stores, Logins &amp; Amazon Lists</summary><div>'+Ordering.html(o.mode||'full',prices,o.logins).replace(/<h1>Ordering<\/h1>/,'')+'</div></details>';
     return h+'</div>';
@@ -184,12 +192,13 @@
   });
   /* Got It (Nov 27 2026): marks the whole order Received on the On Order sheet; the counts and color list pick it up from there */
   document.addEventListener('click',e=>{
-    const b=e.target.closest&&e.target.closest('.wgotb'); if(!b||!window.WhatToOrder.gotIt) return;
-    const card=b.closest('.wst'), m=b.parentNode.querySelector('.wgotm');
+    const b=e.target.closest&&e.target.closest('.wgotb'); if(!b) return;
+    const not=b.classList.contains('wnotb'), fn=not?window.WhatToOrder.notHere:window.WhatToOrder.gotIt; if(!fn) return;
+    const card=b.closest('.wst'), m=b.parentNode.querySelector('.wgotm'), label=b.textContent;
     b.disabled=true; b.textContent='Saving';
-    Promise.resolve(window.WhatToOrder.gotIt(b.dataset.gd,b.dataset.gs,b.dataset.gn))
-      .then(()=>{b.hidden=true;m.textContent='Got it. This order leaves the list and its boxes get added to the counts.';m.hidden=false;card.classList.add('wgone')})
-      .catch(()=>{b.disabled=false;b.textContent='Got It';m.textContent='Didn’t save. Check the Wi-Fi and tap Got It again.';m.hidden=false});
+    Promise.resolve(fn(b.dataset.gd,b.dataset.gs,b.dataset.gn))
+      .then(()=>{b.hidden=true;m.textContent=not?'Okay. This order is back on the On The Way list.':'Got it. This order leaves the list and its boxes get added to the counts.';m.hidden=false;card.classList.add('wgone')})
+      .catch(()=>{b.disabled=false;b.textContent=label;m.textContent='Didn’t save. Check the Wi-Fi and tap '+label+' again.';m.hidden=false});
   });
   document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.closest&&e.target.closest('.wcin')){const b=e.target.closest('.wcin').querySelector('.wcsave');if(b)b.click()}});
   document.addEventListener('click',e=>{
