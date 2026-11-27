@@ -378,7 +378,7 @@ def refresh(inv, stock_rows, order_rows, now=None, year=2026, usage_rows=None):
         if s not in COLOR_STORES or (s == 'CosmoProf' and not stores.get('CosmoProf')):
             order.append([s, x])
     if recount:
-        order.append(['Recount first', 'The scale used more of these than the last count showed, so a new box likely came in that was never logged. Count them before ordering: '
+        order.append(['Recount first', 'The scale used more of these than the last count showed. A new box likely came in that was never logged. Count them before ordering: '
                       + ', '.join(recount) + '.'])
     # No order holds (Alexandra, Nov 16 2026: "i want all her stuff to update based on what all reports show and what her
     # counts show"). The Nov 12 hold is gone for good; any leftover R.hold is dropped so the lists always follow the reports and counts.
