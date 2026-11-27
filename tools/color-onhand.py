@@ -240,8 +240,8 @@ def unused(*t):
             or ('technofruit' in j and 'coactivator' not in j)
             # Alexandra Nov 27 2026: Colorance 3NA, 4R and 7RO aren't real Colorance colors (7RO is Topchic): never count or order them
             or bool(re.search(r'colorance canister\S* 0*(3na|4r|7ro)\b', j))
-            # Alexandra Nov 27 2026: "thers no 8 g in topchic", "8gb in topchic is not a thing either"
-            or bool(re.search(r'topchic canister\S* 0*(8g|8gb)\b', j))
+            # Alexandra Nov 27 2026: "thers no 8 g in topchic", "8gb in topchic is not a thing either", "5BM isnot a color"
+            or bool(re.search(r'topchic canister\S* 0*(8g|8gb|5bm)\b', j))
             # Alexandra Nov 27 2026: same gallon as Topchic 20 Volume (its scale use is moved there in color-refresh.py)
             or bool(re.search(r'system cream developer ?20 ?vol', j))
             # Alexandra Nov 27 2026: the scale's "Generic Developer" button has no volume, and the general developers
