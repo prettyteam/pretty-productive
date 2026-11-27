@@ -372,9 +372,17 @@ def refresh(inv, stock_rows, order_rows, now=None, year=2026, usage_rows=None):
         recv = got(k, since) if since else 0
         added += recv
         now_oh = round(base - extra_use + recv, 2)
-        new_rows.append([line, shade, counted, round(float(used or 0) + extra_use, 2), now_oh, round(pace, 2),
-                         round(now_oh / pace, 1) if pace > 0 else None])
         fresh_count = bool(st) and (now - st[1]).days <= 7
+        # Alexandra Nov 27 2026: a drop-down per brand shows every shade with on hand, the amount to keep, and the
+        # suggested order, so each row also carries [keep, on the way, order] (order -1 = recount first).
+        par = co.par_of(k)
+        if co.unused(*k) or co.discontinued(k):
+            keep, q = 0, 0
+        else:
+            keep = max(0, math.ceil(round(max(par, co.WEEKS * pace) - 0.25, 2))) if par is not None else (math.ceil(round(6 * pace, 2)) if pace > 0 else 0)
+            q = co.order_qty(k, now_oh + way.get(k, 0), pace, counted, fresh_count)
+        new_rows.append([line, shade, counted, round(float(used or 0) + extra_use, 2), now_oh, round(pace, 2),
+                         round(now_oh / pace, 1) if pace > 0 else None, keep, round(way.get(k, 0), 2), -1 if q is None else q])
         items.append((k, counted, now_oh + way.get(k, 0), pace, fresh_count))
         if st and st[1] > ran and not co.unused(*k):
             counted_names.append(co.item_name(k))
