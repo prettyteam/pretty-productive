@@ -26,7 +26,7 @@
     +'.wto .wpick b{font-family:var(--display,Georgia,serif);font-size:30px;font-weight:400;line-height:1}.wto .wpick span{font-size:12px;letter-spacing:.12em;text-transform:uppercase;font-weight:600}'
     +'.wto .wpick small{color:var(--soft,#5f5b55);font-size:12.5px}.wto .wpick button[aria-pressed="true"]{background:var(--ink,#121212);color:#fff;border-color:var(--ink,#121212)}.wto .wpick button[aria-pressed="true"] small{color:#fff;opacity:.75}'
     +'.wto .wback{font:inherit;font-size:12px;letter-spacing:.12em;text-transform:uppercase;font-weight:600;cursor:pointer;background:none;color:var(--ink,#121212);border:1px solid var(--ink,#121212);border-radius:6px;padding:12px;justify-self:start}'
-    +'.wto .wgot{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:8px}.wto .wgotb{font:inherit;font-size:12px;letter-spacing:.12em;text-transform:uppercase;font-weight:600;cursor:pointer;background:var(--ink,#121212);color:#fff;border:1px solid var(--ink,#121212);border-radius:6px;padding:12px 18px;min-height:44px}.wto .wnotb{background:none;color:var(--ink,#121212)}.wto .wgotb:disabled{opacity:.6;cursor:default}.wto .wgotm{font-size:13px;color:var(--soft,#5f5b55)}.wto .wst.wgone{opacity:.55}'
+    +'.wto .wgot{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:8px}.wto .wgotb{font:inherit;font-size:12px;letter-spacing:.12em;text-transform:uppercase;font-weight:600;cursor:pointer;background:var(--ink,#121212);color:#fff;border:1px solid var(--ink,#121212);border-radius:6px;padding:12px 18px;min-height:44px}.wto .wnotb{background:none;color:var(--ink,#121212)}.wto .wgotb:disabled{opacity:.6;cursor:default}.wto .wgotm{font-size:13px;color:var(--soft,#5f5b55)}.wupd{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:14px 16px;border:1px solid var(--line,#e2ded5);border-radius:6px}.wupd b{display:block;font-size:15px}.wupd small{display:block;color:var(--soft,#5f5b55);font-size:13px;margin-top:2px}.wto .wst.wgone{opacity:.55}'
     +'.wto .wv{display:grid;gap:12px}.wto .wv[hidden]{display:none}.wto .wst{background:var(--card,#fff);border:1px solid var(--line,#e2ded5);border-radius:6px;padding:14px;display:grid;gap:4px}'
     +'.wto .wst .top{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:4px}.wto h2{margin:0;font-family:var(--display,Georgia,serif);font-weight:500;font-size:19px;letter-spacing:0;text-transform:none}'
     +'.wto .wst a{text-decoration:none;font-size:12px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;background:var(--ink,#121212);color:#fff;border-radius:4px;padding:8px 12px;white-space:nowrap}'
@@ -79,6 +79,11 @@
     const keys=Object.keys(g).sort((a,b)=>(a===ASK)-(b===ASK)||a.localeCompare(b));return keys.map(k=>[k,g[k]])};
   const left=(oh,w)=>oh<0?'Paired Plus shows '+oh+', count the shelf':(oh+' on hand'+(w>0&&w<8?' · about '+Math.max(1,Math.round(w))+' wk left':''));
   let view='retail';
+  const WMON={Jan:0,Feb:1,Mar:2,Apr:3,May:4,Jun:5,Jul:6,Aug:7,Sep:8,Oct:9,Nov:10,Dec:11};
+  const whenMs=t=>{const m=String(t||'').match(/([A-Z][a-z]{2}) (\d+), (\d{4}) (\d+):(\d+) ?([AP]M)/);if(!m)return 0;
+    return new Date(+m[3],WMON[m[1]],+m[2],(+m[4]%12)+(m[6]==='PM'?12:0),+m[5]).getTime()};
+  const askAt=()=>{try{const v=+localStorage.getItem('wtoAsk')||0;return Date.now()-v<3*3600000?v:0}catch(x){return 0}};
+  const clock=ms=>new Date(ms).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
   function html(o){
     o=o||{};
     const D=o.inv, R=o.report, I=window.Inventory;
@@ -147,6 +152,15 @@
     const nRe=merged.filter(m=>/^Recount/.test(m.det)).length, nNew=merged.filter(m=>/^New/.test(m.det)).length;
     /* Alexandra, Nov 27 2026: "can the count these first be minimized and w a plus or minus so i dont have to scroll a
        whole list": closed by default, and it stays open after a Count is saved (the page redraws) */
+    /* Update What To Order (Alexandra, Nov 27 2026): after counting, Rose or Alex taps it so they know the list is current.
+       It saves a 'req:update' row in Stock Counts (the refresh ignores it), and the color list catch-up check sees a row
+       newer than the last refresh and runs the refresh. The card shows when the list was last updated. */
+    const upd=R&&R.refreshed&&window.WhatToOrder.saveCount?(()=>{const t=whenMs(R.refreshed),ask=askAt();
+      const wait=ask&&t&&ask>t;
+      return '<div class="wupd"><span><b>Color list updated '+esc(String(R.refreshed).replace(/,\s*\d{4}/,','))+'</b><small class="wupdm">'
+        +(wait?'You asked for an update at '+esc(clock(ask))+'. It takes about 20 minutes. Then close the app and open it again, and the time above changes.'
+          :'Done counting? Tap Update What To Order. In about 20 minutes, close the app and open it again, and the time above changes.')
+        +'</small></span><button type="button" class="wgotb wupdb"'+(o.canCount&&!wait?'':' disabled')+'>'+(wait?'Asked':'Update What To Order')+'</button></div>'})():'';
     const countFirst=merged.length?'<details class="wmore" data-cf'+(window.__wtoCfOpen?' open':'')+'><summary>Count These First ('+merged.length+')</summary><div>'
       +'<p>'+(nRe?nRe+' say <b>Recount</b>: the app’s number looks off, so it needs a real count. ':'')+(nNew?nNew+' say <b>New</b>: used on the scale but never counted yet. ':'')
       +'The rest are on the order list or used the most. For each one, count the shelf and the back room together, tap Count, type the total, and tap Save. Once a shade is counted, it drops off this list after the next update.</p>'
@@ -180,7 +194,7 @@
       +'<div class="wpick" role="group" aria-label="Choose a list">'+btn('retail','Retail',ret.length+cnt.length,'for the shelf')
       +btn('back','Color & Backbar',backN,'color and supplies')+btn('way','On The Way',Object.keys(ords).length,Object.keys(ords).length===1?'order':'orders')+'</div>'
       +v('retail',loading||(retailCards.length?'<p>Grouped by where we buy it. Open the store and order the amount shown.</p>'+retailCards.join(''):'<p>Nothing to reorder this week.</p>'))
-      +v('back',noColor||(countFirst+(backCards.length?'<p>Suggested from this week’s color report. Check the shelf and back room first, and only order what we really don’t have.</p>'+backCards.join(''):'<p>Nothing on this week’s color order list.</p>')+ohCard))
+      +v('back',noColor||(upd+countFirst+(backCards.length?'<p>Suggested from this week’s color report. Check the shelf and back room first, and only order what we really don’t have.</p>'+backCards.join(''):'<p>Nothing on this week’s color order list.</p>')+ohCard))
       +v('way',(wayCards.length?'<p>From the order emails in info@. Don’t order these again. When a box comes in, tap Got It and receive it in Paired Plus. An order also leaves this list on its own once its normal delivery time has passed.</p>'+wayCards.join(''):'<p>Nothing on the way right now.</p>')+gotSec)
       +(o.countsHint?'<p>'+esc(o.countsHint)+'</p>':'');
     if(window.Ordering) h+='<details class="wmore"><summary>All Stores, Logins &amp; Amazon Lists</summary><div>'+Ordering.html(o.mode||'full',prices,o.logins).replace(/<h1>Ordering<\/h1>/,'')+'</div></details>';
@@ -217,6 +231,14 @@
     box.querySelectorAll('[data-wto]').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));
     box.querySelectorAll('[data-wtov]').forEach(x=>{x.hidden=x.dataset.wtov!==view});
     const open=box.querySelector('[data-wtov="'+view+'"]'); if(open&&open.getBoundingClientRect().top>window.innerHeight*0.6) open.scrollIntoView({behavior:'smooth',block:'start'});
+  });
+  document.addEventListener('click',e=>{
+    const b=e.target.closest&&e.target.closest('.wupdb'); if(!b||!window.WhatToOrder.saveCount) return;
+    const m=b.closest('.wupd').querySelector('.wupdm'); b.disabled=true; b.textContent='Asking';
+    Promise.resolve(window.WhatToOrder.saveCount('req:update','Update What To Order',1))
+      .then(()=>{const now=Date.now();try{localStorage.setItem('wtoAsk',String(now))}catch(x){}
+        b.textContent='Asked';m.textContent='Got it. The list is updating now with your counts. It takes about 20 minutes. Then close the app and open it again, and the time above changes.'})
+      .catch(()=>{b.disabled=false;b.textContent='Update What To Order';m.textContent='Didn’t go through. Check the Wi-Fi and tap it again.'});
   });
   window.WhatToOrder=Object.assign(window.WhatToOrder||{},{html,storeOf,arrives});
 })();
