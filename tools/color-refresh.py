@@ -348,6 +348,7 @@ def refresh(inv, stock_rows, order_rows, now=None, year=2026, usage_rows=None):
         except ValueError:
             pass
     new_rows, items, fresh, added = [], [], 0, 0
+    counted_names = []      # counted since the weekly report: off Count These First (Alexandra Nov 27 2026)
     for r, k in zip(rows, keys):
         line, shade, counted, used, oh, pace, wl = (list(r) + [None] * 8)[:7]
         pace = float(pace or 0)
@@ -365,7 +366,10 @@ def refresh(inv, stock_rows, order_rows, now=None, year=2026, usage_rows=None):
                          round(now_oh / pace, 1) if pace > 0 else None])
         fresh_count = bool(st) and (now - st[1]).days <= 7
         items.append((k, counted, now_oh + way.get(k, 0), pace, fresh_count))
+        if st and st[1] > ran and not co.unused(*k):
+            counted_names.append(co.item_name(k))
     stores, recount = co.order_lists(items)
+    R['countedSince'] = sorted(set(counted_names))
     order = []
     for s in ('DePasquale', 'SalonCentric', 'CosmoProf'):
         if stores.get(s):
