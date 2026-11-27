@@ -297,8 +297,15 @@ def refresh(inv, stock_rows, order_rows, now=None, year=2026, usage_rows=None):
     usage_rows = [[r[0], 'Redken', 'Shades EQ', 'EQ Processing Solution'] + list(r[4:]) if len(r) > 3
                   and str(r[2]).strip() == 'Redken Developers' and str(r[3]).strip() == 'Shades EQ Processing Solution'
                   else r for r in usage_rows]
+    # Alexandra Nov 27 2026: Blonde Idol High Lift "Pearl Ash" and "Ash Pearl" are the same lightener (two scale
+    # buttons), so both count as "High Lift Ash Pearl".
+    usage_rows = [list(r[:3]) + ['High Lift Ash Pearl'] + list(r[4:]) if len(r) > 3 and str(r[1]).strip() == 'Redken'
+                  and str(r[2]).strip() == 'Blonde Idol' and re.sub(r'\s+', ' ', str(r[3]).strip().lower()) == 'high lift pearl ash'
+                  else r for r in usage_rows]
     ran = co.when(str(R.get('ran', '')).replace(', %d' % year, ''), year) or co.when(R.get('ran', ''), year)
     ran = (ran or now).replace(hour=12, minute=0)
+    # A count saved on the old "Pearl Ash" line goes to "Ash Pearl" too.
+    stock_rows = [[re.sub(r'(?i)high lift pearl ash', 'High Lift Ash Pearl', str(c)) for c in r] for r in stock_rows or []]
     counts = co.latest_counts(stock_rows, year)
     # Always start from the weekly report's own rows (kept in R.base on the first refresh), so running daily never
     # subtracts the same use twice or adds the same delivery twice. A new weekly report has a new 'ran' and resets it.
