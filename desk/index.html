@@ -369,7 +369,7 @@ function regimenCard(r,i,all){
 function guests(){
   const cToday=data.concierge.filter(r=>isToday(r.at)||st(r)!=='Done');
   const cOpen=cToday.filter(r=>st(r)!=='Done'), cDone=cToday.filter(r=>st(r)==='Done'&&isToday(r.handledAt||r.at));
-  const kOpen=data.consult.filter(r=>st(r)!=='Booked'), kDone=data.consult.filter(r=>st(r)==='Booked');
+  const kOpen=data.consult.filter(r=>st(r)!=='Booked'), kNew=kOpen.filter(r=>st(r)!=='Contacted'), kCont=kOpen.filter(r=>st(r)==='Contacted'), kDone=data.consult.filter(r=>st(r)==='Booked');   /* Contacted drops off the main list (Nov 27 2026) */
   const pOpen=data.profiles.filter(r=>st(r)!=='Updated'), pDone=data.profiles.filter(r=>st(r)==='Updated'&&(pending[r.row+':'+r.at]||Date.now()-(Number(r.updatedAt)||Number(r.at))<2*864e5));   /* updated profiles drop off after 2 days */
   const rg=data.regimen||[], hOpen=rg.filter(r=>st(r)!=='Sent'&&st(r)!=='Draft'), hDraft=rg.filter(r=>st(r)==='Draft'), hDone=rg.filter(r=>st(r)==='Sent'&&(pending[r.row+':'+r.at]||Date.now()-(Number(r.sentAt)||Number(r.at))<2*864e5));
   const nR=0;  /* nothing waits to be texted (Nov 12 2026) */
@@ -392,7 +392,8 @@ function guests(){
     let h=cOpen.length?cOpen.map(concierge).join(''):'<p class="empty">No requests right now. Every guest is taken care of.</p>';
     if(cDone.length)h+=`<p class="sub">Handled today</p>`+cDone.map(concierge).join('');return h}
   if(tab==='K'){
-    let h=kOpen.length?kOpen.map(consult).join(''):'<p class="empty">No new consultations.</p>';
+    let h=kNew.length?kNew.map(consult).join(''):'<p class="empty">No new consultations.</p>';
+    if(kCont.length)h+=`<details class="more"><summary>Contacted (${kCont.length}) +</summary><div class="list">${kCont.map(consult).join('')}</div></details>`;
     if(kDone.length)h+=`<details class="more"><summary>Booked (${kDone.length}) +</summary><div class="list">${kDone.map(consult).join('')}</div></details>`;return h}
   let h=pOpen.length?pOpen.map(profile).join(''):'<p class="empty">No profile updates waiting.</p>';
   if(pDone.length)h+=`<details class="more"><summary>Updated (${pDone.length}) +</summary><div class="list">${pDone.map(profile).join('')}</div></details>`;return h}
