@@ -234,7 +234,9 @@ def unused(*t):
             # Alexandra Nov 27 2026: Colorance 3NA, 4R and 7RO aren't real Colorance colors (7RO is Topchic): never count or order them
             or bool(re.search(r'colorance canister\S* 0*(3na|4r|7ro)\b', j))
             # Alexandra Nov 27 2026: "thers no 8 g in topchic", "8gb in topchic is not a thing either"
-            or bool(re.search(r'topchic canister\S* 0*(8g|8gb)\b', j)))
+            or bool(re.search(r'topchic canister\S* 0*(8g|8gb)\b', j))
+            # Alexandra Nov 27 2026: same gallon as Topchic 20 Volume (its scale use is moved there in color-refresh.py)
+            or bool(re.search(r'system cream developer ?20 ?vol', j)))
 
 
 # Discontinued shades (Alexandra Nov 27 2026: "8k we have 1 and its discontinued"): stay on hand with their count,
