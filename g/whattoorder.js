@@ -142,10 +142,12 @@
     let lastB='';
     const cfRows=merged.map(m=>{const head=m.brand!==lastB?'<h3 class="wbr">'+esc(m.brand)+'</h3>':'';lastB=m.brand;return head+crow(m.name,m.det,m.ids)}).join('');
     const nRe=merged.filter(m=>/^Recount/.test(m.det)).length, nNew=merged.filter(m=>/^New/.test(m.det)).length;
-    const countFirst=merged.length?'<div class="wst"><div class="top"><h2>Count These First ('+merged.length+')</h2><span class="q b">Mondays</span></div>'
+    /* Alexandra, Nov 27 2026: "can the count these first be minimized and w a plus or minus so i dont have to scroll a
+       whole list": closed by default, and it stays open after a Count is saved (the page redraws) */
+    const countFirst=merged.length?'<details class="wmore" data-cf'+(window.__wtoCfOpen?' open':'')+'><summary>Count These First ('+merged.length+')</summary><div>'
       +'<p>'+(nRe?nRe+' say <b>Recount</b>: the app’s number looks off, so it needs a real count. ':'')+(nNew?nNew+' say <b>New</b>: used on the scale but never counted yet. ':'')
       +'The rest are on the order list or used the most. For each one, count the shelf and the back room together, tap Count, type the total, and tap Save. Once a shade is counted, it usually drops off this list after the next morning’s update.</p>'
-      +cfRows+'</div>':'';
+      +cfRows+'</div></details>':'';
     /* Color on hand (R.onHand, Nov 2 2026): [line, shade, counted, used since, on hand, per week, weeks left] */
     const OH=((R&&R.onHand)||[]).filter(r=>!NOUSE.test(r.join(' ')));
     const ohCard=OH.length?'<details class="wmore"><summary>Color &amp; Backbar On Hand</summary><div><p>Estimates: Rose’s last count, plus boxes that came in after it, minus SureTint use since then.</p>'
@@ -202,6 +204,7 @@
       .then(()=>{b.hidden=true;m.textContent=not?'Okay. This order is back on the On The Way list.':'Got it. This order leaves the list and its boxes get added to the counts.';m.hidden=false;card.classList.add('wgone')})
       .catch(()=>{b.disabled=false;b.textContent=label;m.textContent='Didn’t save. Check the Wi-Fi and tap '+label+' again.';m.hidden=false});
   });
+  document.addEventListener('toggle',e=>{if(e.target&&e.target.matches&&e.target.matches('details[data-cf]'))window.__wtoCfOpen=e.target.open},true);
   document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.closest&&e.target.closest('.wcin')){const b=e.target.closest('.wcin').querySelector('.wcsave');if(b)b.click()}});
   document.addEventListener('click',e=>{
     const bk=e.target.closest&&e.target.closest('[data-wtoback]');
