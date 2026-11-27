@@ -37,7 +37,7 @@
     +'.wto .wcbtn{cursor:pointer;border:0;font-family:inherit;min-height:36px}.wto .wcin{display:flex;gap:6px;flex:none}.wto .wcin[hidden],.wto .cdone[hidden]{display:none}'
     +'.wto .wcin input{width:72px;font:inherit;font-size:18px;padding:6px 8px;border:1px solid var(--ink,#121212);border-radius:6px}.wto .wcsave{font:inherit;font-size:12px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;background:var(--ink,#121212);color:#fff;border:0;border-radius:6px;padding:0 12px;cursor:pointer}'
     +'.wto .cdone{color:#2f5d46!important;font-weight:600}.wto .wbr{margin:12px 0 0;font-size:12px;letter-spacing:.14em;text-transform:uppercase;font-weight:600;color:var(--green,#2f5d46)}.wto .wc.err .cdone{color:#8a2a22!important}'
-    +'.wto .wfam>summary{gap:10px}.wto .wfam .wfn{margin-left:auto;font-size:10.5px;padding:3px 9px}.wto .wfam .wfn+*{margin-left:0}.wto .wfam>summary:has(.wfn):after{margin-left:0}.wto .wfo b{color:#8a2a22}.wto .wfh{margin-top:8px}'
+    +'.wto .wfr{display:grid;grid-template-columns:1fr 54px 44px 58px;gap:6px;align-items:center;padding:9px 0;border-top:1px solid var(--line,#e2ded5);font-size:14px}.wto .wfr>span:first-child{min-width:0}.wto .wfr small{display:block;color:var(--soft,#5f5b55);font-size:12px}.wto .wfr .wfv{text-align:center;font-family:var(--display,Georgia,serif);font-size:18px;line-height:1.1}.wto .wfr .wfv em{font-style:normal;font-family:inherit;font-size:13px;display:inline-block;min-width:30px;padding:3px 8px}.wto .wfhd{font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--soft,#5f5b55);padding:6px 0;border-top:0}.wto .wfhd span:not(:first-child){text-align:center}'+'.wto .wfam>summary{gap:10px}.wto .wfam .wfn{margin-left:auto;font-size:10.5px;padding:3px 9px}.wto .wfam .wfn+*{margin-left:0}.wto .wfam>summary:has(.wfn):after{margin-left:0}.wto .wfo b{color:#8a2a22}.wto .wfh{margin-top:8px}'
     +'.wto .wpick button:focus-visible,.wto .wst a:focus-visible{outline:2px solid var(--gold,#4a3426);outline-offset:2px}</style>';
   /* not used at Taffeta, never on a list (Alexandra, Nov 2 2026) */
   const NOUSE=/color\s*renew|6n\s*@\s*gb/i;
@@ -193,11 +193,13 @@
       const rs=fams[f].sort((a,b)=>f==='Developers'?a.nm.localeCompare(b.nm):((a.sh.lvl?0:1)-(b.sh.lvl?0:1))||(SHADE_DIR(f)*(b.sh.lvl-a.sh.lvl))||a.sh.code.localeCompare(b.sh.code)||a.nm.localeCompare(b.nm));
       const nOrd=rs.filter(r=>r.ord>0).length,nRe=rs.filter(r=>r.ord<0).length;
       return '<details class="wmore wfam"><summary>'+esc(f)+' ('+rs.length+')'+(nOrd?'<span class="q wfn">'+nOrd+' to order</span>':'')+'</summary><div>'
-        +rs.map(r=>'<div class="wr'+(r.ord>0?' wfo':'')+'"><span><b>'+esc(r.nm)+'</b><small>On hand '+fmt(r.oh)+(r.keep!=null?' · keep '+fmt(r.keep):'')
-          +(r.way?' · '+fmt(r.way)+' on the way':'')+(r.pw>=0.05?' · uses about '+fmt(r.pw)+' a week':'')+'</small></span>'
-          +(r.ord<0?'<span class="q b">Recount</span>':r.ord>0?'<span class="q r">Order '+r.ord+'</span>':'<span class="q g">Order 0</span>')+'</div>').join('')
+        +'<div class="wfr wfhd"><span>Shade</span><span>In stock</span><span>Keep</span><span>To order</span></div>'
+        +rs.map(r=>{const sub=[r.way?fmt(r.way)+' on the way':'',r.pw>=0.05?'uses about '+fmt(r.pw)+' a week':''].filter(Boolean).join(' · ');
+          return '<div class="wfr'+(r.ord>0?' wfo':'')+'"><span><b>'+esc(r.nm)+'</b>'+(sub?'<small>'+sub+'</small>':'')+'</span>'
+          +'<span class="wfv">'+fmt(r.oh)+'</span><span class="wfv">'+(r.keep!=null?fmt(r.keep):'–')+'</span>'
+          +'<span class="wfv">'+(r.ord<0?'<em class="q b">Count</em>':r.ord>0?'<em class="q r">'+r.ord+'</em>':'<em class="q g">0</em>')+'</span></div>'}).join('')
         +'</div></details>'});
-    const ohCard=famCards.length?'<h2 class="wfh">Full Color List</h2><p>Every shade we carry, by brand. Tap a brand to open it. Each shade shows what’s on hand now, how many we like to keep, and what the list says to order. On hand is Rose’s last count, plus boxes that came in, minus what the scale used since.'
+    const ohCard=famCards.length?'<h2 class="wfh">Full Color List</h2><p>Every shade we carry, by brand. Tap a brand to open it. Each shade shows 3 numbers: <b>In stock</b> is what’s on the shelf now. <b>Keep</b> is how many we always want. <b>To order</b> is what to buy to fill back up. In stock is Rose’s last count, plus boxes that came in, minus what the scale used since.'
       +'</p>'+famCards.join(''):'';
     const backCards=byStore(back).filter(([s])=>!(countFirst&&/recount/i.test(s))).map(([s,rs])=>storeCard(s,rs.map(r=>typeof r==='string'?r:crow(r.cnt,'Count the shelf and back room')).concat(prices.filter(p=>String(p[1]).toLowerCase()===s.toLowerCase()).map(([i,,p])=>row(i,'Best price here',p,'g')))));
     /* On The Way: one card per order */
