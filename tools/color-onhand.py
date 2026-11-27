@@ -214,7 +214,8 @@ def on_hand(keys, counts, used_since, pace, received_since=None):
 # filled to WEEKS weeks of use. Fast shades get more, slow shades get nothing until they run low.
 # Developers and other backbar keep the weeks-of-pace rule (under 3 weeks left: order 6 weeks of pace - on hand).
 # Not carried, so never ordered: Wella Color Renew, Colorance 6N@GB (its bowls count as Colorance 6N), Colorance NN
-# shades (Rose buys NN in Topchic) and Alter Ego Technofruit color (Rose buys Fast Color 10) (Nov 12 2026).
+# shades (Rose buys NN in Topchic) and Alter Ego Technofruit color (Rose buys Fast Color 10) (Nov 12 2026), and
+# Colorance 3NA and 4R, which aren't real Colorance colors (Nov 27 2026).
 WEEKS = 6
 PAR = [  # (line test, floor, {shade: floor})
     (lambda l, s: l == 'Shades EQ' and s != 'EQ Processing Solution' and not s.startswith('Bonder'), 1, {'09NB': 6, '09M': 6, '010VV': 6, '07M': 6}),
@@ -228,7 +229,9 @@ STORE = {'Redken': 'SalonCentric', 'Goldwell': 'DePasquale', 'Alter Ego': 'DePas
 def unused(*t):
     j = ' '.join(map(str, t)).lower()
     return ('color renew' in j or '6n@gb' in j or bool(re.search(r'colorance canister\S* 0*\d+nn\b', j))
-            or ('technofruit' in j and 'coactivator' not in j))
+            or ('technofruit' in j and 'coactivator' not in j)
+            # Alexandra Nov 27 2026: Colorance 3NA and 4R aren't real Colorance colors (scale mis-picks): never count or order them
+            or bool(re.search(r'colorance canister\S* 0*(3na|4r)\b', j)))
 
 
 def par_of(key):
