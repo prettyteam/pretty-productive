@@ -22,18 +22,66 @@ function invReport_() {
   return out;
 }
 
-/** Items ordered but not received yet: [date, store, order #, item, qty, status], newest first. */
+/** Items ordered but not received yet: [date, store, order #, item, qty, status], newest first.
+    Auto drop-off (Alexandra, Nov 27 2026): an order leaves On The Way once the vendor's normal delivery time has passed,
+    even when no delivered email comes: DePasquale (own truck, no delivered email) 2 business days after the order,
+    2 days after an "arrives <date>", Shipped orders 7 days after the order, everything else 14 days.
+    The hourly order checker marks those rows Received on the sheet too; this just hides them right away. */
+const ONORDER_STD = [[/depasquale/i, 'biz2']];
 function invOnOrder_() {
   try {
     const v = SpreadsheetApp.openById(ONORDER_SHEET_ID).getSheets()[0].getDataRange().getValues();
-    const cut = Date.now() - ONORDER_DAYS * 864e5;
+    const now = Date.now(), cut = now - ONORDER_DAYS * 864e5;
     return v.slice(1).map(r => {
       const d = r[0] instanceof Date ? r[0] : new Date(String(r[0]) + 'T12:00:00');
       if (isNaN(d)) return { d, row: [] };
       return { d, row: [Utilities.formatDate(d, 'America/New_York', 'yyyy-MM-dd'), String(r[1]), String(r[2]), String(r[3]), Number(r[4]) || 0, String(r[5] || 'Ordered')] };
-    }).filter(x => x.row[3] && !isNaN(x.d) && x.d.getTime() >= cut && !/received|cancel/i.test(x.row[5]))
+    }).filter(x => x.row[3] && !isNaN(x.d) && x.d.getTime() >= cut && !/received|cancel|deliver/i.test(x.row[5]) && !invPastDue_(x.d, x.row[1], x.row[5], now))
       .sort((a, b) => b.d - a.d).map(x => x.row);
   } catch (e) { return []; }
+}
+
+/** true when the vendor's normal delivery time for this order has passed (see invOnOrder_). */
+function invPastDue_(d, store, status, now) {
+  const day = 864e5;
+  const m = /arriv\w*\s+(?:on\s+|by\s+)?([A-Z][a-z]{2,8})\.?\s+(\d{1,2})/i.exec(status || '');
+  if (m) {
+    const a = new Date(m[1].slice(0, 3) + ' ' + m[2] + ', ' + d.getFullYear() + ' 12:00');
+    if (!isNaN(a)) { if (a < d - 30 * day) a.setFullYear(a.getFullYear() + 1); return now > a.getTime() + 2 * day; }
+  }
+  if (ONORDER_STD.some(([re]) => re.test(store))) {
+    const t = new Date(d.getTime()); let n = 0;
+    while (n < 2) { t.setDate(t.getDate() + 1); const w = t.getDay(); if (w !== 0 && w !== 6) n++; }
+    t.setHours(23, 59, 0, 0);
+    return now > t.getTime();
+  }
+  return now > d.getTime() + (/ship/i.test(status) ? 7 : 14) * day;
+}
+
+/** "Got It" on What To Order > On The Way (Alexandra, Nov 27 2026): marks every open row of that order Received
+    with today's date. Column I stays blank so the hourly order checker adds non-color boxes to the counts
+    and the daily color refresh adds the color. Column J notes who tapped it.
+    d = {type:'ordergot', key (desk) | slug+t (staff app, STOCK_EDITORS only), date:'yyyy-MM-dd', store, num} */
+function invOrderGot_(d) {
+  let who = '';
+  if (d.key && d.key === DESK_KEY) who = 'Front Desk';
+  else { const me = member_(d.slug, d.t); if (me && STOCK_EDITORS.indexOf(me.slug) >= 0) who = me.name; }
+  if (!who) return json_({ ok: false, error: 'link' });
+  const date = String(d.date || ''), store = String(d.store || ''), num = String(d.num || '');
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || !store) return json_({ ok: false, error: 'order' });
+  const sh = SpreadsheetApp.openById(ONORDER_SHEET_ID).getSheets()[0], v = sh.getDataRange().getValues();
+  const today = Utilities.formatDate(new Date(), 'America/New_York', 'yyyy-MM-dd');
+  const note = 'Got It in the app: ' + clean_(who, 60) + ', ' + Utilities.formatDate(new Date(), 'America/New_York', 'MMM d h:mm a');
+  let n = 0;
+  v.forEach((r, i) => {
+    if (i === 0) return;
+    const rd = r[0] instanceof Date ? Utilities.formatDate(r[0], 'America/New_York', 'yyyy-MM-dd') : String(r[0]).slice(0, 10);
+    if (rd !== date || String(r[1]) !== store || String(r[2]) !== num || /received|cancel/i.test(String(r[5]))) return;
+    sh.getRange(i + 1, 6, 1, 2).setValues([['Received', today]]);
+    sh.getRange(i + 1, 10).setValue(note);
+    n++;
+  });
+  return json_({ ok: true, marked: n });
 }
 
 function invNewest_() {

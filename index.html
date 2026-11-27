@@ -624,7 +624,7 @@ details.days summary::-webkit-details-marker{display:none}
 <script src="g/bride-links.js?v=1"></script>
 <script src="g/tcal.js?v=2"></script>
 <script src="g/inventory.js?v=2"></script>
-<script src="g/whattoorder.js?v=13"></script>
+<script src="g/whattoorder.js?v=14"></script>
 <link rel="stylesheet" href="g/rx.css?v=9">
 <link rel="icon" href="icon.png">
 <link rel="apple-touch-icon" href="briefing/icons/employee-experience-180.png">
@@ -2401,6 +2401,11 @@ function orderView(){
     :window.Ordering.html(mode,R&&R.prices,mode==='full'&&S.mine.ordering);
   return [box];
 }
+if(window.WhatToOrder)WhatToOrder.gotIt=async(date,store,num)=>{
+  const st=S.mine.staff, r=await fetch(API(),{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({type:'ordergot',date,store,num,slug:st.slug,t:st.t})});
+  const j=await r.json(); if(!j.ok) throw new Error('no');
+  if(WREP.d&&WREP.d.onOrder) WREP.d.onOrder=WREP.d.onOrder.filter(q=>!(q[0]===date&&q[1]===store&&q[2]===num));
+};
 if(window.WhatToOrder)WhatToOrder.saveCount=async(id,item,n)=>{
   const st=S.mine.staff, r=await fetch(API(),{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({type:'stock',id,item,n,slug:st.slug,t:st.t})});
   const j=await r.json(); if(!j.ok) throw new Error('no'); (HUB.data.stock||={})[id]={n};
