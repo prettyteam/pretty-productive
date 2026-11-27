@@ -245,7 +245,9 @@ def unused(*t):
             or bool(re.search(r'general developers generic developer', j))
             or 'redken developers shades eq processing solution' in j
             # Alexandra Nov 27 2026: "so can the silk lift condition developer" (10 and 20 vol): take it off
-            or 'silk lift condition' in j)
+            or 'silk lift condition' in j
+            # Alexandra Nov 27 2026: take off Redken 20 VOL Blonde Idol and 20 VOL PRO developers
+            or bool(re.search(r'redken developers 20 vol (blonde idol|pro)\b', j)))
 
 
 # Discontinued shades (Alexandra Nov 27 2026: "8k we have 1 and its discontinued"): stay on hand with their count,
