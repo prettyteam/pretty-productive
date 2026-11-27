@@ -141,12 +141,14 @@
       ||(a.brand==='Developer'?a.lvl-b.lvl:SHADE_DIR(a.brand)*(b.lvl-a.lvl))||a.code.localeCompare(b.code));
     let lastB='';
     const cfRows=merged.map(m=>{const head=m.brand!==lastB?'<h3 class="wbr">'+esc(m.brand)+'</h3>':'';lastB=m.brand;return head+crow(m.name,m.det,m.ids)}).join('');
-    const countFirst=merged.length?'<div class="wst"><div class="top"><h2>Count These First</h2><span class="q b">Mondays</span></div>'
-      +'<p>These are guesses, not what we have. Each one is Rose’s last count minus the color weighed in SureTint since then. Boxes that came in after that count are not added, so a shade can show here even when it’s sitting in the back room. Count the shelf and the back room together, tap Count, type the total, and tap Save.</p>'
+    const nRe=merged.filter(m=>/^Recount/.test(m.det)).length, nNew=merged.filter(m=>/^New/.test(m.det)).length;
+    const countFirst=merged.length?'<div class="wst"><div class="top"><h2>Count These First ('+merged.length+')</h2><span class="q b">Mondays</span></div>'
+      +'<p>'+(nRe?nRe+' say <b>Recount</b>: the app’s number looks off, so it needs a real count. ':'')+(nNew?nNew+' say <b>New</b>: used on the scale but never counted yet. ':'')
+      +'The rest are on the order list or used the most. For each one, count the shelf and the back room together, tap Count, type the total, and tap Save. Once a shade is counted, it usually drops off this list after the next morning’s update.</p>'
       +cfRows+'</div>':'';
     /* Color on hand (R.onHand, Nov 2 2026): [line, shade, counted, used since, on hand, per week, weeks left] */
     const OH=((R&&R.onHand)||[]).filter(r=>!NOUSE.test(r.join(' ')));
-    const ohCard=OH.length?'<details class="wmore"><summary>Color &amp; Backbar On Hand</summary><div><p>Estimates: Rose’s last count minus SureTint use since then. Deliveries after that count are not added.</p>'
+    const ohCard=OH.length?'<details class="wmore"><summary>Color &amp; Backbar On Hand</summary><div><p>Estimates: Rose’s last count, plus boxes that came in after it, minus SureTint use since then.</p>'
       +OH.slice().sort((a,b)=>(+a[6]||99)-(+b[6]||99)).map(([l,sh,c,u,oh,pw,wl])=>row(l+' '+sh,'Counted '+fmt(c)+' · used '+fmt(u)+' since'+(+wl?' · about '+Math.round(+wl)+' wk left':''),fmt(oh)+' on hand',+oh<=0?'r':+wl&&+wl<3?'':'g')).join('')+'</div></details>':'';
     const backCards=byStore(back).filter(([s])=>!(countFirst&&/recount/i.test(s))).map(([s,rs])=>storeCard(s,rs.map(r=>typeof r==='string'?r:crow(r.cnt,'Count the shelf and back room')).concat(prices.filter(p=>String(p[1]).toLowerCase()===s.toLowerCase()).map(([i,,p])=>row(i,'Best price here',p,'g')))));
     /* On The Way: one card per order */
