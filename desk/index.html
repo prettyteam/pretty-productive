@@ -584,6 +584,20 @@ function consultHome(){
   return h+'</div>'}
 document.addEventListener('change',e=>{const b=e.target.closest('[data-cf]');if(b)store.set('consult-done:'+b.dataset.cf,b.checked?'1':'')});
 
+/* Ding (Nov 27 2026): when this page is open, play a chime for every new guest request or consultation,
+   even if phone alerts are off. iPads only allow sound after one tap on the page, so any tap unlocks it. */
+let dingSeen=null, dingCtx=null;
+function dingUnlock(){try{dingCtx=dingCtx||new (window.AudioContext||window.webkitAudioContext)();if(dingCtx.state==='suspended')dingCtx.resume()}catch(e){}}
+['pointerdown','touchstart','keydown'].forEach(ev=>addEventListener(ev,dingUnlock,{passive:true}));
+function dingPlay(){try{dingUnlock();const c=dingCtx;if(!c)return;const t=c.currentTime;
+  [[880,0],[1318.5,.18],[880,.6],[1318.5,.78]].forEach(([f,d])=>{const o=c.createOscillator(),g=c.createGain();o.type='sine';o.frequency.value=f;
+    g.gain.setValueAtTime(0,t+d);g.gain.linearRampToValueAtTime(.5,t+d+.02);g.gain.exponentialRampToValueAtTime(.001,t+d+.5);o.connect(g);g.connect(c.destination);o.start(t+d);o.stop(t+d+.55)})}catch(e){}}
+function deskDing(){
+  const ids=[...data.concierge.map(r=>'c'+r.row+':'+r.at),...data.consult.map(r=>'k'+r.row+':'+r.at)];
+  const fresh=dingSeen?[...data.concierge.filter(r=>st(r)==='New').map(r=>'c'+r.row+':'+r.at),...data.consult.filter(r=>st(r)==='New').map(r=>'k'+r.row+':'+r.at)].filter(id=>!dingSeen.has(id)):[];
+  dingSeen=new Set(ids);
+  if(fresh.length&&!DEMO)dingPlay();
+}
 async function load(){
   loadConsult();
   if(DEMO){data=demo();showTodo(true);lastOk=Date.now();render();status();return}
@@ -593,7 +607,7 @@ async function load(){
     const r=await fetch(window.TAFFETA_ENDPOINT+'?key='+encodeURIComponent(KEY)+'&t='+Date.now(),{cache:'no-store'});
     const j=await r.json();
     if(!j.ok){if(j.error==='key')lockView();return}
-    data={concierge:j.concierge||[],consult:j.consult||[],profiles:j.profiles||[],todo:j.todo||[],regimen:j.regimen||[],rx:j.rx||[],seen:j.seen||{}};showTodo(Array.isArray(j.todo));lastOk=Date.now();
+    data={concierge:j.concierge||[],consult:j.consult||[],profiles:j.profiles||[],todo:j.todo||[],regimen:j.regimen||[],rx:j.rx||[],seen:j.seen||{}};showTodo(Array.isArray(j.todo));lastOk=Date.now();deskDing();
     for(const k in pending){const [row,at]=k.split(':');const all=[...data.concierge,...data.consult,...data.profiles,...(data.todo||[]),...(data.regimen||[])];const m=all.find(x=>String(x.row)===row&&String(x.at)===at);if(m&&m.status===pending[k])delete pending[k]}
     render();
   }catch(e){}
@@ -723,7 +737,7 @@ $('#sendList').addEventListener('click',async e=>{
     const t=await token();if(!t)throw new Error("no token");
     await fetch(window.TAFFETA_ENDPOINT,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain;charset=utf-8"},
       body:JSON.stringify({type:"push",key:KEY,token:t,name:$("#alName").value,device:(ios?"iPhone/iPad":"Computer")+(standalone()?" app":""),off:!!off})});
-    if(off)store.set("desk-al-on","");else store.set("desk-al-on","1");
+    store.set("desk-al-on",off?"0":"1");
   }
   const n=store.get("desk-al-name");if(n)$("#alName").value=n;
   $("#alName").addEventListener("change",()=>store.set("desk-al-name",$("#alName").value));
@@ -731,7 +745,7 @@ $('#sendList').addEventListener('click',async e=>{
   if(ios&&!standalone()){$("#alSteps").hidden=false;$("#alNameWrap").hidden=true;$("#alOn").hidden=true;$("#alMsg").textContent="To get alerts on an iPhone or iPad, add Front Desk to the Home Screen first:";}
   else if(!can()){$("#alNameWrap").hidden=true;$("#alOn").hidden=true;$("#alMsg").textContent="This browser can't show alerts. On an iPhone or iPad, use Safari and add Front Desk to the Home Screen.";}
   else if(Notification.permission==="denied")show(false,"Alerts are blocked. Turn them on in Settings for Front Desk, then tap Turn on alerts.");
-  else if(Notification.permission==="granted"&&store.get("desk-al-on")){show(true,"Alerts are on for "+$("#alName").value+".");save().catch(()=>{})}
+  else if(Notification.permission==="granted"&&store.get("desk-al-on")!=="0"){show(true,"Alerts are on for "+$("#alName").value+".");save().catch(()=>{})}
   $("#alOn").onclick=async()=>{
     $("#alSt").textContent="Turning on…";
     try{const p=await Notification.requestPermission();
