@@ -260,6 +260,10 @@ def refresh(inv, stock_rows, order_rows, now=None, year=2026, usage_rows=None):
     # so a new one shows up in Count These First as New.
     usage_rows = [(list(r[:2]) + ['Fast Color 10'] + list(r[3:])) if len(r) > 3 and str(r[2]).strip() == 'Technofruit'
                   and 'coactivator' not in str(r[3]).lower() else r for r in usage_rows or []]
+    # Alexandra Nov 27 2026: the scale's "System Cream Developer 20vol" is the same Goldwell 20 vol gallon as
+    # Topchic 20 Volume, so its use counts there and it never shows as its own item.
+    usage_rows = [(list(r[:3]) + ['Topchic 20 Volume'] + list(r[4:])) if len(r) > 3 and str(r[1]).strip() == 'Goldwell'
+                  and re.sub(r'\s+', '', str(r[3]).lower()) == 'systemcreamdeveloper20vol' else r for r in usage_rows]
     ran = co.when(str(R.get('ran', '')).replace(', %d' % year, ''), year) or co.when(R.get('ran', ''), year)
     ran = (ran or now).replace(hour=12, minute=0)
     counts = co.latest_counts(stock_rows, year)
