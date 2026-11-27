@@ -18,7 +18,7 @@ function invReport_() {
     try { out = invBuild_(); } catch (err) { return { error: 'read' }; }
     if (!out.error) { try { c.put('invReport1', JSON.stringify(out), 3600); } catch (e) {} }
   }
-  if (!out.error) out.onOrder = invOnOrder_();   // read fresh each time, so an order shows as soon as it's on the sheet
+  if (!out.error) { out.onOrder = invOnOrder_(); out.arrived = invArrived_(); }   // read fresh each time, so an order shows as soon as it's on the sheet
   return out;
 }
 
@@ -26,24 +26,43 @@ function invReport_() {
     Auto drop-off (Alexandra, Nov 27 2026): an order leaves On The Way once the vendor's normal delivery time has passed,
     even when no delivered email comes: DePasquale (own truck, no delivered email) 2 business days after the order,
     2 days after an "arrives <date>", Shipped orders 7 days after the order, everything else 14 days.
-    The hourly order checker marks those rows Received on the sheet too; this just hides them right away. */
+    A "Still coming" order (someone tapped Not Delivered) stays 7 more days from that tap.
+    The hourly order checker marks those rows Received on the sheet too; this just hides them right away.
+    invArrived_ lists what just came in (last 10 days) so the Not Delivered button has somewhere to live. */
 const ONORDER_STD = [[/depasquale/i, 'biz2']];
+function invOrderRows_() {
+  const v = SpreadsheetApp.openById(ONORDER_SHEET_ID).getSheets()[0].getDataRange().getValues();
+  const fmt = x => Utilities.formatDate(x, 'America/New_York', 'yyyy-MM-dd');
+  return v.slice(1).map(r => {
+    const d = r[0] instanceof Date ? r[0] : new Date(String(r[0]) + 'T12:00:00');
+    const g = r[6] instanceof Date ? r[6] : (r[6] ? new Date(String(r[6]).slice(0, 10) + 'T12:00:00') : null);
+    return { d, g: g && !isNaN(g) ? g : null, row: isNaN(d) ? [] : [fmt(d), String(r[1]), String(r[2]), String(r[3]), Number(r[4]) || 0, String(r[5] || 'Ordered')] };
+  }).filter(x => x.row[3] && !isNaN(x.d));
+}
 function invOnOrder_() {
   try {
-    const v = SpreadsheetApp.openById(ONORDER_SHEET_ID).getSheets()[0].getDataRange().getValues();
     const now = Date.now(), cut = now - ONORDER_DAYS * 864e5;
-    return v.slice(1).map(r => {
-      const d = r[0] instanceof Date ? r[0] : new Date(String(r[0]) + 'T12:00:00');
-      if (isNaN(d)) return { d, row: [] };
-      return { d, row: [Utilities.formatDate(d, 'America/New_York', 'yyyy-MM-dd'), String(r[1]), String(r[2]), String(r[3]), Number(r[4]) || 0, String(r[5] || 'Ordered')] };
-    }).filter(x => x.row[3] && !isNaN(x.d) && x.d.getTime() >= cut && !/received|cancel|deliver/i.test(x.row[5]) && !invPastDue_(x.d, x.row[1], x.row[5], now))
+    return invOrderRows_().filter(x => x.d.getTime() >= cut && !/received|cancel|deliver/i.test(x.row[5]) && !invPastDue_(x.d, x.row[1], x.row[5], now, x.g))
       .sort((a, b) => b.d - a.d).map(x => x.row);
   } catch (e) { return []; }
 }
+/** Just came in (last 10 days): [date, store, order #, item, qty, how] — how = 'got' (marked received) or 'auto' (past its normal delivery time). */
+function invArrived_() {
+  try {
+    const now = Date.now(), cut = now - 10 * 864e5;
+    return invOrderRows_().map(x => {
+      if (/cancel/i.test(x.row[5])) return null;
+      if (/received|deliver/i.test(x.row[5])) return (x.g || x.d).getTime() >= cut ? { t: (x.g || x.d).getTime(), row: x.row.slice(0, 5).concat('got') } : null;
+      if (x.d.getTime() >= now - ONORDER_DAYS * 864e5 && invPastDue_(x.d, x.row[1], x.row[5], now, x.g)) return { t: x.d.getTime(), row: x.row.slice(0, 5).concat('auto') };
+      return null;
+    }).filter(Boolean).sort((a, b) => b.t - a.t).map(x => x.row);
+  } catch (e) { return []; }
+}
 
-/** true when the vendor's normal delivery time for this order has passed (see invOnOrder_). */
-function invPastDue_(d, store, status, now) {
+/** true when the vendor's normal delivery time for this order has passed (see invOnOrder_). g = Updated date (column G). */
+function invPastDue_(d, store, status, now, g) {
   const day = 864e5;
+  if (/still coming/i.test(status || '')) return now > (g || d).getTime() + 7 * day;
   const m = /arriv\w*\s+(?:on\s+|by\s+)?([A-Z][a-z]{2,8})\.?\s+(\d{1,2})/i.exec(status || '');
   if (m) {
     const a = new Date(m[1].slice(0, 3) + ' ' + m[2] + ', ' + d.getFullYear() + ' 12:00');
@@ -71,14 +90,20 @@ function invOrderGot_(d) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || !store) return json_({ ok: false, error: 'order' });
   const sh = SpreadsheetApp.openById(ONORDER_SHEET_ID).getSheets()[0], v = sh.getDataRange().getValues();
   const today = Utilities.formatDate(new Date(), 'America/New_York', 'yyyy-MM-dd');
-  const note = 'Got It in the app: ' + clean_(who, 60) + ', ' + Utilities.formatDate(new Date(), 'America/New_York', 'MMM d h:mm a');
+  const back = d.type === 'ordernot';
+  const note = (back ? 'Not Delivered in the app: ' : 'Got It in the app: ') + clean_(who, 60) + ', ' + Utilities.formatDate(new Date(), 'America/New_York', 'MMM d h:mm a');
   let n = 0;
   v.forEach((r, i) => {
     if (i === 0) return;
     const rd = r[0] instanceof Date ? Utilities.formatDate(r[0], 'America/New_York', 'yyyy-MM-dd') : String(r[0]).slice(0, 10);
-    if (rd !== date || String(r[1]) !== store || String(r[2]) !== num || /received|cancel/i.test(String(r[5]))) return;
-    sh.getRange(i + 1, 6, 1, 2).setValues([['Received', today]]);
-    sh.getRange(i + 1, 10).setValue(note);
+    if (rd !== date || String(r[1]) !== store || String(r[2]) !== num || /cancel/i.test(String(r[5]))) return;
+    if (!back && /received/i.test(String(r[5]))) return;
+    // Not Delivered: back on On The Way as "Still coming" (no "deliver"/"receiv" in it, so every reader treats it as on the way).
+    // Column I is cleared only when nothing was added to the counts yet; if boxes were already added, the note says to recount.
+    const added = String(r[8] || '') && !/^color:/i.test(String(r[8])) && /add/i.test(String(r[8]));
+    sh.getRange(i + 1, 6, 1, 2).setValues([[back ? 'Still coming · not here yet' : 'Received', today]]);
+    if (back && !added) sh.getRange(i + 1, 9).setValue('');
+    sh.getRange(i + 1, 10).setValue(note + (back && added ? ' (boxes were already added to the counts: recount this one)' : ''));
     n++;
   });
   return json_({ ok: true, marked: n });
