@@ -232,6 +232,8 @@ PAR = [  # (line test, floor, {shade: floor})
         '09AA': 2,   # Alexandra, Nov 27 2026: keep 2 of 09AA Papaya
         '09V': 3,
         '08GI': 3}),   # Alexandra, Nov 27 2026: keep 3 of 08GI St. Barths   # Alexandra, Nov 27 2026: keep 3 of 09V Platinum Ice at all times   # Rose, Nov 27 2026: keep 2 of 04NCH Dark Chocolate (Bonder Inside, SalonCentric P2417502)
+    # Alexandra Nov 27 2026: "we should have 6 in stock always" (Shades EQ Processing Solution)
+    (lambda l, s: l == 'Shades EQ' and s == 'EQ Processing Solution', 6, {}),
     (lambda l, s: l.startswith('Colorance Canister'), 1, {'6A': 3, '2A': 3, '5NB': 3, '7NA': 3, '6N': 3}),
     (lambda l, s: l.startswith('Topchic Canister') and l != 'Topchic Canister Blonding Cream', 1, {'4NN': 3, '5NN': 3, '6NN': 3, '7NN': 3, '4G': 3}),
     (lambda l, s: l in ('Fast Color 10', 'Technofruit') and 'Coactivator' not in s, 1, {}),
