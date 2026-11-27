@@ -223,7 +223,7 @@ def on_hand(keys, counts, used_since, pace, received_since=None):
 # Not carried, so never ordered: Wella Color Renew, Colorance 6N@GB (its bowls count as Colorance 6N), Colorance NN
 # shades (Rose buys NN in Topchic) and Alter Ego Technofruit color (Rose buys Fast Color 10) (Nov 12 2026), and
 # Colorance 3NA and 4R, which aren't real Colorance colors (Nov 27 2026). Colorance 4NN IS carried (Nov 27 2026).
-# Topchic 8G and 8GB aren't real Topchic colors (Nov 27 2026). Colorance 9N IS carried (Nov 27 2026).
+# Topchic 8G and 8GB ARE carried: 3 of each on the wall by their caps (Alexandra Nov 27 2026: count by the cap, not the shelf label). Colorance 9N IS carried (Nov 27 2026).
 WEEKS = 6
 PAR = [  # (line test, floor, {shade: floor})
     (lambda l, s: l == 'Shades EQ' and s != 'EQ Processing Solution' and not s.startswith('Bonder'), 1, {'09NB': 6, '09M': 6, '010VV': 6, '07M': 6,
@@ -249,8 +249,8 @@ def unused(*t):
             or ('technofruit' in j and 'coactivator' not in j)
             # Alexandra Nov 27 2026: Colorance 3NA, 4R and 7RO aren't real Colorance colors (7RO is Topchic): never count or order them
             or bool(re.search(r'colorance canister\S* 0*(3na|4r|7ro)\b', j))
-            # Alexandra Nov 27 2026: "thers no 8 g in topchic", "8gb in topchic is not a thing either", "5BM isnot a color"
-            or bool(re.search(r'topchic canister\S* 0*(8g|8gb|5bm)\b', j))
+            # Alexandra Nov 27 2026: "5BM isnot a color" (Topchic 8G/8GB were hidden here too, but they are on the wall: un-hidden later Nov 27)
+            or bool(re.search(r'topchic canister\S* 0*(5bm)\b', j))
             # Alexandra Nov 27 2026: same gallon as Topchic 20 Volume (its scale use is moved there in color-refresh.py)
             or bool(re.search(r'system cream developer ?20 ?vol', j))
             # Alexandra Nov 27 2026: the scale's "Generic Developer" button has no volume, and the general developers
