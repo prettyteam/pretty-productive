@@ -37,6 +37,7 @@
     +'.wto .wcbtn{cursor:pointer;border:0;font-family:inherit;min-height:36px}.wto .wcin{display:flex;gap:6px;flex:none}.wto .wcin[hidden],.wto .cdone[hidden]{display:none}'
     +'.wto .wcin input{width:72px;font:inherit;font-size:18px;padding:6px 8px;border:1px solid var(--ink,#121212);border-radius:6px}.wto .wcsave{font:inherit;font-size:12px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;background:var(--ink,#121212);color:#fff;border:0;border-radius:6px;padding:0 12px;cursor:pointer}'
     +'.wto .cdone{color:#2f5d46!important;font-weight:600}.wto .wbr{margin:12px 0 0;font-size:12px;letter-spacing:.14em;text-transform:uppercase;font-weight:600;color:var(--green,#2f5d46)}.wto .wc.err .cdone{color:#8a2a22!important}'
+    +'.wto .wfam>summary{gap:10px}.wto .wfam .wfn{margin-left:auto;font-size:10.5px;padding:3px 9px}.wto .wfam .wfn+*{margin-left:0}.wto .wfam>summary:has(.wfn):after{margin-left:0}.wto .wfo b{color:#8a2a22}.wto .wfh{margin-top:8px}'
     +'.wto .wpick button:focus-visible,.wto .wst a:focus-visible{outline:2px solid var(--gold,#4a3426);outline-offset:2px}</style>';
   /* not used at Taffeta, never on a list (Alexandra, Nov 2 2026) */
   const NOUSE=/color\s*renew|6n\s*@\s*gb/i;
@@ -169,8 +170,35 @@
       +cfRows+'</div></details>':'';
     /* Color on hand (R.onHand, Nov 2 2026): [line, shade, counted, used since, on hand, per week, weeks left] */
     const OH=((R&&R.onHand)||[]).filter(r=>!NOUSE.test(r.join(' ')));
-    const ohCard=OH.length?'<details class="wmore"><summary>Color &amp; Backbar On Hand</summary><div><p>Estimates: Rose’s last count, plus boxes that came in after it, minus SureTint use since then.</p>'
-      +OH.slice().sort((a,b)=>(+a[6]||99)-(+b[6]||99)).map(([l,sh,c,u,oh,pw,wl])=>row(l+' '+sh,'Counted '+fmt(c)+' · used '+fmt(u)+' since'+(+wl?' · about '+Math.round(+wl)+' wk left':''),fmt(oh)+' on hand',+oh<=0?'r':+wl&&+wl<3?'':'g')).join('')+'</div></details>':'';
+    /* Full Color List (Alexandra, Nov 27 2026: "a drop down tab per color room brand that shows us an entire list of the
+       colors we use/order so we can compare the entire inventory to what the order list is suggesting").
+       One closed drop-down per brand. Each shade: on hand, how many to keep, and the suggested order (0 if none).
+       Rows from the color refresh: [line, shade, counted, used since, on hand, per week, weeks left, keep, on the way, order (-1 = recount)].
+       A shade never counted and never used isn't carried, so it's left off. */
+    const ordQ={};((R&&R.order)||[]).forEach(([s,x])=>{if(/recount/i.test(s))return;parseList(x).items.forEach(it=>{ordQ[shadeOf(it.name).key]=(ordQ[shadeOf(it.name).key]||0)+n(it.qty)})});
+    const reQ=new Set();((R&&R.order)||[]).forEach(([s,x])=>{if(/recount/i.test(s))parseList(x).items.forEach(it=>reQ.add(shadeOf(it.name).key))});
+    const FAM=l=>/shades\s*eq/i.test(l)?'Redken Shades EQ':/blonde\s*idol/i.test(l)?'Redken Blonde Idol':/colorance/i.test(l)?'Goldwell Colorance':/topchic/i.test(l)?'Goldwell Topchic':
+      /alter\s*ego/i.test(l)?'Alter Ego':/wella|blondor/i.test(l)?'Wella Blondor & Lighteners':/developer/i.test(l)?'Developers':l;
+    const FAMS=['Redken Shades EQ','Redken Blonde Idol','Goldwell Colorance','Goldwell Topchic','Alter Ego','Wella Blondor & Lighteners','Developers'];
+    const fams={};
+    OH.forEach(r=>{const [l,sh,c,u,oh,pw,wl,keep,way,q]=r,f=FAM(String(l)),
+        sub=String(l).replace(/^(Redken|Goldwell|Wella|Alter Ego|General)\s+/,'').replace(/^(Shades EQ|Blonde Idol|Colorance Canister|Topchic Canister|Fast Color 10|Goldwell Developers|General Developers|Wella Lighteners)\s*/i,''),
+        sub2=sub.replace(/^Topchic\s+/i,'').replace(/^Tubes\b/i,'Tube').replace(/^Canister\s*/i,''),
+        nm=(sub2&&!String(sh).toLowerCase().startsWith(sub2.toLowerCase())?sub2+' ':'')+sh,
+        key=shadeOf((f==='Developers'?'':String(l).replace(/^(Redken|Goldwell|Wella)\s+/,'')+' ')+sh).key,
+        ord=q==null?(reQ.has(key)?-1:(ordQ[key]||0)):+q;
+      if(!(+pw>=0.05)&&!(+oh>0)&&!ord&&!(+way>0))return;   /* not on the shelf, not used, not ordered: not carried */
+      (fams[f]||=[]).push({nm,oh:+oh||0,keep,way:+way||0,pw:+pw||0,ord,sh:shadeOf(f+' '+sh)})});
+    const famCards=Object.keys(fams).sort((a,b)=>((FAMS.indexOf(a)+1)||99)-((FAMS.indexOf(b)+1)||99)||a.localeCompare(b)).map(f=>{
+      const rs=fams[f].sort((a,b)=>f==='Developers'?a.nm.localeCompare(b.nm):((a.sh.lvl?0:1)-(b.sh.lvl?0:1))||(SHADE_DIR(f)*(b.sh.lvl-a.sh.lvl))||a.sh.code.localeCompare(b.sh.code)||a.nm.localeCompare(b.nm));
+      const nOrd=rs.filter(r=>r.ord>0).length,nRe=rs.filter(r=>r.ord<0).length;
+      return '<details class="wmore wfam"><summary>'+esc(f)+' ('+rs.length+')'+(nOrd?'<span class="q wfn">'+nOrd+' to order</span>':'')+'</summary><div>'
+        +rs.map(r=>'<div class="wr'+(r.ord>0?' wfo':'')+'"><span><b>'+esc(r.nm)+'</b><small>On hand '+fmt(r.oh)+(r.keep!=null?' · keep '+fmt(r.keep):'')
+          +(r.way?' · '+fmt(r.way)+' on the way':'')+(r.pw>=0.05?' · uses about '+fmt(r.pw)+' a week':'')+'</small></span>'
+          +(r.ord<0?'<span class="q b">Recount</span>':r.ord>0?'<span class="q r">Order '+r.ord+'</span>':'<span class="q g">Order 0</span>')+'</div>').join('')
+        +'</div></details>'});
+    const ohCard=famCards.length?'<h2 class="wfh">Full Color List</h2><p>Every shade we carry, by brand. Tap a brand to open it. Each shade shows what’s on hand now, how many we like to keep, and what the list says to order. On hand is Rose’s last count, plus boxes that came in, minus what the scale used since.'
+      +'</p>'+famCards.join(''):'';
     const backCards=byStore(back).filter(([s])=>!(countFirst&&/recount/i.test(s))).map(([s,rs])=>storeCard(s,rs.map(r=>typeof r==='string'?r:crow(r.cnt,'Count the shelf and back room')).concat(prices.filter(p=>String(p[1]).toLowerCase()===s.toLowerCase()).map(([i,,p])=>row(i,'Best price here',p,'g')))));
     /* On The Way: one card per order */
     const ords={};oo.forEach(q=>(ords[q[1]+'|'+q[2]+'|'+q[0]]||=[]).push(q));
