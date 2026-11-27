@@ -216,6 +216,7 @@ def on_hand(keys, counts, used_since, pace, received_since=None):
 # Not carried, so never ordered: Wella Color Renew, Colorance 6N@GB (its bowls count as Colorance 6N), Colorance NN
 # shades (Rose buys NN in Topchic) and Alter Ego Technofruit color (Rose buys Fast Color 10) (Nov 12 2026), and
 # Colorance 3NA and 4R, which aren't real Colorance colors (Nov 27 2026). Colorance 4NN IS carried (Nov 27 2026).
+# Topchic 8G and 8GB aren't real Topchic colors (Nov 27 2026). Colorance 9N IS carried (Nov 27 2026).
 WEEKS = 6
 PAR = [  # (line test, floor, {shade: floor})
     (lambda l, s: l == 'Shades EQ' and s != 'EQ Processing Solution' and not s.startswith('Bonder'), 1, {'09NB': 6, '09M': 6, '010VV': 6, '07M': 6}),
@@ -231,7 +232,18 @@ def unused(*t):
     return ('color renew' in j or '6n@gb' in j or bool(re.search(r'colorance canister\S* (?!0*4nn\b)0*\d+nn\b', j))
             or ('technofruit' in j and 'coactivator' not in j)
             # Alexandra Nov 27 2026: Colorance 3NA, 4R and 7RO aren't real Colorance colors (7RO is Topchic): never count or order them
-            or bool(re.search(r'colorance canister\S* 0*(3na|4r|7ro)\b', j)))
+            or bool(re.search(r'colorance canister\S* 0*(3na|4r|7ro)\b', j))
+            # Alexandra Nov 27 2026: "thers no 8 g in topchic", "8gb in topchic is not a thing either"
+            or bool(re.search(r'topchic canister\S* 0*(8g|8gb)\b', j)))
+
+
+# Discontinued shades (Alexandra Nov 27 2026: "8k we have 1 and its discontinued"): stay on hand with their count,
+# but are never ordered and never sent to Recount first.
+DISCONTINUED = {('Goldwell', 'Topchic Canister', '8K')}
+
+
+def discontinued(key):
+    return (key[0], key[1], code_of(key[2]) or key[2]) in {(b, l, code_of(c) or c) for b, l, c in DISCONTINUED}
 
 
 def par_of(key):
@@ -269,7 +281,7 @@ def order_lists(items):
     """items = [(key, counted, on hand, pace)] -> ({store: [(name, qty)]}, [recount names]); Color Renew left off."""
     stores, recount = {}, []
     for key, counted, oh, pace, *more in items:
-        if unused(*key):
+        if unused(*key) or discontinued(key):
             continue
         q = order_qty(key, oh, pace, counted, *more)
         if q is None:
