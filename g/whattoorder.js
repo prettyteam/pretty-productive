@@ -129,8 +129,11 @@
     /* Nov 12 2026 (Alexandra said yes): used on the SureTint scale but never counted, so the app can't track them yet.
        Once counted here, the daily color refresh starts tracking them from that count. */
     ((R&&R.countNew)||[]).filter(nm=>!NOUSE.test(nm)).forEach(nm=>toCount.push({nm,det:'New · used on the scale, never counted'}));
+    /* Alexandra, Nov 27 2026 ("my list still shows a lot to count ... like the whole thing"): a shade counted since the
+       weekly report (R.countedSince, from the daily color refresh) leaves this list, unless it says Recount or New */
+    const done=new Set(((R&&R.countedSince)||[]).map(nm=>shadeOf(nm).key));
     const merged=[];
-    toCount.forEach(t=>{const sh=shadeOf(t.nm),had=merged.find(m=>m.key===sh.key);
+    toCount.forEach(t=>{if(done.has(shadeOf(t.nm).key)&&!/^(Recount|New)/.test(t.det))return;const sh=shadeOf(t.nm),had=merged.find(m=>m.key===sh.key);
       if(!had){merged.push({...sh,ids:['c:'+norm(t.nm)],det:t.det});return}
       had.ids.push('c:'+norm(t.nm));
       if(sh.brand!=='Wella Blondor'&&sh.name.length<had.name.length)had.name=sh.name;   /* keep the plain "6N" name, not "6N Moroccan Sand" */
@@ -146,7 +149,7 @@
        whole list": closed by default, and it stays open after a Count is saved (the page redraws) */
     const countFirst=merged.length?'<details class="wmore" data-cf'+(window.__wtoCfOpen?' open':'')+'><summary>Count These First ('+merged.length+')</summary><div>'
       +'<p>'+(nRe?nRe+' say <b>Recount</b>: the app’s number looks off, so it needs a real count. ':'')+(nNew?nNew+' say <b>New</b>: used on the scale but never counted yet. ':'')
-      +'The rest are on the order list or used the most. For each one, count the shelf and the back room together, tap Count, type the total, and tap Save. Once a shade is counted, it usually drops off this list after the next morning’s update.</p>'
+      +'The rest are on the order list or used the most. For each one, count the shelf and the back room together, tap Count, type the total, and tap Save. Once a shade is counted, it drops off this list after the next update.</p>'
       +cfRows+'</div></details>':'';
     /* Color on hand (R.onHand, Nov 2 2026): [line, shade, counted, used since, on hand, per week, weeks left] */
     const OH=((R&&R.onHand)||[]).filter(r=>!NOUSE.test(r.join(' ')));
