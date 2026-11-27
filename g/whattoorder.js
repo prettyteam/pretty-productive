@@ -72,7 +72,9 @@
         const w=nm.split(/\s+/);if(w.length===1&&brand)nm=brand+' '+nm;else if(w.length>1)brand=w.slice(0,-1).join(' ');
         items.push({name:nm,qty:q})})})});
     return{items,notes}};
-  const qrow=(name,qty,detail)=>'<div class="wr"><span><b>'+esc(name)+'</b>'+(detail?'<small>'+esc(detail)+'</small>':'')+'</span>'+(qty?'<span class="qty">×'+esc(qty)+'</span>':'')+'</div>';
+  /* Alexandra Nov 27 2026: "we only order 20 vol goldwell in gallons" */
+  const unitOf=n=>/^Topchic 20 Volume$/i.test(String(n).trim())?'Gallons only (System Cream Developer 20 vol Gallon)':'';
+  const qrow=(name,qty,detail)=>'<div class="wr"><span><b>'+esc(name)+'</b>'+((detail||unitOf(name))?'<small>'+esc([detail,unitOf(name)].filter(Boolean).join(' · '))+'</small>':'')+'</span>'+(qty?'<span class="qty">×'+esc(qty)+'</span>':'')+'</div>';
   const note=t=>'<div class="wnote">'+esc(t)+'</div>';
   const storeCard=(st,rows,note)=>'<div class="wst"><div class="top"><h2>'+esc(st)+'</h2>'+(URL[st]?'<a href="'+esc(URL[st])+'" target="_blank" rel="noopener">Open Store</a>':'')+'</div>'+(note?'<p>'+esc(note)+'</p>':'')+rows.join('')+'</div>';
   const byStore=list=>{const g={};list.forEach(([st,r])=>(g[st]||=[]).push(r));
