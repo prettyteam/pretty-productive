@@ -264,6 +264,11 @@ def refresh(inv, stock_rows, order_rows, now=None, year=2026, usage_rows=None):
     # Topchic 20 Volume, so its use counts there and it never shows as its own item.
     usage_rows = [(list(r[:3]) + ['Topchic 20 Volume'] + list(r[4:])) if len(r) > 3 and str(r[1]).strip() == 'Goldwell'
                   and re.sub(r'\s+', '', str(r[3]).lower()) == 'systemcreamdeveloper20vol' else r for r in usage_rows]
+    # Same product under a second scale button (Nov 27 2026): Redken Developers "Shades EQ Processing Solution" is the
+    # Shades EQ "EQ Processing Solution" Rose counts.
+    usage_rows = [[r[0], 'Redken', 'Shades EQ', 'EQ Processing Solution'] + list(r[4:]) if len(r) > 3
+                  and str(r[2]).strip() == 'Redken Developers' and str(r[3]).strip() == 'Shades EQ Processing Solution'
+                  else r for r in usage_rows]
     ran = co.when(str(R.get('ran', '')).replace(', %d' % year, ''), year) or co.when(R.get('ran', ''), year)
     ran = (ran or now).replace(hour=12, minute=0)
     counts = co.latest_counts(stock_rows, year)
