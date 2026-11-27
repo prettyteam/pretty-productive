@@ -206,6 +206,7 @@ def daily_usage(rows, keys):
         if code(k[2]):
             short.setdefault(co.norm(k[0] + k[1] + code(k[2])), k)
     six_n = next((k for k in keys if k[1] == 'Colorance Canister' and k[2].split(' ')[0] == '6N'), None)
+    fast10 = {code(k[2]): k for k in keys if k[1] == 'Fast Color 10' and code(k[2])}
     use, days, miss = {}, set(), set()
     for r in rows or []:
         r = [str(x).strip() for x in list(r) + [''] * 8]
@@ -221,6 +222,8 @@ def daily_usage(rows, keys):
         man, brand, prod = r[1], r[2], r[3]
         if '6n@gb' in prod.lower() and six_n:         # Colorance 6N@GB isn't carried: those bowls are Colorance 6N
             k = six_n
+        elif brand == 'Technofruit' and 'coactivator' not in prod.lower() and fast10.get(code(prod) or ''):
+            k = fast10[code(prod)]                    # Technofruit color isn't carried (Rose buys Fast Color 10): same shade in Fast Color 10 (Nov 27 2026)
         else:
             k = full.get(co.norm(man + brand + prod)) or (code(prod) and short.get(co.norm(man + brand + code(prod))))
         if not k:
