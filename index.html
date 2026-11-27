@@ -2720,7 +2720,8 @@ const TIP_PCT=.2; let TIP_TOTAL='150';
    ($10 to start), or the girl taps "Service" and types the service total for the 20% tip, or "Any amount" */
 const TIP_LITE=['rose','kat','adriana','ashley-b'], TIP_PICKS=[5,10]; let TIP_PICK=10;
 const tipOf=t=>Math.round((parseFloat(String(t).replace(/[^0-9.]/g,''))||0)*TIP_PCT);
-function venmoTipUrl(v,amt){return amt?'https://venmo.com/'+encodeURIComponent(v)+'?txn=pay&amount='+amt+'&note='+encodeURIComponent('Thank you! ✨'):'https://venmo.com/u/'+encodeURIComponent(v)}
+/* Venmo app only opens venmo.com/u/... links from a scan, so tip amounts use /u/ too (fixed Nov 27 2026) */
+function venmoTipUrl(v,amt){return amt?'https://venmo.com/u/'+encodeURIComponent(v)+'?txn=pay&amount='+amt+'&note='+encodeURIComponent('Thank you! ✨'):'https://venmo.com/u/'+encodeURIComponent(v)}
 function qrEl(text){const d=h('div',{class:'tipqr'});d.innerHTML=qrSvg(text);return d}
 /* Team Activity (Alexandra, Oct 24 2026): opening Gratuity puts a line on the Team Hub's Team Activity tab for Pretty Life */
 function actLog(what){const st=(S.mine&&S.mine.staff)||{};if(!API()||!S.mine||!S.mine.name||actLog[what])return;actLog[what]=1;
