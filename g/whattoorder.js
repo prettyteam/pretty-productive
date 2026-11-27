@@ -158,8 +158,8 @@
     const upd=R&&R.refreshed&&window.WhatToOrder.saveCount?(()=>{const t=whenMs(R.refreshed),ask=askAt();
       const wait=ask&&t&&ask>t;
       return '<div class="wupd"><span><b>Color list updated '+esc(String(R.refreshed).replace(/,\s*\d{4}/,','))+'</b><small class="wupdm">'
-        +(wait?'You asked for an update at '+esc(clock(ask))+'. It takes about 20 minutes. Then close the app and open it again, and the time above changes.'
-          :'Done counting? Tap Update What To Order. In about 20 minutes, close the app and open it again, and the time above changes.')
+        +(wait?'You asked for an update at '+esc(clock(ask))+'. It can take up to an hour. Then close the app and open it again, and the time above changes.'
+          :'Done counting? Tap Update What To Order. It can take up to an hour. Then close the app and open it again, and the time above changes.')
         +'</small></span><button type="button" class="wgotb wupdb"'+(o.canCount&&!wait?'':' disabled')+'>'+(wait?'Asked':'Update What To Order')+'</button></div>'})():'';
     const countFirst=merged.length?'<details class="wmore" data-cf'+(window.__wtoCfOpen?' open':'')+'><summary>Count These First ('+merged.length+')</summary><div>'
       +'<p>'+(nRe?nRe+' say <b>Recount</b>: the app’s number looks off, so it needs a real count. ':'')+(nNew?nNew+' say <b>New</b>: used on the scale but never counted yet. ':'')
@@ -237,7 +237,7 @@
     const m=b.closest('.wupd').querySelector('.wupdm'); b.disabled=true; b.textContent='Asking';
     Promise.resolve(window.WhatToOrder.saveCount('req:update','Update What To Order',1))
       .then(()=>{const now=Date.now();try{localStorage.setItem('wtoAsk',String(now))}catch(x){}
-        b.textContent='Asked';m.textContent='Got it. The list is updating now with your counts. It takes about 20 minutes. Then close the app and open it again, and the time above changes.'})
+        b.textContent='Asked';m.textContent='Got it. The list is updating now with your counts. It can take up to an hour. Then close the app and open it again, and the time above changes.'})
       .catch(()=>{b.disabled=false;b.textContent='Update What To Order';m.textContent='Didn’t go through. Check the Wi-Fi and tap it again.'});
   });
   window.WhatToOrder=Object.assign(window.WhatToOrder||{},{html,storeOf,arrives});
