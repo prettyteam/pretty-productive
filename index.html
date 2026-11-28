@@ -2615,7 +2615,9 @@ function homeMenu(){
   return h('div',{class:'hmenu'},h('div',{class:'mhead'},'Menu'),h('div',{class:'cgrid'},cells));
 }
 addEventListener('popstate',e=>{const st=e.state;if(st&&st.pp&&EDITION==='stylist'&&S.mine){HOME_OPEN='';HUB_OPEN=st.hub||'';navGo(st.pp,true)}});
-/* Back on Home leaves for Pretty Life when she came from there; the logo goes Home (g/life.js, Oct 24 2026) */
+/* Back on Home leaves for Pretty Life when she came from there; the logo goes Home (g/life.js, Oct 24 2026).
+   Nov 28 2026: a page opened straight from Pretty Life (?tab=order) goes Back to Pretty Life, and Back to Home
+   replaces the history step so Back on Home can't bounce to the first page again (it used to loop). */
 const ppOut=()=>!!(window.PPLife&&PPLife.canOut());
 function staffNav(){
   const tabs=staffTabs(); if(tabs.length<2) return null;
@@ -2626,7 +2628,7 @@ function staffNav(){
   const scrim=NAV_OPEN?h('div',{class:'navscrim',onclick:()=>{NAV_OPEN=false;render()}}):null;
   return h('nav',{class:'nav menu','aria-label':'Sections'},scrim,sheet,
     h('div',{class:'navrow'},
-      (S.tab!==homeKey()||(history.state&&history.state.d>0)||ppOut()||(isHub()&&HUB_OPEN))?h('button',{type:'button',class:'navback',onclick:()=>{if(history.state&&history.state.d>0)history.back();else if(S.tab!==homeKey())navGo(homeKey());else if(isHub()&&HUB_OPEN){HUB_OPEN='';render()}else PPLife.out()}},'‹ Back'):h('span',{class:'navback'}),
+      (S.tab!==homeKey()||(history.state&&history.state.d>0)||ppOut()||(isHub()&&HUB_OPEN))?h('button',{type:'button',class:'navback',onclick:()=>{if(history.state&&history.state.d>0)history.back();else if(S.tab!==homeKey()){if(ppOut())PPLife.out();else{try{history.replaceState({pp:homeKey(),d:0},'',location.href)}catch(e){}navGo(homeKey(),true)}}else if(isHub()&&HUB_OPEN){HUB_OPEN='';render()}else PPLife.out()}},'‹ Back'):h('span',{class:'navback'}),
       h('button',{type:'button',class:'navhome','aria-label':'Home',title:'Home','aria-current':S.tab===homeKey()?'page':null,onclick:()=>{HOME_OPEN='';navGo(homeKey())}},h('img',{src:DISCO,alt:''})),
       h('button',{type:'button',class:'navbtn','aria-expanded':String(NAV_OPEN),'aria-controls':'navsheet',onclick:()=>{NAV_OPEN=!NAV_OPEN;render()}},
         h('span',{class:'navlbl'},NAV_OPEN?'Close ✕':'Menu ▾'))));
