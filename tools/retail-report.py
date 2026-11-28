@@ -4,7 +4,7 @@ Inputs are the row dumps ("cell|cell|...") of report 33 (All Manufacturers, as o
 (All Manufacturers, All Stylists) for Jan 1-today and for the last 30 days. Prints a JSON summary with
 total checks; upload report.csv to Drive folder 12caB_cJkBiE6_dm8rBqOeolmMOMUX650 as
 "Retail Inventory Report – <Month D, YYYY>" (text/csv converts to a Google Sheet). Apps-script Inventory.gs reads it."""
-import csv, math, io, json, datetime, argparse
+import csv, math, io, json, datetime, argparse, re
 ap = argparse.ArgumentParser()
 for a in ('stock', 'ytd', 'd30', 'out'): ap.add_argument('--' + a, required=True)
 A = ap.parse_args()
@@ -80,6 +80,9 @@ sold_missing = [(k, v['item'], v['q']) for k, v in ytd.items() if k not in skus]
 
 rows = []
 for r in stock:
+    # Alexandra Nov 28 2026: "remove the davines dry texture spray from app we dont carry that"
+    if re.search(r'(?i)dry texture', str(r.get('item', ''))) and re.search(r'(?i)davines', str(r.get('man', ''))):
+        continue
     if r['sku'] in NONPROD or r['man'] == 'GIFTCARD':
         continue
     y = ytd.get(r['sku'], {}); t = d30.get(r['sku'], {})
