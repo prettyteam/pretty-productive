@@ -116,4 +116,5 @@ function view(){
   return [h('div',{class:'hub exq'},head,fresh,build,card,acts,MSG?h('p',{class:'toast',style:'text-align:center'},MSG):null)];
 }
 window.extQuoteView=view;
+window.EXQ_GUIDE={hair:EXQ_HAIR,look:EXQ_LOOK,kit:EXQ_KIT,dep:EXQ_DEP};   // the Prices tab shows the same guide (Nov 19 2026)
 })();

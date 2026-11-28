@@ -41,6 +41,34 @@ function pricesView(){
   if(PR_SIDE==='svc'){
     const groups=PR_MENU.map(([g,items,note])=>{const shown=items.filter(([n])=>hit(n)||hit(g));if(!shown.length)return null;
       return h('section',{class:'card2'},h('span',{class:'lbl'},g),...shown.map(([n,p])=>row(prTitle(n),p)),note?h('small',{class:'soft'},note):null)});
+    /* Extension Cost Guide (Alexandra, Nov 19 2026): the Canva "Extension Consult & Cost Guide" numbers, the same ones the
+       Extension Quote card uses, so anyone can look up hair cost by method, length and color right here. */
+    const G=window.EXQ_GUIDE;
+    if(G&&(hit('extension')||hit('extensions')||hit('tape')||hit('hand-tied')||hit('hair cost')||hit('color pops'))){
+      const m=v=>v==null?'—':'$'+v, rg=([a,b])=>a===b?'$'+a:'$'+a+'–$'+b;
+      const th=(a,b,c)=>h('div',{class:'exg-r exg-h'},h('span',{},a),h('span',{},b),h('span',{},c));
+      const tr=(a,b,c)=>c===''?h('div',{class:'exg-r exg-2'},h('span',{},a),h('b',{class:'num'},b)):h('div',{class:'exg-r'},h('span',{},a),h('b',{class:'num'},b),h('b',{class:'num'},c));
+      const meth=Object.entries(G.hair).map(([k,L])=>h('div',{class:'exg-m'},h('h3',{},k),th('Length','Solid','Rooted'),...L.map(r=>tr(r[0],m(r[1]),m(r[2])))));
+      const BOX={Minimal:'1–1.5 boxes (some pieces left over)',Medium:'2 boxes',Full:'3–5 boxes'};
+      const look=G.look.map(([n,l,a,r])=>h('div',{class:'exg-r'},h('span',{},n,h('small',{class:'soft',style:'display:block'},BOX[n]||'')),h('b',{class:'num'},rg(a)),h('b',{class:'num'},rg(r))));
+      const hasExt=typeof staffTabs==='function'&&staffTabs().some(x=>x[0]==='ext');
+      /* Alexandra, Nov 22 2026: guests are quoted per LOOK, never per box, so the card leads with the look. */
+      const card=h('section',{class:'card2 exg'},h('span',{class:'lbl'},'Extension Cost Guide'),
+        h('div',{class:'exg-look'},h('h3',{},'Quote Per Look, Never Per Box'),
+          h('ol',{},h('li',{},'Pick her look (see below).'),h('li',{},'Add the hair: the price per box times the boxes her look needs.'),
+            h('li',{},'Add the application for that look, plus the $'+G.kit+' Home Maintenance Kit.')),
+          h('small',{class:'soft'},'Give her one price for her whole look. Never tell a guest a price per box.')),
+        h('div',{class:'exg-m'},h('h3',{},'1. Pick The Look'),th('Look','New hair','Re-app'),...look,
+          tr('Tape Row, 1 row','$250',''),tr('Tape Row, 2 rows','$300–$350',''),tr('Hand-Tied, per row','$200–$250','')),
+        h('div',{class:'exg-m'},h('h3',{},'2. Hair For The Look'),h('small',{class:'soft'},'Price per box, for your math only. Times it by the boxes her look needs. A solid color uses Solid. A two-tone color (like 7NA/11N) uses Rooted. The color code does not change the price.')),
+        ...meth,
+        h('div',{class:'exg-m'},h('h3',{},'Color Pops'),tr('1 sandwich','$25',''),tr('Bundle of 6','$125',''),tr('Application','$0–$100',''),tr('Re-application','$50–$150','')),
+        h('div',{class:'exg-m'},h('h3',{},'Good To Know'),tr('Home Maintenance Kit','$'+G.kit,''),tr('Deposit to order new hair','$'+G.dep,''),tr('Extension removal','$75','')),
+        h('small',{class:'soft'},'A suggested guideline. The final price depends on the look she wants.'),
+        hasExt?h('button',{type:'button',class:'obtn',style:'width:100%',onclick:()=>{S.tab='ext';render();window.scrollTo(0,0)}},'Build An Extension Quote'):null);
+      const i=groups.findIndex(g=>g&&g.textContent.startsWith('Extensions'));
+      groups.splice(i>=0?i+1:groups.length,0,card);
+    }
     body=groups.some(Boolean)?groups:[h('p',{class:'soft',style:'text-align:center'},'Nothing matches “'+PR_Q+'”.')];
     body.push(h('small',{class:'soft',style:'text-align:center'},'Starting prices from our website menu. “+” means starting at; final price depends on time, length and product.'));
   } else {
