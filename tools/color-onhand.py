@@ -252,7 +252,8 @@ PAR = [  # (line test, floor, {shade: floor})
     # Alexandra Nov 28 2026: Colorance Lotion = 7 vol cream developer, "we need 6 in stock"
     (lambda l, s: re.sub(r'\s+', '', s.lower()) == 'systemcreamdeveloper7vol', 6, {}),
     # Alexandra Nov 27 2026: "its ok to have 5 blondor from cosmoprof in stock": keep 5 tubs of Blondor Multi, no more
-    (lambda l, s: l == 'Wella Lighteners' and re.match(r'(?i)blondor multi', s) is not None, 5, {}),
+    # Alexandra Nov 28 2026: "we can keep 6 full tubs in stock" (replaces 5)
+    (lambda l, s: l == 'Wella Lighteners' and re.match(r'(?i)blondor multi', s) is not None, 6, {}),
 ]
 STORE = {'Redken': 'SalonCentric', 'Goldwell': 'DePasquale', 'Alter Ego': 'DePasquale', 'Wella': 'CosmoProf'}
 
