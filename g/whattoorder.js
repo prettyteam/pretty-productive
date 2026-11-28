@@ -193,10 +193,11 @@
         key=shadeOf((f==='Developers'?'':String(l).replace(/^(Redken|Goldwell|Wella)\s+/,'')+' ')+sh).key,
         ord=q==null?(reQ.has(key)?-1:(ordQ[key]||0)):+q;
       if(!(+pw>=0.05)&&!(+oh>0)&&!ord&&!(+way>0))return;   /* not on the shelf, not used, not ordered: not carried */
-      (fams[f]||=[]).push({nm,oh:+oh||0,keep,way:+way||0,pw:+pw||0,ord,sh:shadeOf(f+' '+sh),fid:fid||'',cnt:fid?C['b:'+fid]:null})});
+      (fams[f]||=[]).push({nm,oh:Math.max(0,+oh||0),keep,way:+way||0,pw:+pw||0,ord,sh:shadeOf(f+' '+sh),fid:fid||'',cnt:fid?C['b:'+fid]:null})});
     const famCards=Object.keys(fams).sort((a,b)=>((FAMS.indexOf(a)+1)||99)-((FAMS.indexOf(b)+1)||99)||a.localeCompare(b)).map(f=>{
       const rs=fams[f].sort((a,b)=>f==='Developers'?a.nm.localeCompare(b.nm):((a.sh.lvl?0:1)-(b.sh.lvl?0:1))||(SHADE_DIR(f)*(b.sh.lvl-a.sh.lvl))||a.sh.code.localeCompare(b.sh.code)||a.nm.localeCompare(b.nm));
-      const nOrd=rs.filter(r=>r.ord>0).length,nRe=rs.filter(r=>r.ord<0).length;
+      /* Nov 28 2026: the brand badge counts bottles (like the store totals), not shades */
+      const nOrd=rs.reduce((t,r)=>t+(r.ord>0?r.ord:0),0),nRe=rs.filter(r=>r.ord<0).length;
       return '<details class="wmore wfam"><summary>'+esc(f)+' ('+rs.length+')'+(nOrd?'<span class="q wfn">'+nOrd+' to order</span>':'')+'</summary><div>'
         +'<div class="wfr wfhd"><span>Shade</span><span>In stock</span><span>Keep</span><span>To order</span></div>'
         +rs.map(r=>{const sub=[r.way?fmt(r.way)+' on the way':'',r.pw>=0.05?'uses about '+fmt(r.pw)+' a week':''].filter(Boolean).join(' · ');
