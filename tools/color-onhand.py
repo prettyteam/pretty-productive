@@ -49,9 +49,16 @@ def latest_counts(rows, year):
         except (TypeError, ValueError):
             continue
         d = when(r[0], year)
-        if d and (r[3] not in out or d > out[r[3]][1]):
-            out[r[3]] = (n, d)
+        cid = same_item(r[3])
+        if d and (cid not in out or d > out[cid][1]):
+            out[cid] = (n, d)
     return out
+
+
+def same_item(cid):
+    """One id per real item. Alexandra Nov 28 2026: "hi lift blonde 11V is a can thats goldwell topchic", so Rose's
+    'Topchic Tubes High Blond' count is the same cans the scale logs as 'Topchic Canister High Blond'."""
+    return re.sub(r'^b:Goldwell\|Topchic Tubes High Blond\|', 'b:Goldwell|Topchic Canister High Blond|', str(cid))
 
 
 def item_name(key):
@@ -87,7 +94,7 @@ def code_of(shade):
 def backbar_id(key, counts):
     """Stock Counts Backbar id for a SureTint (brand, line, shade), or None. Exact name first; then the same brand, line
     and shade code (leading zeros ignored: 10VV = 010VV); then, only when there is exactly one, the same brand, the same
-    line family (first word, e.g. 'Topchic Canister High Blond' 11V = the shelf's 'Topchic Tubes High Blond' 11V) and
+    line family (first word, e.g. 'Topchic Canister High Blond' = 'Topchic Canister Blonding Cream') and
     code. Found Nov 11 2026: these name differences kept counted shades under NOT COUNTED YET."""
     b, l, s = key
     exact = 'b:%s|%s|%s' % key
