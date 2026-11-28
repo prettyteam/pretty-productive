@@ -195,6 +195,37 @@ def count_name(man, line, prod):
     return line + ' ' + prod
 
 
+def merge_same_shade(rows, keys):
+    """One row per shade (Nov 27 2026): SureTint names a shade '10VV Lavender Ice' and the shelf count '010VV Lavender
+    Ice', and the weekly report kept both, so the list ordered 10VV x7 next to 010VV x1 with 5 on the shelf. Rows with the
+    same brand, line and shade code (leading zeros ignored) become one: the shelf's name (the one with a count), the
+    newest count, use, on hand and weekly pace added together."""
+    out, at = [], {}
+    for r, k in zip(rows, keys):
+        if re.sub(r'\s+', ' ', str(k[2]).strip().lower()) == 'high lift pearl ash':   # same as Ash Pearl (Nov 27 2026)
+            k = (k[0], k[1], 'High Lift Ash Pearl') + tuple(k[3:])
+            r = [r[0], 'High Lift Ash Pearl'] + list(r[2:])
+        c = co.code_of(k[2])
+        g = (k[0], k[1], c) if c else (k[0], k[1], re.sub(r'\s+', ' ', str(k[2]).strip().lower()))
+        if g is None or g not in at:
+            if g is not None:
+                at[g] = len(out)
+            out.append([list(r), k])
+            continue
+        i = at[g]
+        a, ka = out[i]
+        b = list(r) + [None] * 7
+        a = a + [None] * (7 - len(a))
+        keep_b = (a[2] in (None, 0, 0.0)) and b[2] not in (None, 0, 0.0)
+        name_k = k if keep_b or (k[2].startswith('0') and not ka[2].startswith('0') and a[2] in (None, 0, 0.0)) else ka
+        num = lambda x: float(x or 0)
+        cnt = b[2] if keep_b else a[2]
+        used, oh, pace = num(a[3]) + num(b[3]), num(a[4]) + num(b[4]), num(a[5]) + num(b[5])
+        out[i] = [[a[0], name_k[2], cnt, round(used, 2), round(oh, 2), round(pace, 2),
+                   round(oh / pace, 1) if pace > 0 else None], name_k]
+    return [r for r, _ in out], [k for _, k in out]
+
+
 def daily_usage(rows, keys):
     """({(key, date): units}, {weighed dates}, [unmatched products]) from Scale Usage rows."""
     full = {co.norm(k[0] + k[1] + k[2]): k for k in keys}
@@ -206,6 +237,7 @@ def daily_usage(rows, keys):
         if code(k[2]):
             short.setdefault(co.norm(k[0] + k[1] + code(k[2])), k)
     six_n = next((k for k in keys if k[1] == 'Colorance Canister' and k[2].split(' ')[0] == '6N'), None)
+    fast10 = {code(k[2]): k for k in keys if k[1] == 'Fast Color 10' and code(k[2])}
     use, days, miss = {}, set(), set()
     for r in rows or []:
         r = [str(x).strip() for x in list(r) + [''] * 8]
@@ -221,6 +253,8 @@ def daily_usage(rows, keys):
         man, brand, prod = r[1], r[2], r[3]
         if '6n@gb' in prod.lower() and six_n:         # Colorance 6N@GB isn't carried: those bowls are Colorance 6N
             k = six_n
+        elif brand == 'Technofruit' and 'coactivator' not in prod.lower() and fast10.get(code(prod) or ''):
+            k = fast10[code(prod)]                    # Technofruit color isn't carried (Rose buys Fast Color 10): same shade in Fast Color 10 (Nov 27 2026)
         else:
             k = full.get(co.norm(man + brand + prod)) or (code(prod) and short.get(co.norm(man + brand + code(prod))))
         if not k:
@@ -252,8 +286,29 @@ def used_between(k, start, end, pace, use, days):
 def refresh(inv, stock_rows, order_rows, now=None, year=2026, usage_rows=None):
     now = now or datetime.now()
     R = inv['report']
+    # Technofruit color isn't carried (Rose buys Fast Color 10): scale bowls logged under Technofruit are the same
+    # Fast Color 10 shade, even one the list has never seen (Alexandra Nov 27 2026: "yes for 3/0 fast color 10"),
+    # so a new one shows up in Count These First as New.
+    usage_rows = [(list(r[:2]) + ['Fast Color 10'] + list(r[3:])) if len(r) > 3 and str(r[2]).strip() == 'Technofruit'
+                  and 'coactivator' not in str(r[3]).lower() else r for r in usage_rows or []]
+    # Alexandra Nov 27 2026: the scale's "System Cream Developer 20vol" is the same Goldwell 20 vol gallon as
+    # Topchic 20 Volume, so its use counts there and it never shows as its own item.
+    usage_rows = [(list(r[:3]) + ['Topchic 20 Volume'] + list(r[4:])) if len(r) > 3 and str(r[1]).strip() == 'Goldwell'
+                  and re.sub(r'\s+', '', str(r[3]).lower()) == 'systemcreamdeveloper20vol' else r for r in usage_rows]
+    # Same product under a second scale button (Nov 27 2026): Redken Developers "Shades EQ Processing Solution" is the
+    # Shades EQ "EQ Processing Solution" Rose counts.
+    usage_rows = [[r[0], 'Redken', 'Shades EQ', 'EQ Processing Solution'] + list(r[4:]) if len(r) > 3
+                  and str(r[2]).strip() == 'Redken Developers' and str(r[3]).strip() == 'Shades EQ Processing Solution'
+                  else r for r in usage_rows]
+    # Alexandra Nov 27 2026: Blonde Idol High Lift "Pearl Ash" and "Ash Pearl" are the same lightener (two scale
+    # buttons), so both count as "High Lift Ash Pearl".
+    usage_rows = [list(r[:3]) + ['High Lift Ash Pearl'] + list(r[4:]) if len(r) > 3 and str(r[1]).strip() == 'Redken'
+                  and str(r[2]).strip() == 'Blonde Idol' and re.sub(r'\s+', ' ', str(r[3]).strip().lower()) == 'high lift pearl ash'
+                  else r for r in usage_rows]
     ran = co.when(str(R.get('ran', '')).replace(', %d' % year, ''), year) or co.when(R.get('ran', ''), year)
     ran = (ran or now).replace(hour=12, minute=0)
+    # A count saved on the old "Pearl Ash" line goes to "Ash Pearl" too.
+    stock_rows = [[re.sub(r'(?i)high lift pearl ash', 'High Lift Ash Pearl', str(c)) for c in r] for r in stock_rows or []]
     counts = co.latest_counts(stock_rows, year)
     # Always start from the weekly report's own rows (kept in R.base on the first refresh), so running daily never
     # subtracts the same use twice or adds the same delivery twice. A new weekly report has a new 'ran' and resets it.
@@ -274,6 +329,7 @@ def refresh(inv, stock_rows, order_rows, now=None, year=2026, usage_rows=None):
     extra, nocount = counted_extras(keys, counts, products, R.get('usage4'), scale_products=scale)
     rows = rows + extra
     keys = keys + [(*key_of(r[0]), r[1]) for r in extra]
+    rows, keys = merge_same_shade(rows, keys)
     # color Rose orders that the list has never seen (Nov 12 2026: Colorance 8BA, 9BA, 6A, Topchic 9GB): counted on
     # Count These First -> joins the list from that count; not counted yet -> goes on Count These First
     # Not counted yet but on order (Rose, Nov 12 2026: "she already ordered those"): start at 0, so the boxes are added
@@ -301,7 +357,22 @@ def refresh(inv, stock_rows, order_rows, now=None, year=2026, usage_rows=None):
                 use_ran = wk_end
         except ValueError:
             pass
+    # Keep numbers typed in the app (Stock Counts id 'k:Brand|Line|Shade', newest wins): exact keep for that shade.
+    ov = {}
+    for r in stock_rows:
+        if len(r) < 6 or not str(r[3]).startswith('k:') or str(r[3]).count('|') != 2:
+            continue
+        try:
+            n = int(float(r[5]))
+        except (TypeError, ValueError):
+            continue
+        d = co.when(r[0], year) or datetime(2000, 1, 1)
+        if r[3][2:] not in ov or d >= ov[r[3][2:]][1]:
+            ov[r[3][2:]] = (n, d)
+    co.KEEP_OV.clear()
+    co.KEEP_OV.update({k: ov['%s|%s|%s' % k][0] for k in keys if '%s|%s|%s' % k in ov})
     new_rows, items, fresh, added = [], [], 0, 0
+    counted_names = []      # counted since the weekly report: off Count These First (Alexandra Nov 27 2026)
     for r, k in zip(rows, keys):
         line, shade, counted, used, oh, pace, wl = (list(r) + [None] * 8)[:7]
         pace = float(pace or 0)
@@ -315,20 +386,34 @@ def refresh(inv, stock_rows, order_rows, now=None, year=2026, usage_rows=None):
         recv = got(k, since) if since else 0
         added += recv
         now_oh = round(base - extra_use + recv, 2)
-        new_rows.append([line, shade, counted, round(float(used or 0) + extra_use, 2), now_oh, round(pace, 2),
-                         round(now_oh / pace, 1) if pace > 0 else None])
         fresh_count = bool(st) and (now - st[1]).days <= 7
+        # Alexandra Nov 27 2026: a drop-down per brand shows every shade with on hand, the amount to keep, and the
+        # suggested order, so each row also carries [keep, on the way, order] (order -1 = recount first).
+        par = co.par_of(k)
+        if co.unused(*k) or co.discontinued(k):
+            keep, q = 0, 0
+        else:
+            keep = co.KEEP_OV[k] if k in co.KEEP_OV else (par if k[1] == 'Wella Lighteners' else max(0, math.ceil(round(max(par, co.WEEKS * pace) - 0.25, 2)))) if par is not None else (math.ceil(round(6 * pace, 2)) if pace > 0 else 0)
+            q = co.order_qty(k, now_oh + way.get(k, 0), pace, counted, fresh_count)
+        new_rows.append([line, shade, counted, round(float(used or 0) + extra_use, 2), now_oh, round(pace, 2),
+                         round(now_oh / pace, 1) if pace > 0 else None, keep, round(way.get(k, 0), 2), -1 if q is None else q,
+                         '%s|%s|%s' % k])   # [10] id the app saves a typed Keep ('k:') or count ('b:') under
         items.append((k, counted, now_oh + way.get(k, 0), pace, fresh_count))
+        if st and st[1] > ran and not co.unused(*k):
+            counted_names.append(co.item_name(k))
     stores, recount = co.order_lists(items)
+    R['countedSince'] = sorted(set(counted_names))
     order = []
     for s in ('DePasquale', 'SalonCentric', 'CosmoProf'):
         if stores.get(s):
             order.append([s, ', '.join('%s ×%d' % (n, q) for n, q in stores[s]) + '. Skip anything already on order.'])
     for s, x in R['base']['order']:
-        if s not in COLOR_STORES or (s == 'CosmoProf' and not stores.get('CosmoProf')):
+        # Nov 27 2026: the weekly report's own CosmoProf line is no longer kept when the counts say nothing is needed
+        # (it kept "Blondor ×2" on the list after Alexandra counted 5 on the shelf). Blondor is tracked like the rest.
+        if s not in COLOR_STORES:
             order.append([s, x])
     if recount:
-        order.append(['Recount first', 'Used more than was counted, so these were restocked. Count them before ordering: '
+        order.append(['Recount first', 'The scale used more of these than the last count showed. A new box likely came in that was never logged. Count them before ordering: '
                       + ', '.join(recount) + '.'])
     # No order holds (Alexandra, Nov 16 2026: "i want all her stuff to update based on what all reports show and what her
     # counts show"). The Nov 12 hold is gone for good; any leftover R.hold is dropped so the lists always follow the reports and counts.

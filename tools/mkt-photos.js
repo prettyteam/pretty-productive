@@ -85,7 +85,10 @@
       var em=$('o-empty');if(!em.dataset.t)em.dataset.t=em.textContent;
       em.textContent=cur==='team'?'Each person gets their own album here as soon as they add a before and after in My Work in the team app.':mode==='videos'?'No videos in this album yet.':em.dataset.t;
       em.hidden=mine.length>0||kids.length>0;}
-    $('upbar').hidden=!ready||cur==='team'||mode==='videos';var canV=!!(MK._state&&MK._state.vid);var vb=box('o-vbar','pupbar','div',$('upbar'));
+    $('upbar').hidden=!ready||cur==='team'||mode==='videos';var canV=!!(MK._state&&MK._state.vid);
+    // Dom, Nov 27 2026: videos would not upload from the Photos tab because its picker only took photos. When the server takes
+    // videos, the Photos tab picker takes them too, and videos go to this album's Videos tab.
+    if($('pick'))$('pick').accept=canV?'image/*,video/*':'image/*';var vb=box('o-vbar','pupbar','div',$('upbar'));
     if(!vb.dataset.on){vb.dataset.on=1;vb.innerHTML='<label class="pupbtn">Add Photos &amp; Videos<input type="file" id="vpick" accept="image/*,video/*" multiple></label><p class="pdrophint">Pick as many as you want at once. On a computer, you can also drag a whole group of photos and videos onto this page. Videos show here. Photos go to this album on the Photos tab.</p><p id="vmsg" role="status" aria-live="polite"></p>';
       // On an iPhone the page sees nothing until the phone has every picked video ready, which can take minutes, and a picked video
       // that is only in iCloud can come back as nothing at all. Say so out loud instead of staying blank (Alexandra, Nov 12 2026).
@@ -252,7 +255,9 @@
   navState();
 
   $('pick').addEventListener('change',function(){var f=[].slice.call(this.files||[]);
-    if(!f.length){msg('Your phone didn\u2019t hand over any photos. With a very big album, pick about 200 at a time.');return}uploadAll(f)});
+    if(!f.length){msg('Your phone didn\u2019t hand over any photos. With a very big album, pick about 200 at a time.');return}
+    if(f.some(isVid)&&MK._state&&MK._state.vid){var nv=f.filter(isVid).length;this.value='';msg('Got '+f.length+' file'+(f.length===1?'':'s')+'. Videos go to the Videos tab of this album. Starting\u2026');if(window.TUp)TUp.say('Got '+nv+' video'+(nv===1?'':'s')+(f.length>nv?' and '+(f.length-nv)+' photo'+(f.length-nv===1?'':'s'):'')+'. Starting\u2026','busy');addMixed(f);return}
+    uploadAll(f)});
   // An iPhone gets every picked photo ready before the page sees any, which can take minutes for a whole album (Oct 24 2026).
   $('pick').addEventListener('click',function(){if(!busy)msg('Pick your photos. If you choose a lot, your phone may take a few minutes to get them ready before they start.')});
   $('pick').addEventListener('cancel',function(){if(!busy)msg('')});

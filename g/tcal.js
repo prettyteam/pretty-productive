@@ -15,6 +15,9 @@ const dOf=s=>{const [y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d)};
 const t12=v=>{if(!v)return'';const [H,M]=v.split(':').map(Number);return (H%12||12)+(M?':'+pad(M):'')+(H<12?' AM':' PM')};
 const when=e=>(e.start?t12(e.start)+(e.end?' – '+t12(e.end):''):'All day');
 const longDay=s=>dOf(s).toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
+// Links in details turn into a tap-able button (Nov 22: holiday party invitation + RSVP page)
+const det=t=>{const parts=String(t).split(/(https?:\/\/[^\s]+)/);
+  return h('p',{class:'tc-det'},parts.map((p,i)=>i%2?h('a',{class:'tdlink tc-link',href:p,target:'_blank',rel:'noopener'},/rsvp/i.test(parts[i-1]||'')?'Open The Invitation & RSVP':'Open The Link'):p.replace(/:\s*$/,'')))};
 function gLink(e){
   const d=e.date.replace(/-/g,''), tt=v=>v.replace(':','')+'00';
   let dates;
@@ -35,7 +38,7 @@ function evRow(e,o){
       h('span',{class:'tc-kind'},e.kind),
       h('b',{class:'tc-title'},e.title),
       h('small',{},dt.toLocaleDateString('en-US',{weekday:'long'})+' · '+when(e)+(e.where?' · '+e.where:'')),
-      e.details?h('p',{class:'tc-det'},e.details):null,
+      e.details?det(e.details):null,
       o&&o.admin?h('small',{class:'tc-who'},'For: '+e.forNames+(e.ask?' · Accepted: '+(e.yes.length?e.yes.join(', '):'nobody yet')+(e.no.length?' · Can’t: '+e.no.join(', '):'')+(e.waiting.length?' · Waiting on: '+e.waiting.join(', '):''):'')):null,
       h('div',{class:'tc-acts'},
         !o||!o.admin?status:null,
@@ -48,7 +51,7 @@ function inviteBox(e,send){
     h('b',{class:'tc-title',style:'font-size:20px'},e.title),
     h('span',{},longDay(e.date)+' · '+when(e)),
     e.where?h('span',{class:'soft'},e.where):null,
-    e.details?h('p',{class:'tc-det'},e.details):null,
+    e.details?det(e.details):null,
     h('small',{class:'soft'},'From '+(e.by||'Alexandra')),
     h('div',{class:'tc-yn'},
       h('button',{class:'obtn sm',disabled:TC.busy?'':null,onclick:()=>send({type:'calans',id:e.id,answer:'yes'},'Thank you! It’s on your calendar.')},'Accept'),

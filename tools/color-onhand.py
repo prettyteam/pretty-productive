@@ -49,9 +49,16 @@ def latest_counts(rows, year):
         except (TypeError, ValueError):
             continue
         d = when(r[0], year)
-        if d and (r[3] not in out or d > out[r[3]][1]):
-            out[r[3]] = (n, d)
+        cid = same_item(r[3])
+        if d and (cid not in out or d > out[cid][1]):
+            out[cid] = (n, d)
     return out
+
+
+def same_item(cid):
+    """One id per real item. Alexandra Nov 28 2026: "hi lift blonde 11V is a can thats goldwell topchic", so Rose's
+    'Topchic Tubes High Blond' count is the same cans the scale logs as 'Topchic Canister High Blond'."""
+    return re.sub(r'^b:Goldwell\|Topchic Tubes High Blond\|', 'b:Goldwell|Topchic Canister High Blond|', str(cid))
 
 
 def item_name(key):
@@ -66,6 +73,9 @@ def item_name(key):
         return 'Topchic ' + tok
     if l == 'Fast Color 10':
         return 'Alter Ego 10-minute ' + tok
+    if l == 'Technofruit' and 'coactivator' in s.lower():   # the developer mixed with Fast Color 10 (Nov 27 2026)
+        v = re.search(r'(\d+)\s*vol', s, re.I)
+        return 'Alter Ego Fast 10 Coactivator' + (' %s Vol' % v.group(1) if v else '')
     if l == 'Technofruit' and par_of(key):
         return 'Alter Ego Technofruit ' + tok
     return s
@@ -84,7 +94,7 @@ def code_of(shade):
 def backbar_id(key, counts):
     """Stock Counts Backbar id for a SureTint (brand, line, shade), or None. Exact name first; then the same brand, line
     and shade code (leading zeros ignored: 10VV = 010VV); then, only when there is exactly one, the same brand, the same
-    line family (first word, e.g. 'Topchic Canister High Blond' 11V = the shelf's 'Topchic Tubes High Blond' 11V) and
+    line family (first word, e.g. 'Topchic Canister High Blond' = 'Topchic Canister Blonding Cream') and
     code. Found Nov 11 2026: these name differences kept counted shades under NOT COUNTED YET."""
     b, l, s = key
     exact = 'b:%s|%s|%s' % key
@@ -116,6 +126,10 @@ def start_count(key, counts):
     found = [(*counts[bid], 'backbar')] if bid else []
     # desk names use the short shade ('Shades EQ 09V'); Backbar keys carry the full name ('09V Platinum Iced')
     ids = {'c:' + norm(x + ' ' + y) for x in (l, b + ' ' + l, b, l.split(' ')[0], '') for y in {s, s.split(' ')[0]}} | {'c:' + norm(item_name(key))}
+    # leading zeros ignored on desk counts too (Nov 27 2026: Rose's "Shades EQ 10P" count is the shelf's 010P)
+    c, nm = code_of(s), item_name(key)
+    if c and ' ' in nm:
+        ids |= {'c:' + norm(nm.rsplit(' ', 1)[0] + ' ' + z + c) for z in ('', '0')}
     for cid in ids:
         if cid in counts:
             found.append((*counts[cid], 'desk'))
@@ -214,24 +228,66 @@ def on_hand(keys, counts, used_since, pace, received_since=None):
 # filled to WEEKS weeks of use. Fast shades get more, slow shades get nothing until they run low.
 # Developers and other backbar keep the weeks-of-pace rule (under 3 weeks left: order 6 weeks of pace - on hand).
 # Not carried, so never ordered: Wella Color Renew, Colorance 6N@GB (its bowls count as Colorance 6N), Colorance NN
-# shades (Rose buys NN in Topchic) and Alter Ego Technofruit color (Rose buys Fast Color 10) (Nov 12 2026).
+# shades (Rose buys NN in Topchic) and Alter Ego Technofruit color (Rose buys Fast Color 10) (Nov 12 2026), and
+# Colorance 3NA and 4R, which aren't real Colorance colors (Nov 27 2026). Colorance 4NN IS carried (Nov 27 2026).
+# Topchic 8G and 8GB ARE carried: 3 of each on the wall by their caps (Alexandra Nov 27 2026: count by the cap, not the shelf label). Colorance 9N IS carried (Nov 27 2026).
 WEEKS = 6
 PAR = [  # (line test, floor, {shade: floor})
-    (lambda l, s: l == 'Shades EQ' and s != 'EQ Processing Solution' and not s.startswith('Bonder'), 1, {'09NB': 6, '09M': 6, '010VV': 6, '07M': 6}),
+    (lambda l, s: l == 'Shades EQ' and s != 'EQ Processing Solution' and not s.startswith('Bonder'), 1, {'09NB': 6, '09M': 6, '010VV': 6, '07M': 6,
+        '08GN': 2,   # Rose, Nov 27 2026: keep 2 of 08GN Ivy even though the scale shows little use
+        '04NCH': 2,
+        '09AA': 2,   # Alexandra, Nov 27 2026: keep 2 of 09AA Papaya
+        '09V': 3,
+        '08GI': 3}),   # Alexandra, Nov 27 2026: keep 3 of 08GI St. Barths   # Alexandra, Nov 27 2026: keep 3 of 09V Platinum Ice at all times   # Rose, Nov 27 2026: keep 2 of 04NCH Dark Chocolate (Bonder Inside, SalonCentric P2417502)
+    # Alexandra Nov 27 2026: "we should have 6 in stock always" (Shades EQ Processing Solution)
+    (lambda l, s: l == 'Shades EQ' and s == 'EQ Processing Solution', 6, {}),
     (lambda l, s: l.startswith('Colorance Canister'), 1, {'6A': 3, '2A': 3, '5NB': 3, '7NA': 3, '6N': 3}),
     (lambda l, s: l.startswith('Topchic Canister') and l != 'Topchic Canister Blonding Cream', 1, {'4NN': 3, '5NN': 3, '6NN': 3, '7NN': 3, '4G': 3}),
     (lambda l, s: l in ('Fast Color 10', 'Technofruit') and 'Coactivator' not in s, 1, {}),
+    # Alexandra Nov 27 2026: "its ok to have 5 blondor from cosmoprof in stock": keep 5 tubs of Blondor Multi, no more
+    (lambda l, s: l == 'Wella Lighteners' and re.match(r'(?i)blondor multi', s) is not None, 5, {}),
 ]
 STORE = {'Redken': 'SalonCentric', 'Goldwell': 'DePasquale', 'Alter Ego': 'DePasquale', 'Wella': 'CosmoProf'}
 
 
 def unused(*t):
     j = ' '.join(map(str, t)).lower()
-    return ('color renew' in j or '6n@gb' in j or bool(re.search(r'colorance canister\S* 0*\d+nn\b', j))
-            or ('technofruit' in j and 'coactivator' not in j))
+    return ('color renew' in j or '6n@gb' in j or bool(re.search(r'colorance canister\S* (?!0*4nn\b)0*\d+nn\b', j))
+            or ('technofruit' in j and 'coactivator' not in j)
+            # Alexandra Nov 27 2026: Colorance 3NA, 4R and 7RO aren't real Colorance colors (7RO is Topchic): never count or order them
+            or bool(re.search(r'colorance canister\S* 0*(3na|4r|7ro)\b', j))
+            # Alexandra Nov 27 2026: "5BM isnot a color" (Topchic 8G/8GB were hidden here too, but they are on the wall: un-hidden later Nov 27)
+            or bool(re.search(r'topchic canister\S* 0*(5bm)\b', j))
+            # Alexandra Nov 27 2026: same gallon as Topchic 20 Volume (its scale use is moved there in color-refresh.py)
+            or bool(re.search(r'system cream developer ?20 ?vol', j))
+            # Alexandra Nov 27 2026: the scale's "Generic Developer" button has no volume, and the general developers
+            # are counted by volume (10vol, 20vol), so it's never counted or ordered on its own
+            or bool(re.search(r'general developers generic developer', j))
+            or 'redken developers shades eq processing solution' in j
+            # Alexandra Nov 27 2026: "so can the silk lift condition developer" (10 and 20 vol): take it off
+            or 'silk lift condition' in j
+            # Alexandra Nov 27 2026: take off Redken 20 VOL Blonde Idol and 20 VOL PRO developers
+            or bool(re.search(r'redken developers 20 vol (blonde idol|pro)\b', j)))
+
+
+# Discontinued shades (Alexandra Nov 27 2026: "8k we have 1 and its discontinued"): stay on hand with their count,
+# but are never ordered and never sent to Recount first.
+DISCONTINUED = {('Goldwell', 'Topchic Canister', '8K')}
+
+
+def discontinued(key):
+    return (key[0], key[1], code_of(key[2]) or key[2]) in {(b, l, code_of(c) or c) for b, l, c in DISCONTINUED}
+
+
+# Keep numbers Alexandra or Rose typed in the app's Full Color List (Nov 27 2026: "an option for us to adjust those
+# counts when we want"). Saved on Stock Counts as 'k:Brand|Line|Shade'; color-refresh.py fills this per run.
+# A typed Keep is exact: the list orders up to that number, not up to 6 weeks of use.
+KEEP_OV = {}
 
 
 def par_of(key):
+    if key in KEEP_OV:
+        return KEEP_OV[key]
     b, l, s = key
     c = code_of(s)
     for test, dflt, ex in PAR:
@@ -239,6 +295,18 @@ def par_of(key):
             # leading zeros ignored: SureTint's 10VV gets Rose's 010VV par
             return next((v for x, v in ex.items() if c and code_of(x) == c), ex.get(s.split(' ')[0], dflt))
     return None
+
+
+def set_par(key):
+    """True when Alexandra or Rose named this shade's own number in PAR (not just the brand's floor): always carried."""
+    if key in KEEP_OV:
+        return True
+    b, l, s = key
+    c = code_of(s)
+    for test, dflt, ex in PAR:
+        if test(l, s):
+            return any(c and code_of(x) == c for x in ex) or s.split(' ')[0] in ex
+    return False
 
 
 def order_qty(key, oh, pace, counted=None, fresh=True):
@@ -253,9 +321,9 @@ def order_qty(key, oh, pace, counted=None, fresh=True):
         oh = 0.0
     par = par_of(key)
     if par is not None:
-        if zero and pace <= 0:
+        if zero and pace <= 0 and not set_par(key):
             return 0
-        target = max(par, WEEKS * pace)
+        target = par if key[1] == 'Wella Lighteners' or key in KEEP_OV else max(par, WEEKS * pace)
         # less than a quarter can short doesn't buy another can (Nov 10 2026)
         return max(0, math.ceil(round(target - oh - 0.25, 2)))
     wl = oh / pace if pace > 0 else None
@@ -266,7 +334,7 @@ def order_lists(items):
     """items = [(key, counted, on hand, pace)] -> ({store: [(name, qty)]}, [recount names]); Color Renew left off."""
     stores, recount = {}, []
     for key, counted, oh, pace, *more in items:
-        if unused(*key):
+        if unused(*key) or discontinued(key):
             continue
         q = order_qty(key, oh, pace, counted, *more)
         if q is None:

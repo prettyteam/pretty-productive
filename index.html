@@ -46,7 +46,7 @@
 .tc-evtx{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1}
 .tc-kind{font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
 .tc-title{font-family:var(--display);font-weight:400;font-size:18px;line-height:1.2}
-.tc-evtx small{font-size:13px;color:var(--muted)}.tc-det{font-size:14px;margin:2px 0 0;white-space:pre-line}
+.tc-evtx small{font-size:13px;color:var(--muted)}.tc-det{font-size:14px;margin:2px 0 0;white-space:pre-line}.tc-det .tc-link{display:inline-block;margin-top:6px}
 .tc-acts{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:4px}.tc-acts .tdlink{align-self:auto;padding:4px 0;font-size:13px}
 .tc-pill{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;border:1px solid var(--line);border-radius:999px;padding:3px 10px}
 .tc-pill.on{border-color:var(--ink)}.tc-pill.wait{background:var(--ink);color:#fff;border-color:var(--ink)}
@@ -606,6 +606,21 @@ details.days summary::-webkit-details-marker{display:none}
 .askans{display:block;margin-top:4px;color:var(--ink,inherit);font-size:14px;line-height:1.4}
 .hub textarea,.hub select{font:inherit;font-size:15px;border:1px solid var(--line);border-radius:6px;padding:8px 10px;background:#fff;width:100%;color:var(--ink)}
 .askreq{background:#fff;border:1px solid var(--line);border-radius:8px;padding:12px;display:flex;flex-direction:column;gap:4px;font-size:14px;margin-bottom:8px}
+/* Front Desk Log (Nov 27 2026) */
+.dlg{background:#fff;border:1px solid var(--line);border-radius:8px;margin-bottom:10px}
+.dlg>summary{list-style:none;cursor:pointer;padding:14px 16px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.dlg>summary::-webkit-details-marker{display:none}
+.dlg>summary b{font-family:var(--display);font-size:20px;font-weight:400}
+.dlg>summary small{display:block;font-size:13px;color:var(--soft)}
+.dlg>summary .chev{font-size:18px;transition:transform .2s}.dlg[open]>summary .chev{transform:rotate(90deg)}
+.dlg .on{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;border:1px solid var(--ink);border-radius:999px;padding:2px 8px;margin-left:6px}
+.dlg .in{padding:0 16px 14px;display:flex;flex-direction:column;gap:10px}
+.dlg .st{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;text-align:center}
+.dlg .st div{border:1px solid var(--line);padding:8px 4px;font-size:12px;color:var(--soft)}
+.dlg .st b{display:block;font-size:17px;color:var(--ink);font-weight:500}
+.dlg .day{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--soft);margin-top:6px}
+.dlg .ln{display:flex;gap:10px;font-size:14px;padding:6px 0;border-bottom:1px solid var(--line)}
+.dlg .ln span:first-child{flex:none;width:68px;color:var(--soft)}
 .askreq .top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
 .askreq .tag{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#7a6a55}
 .askreq .acts{display:flex;flex-direction:row;flex-wrap:wrap;align-items:center;gap:6px;margin-top:6px}
@@ -625,9 +640,9 @@ details.days summary::-webkit-details-marker{display:none}
 <script src="g/prices.js?v=13"></script>
 <script src="g/ordering.js?v=4"></script>
 <script src="g/bride-links.js?v=1"></script>
-<script src="g/tcal.js?v=1"></script>
+<script src="g/tcal.js?v=2"></script>
 <script src="g/inventory.js?v=2"></script>
-<script src="g/whattoorder.js?v=13"></script>
+<script src="g/whattoorder.js?v=26"></script>
 <link rel="stylesheet" href="g/rx.css?v=9">
 <link rel="icon" href="icon.png">
 <link rel="apple-touch-icon" href="briefing/icons/employee-experience-180.png">
@@ -975,6 +990,7 @@ function render(){
   else if(S.rtab==='cal') parts=window.TCal?TCal.adminView():[];
   else if(S.rtab==='off') parts=adminOffView();
   else if(S.rtab==='reqs') parts=reqsView();
+  else if(S.rtab==='desklog') parts=deskLogView();
   else if(S.rtab==='month') parts=monthView();
   else if(S.rtab==='trends') parts=trendsView();
   else if(S.rtab==='color') parts=colorRoomView();
@@ -1020,7 +1036,13 @@ async function hubPost(body,ok,onOk){
     const j=await r.json(); HUB.toast=j.ok?(ok||'Saved'):(j.error==='taken'?'Someone already picked that one up.':FIX_ERR[j.error]||'That didn’t go through. Try again.');
     if(j.ok&&body.type==='clockfix') HUB.fx=null; done=!!j.ok;}
   catch(e){HUB.toast='Can’t connect right now. Check your signal and try again.'}
-  HUB.busy=false; if(done&&onOk) onOk(); await hubGet(); setTimeout(()=>{HUB.toast='';render()},4000);
+  /* Faster saves (Alexandra, Nov 23 2026): show "Saved" the moment the save lands, then refresh in the background.
+     It used to wait for a second full reload before the button let go. Clock in/out updates the clock right away. */
+  if(done&&body.type==='clock'&&HUB.data&&HUB.data.clock){const c=HUB.data.clock,now=Date.now(),gone=(now-(HUB.at||now))/6e4;
+    if(body.action==='in'&&!c.in){c.in=true;c.since=now;c.sinceLabel=new Date(now).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})}
+    else if(body.action==='out'&&c.in){c.todayMin+=gone;c.weekMin+=gone;c.in=false;c.since=null;c.sinceLabel=null}
+    HUB.at=now}
+  HUB.busy=false; if(done&&onOk) onOk(); render(); hubGet(); setTimeout(()=>{HUB.toast='';render()},4000);
   return done;
 }
 function liveClock(){const c=HUB.data&&HUB.data.clock; if(!c) return null;
@@ -2398,6 +2420,15 @@ function orderView(){
     :window.Ordering.html(mode,R&&R.prices,mode==='full'&&S.mine.ordering);
   return [box];
 }
+if(window.WhatToOrder)WhatToOrder.notHere=async(date,store,num)=>{
+  const st=S.mine.staff, r=await fetch(API(),{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({type:'ordernot',date,store,num,slug:st.slug,t:st.t})});
+  const j=await r.json(); if(!j.ok) throw new Error('no'); WREP.at=0;
+};
+if(window.WhatToOrder)WhatToOrder.gotIt=async(date,store,num)=>{
+  const st=S.mine.staff, r=await fetch(API(),{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({type:'ordergot',date,store,num,slug:st.slug,t:st.t})});
+  const j=await r.json(); if(!j.ok) throw new Error('no');
+  if(WREP.d&&WREP.d.onOrder) WREP.d.onOrder=WREP.d.onOrder.filter(q=>!(q[0]===date&&q[1]===store&&q[2]===num));
+};
 if(window.WhatToOrder)WhatToOrder.saveCount=async(id,item,n)=>{
   const st=S.mine.staff, r=await fetch(API(),{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({type:'stock',id,item,n,slug:st.slug,t:st.t})});
   const j=await r.json(); if(!j.ok) throw new Error('no'); (HUB.data.stock||={})[id]={n};
@@ -2607,7 +2638,10 @@ function weekCard(p){
 function CONSULT_RE(){return {hair:/color|process|balayage|foil|highlight|glaze|gloss|toner|root|gr[ae]y|lighten|blond|keratin|brazilian|smooth|perm|extension|treatment/i,skin:/facial|peel|dermaplan|microneedl|nano|hydrafacial|acne|lash lift|brow lam|treatment/i}}
 /* Color mix reminder (Alexandra, Nov 17 2026): guests on the Team Hub "Mix Watch" list whose color mixes have been undercharged before.
    The daily update sets c.mixAlert (e.g. "Her bowls run ~105 g. Weigh the whole bowl and ring 80 ML color mix + Additional Mix ($50).") */
-function mixNote(c){return c&&c.mixAlert?h('p',{style:'font-size:14px;margin:6px 0 0;padding:8px 10px;border:1px solid #121212;border-radius:10px;background:#fff'},h('b',{},'Color mix reminder. '),String(c.mixAlert)):null}
+/* Scale reminder (Alexandra, Nov 23 2026): every guest with a color service gets a reminder to weigh each bowl on the scale and update her client profile so the mix rings right. */
+const SCALE_RE=/colou?r|process|foil|balayage|highlight|glaze|gloss|toner|root|lighten|blond|face frame|additional mix/i;
+const SCALE_TXT='Weigh every bowl (color + developer) on the scale. Then update her client profile with today\u2019s formula and bowl grams so her mix is right next time.';
+function mixNote(c){if(!c)return null;const col=SCALE_RE.test((c.services||[]).map(s=>s.name).join(' '));if(!c.mixAlert&&!col)return null;const st='font-size:14px;margin:6px 0 0;padding:8px 10px;border:1px solid #121212;border-radius:10px;background:#fff';return c.mixAlert?h('p',{style:st},h('b',{},'Color mix reminder. '),String(c.mixAlert)+(col?' '+SCALE_TXT:'')):h('p',{style:st},h('b',{},'Use the scale. '),SCALE_TXT)}
 function needsConsult(c){const n=(c&&c.services||[]).map(s=>s.name).join(' '),R=CONSULT_RE();return !!(c&&c.isNew&&(R.hair.test(n)||R.skin.test(n)))}
 function tomorrowView(){
   const p=S.mine||{}, t=p.tomorrow, today=ymd(new Date());
@@ -2705,7 +2739,8 @@ const TIP_PCT=.2; let TIP_TOTAL='150';
    ($10 to start), or the girl taps "Service" and types the service total for the 20% tip, or "Any amount" */
 const TIP_LITE=['rose','kat','adriana','ashley-b'], TIP_PICKS=[5,10]; let TIP_PICK=10;
 const tipOf=t=>Math.round((parseFloat(String(t).replace(/[^0-9.]/g,''))||0)*TIP_PCT);
-function venmoTipUrl(v,amt){return amt?'https://venmo.com/'+encodeURIComponent(v)+'?txn=pay&amount='+amt+'&note='+encodeURIComponent('Thank you! ✨'):'https://venmo.com/u/'+encodeURIComponent(v)}
+/* Venmo app only opens venmo.com/u/... links from a scan, so tip amounts use /u/ too (fixed Nov 27 2026) */
+function venmoTipUrl(v,amt){return amt?'https://venmo.com/u/'+encodeURIComponent(v)+'?txn=pay&amount='+amt+'&note='+encodeURIComponent('Thank you! ✨'):'https://venmo.com/u/'+encodeURIComponent(v)}
 function qrEl(text){const d=h('div',{class:'tipqr'});d.innerHTML=qrSvg(text);return d}
 /* Team Activity (Alexandra, Oct 24 2026): opening Gratuity puts a line on the Team Hub's Team Activity tab for Pretty Life */
 function actLog(what){const st=(S.mine&&S.mine.staff)||{};if(!API()||!S.mine||!S.mine.name||actLog[what])return;actLog[what]=1;
@@ -3120,6 +3155,42 @@ function reqsView(){
     done.length?h('div',{class:'sec2'},h('span',{class:'lbl'},'Finished'),done.map(x=>h('div',{class:'lrow'},h('span',{},x.name+' · '+(x.kind==='ask'?x.note:x.item||'Easi Hair Pro')),h('span',{class:'stat ok'},'Done')))):null,
     h('p',{class:'soft',style:'text-align:center;font-size:13px'},'Customer orders also show in Rose’s app. Each request emails you when it comes in.'))];
 }
+/* The Pretty Report: Front Desk Log (Alexandra, Nov 27 2026). Every girl signs in to the Front Desk app with her own
+   code, so each thing done there is saved with her name (Desk Activity tab, DeskSignIn.js). One row per person; tap a
+   name and it drops down her usage: things done and time signed in today / 7 days / 30 days, what she does most, and her history. */
+let DL={data:null,err:null,busy:false};
+async function dlLoad(){
+  if(!S.hubKey||!API()){DL.err='setup';render();return}
+  DL.busy=true;render();
+  try{const r=await fetch(API()+'?admin='+encodeURIComponent(S.hubKey)+'&desklog=1&_='+Date.now());const j=await r.json();if(!j.ok)throw 0;DL.data=j;DL.err=null}
+  catch(e){DL.err='offline'}
+  DL.busy=false;render();
+}
+const dlHrs=m=>!m?'0 min':m<60?m+' min':Math.floor(m/60)+' hr'+(m%60?' '+(m%60)+' min':'');
+let DL_OPEN={};
+function deskLogView(){
+  if(!DL.data&&!DL.err&&!DL.busy) dlLoad();
+  const D=DL.data, msg=DL.err==='setup'?'The Front Desk Log isn’t connected yet.':DL.err?'Can’t reach the Front Desk Log right now.':'Loading…';
+  const dayOf=t=>new Date(t).toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
+  const person=p=>{
+    const lines=[];let last='';
+    p.lines.forEach(l=>{const d=dayOf(l.at);if(d!==last){lines.push(h('div',{class:'day'},d));last=d}
+      lines.push(h('div',{class:'ln'},h('span',{},new Date(l.at).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})),h('span',{},l.what+(l.detail?' · '+l.detail:''))))});
+    const d=h('details',{class:'dlg',open:DL_OPEN[p.slug]?'':null},
+      h('summary',{},h('div',{},h('b',{},p.name),p.on?h('span',{class:'on'},'At the desk now'):null,
+        h('small',{},p.week.n+' thing'+(p.week.n===1?'':'s')+' done · '+dlHrs(p.week.min)+' signed in · last 7 days')),h('span',{class:'chev','aria-hidden':'true'},'›')),
+      h('div',{class:'in'},
+        h('div',{class:'st'},[['Today',p.today],['7 days',p.week],['30 days',p.month]].map(([k,v])=>h('div',{},h('b',{},String(v.n)),k+' · '+dlHrs(v.min)))),
+        p.top.length?h('small',{class:'soft'},'Most done: '+p.top.map(([k,n])=>k+' ('+n+')').join(', ')):null,
+        lines.length?lines:h('small',{class:'soft'},'Nothing yet. Her history shows here once she signs in at the desk.')));
+    d.addEventListener('toggle',()=>{DL_OPEN[p.slug]=d.open});
+    return d};
+  return [h('div',{class:'hub'},h('h1',{style:'font-size:28px;text-align:center'},'Front Desk Log'),
+    h('p',{class:'soft',style:'text-align:center;margin:-14px 0 0'},D?'Tap a name to see what she did on the Front Desk app.':msg),
+    D?D.people.map(person):null,
+    D&&D.notSignedIn?h('p',{class:'soft',style:'text-align:center;font-size:13px'},D.notSignedIn+' thing'+(D.notSignedIn===1?' was':'s were')+' done this week with no one signed in (an old copy of the app).'):null,
+    h('p',{class:'soft',style:'text-align:center;font-size:13px'},'Things done = guest requests, consultations, profiles, RX and home care cards, To Do, counts and orders marked on the desk. Time signed in runs from her code until the app locks or she signs out.'))];
+}
 /* The Pretty Report homepage, like the Employee Experience App (Alexandra, Oct 17 2026): the wreath with her photo,
    "Hello," and the reader's name, the date and a joke about running a business, then the menu squares.
    One passcode is shared, so each phone says who is reading (asked once, remembered on the phone). */
@@ -3129,9 +3200,9 @@ function prPhotoKey(){return 'pp-photo:'+ID+':'+prWho()}
 function reportGroups(){
   // always 6 squares (Alexandra, Oct 17 2026): Access sits under Team; without the Color Room, Payroll and Month & Trends share one
   return [['Today',['today']]].concat(S.inv?[['Payroll',['payroll','trends']],['Month & Trends',['month']],['Color Room',['color']]]:[['Payroll & Trends',['payroll','trends','month']]])
-    .concat([['Team',['reqs','cal','todo','off','photos','guide','sendguide','access']],['Marketing Proofs',['mkt']]]);
+    .concat([['Team',['reqs','desklog','cal','todo','off','photos','guide','sendguide','access']],['Marketing Proofs',['mkt']]]);
 }
-const PR_LABEL={reqs:'Requests',cal:'Taffeta Calendar',todo:'To Do List',mkt:'Marketing Proofs',photos:'Team Work',home:'Home',today:'Today',payroll:'Payroll',month:'Month & Trends',trends:'Sunday Trends',color:'Color Room',off:'Time Off',guide:'Culture',sendguide:'Send App Guide',access:'Access'};
+const PR_LABEL={reqs:'Requests',desklog:'Front Desk Log',cal:'Taffeta Calendar',todo:'To Do List',mkt:'Marketing Proofs',photos:'Team Work',home:'Home',today:'Today',payroll:'Payroll',month:'Month & Trends',trends:'Sunday Trends',color:'Color Room',off:'Time Off',guide:'Culture',sendguide:'Send App Guide',access:'Access'};
 let PR_OPEN='',PR_NAV=false;
 function prGo(k,fromHistory){
   if(k==='mkt'){PR_NAV=false;PR_OPEN='';openMkt();render();return}
@@ -3139,6 +3210,7 @@ function prGo(k,fromHistory){
   PR_OPEN='';PR_NAV=false;S.rtab=k;S.open=null;render();window.scrollTo(0,0);
   if(k==='photos'&&!ALB.loading){ALB.err=null;albLoad()}
   if(k==='reqs'&&!RQ.busy){RQ.err=null;rqLoad()}
+  if(k==='desklog'&&!DL.busy){DL.err=null;dlLoad()}
   if(k==='cal'&&window.TCal) TCal.reload();
   if(k==='todo'&&!TDA.busy){TDA.err=null;TDA.msg='';TDA.day=ymd(new Date());tdaLoad()}
 }
@@ -3170,6 +3242,13 @@ function reportHome(){
     const end=i%2===1||i===gs.length-1,row=gs.slice(i-(i%2),i+1).map(([x])=>x);
     if(end&&row.includes(PR_OPEN)){const o=gs.find(([x])=>x===PR_OPEN);cells.push(h('div',{class:'hpages'},o[1].map(p=>h('button',{type:'button',onclick:()=>prGo(p)},PR_LABEL[p]))))}
   });
+  /* New Hire (Alexandra, Nov 23 2026): text new team members the private new hire form (welcome/). Answers go only to Alexandra + Rick. */
+  const NH='https://prettyteam.taffetadesign.com/welcome/', nhMsg='Welcome to Taffeta! Please fill out our new hire form so we can set you up for payroll: '+NH;
+  cells.push(h('button',{type:'button','aria-expanded':String(PR_OPEN==='__nh'),onclick:()=>{PR_OPEN=PR_OPEN==='__nh'?'':'__nh';render()}},'New Hire'));
+  if(PR_OPEN==='__nh')cells.push(h('div',{class:'hpages'},
+    h('button',{type:'button',onclick:()=>{location.href='sms:?&body='+encodeURIComponent(nhMsg)}},'Text The Form'),
+    h('button',{type:'button',onclick:async()=>{try{await navigator.clipboard.writeText(NH);if(window.TUp)TUp.saved(null,'','Link copied.')}catch(e){prompt('Copy this link:',NH)}}},'Copy Link'),
+    h('button',{type:'button',onclick:()=>window.open(NH,'_blank','noopener')},'See The Form')));
   return [h('div',{class:'hub'},h('div',{class:'hhome'},crest,...top,file),
     h('div',{class:'hgig'},h('span',{class:'lbl'},today),h('p',{},window.dayJoke?dayJoke('business'):'')),
     h('div',{class:'hmenu'},h('div',{class:'mhead'},'Menu'),h('div',{class:'cgrid'},cells)))];

@@ -7,7 +7,8 @@ LINKS
 
 DESIGN
 - Background light ivory #FBFAF8. Black text. Thin black lines (hairlines), no thick boxes, no brown.
-- Headings: Playfair Display (or the closest Flodesk serif). Body: Work Sans Light (or the closest light sans).
+- Headings (email title and the "Join the Beauty Membership" / "Nano needling at the spa" titles): Playfair Display regular, ALL CAPS, small, widely spaced letters. NOT bold, NOT italic. Body: Work Sans Light (or the closest light sans).
+- Do NOT put the words "Taffeta Spa" at the top of the email.
 - Buttons: NOT filled. Thin black outline, black spaced capital letters, transparent background.
 - The membership and nano needling blocks sit at the bottom, each between thin lines, membership first.
 - "[first name]" = Flodesk first-name merge tag, with fallback "there".
@@ -20,9 +21,7 @@ Email 1 · The day after she books (pays her deposit)
 
  From: Taffeta Spa
 
-[IMAGE: bow.png, small, centered]
-
- Taffeta Spa
+[IMAGE: bow.png, tiny, centered, about 50px wide]
 
 [IMAGE: congratulations.png, script word "Congratulations", centered, about 260px wide]
 
@@ -74,7 +73,7 @@ No downtime. No pain. Just relaxation.
 
  Book nano needling
 
-[IMAGE: bow.png, small, centered]
+[IMAGE: bow.png, tiny, centered, about 50px wide]
 
 Email 2 · 3 weeks after she books
 
@@ -84,9 +83,7 @@ Email 2 · 3 weeks after she books
 
  From: Taffeta Spa
 
-[IMAGE: bow.png, small, centered]
-
- Taffeta Spa
+[IMAGE: bow.png, tiny, centered, about 50px wide]
 
 [IMAGE: your-glow.png, script word "Your glow", centered, about 260px wide]
 
@@ -130,7 +127,7 @@ No downtime. No pain. Just relaxation.
 
  Book nano needling
 
-[IMAGE: bow.png, small, centered]
+[IMAGE: bow.png, tiny, centered, about 50px wide]
 
 Email 3 · 8 weeks before her preview
 
@@ -140,9 +137,7 @@ Email 3 · 8 weeks before her preview
 
  From: Taffeta Spa
 
-[IMAGE: bow.png, small, centered]
-
- Taffeta Spa
+[IMAGE: bow.png, tiny, centered, about 50px wide]
 
 [IMAGE: almost-time.png, script word "Almost time", centered, about 260px wide]
 
@@ -186,7 +181,7 @@ No downtime. No pain. Just relaxation.
 
  Book nano needling
 
-[IMAGE: bow.png, small, centered]
+[IMAGE: bow.png, tiny, centered, about 50px wide]
 
 Email 4 · 2 weeks later, a gentle reminder
 
@@ -196,9 +191,7 @@ Email 4 · 2 weeks later, a gentle reminder
 
  From: Taffeta Spa
 
-[IMAGE: bow.png, small, centered]
-
- Taffeta Spa
+[IMAGE: bow.png, tiny, centered, about 50px wide]
 
 [IMAGE: just-a-reminder.png, script word "Just a reminder", centered, about 260px wide]
 
@@ -238,4 +231,4 @@ No downtime. No pain. Just relaxation.
 
  Book nano needling
 
-[IMAGE: bow.png, small, centered]
+[IMAGE: bow.png, tiny, centered, about 50px wide]
