@@ -61,7 +61,7 @@ def same_item(cid):
     cid = re.sub(r'^b:Goldwell\|Topchic Tubes High Blond\|', 'b:Goldwell|Topchic Canister High Blond|', str(cid))
     # Alexandra Nov 28 2026: "colorance lotion is the same as 7 vol cream developers": one item, System Cream Developer 7vol
     cid = re.sub(r'^b:Goldwell\|Goldwell Developers\|Colorance Lotion$', 'b:Goldwell|Goldwell Developers|System Cream Developer 7vol', cid)
-    return 'c:systemcreamdeveloper7vol' if cid == 'c:colorancelotion' else cid
+    return 'c:systemcreamdeveloper7vol' if cid in ('c:colorancelotion', 'c:colorance7vol') else cid
 
 
 def item_name(key):
@@ -72,6 +72,8 @@ def item_name(key):
         return 'Shades EQ ' + tok
     if l.startswith('Colorance Canister'):
         return 'Colorance ' + tok
+    if re.sub(r'\s+', '', s.lower()) == 'systemcreamdeveloper7vol':   # Alexandra Nov 28 2026: "rename ... to Colorance 7 Vol"
+        return 'Colorance 7 Vol'
     if l.startswith('Topchic Canister') and par_of(key):
         return 'Topchic ' + tok
     if l == 'Fast Color 10':
