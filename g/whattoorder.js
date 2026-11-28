@@ -189,7 +189,7 @@
     OH.forEach(r=>{const [l,sh,c,u,oh,pw,wl,keep0,way,q,fid]=r,keep=fid&&C['k:'+fid]?+C['k:'+fid].n:keep0,f=FAM(String(l)),
         sub=String(l).replace(/^(Redken|Goldwell|Wella|Alter Ego|General)\s+/,'').replace(/^(Shades EQ|Blonde Idol|Colorance Canister|Topchic Canister|Fast Color 10|Goldwell Developers|General Developers|Wella Lighteners)\s*/i,''),
         sub2=sub.replace(/^Topchic\s+/i,'').replace(/^Tubes\b/i,'Tube').replace(/^Canister\s*/i,''),
-        nm=(sub2&&!String(sh).toLowerCase().startsWith(sub2.toLowerCase())?sub2+' ':'')+sh,
+        nm=/^system cream developer ?7 ?vol$/i.test(String(sh).trim())?'Colorance 7 Vol':(sub2&&!String(sh).toLowerCase().startsWith(sub2.toLowerCase())?sub2+' ':'')+sh,   /* Alexandra Nov 28 2026: "rename system cream developer to Colorance 7 Vol" */
         key=shadeOf((f==='Developers'?'':String(l).replace(/^(Redken|Goldwell|Wella)\s+/,'')+' ')+sh).key,
         ord=q==null?(reQ.has(key)?-1:(ordQ[key]||0)):+q;
       if(!(+pw>=0.05)&&!(+oh>0)&&!ord&&!(+way>0))return;   /* not on the shelf, not used, not ordered: not carried */
