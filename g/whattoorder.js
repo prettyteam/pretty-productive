@@ -212,7 +212,8 @@
         +'</div></details>'});
     const ohCard=famCards.length?'<h2 class="wfh">Full Color List</h2><p>Every shade we carry, by brand. Tap a brand to open it. Each shade shows 3 numbers: <b>In stock</b> is about how many we have right now. <b>Keep</b> is how many we always want on the shelf. <b>To order</b> is how many to buy to get back to that number.'+(o.canCount?' Tap a shade to change its shelf count or its Keep number.':'')+''
       +'</p>'+famCards.join(''):'';
-    const backCards=byStore(back).filter(([s])=>!(countFirst&&/recount/i.test(s))).map(([s,rs])=>storeCard(s,(backTot[s]?[totRow(backTot[s])]:[]).concat(rs.map(r=>typeof r==='string'?r:crow(r.cnt,'Count the shelf and back room'))).concat(prices.filter(p=>String(p[1]).toLowerCase()===s.toLowerCase()).map(([i,,p])=>row(i,'Best price here',p,'g')))));
+    /* Alexandra, Nov 28 2026: each store's color list starts closed, showing the store and its total; tap + to open it */
+    const backCards=byStore(back).filter(([s])=>!(countFirst&&/recount/i.test(s))).map(([s,rs])=>'<details class="wmore wfam"><summary>'+esc(s)+(backTot[s]?'<span class="q wfn">'+backTot[s].n+' to order</span>':'')+'</summary><div>'+storeCard(s,(backTot[s]?[totRow(backTot[s])]:[]).concat(rs.map(r=>typeof r==='string'?r:crow(r.cnt,'Count the shelf and back room'))).concat(prices.filter(p=>String(p[1]).toLowerCase()===s.toLowerCase()).map(([i,,p])=>row(i,'Best price here',p,'g'))))+'</div></details>');
     /* On The Way: one card per order */
     const ords={};oo.forEach(q=>(ords[q[1]+'|'+q[2]+'|'+q[0]]||=[]).push(q));
     const wayCards=Object.keys(ords).map(k=>{const [st,num,d]=k.split('|'),its=ords[k],s=its[0][5]||'Ordered',a=arrives(s);
