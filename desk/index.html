@@ -208,7 +208,111 @@ body.dk-home .head{display:none}
 .hpages .n{margin-left:8px}
 #send[data-page],#after[data-page]{border:0;padding:0}
 </style>
-</head><body><main id="app">
+</head><body>
+<style>/* Front Desk sign-in code (Alexandra, Nov 27 2026, Ashley B's ask): the app asks for her own code when it opens and
+   again after 5 minutes with no taps, so every action shows who did it. */
+.dlock[hidden]{display:none!important}
+.dlock{position:fixed;inset:0;z-index:9999;background:var(--ivory,#f2f1ec);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px 16px;text-align:center;overflow:auto}
+body.dk-locked{overflow:hidden}
+.dlock img{width:120px;height:auto}
+.dlock h2{margin:0;font-family:var(--serif,"Lora"),Georgia,serif;font-weight:400;font-size:28px;color:#121212}
+.dlock p{margin:0;font-size:15px;color:#555250;max-width:320px}
+.dl-dots{display:flex;gap:12px;justify-content:center;min-height:18px;margin:6px 0}
+.dl-dots i{width:14px;height:14px;border-radius:50%;border:1px solid #121212}
+.dl-dots i.on{background:#121212}
+.dl-pad{display:grid;grid-template-columns:repeat(3,76px);gap:12px;justify-content:center}
+.dl-pad button{all:unset;box-sizing:border-box;width:76px;height:76px;border:1px solid #2b2a28;outline:1px solid #2b2a28;outline-offset:-5px;background:#fff;font-family:var(--serif,"Lora"),Georgia,serif;font-size:26px;color:#121212;display:flex;align-items:center;justify-content:center;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.dl-pad button:active{background:#eae6dd}
+.dl-pad button.sm{font-family:inherit;font-size:11px;letter-spacing:.16em;text-transform:uppercase}
+.dl-pad button:focus-visible{outline:2px solid var(--gold,#b4925b)}
+.dl-msg{min-height:22px;font-size:14px;color:#8a2c2c!important}
+.dl-help{font-size:13px!important}
+.dsigned{display:flex;justify-content:center;align-items:center;gap:10px;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:#555250;padding:6px 0 0}
+.dsigned button{all:unset;cursor:pointer;text-decoration:underline;text-underline-offset:4px;color:#121212;padding:4px}
+</style>
+<section class="dlock" id="dlock" role="dialog" aria-modal="true" aria-labelledby="dlT" hidden>
+  <img src="../g/logo.png" alt="Taffeta Salon &amp; Spa">
+  <h2 id="dlT">Who’s at the desk?</h2>
+  <p>Type your code. It is the same code you use for RX cards and the SureTint iPad.</p>
+  <div class="dl-dots" id="dlDots" aria-hidden="true"></div>
+  <p class="dl-msg" id="dlMsg" role="status" aria-live="polite"></p>
+  <div class="dl-pad" id="dlPad">
+    <button type="button">1</button><button type="button">2</button><button type="button">3</button>
+    <button type="button">4</button><button type="button">5</button><button type="button">6</button>
+    <button type="button">7</button><button type="button">8</button><button type="button">9</button>
+    <button type="button" class="sm" data-k="del" aria-label="Delete">Delete</button><button type="button">0</button><button type="button" class="sm" data-k="go">Open</button>
+  </div>
+  <p class="dl-help">No code yet? Set your Salon iPad PIN in your own Taffeta app (Me, then Salon iPad PIN), or ask Alex.</p>
+</section>
+<script>
+/* Desk sign-in. Session = {slug,name,bt,day,last} in this device's storage. Locks after 5 minutes with no taps,
+   at midnight, and when the app comes back after 5+ minutes away. Every post the page sends to the desk script
+   gets desk:1, by and bt added, so the script writes who did it on the Desk Activity tab. */
+(function(){
+  const IDLE=5*60*1000, DEMO=/[?&]demo\b/.test(location.search);
+  const S={get(k){try{return localStorage.getItem(k)||''}catch(e){return''}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
+  const hk=(location.hash.match(/k=([\w-]+)/)||[])[1], KEY=hk||S.get('desk-key');
+  const SHOW={adriana:'Adriana',alexandra:'Alexandra',amanda:'Amanda','ashley-b':'Ashley',carolyn:'Carolyn',rose:'Flower'};   // names as the desk home shows them
+  const day=()=>new Date().toLocaleDateString('en-CA');
+  const EP=()=>window.TAFFETA_ENDPOINT||'';
+  let sess=null; try{sess=JSON.parse(S.get('desk-sess')||'null')}catch(e){}
+  let code='', busy=false, lastSave=0;
+  const box=document.getElementById('dlock'), dots=document.getElementById('dlDots'), msg=document.getElementById('dlMsg');
+  const valid=()=>sess&&sess.day===day()&&Date.now()-(sess.last||0)<IDLE;
+  function drawDots(){dots.innerHTML=Array.from({length:Math.max(4,code.length)},(_,i)=>`<i class="${i<code.length?'on':''}"></i>`).join('')}
+  function post(o){return window.__deskFetch(EP(),{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(o)})}
+  function lock(why){
+    if(sess&&why&&!DEMO&&KEY&&EP())post({type:'deskout',key:KEY,by:sess.slug,bt:sess.bt,why}).catch(()=>{});
+    sess=null; S.set('desk-sess',''); S.set('desk-who','');
+    code=''; drawDots(); msg.textContent='';
+    box.hidden=false; document.body.classList.add('dk-locked');
+    const b=box.querySelector('.dl-pad button'); if(b) setTimeout(()=>b.focus(),50);
+  }
+  function open(){
+    box.hidden=true; document.body.classList.remove('dk-locked');
+    S.set('desk-who',SHOW[sess.slug]||sess.name);
+    if(typeof deskHome==='function'&&!document.getElementById('dhome').hidden)deskHome();
+    signedBar();
+  }
+  function signedBar(){
+    let b=document.getElementById('dsigned');
+    if(!b){b=document.createElement('div');b.id='dsigned';b.className='dsigned';const m=document.getElementById('app');m.insertBefore(b,m.firstChild)}
+    b.innerHTML=sess?`<span>Signed in: ${String(sess.name).replace(/[<>&"]/g,'')}</span><button type="button" id="dsOut">Sign out</button>`:'';
+    const o=document.getElementById('dsOut'); if(o)o.onclick=()=>lock('out');
+  }
+  async function tryCode(){
+    if(busy)return; if(code.length<4){msg.textContent='Codes are 4 to 8 numbers.';return}
+    busy=true; msg.textContent='Checking…';
+    try{
+      let j;
+      if(DEMO) j=code==='1234'?{ok:true,slug:'ashley-b',name:'Ashley B',bt:'demo'}:{ok:false,error:'pin'};
+      else{const r=await post({type:'deskin',key:KEY,pin:code,device:S.get('desk-al-name')||''}); j=await r.json()}
+      if(j.ok){sess={slug:j.slug,name:j.name,bt:j.bt,day:day(),last:Date.now()};S.set('desk-sess',JSON.stringify(sess));code='';drawDots();msg.textContent='';open()}
+      else{code='';drawDots();msg.textContent=j.error==='locked'?'Too many wrong codes. Try again in '+(j.mins||5)+' minutes.':j.error==='same'?'Two people have this code. Ask Alex to change one.':'That code didn’t work. Try again.'}
+    }catch(e){msg.textContent='No connection. Check the Wi-Fi and try again.'}
+    busy=false;
+  }
+  document.getElementById('dlPad').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
+    const k=b.dataset.k; if(k==='del')code=code.slice(0,-1); else if(k==='go'){tryCode();return} else if(code.length<8)code+=b.textContent.trim();
+    msg.textContent=''; drawDots(); if(code.length===8)tryCode()});
+  document.addEventListener('keydown',e=>{if(box.hidden)return; if(/^\d$/.test(e.key)&&code.length<8){code+=e.key;drawDots()} else if(e.key==='Backspace'){code=code.slice(0,-1);drawDots()} else if(e.key==='Enter')tryCode()});
+  // any tap, key or scroll counts as "still here"
+  const touch=()=>{if(!sess||!box.hidden)return; const n=Date.now(); sess.last=n; if(n-lastSave>15000){lastSave=n;S.set('desk-sess',JSON.stringify(sess))}};
+  ['pointerdown','keydown','touchstart','scroll','input'].forEach(t=>addEventListener(t,touch,{passive:true,capture:true}));
+  const check=()=>{if(box.hidden&&sess&&!valid())lock(sess.day===day()?'idle':'')};
+  setInterval(check,10000); document.addEventListener('visibilitychange',()=>{if(!document.hidden)check()}); addEventListener('pageshow',check); addEventListener('focus',check);
+  // add who is signed in to every post this page sends to the desk script
+  const F=window.fetch.bind(window); window.__deskFetch=F;
+  window.fetch=function(u,o){
+    try{ if(o&&String(o.method||'').toUpperCase()==='POST'&&typeof o.body==='string'&&sess&&EP()&&String(u).indexOf(EP())===0){
+      const d=JSON.parse(o.body); if(d&&d.key&&d.type!=='deskin'&&d.type!=='deskout'){d.desk=1;d.by=sess.slug;d.bt=sess.bt;o=Object.assign({},o,{body:JSON.stringify(d)})} } }catch(e){}
+    return F(u,o)};
+  window.DeskSignIn={who:()=>sess,lock};
+  if(!KEY&&!DEMO)return;   // a device that isn't set up as a desk shows its usual set-up message
+  if(valid()){sess.last=Date.now();S.set('desk-sess',JSON.stringify(sess));addEventListener('DOMContentLoaded',open)}else{S.set('desk-who','');lock('')}
+})();
+</script>
+<main id="app">
 <section class="dhome" id="dhome" hidden></section>
 <div class="head"><img src="../g/logo.png" alt="Taffeta Salon &amp; Spa"><div><span class="eyebrow">Front Desk</span><h1>Today at Taffeta</h1></div></div>
 <div class="runbar"><button id="runAll">Run all updates</button><span id="runSt">Refreshes the team app and the Pretty Report with today’s Paired Plus numbers.</span></div>
@@ -464,7 +568,7 @@ function deskHome(){
   h+=`</div></div><input type="file" accept="image/*" id="hFile" hidden>`;
   const box=$('#dhome');box.innerHTML=h;
   const sel=$('#hWhoSel');if(sel)sel.onchange=()=>{if(sel.value){store.set('desk-who',sel.value);deskHome()}};
-  const nw=$('#hWho');if(nw)nw.onclick=()=>{store.set('desk-who','');deskHome()};
+  const nw=$('#hWho');if(nw)nw.onclick=()=>{if(window.DeskSignIn)DeskSignIn.lock('out');else{store.set('desk-who','');deskHome()}};
   const pick=()=>{if(store.get('desk-who'))$('#hFile').click()};$('#hCrest').onclick=pick;const hp=$('#hPhoto');if(hp)hp.onclick=pick;
   $('#hFile').onchange=e=>{const f=e.target.files&&e.target.files[0];if(!f||!store.get('desk-who'))return;const img=new Image(),url=URL.createObjectURL(f);
     img.onload=()=>{const m=Math.min(img.width,img.height),c=document.createElement('canvas');c.width=c.height=360;
