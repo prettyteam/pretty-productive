@@ -244,6 +244,8 @@ PAR = [  # (line test, floor, {shade: floor})
     (lambda l, s: l.startswith('Colorance Canister'), 1, {'6A': 3, '2A': 3, '5NB': 3, '7NA': 3, '6N': 3}),
     (lambda l, s: l.startswith('Topchic Canister') and l != 'Topchic Canister Blonding Cream', 1, {'4NN': 3, '5NN': 3, '6NN': 3, '7NN': 3, '4G': 3}),
     (lambda l, s: l in ('Fast Color 10', 'Technofruit') and 'Coactivator' not in s, 1, {}),
+    # Alexandra Nov 28 2026: "we only have 1 goldwell 20 vol gallon so we need 5": keep 5 gallons of Topchic 20 Volume
+    (lambda l, s: s.strip().lower() == 'topchic 20 volume', 5, {}),
     # Alexandra Nov 27 2026: "its ok to have 5 blondor from cosmoprof in stock": keep 5 tubs of Blondor Multi, no more
     (lambda l, s: l == 'Wella Lighteners' and re.match(r'(?i)blondor multi', s) is not None, 5, {}),
 ]
