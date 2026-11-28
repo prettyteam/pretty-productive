@@ -150,6 +150,7 @@ function doPost(e) {
       case 'todos': return json_(todos_());
       case 'addTodo': return json_(addTodo_(d.todo));
       case 'doneTodo': return json_(doneTodo_(d.id, !!d.done));
+      case 'editTodo': return json_(editTodo_(d.todo));
       case 'jobs': return json_(jobs_());
       case 'offerJob': return json_(offerJob_(d.offer));
       case 'logAsk': return json_(logAsk_(d.ask));
