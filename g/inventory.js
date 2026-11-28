@@ -29,6 +29,8 @@
   const sec=(title,count,body,open)=>'<details'+(open?' open':'')+'><summary>'+esc(title)+(count!=null?' <span class="c">'+count+'</span>':'')+'</summary><div class="in">'+body+'</div></details>';
   const left=(oh,w)=>oh<0?'Shows '+oh+', count the shelf first':oh+' on hand'+(w>0&&w<8?', about '+plural(Math.max(1,Math.round(w)),'week')+' left':'');
   function html(D,opts){
+    /* Products we don't carry (Alexandra, Nov 28 2026: "remove the davines dry texture spray ... we dont carry that") */
+    if(D){const NC=/davines.*dry texture/i,keep=r=>!NC.test(Array.isArray(r)?r.join(' '):String(r));D=Object.assign({},D);['reorder','outLow','negative','noCost','top','idle'].forEach(k=>{if(Array.isArray(D[k]))D[k]=D[k].filter(keep)})}
     opts=opts||{};
     const head='<h1>Inventory</h1>';
     if(!D) return css+'<div class="ivr">'+head+'<p>'+(opts.err?'Couldn’t open the report right now. Check the Wi-Fi and try again.':'Opening the report…')+'</p></div>';

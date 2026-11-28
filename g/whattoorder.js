@@ -91,7 +91,9 @@
   const clock=ms=>new Date(ms).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
   function html(o){
     o=o||{};
-    const D=o.inv, R=o.report, I=window.Inventory;
+    let D=o.inv;const R=o.report, I=window.Inventory;
+    /* Products we don't carry (Alexandra, Nov 28 2026: "remove the davines dry texture spray ... we dont carry that") */
+    if(D&&Array.isArray(D.reorder))D=Object.assign({},D,{reorder:D.reorder.filter(r=>!/davines.*dry texture/i.test(r.slice(0,2).join(' ')))});
     const oo=(D&&D.onOrder)||[], isOn=t=>I&&I.onOrder?I.onOrder(t,oo):null;
     /* Retail: the reorder list, minus anything on order; "count first" rows get their own card */
     const ret=[], cnt=[];
