@@ -295,6 +295,9 @@ def refresh(inv, stock_rows, order_rows, now=None, year=2026, usage_rows=None):
     # Topchic 20 Volume, so its use counts there and it never shows as its own item.
     usage_rows = [(list(r[:3]) + ['Topchic 20 Volume'] + list(r[4:])) if len(r) > 3 and str(r[1]).strip() == 'Goldwell'
                   and re.sub(r'\s+', '', str(r[3]).lower()) == 'systemcreamdeveloper20vol' else r for r in usage_rows]
+    # Alexandra Nov 28 2026: "colorance lotion is the same as 7 vol cream developers": its scale use counts there
+    usage_rows = [(list(r[:3]) + ['System Cream Developer 7vol'] + list(r[4:])) if len(r) > 3 and str(r[1]).strip() == 'Goldwell'
+                  and str(r[3]).strip().lower() == 'colorance lotion' else r for r in usage_rows]
     # Same product under a second scale button (Nov 27 2026): Redken Developers "Shades EQ Processing Solution" is the
     # Shades EQ "EQ Processing Solution" Rose counts.
     usage_rows = [[r[0], 'Redken', 'Shades EQ', 'EQ Processing Solution'] + list(r[4:]) if len(r) > 3
@@ -393,7 +396,7 @@ def refresh(inv, stock_rows, order_rows, now=None, year=2026, usage_rows=None):
         if co.unused(*k) or co.discontinued(k):
             keep, q = 0, 0
         else:
-            keep = co.KEEP_OV[k] if k in co.KEEP_OV else (par if k[1] == 'Wella Lighteners' else max(0, math.ceil(round(max(par, co.WEEKS * pace) - 0.25, 2)))) if par is not None else (math.ceil(round(6 * pace, 2)) if pace > 0 else 0)
+            keep = co.KEEP_OV[k] if k in co.KEEP_OV else (par if co.exact_keep(k) else max(0, math.ceil(round(max(par, co.WEEKS * pace) - 0.25, 2)))) if par is not None else (math.ceil(round(6 * pace, 2)) if pace > 0 else 0)
             q = co.order_qty(k, now_oh + way.get(k, 0), pace, counted, fresh_count)
         new_rows.append([line, shade, counted, round(float(used or 0) + extra_use, 2), now_oh, round(pace, 2),
                          round(now_oh / pace, 1) if pace > 0 else None, keep, round(way.get(k, 0), 2), -1 if q is None else q,

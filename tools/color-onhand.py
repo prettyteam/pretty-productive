@@ -58,7 +58,10 @@ def latest_counts(rows, year):
 def same_item(cid):
     """One id per real item. Alexandra Nov 28 2026: "hi lift blonde 11V is a can thats goldwell topchic", so Rose's
     'Topchic Tubes High Blond' count is the same cans the scale logs as 'Topchic Canister High Blond'."""
-    return re.sub(r'^b:Goldwell\|Topchic Tubes High Blond\|', 'b:Goldwell|Topchic Canister High Blond|', str(cid))
+    cid = re.sub(r'^b:Goldwell\|Topchic Tubes High Blond\|', 'b:Goldwell|Topchic Canister High Blond|', str(cid))
+    # Alexandra Nov 28 2026: "colorance lotion is the same as 7 vol cream developers": one item, System Cream Developer 7vol
+    cid = re.sub(r'^b:Goldwell\|Goldwell Developers\|Colorance Lotion$', 'b:Goldwell|Goldwell Developers|System Cream Developer 7vol', cid)
+    return 'c:systemcreamdeveloper7vol' if cid == 'c:colorancelotion' else cid
 
 
 def item_name(key):
@@ -246,6 +249,8 @@ PAR = [  # (line test, floor, {shade: floor})
     (lambda l, s: l in ('Fast Color 10', 'Technofruit') and 'Coactivator' not in s, 1, {}),
     # Alexandra Nov 28 2026: "we only have 1 goldwell 20 vol gallon so we need 5": keep 5 gallons of Topchic 20 Volume
     (lambda l, s: s.strip().lower() == 'topchic 20 volume', 5, {}),
+    # Alexandra Nov 28 2026: Colorance Lotion = 7 vol cream developer, "we need 6 in stock"
+    (lambda l, s: re.sub(r'\s+', '', s.lower()) == 'systemcreamdeveloper7vol', 6, {}),
     # Alexandra Nov 27 2026: "its ok to have 5 blondor from cosmoprof in stock": keep 5 tubs of Blondor Multi, no more
     (lambda l, s: l == 'Wella Lighteners' and re.match(r'(?i)blondor multi', s) is not None, 5, {}),
 ]
@@ -262,6 +267,8 @@ def unused(*t):
             or bool(re.search(r'topchic canister\S* 0*(5bm)\b', j))
             # Alexandra Nov 27 2026: same gallon as Topchic 20 Volume (its scale use is moved there in color-refresh.py)
             or bool(re.search(r'system cream developer ?20 ?vol', j))
+            # Alexandra Nov 28 2026: Colorance Lotion is the 7 vol cream developer (merged in color-refresh.py)
+            or 'goldwell developers colorance lotion' in j
             # Alexandra Nov 27 2026: the scale's "Generic Developer" button has no volume, and the general developers
             # are counted by volume (10vol, 20vol), so it's never counted or ordered on its own
             or bool(re.search(r'general developers generic developer', j))
@@ -285,6 +292,13 @@ def discontinued(key):
 # counts when we want"). Saved on Stock Counts as 'k:Brand|Line|Shade'; color-refresh.py fills this per run.
 # A typed Keep is exact: the list orders up to that number, not up to 6 weeks of use.
 KEEP_OV = {}
+
+
+def exact_keep(key):
+    """Keep numbers Alexandra set as exact (order up to that number, never more for 6 weeks of use): typed Keeps,
+    Wella lighteners, and (Nov 28 2026: "we only have 1 ... so we need 5" -> order 4) the gallon and lotion developers."""
+    return key in KEEP_OV or key[1] == 'Wella Lighteners' or re.sub(r'\s+', '', key[2].lower()) in (
+        'topchic20volume', 'systemcreamdeveloper7vol')
 
 
 def par_of(key):
@@ -325,7 +339,7 @@ def order_qty(key, oh, pace, counted=None, fresh=True):
     if par is not None:
         if zero and pace <= 0 and not set_par(key):
             return 0
-        target = par if key[1] == 'Wella Lighteners' or key in KEEP_OV else max(par, WEEKS * pace)
+        target = par if exact_keep(key) else max(par, WEEKS * pace)
         # less than a quarter can short doesn't buy another can (Nov 10 2026)
         return max(0, math.ceil(round(target - oh - 0.25, 2)))
     wl = oh / pace if pace > 0 else None
