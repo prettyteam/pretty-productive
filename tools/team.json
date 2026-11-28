@@ -171,18 +171,18 @@
     ]
   },
   "pk": {
-    "week": "Nov 23",
+    "week": "Nov 28",
     "groups": [
       {
         "name": "Hair Care",
         "brands": [
           {
             "name": "Oribe",
-            "title": "Bond Building, Oribe Style",
-            "blurb": "See the Hair Alchemy Elixir routine for stronger, more resilient strands.",
-            "url": "https://www.oribe.com/blogs/community/bond-building-in-the-big-apple",
+            "title": "Holiday Gift Sets Are Here",
+            "blurb": "The new mosaic gift sets: easy holiday add-ons for every guest in your chair.",
+            "url": "https://www.oribe.com/pages/holiday",
             "cta": "Read",
-            "week": "Nov 9"
+            "week": "Nov 28"
           },
           {
             "name": "K18",
@@ -202,11 +202,11 @@
           },
           {
             "name": "Davines",
-            "title": "Naturaltech Overnight Scalp Serum",
-            "blurb": "Works while guests sleep for fuller-looking hair and less breakage.",
-            "url": "https://davinespro.com/en/international/blog/discover-our-new-naturaltech-energizing-overnight-serum",
+            "title": "Meet The Davines Edit",
+            "blurb": "Davines' new pro hub for artists: education, community and fresh hair ideas.",
+            "url": "https://www.salontoday.com/articles/community-center-with-artists-at-its-heart-davines-reinvents-its-pro-channel",
             "cta": "Read",
-            "week": "Nov 9"
+            "week": "Nov 28"
           },
           {
             "name": "Rossano Ferretti",
@@ -218,11 +218,11 @@
           },
           {
             "name": "IGK",
-            "title": "Meet the lineup",
-            "blurb": "Famous for dry shampoo. Match a spray to every blowout.",
-            "url": "https://spacenk.com/us/brands/i/igk-hair",
+            "title": "Paid In Full, Reviewed",
+            "blurb": "A gloss and split-end repair treatment: what it does and who to suggest it to.",
+            "url": "https://www.newbeauty.com/view/igk-paid-in-full-hair-gloss-review",
             "cta": "Read",
-            "week": "Oct 17"
+            "week": "Nov 28"
           },
           {
             "name": "Hot Like Me",
@@ -247,11 +247,11 @@
           },
           {
             "name": "Biologique Recherche",
-            "title": "Lotion P50 guide",
-            "blurb": "Which P50 fits which skin. The heart of every BR routine.",
-            "url": "https://www.biologique-recherche.com/en-us/pages/choose-a-lotion-p50",
+            "title": "BR Opens in New York",
+            "blurb": "Inside the new SoHo home for BR facials and skin care, close to home.",
+            "url": "https://www.wallpaper.com/fashion-beauty/skincare/biologique-recherche-new-york-city-store",
             "cta": "Read",
-            "week": "Oct 17"
+            "week": "Nov 28"
           }
         ]
       },
@@ -260,11 +260,11 @@
         "brands": [
           {
             "name": "Taffeta Makeup",
-            "title": "10 Winter Makeup Trends",
-            "blurb": "Renaissance blush to icicle eyes: the looks guests will ask for.",
-            "url": "https://coveteur.com/winter-2026-makeup-trends",
+            "title": "6 Winter Makeup Trends",
+            "blurb": "Celebrity artists share six winter looks guests will ask for this season.",
+            "url": "https://www.whowhatwear.com/beauty/makeup/winter-makeup-trends-2026",
             "cta": "Read",
-            "week": "Nov 9"
+            "week": "Nov 28"
           }
         ]
       }
@@ -287,7 +287,12 @@
       "https://hauteliving.com/hautebeauty/marco-norma-rossano-ferretti-explains-the-method/",
       "https://maneprint.com/products/hot-like-me-sheer-glass",
       "https://www.brazilianblowout.com/blogs/news/does-damaged-hair-cause-frizz",
-      "https://www.becoolasacucumber.com/blogs/news/hydrating-ingredients-101"
+      "https://www.becoolasacucumber.com/blogs/news/hydrating-ingredients-101",
+      "https://www.oribe.com/pages/holiday",
+      "https://www.salontoday.com/articles/community-center-with-artists-at-its-heart-davines-reinvents-its-pro-channel",
+      "https://www.newbeauty.com/view/igk-paid-in-full-hair-gloss-review",
+      "https://www.wallpaper.com/fashion-beauty/skincare/biologique-recherche-new-york-city-store",
+      "https://www.whowhatwear.com/beauty/makeup/winter-makeup-trends-2026"
     ]
   },
   "promo": {
