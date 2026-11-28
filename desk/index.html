@@ -252,7 +252,7 @@ body.dk-locked{overflow:hidden}
   const IDLE=5*60*1000, DEMO=/[?&]demo\b/.test(location.search);
   const S={get(k){try{return localStorage.getItem(k)||''}catch(e){return''}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
   const hk=(location.hash.match(/k=([\w-]+)/)||[])[1], KEY=hk||S.get('desk-key');
-  const SHOW={adriana:'Adriana',alexandra:'Alexandra',amanda:'Amanda','ashley-b':'Ashley',carolyn:'Carolyn',rose:'Flower'};   // names as the desk home shows them
+  const SHOW={adriana:'Adriana',alexandra:'Alexandra',amanda:'Amanda','angelina-h':'Angelina','ashley-b':'Ashley',carolyn:'Carolyn',isabella:'Isabella',kat:'Kat',rose:'Flower'};   // names as the desk home shows them
   const day=()=>new Date().toLocaleDateString('en-CA');
   const EP=()=>window.TAFFETA_ENDPOINT||'';
   let sess=null; try{sess=JSON.parse(S.get('desk-sess')||'null')}catch(e){}
@@ -544,7 +544,7 @@ function guideView(){
   const pl=(GUIDE.links||[]).map(l=>`<a class="plink big" href="${esc(l.u)}" target="_blank" rel="noopener">${esc(l.t)} ↗</a><p class="note2">${esc(l.sub||'')}</p>`).join('');
   return `<div class="sec"><h2>Desk guide</h2>${pl}${logins}${secs.join('')}</div>`}
 
-const DESK_PEOPLE=['Adriana','Alexandra','Amanda','Ashley','Carolyn','Flower'];   // Rose is listed as Flower   // who works the desk (Alexandra, Oct 17 2026)
+const DESK_PEOPLE=['Adriana','Alexandra','Amanda','Angelina','Ashley','Carolyn','Flower','Isabella','Kat'];   // Rose is listed as Flower   // who works the desk (Alexandra, Oct 17 2026)
 const NAME_PICS=['adriana','alexandra','amanda','ashley','carolyn'];
 const DESK_GROUPS=[['Guest Requests',['G|C']],['Consultations',['G|K']],['Profiles & Home Care',['G|P','G|R','G|H']],['To Do',['T|C']],['Send to a Guest',['S|C']],['What To Order',['O|C']],['Inventory',['I|C']],['Desk Guide',['D|C','K|C','C|C','B|C']]];
 const DESK_LABEL={'H|C':'Home','G|C':'Guest Requests','G|K':'Consultations','G|P':'Profiles','G|R':'RX Cards','G|H':'Home Care','T|C':'To Do','S|C':'Send a Link or Aftercare','O|C':'What To Order','I|C':'Inventory','D|C':'Desk Guide','K|C':'Call Coach','C|C':'Cleaning','B|C':'Keep Busy'};

@@ -603,6 +603,21 @@ details.days summary::-webkit-details-marker{display:none}
 .askans{display:block;margin-top:4px;color:var(--ink,inherit);font-size:14px;line-height:1.4}
 .hub textarea,.hub select{font:inherit;font-size:15px;border:1px solid var(--line);border-radius:6px;padding:8px 10px;background:#fff;width:100%;color:var(--ink)}
 .askreq{background:#fff;border:1px solid var(--line);border-radius:8px;padding:12px;display:flex;flex-direction:column;gap:4px;font-size:14px;margin-bottom:8px}
+/* Front Desk Log (Nov 27 2026) */
+.dlg{background:#fff;border:1px solid var(--line);border-radius:8px;margin-bottom:10px}
+.dlg>summary{list-style:none;cursor:pointer;padding:14px 16px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.dlg>summary::-webkit-details-marker{display:none}
+.dlg>summary b{font-family:var(--display);font-size:20px;font-weight:400}
+.dlg>summary small{display:block;font-size:13px;color:var(--soft)}
+.dlg>summary .chev{font-size:18px;transition:transform .2s}.dlg[open]>summary .chev{transform:rotate(90deg)}
+.dlg .on{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;border:1px solid var(--ink);border-radius:999px;padding:2px 8px;margin-left:6px}
+.dlg .in{padding:0 16px 14px;display:flex;flex-direction:column;gap:10px}
+.dlg .st{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;text-align:center}
+.dlg .st div{border:1px solid var(--line);padding:8px 4px;font-size:12px;color:var(--soft)}
+.dlg .st b{display:block;font-size:17px;color:var(--ink);font-weight:500}
+.dlg .day{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--soft);margin-top:6px}
+.dlg .ln{display:flex;gap:10px;font-size:14px;padding:6px 0;border-bottom:1px solid var(--line)}
+.dlg .ln span:first-child{flex:none;width:68px;color:var(--soft)}
 .askreq .top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
 .askreq .tag{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#7a6a55}
 .askreq .acts{display:flex;flex-direction:row;flex-wrap:wrap;align-items:center;gap:6px;margin-top:6px}
@@ -972,6 +987,7 @@ function render(){
   else if(S.rtab==='cal') parts=window.TCal?TCal.adminView():[];
   else if(S.rtab==='off') parts=adminOffView();
   else if(S.rtab==='reqs') parts=reqsView();
+  else if(S.rtab==='desklog') parts=deskLogView();
   else if(S.rtab==='month') parts=monthView();
   else if(S.rtab==='trends') parts=trendsView();
   else if(S.rtab==='color') parts=colorRoomView();
@@ -3136,6 +3152,42 @@ function reqsView(){
     done.length?h('div',{class:'sec2'},h('span',{class:'lbl'},'Finished'),done.map(x=>h('div',{class:'lrow'},h('span',{},x.name+' · '+(x.kind==='ask'?x.note:x.item||'Easi Hair Pro')),h('span',{class:'stat ok'},'Done')))):null,
     h('p',{class:'soft',style:'text-align:center;font-size:13px'},'Customer orders also show in Rose’s app. Each request emails you when it comes in.'))];
 }
+/* The Pretty Report: Front Desk Log (Alexandra, Nov 27 2026). Every girl signs in to the Front Desk app with her own
+   code, so each thing done there is saved with her name (Desk Activity tab, DeskSignIn.js). One row per person; tap a
+   name and it drops down her usage: things done and time signed in today / 7 days / 30 days, what she does most, and her history. */
+let DL={data:null,err:null,busy:false};
+async function dlLoad(){
+  if(!S.hubKey||!API()){DL.err='setup';render();return}
+  DL.busy=true;render();
+  try{const r=await fetch(API()+'?admin='+encodeURIComponent(S.hubKey)+'&desklog=1&_='+Date.now());const j=await r.json();if(!j.ok)throw 0;DL.data=j;DL.err=null}
+  catch(e){DL.err='offline'}
+  DL.busy=false;render();
+}
+const dlHrs=m=>!m?'0 min':m<60?m+' min':Math.floor(m/60)+' hr'+(m%60?' '+(m%60)+' min':'');
+let DL_OPEN={};
+function deskLogView(){
+  if(!DL.data&&!DL.err&&!DL.busy) dlLoad();
+  const D=DL.data, msg=DL.err==='setup'?'The Front Desk Log isn’t connected yet.':DL.err?'Can’t reach the Front Desk Log right now.':'Loading…';
+  const dayOf=t=>new Date(t).toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
+  const person=p=>{
+    const lines=[];let last='';
+    p.lines.forEach(l=>{const d=dayOf(l.at);if(d!==last){lines.push(h('div',{class:'day'},d));last=d}
+      lines.push(h('div',{class:'ln'},h('span',{},new Date(l.at).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})),h('span',{},l.what+(l.detail?' · '+l.detail:''))))});
+    const d=h('details',{class:'dlg',open:DL_OPEN[p.slug]?'':null},
+      h('summary',{},h('div',{},h('b',{},p.name),p.on?h('span',{class:'on'},'At the desk now'):null,
+        h('small',{},p.week.n+' thing'+(p.week.n===1?'':'s')+' done · '+dlHrs(p.week.min)+' signed in · last 7 days')),h('span',{class:'chev','aria-hidden':'true'},'›')),
+      h('div',{class:'in'},
+        h('div',{class:'st'},[['Today',p.today],['7 days',p.week],['30 days',p.month]].map(([k,v])=>h('div',{},h('b',{},String(v.n)),k+' · '+dlHrs(v.min)))),
+        p.top.length?h('small',{class:'soft'},'Most done: '+p.top.map(([k,n])=>k+' ('+n+')').join(', ')):null,
+        lines.length?lines:h('small',{class:'soft'},'Nothing yet. Her history shows here once she signs in at the desk.')));
+    d.addEventListener('toggle',()=>{DL_OPEN[p.slug]=d.open});
+    return d};
+  return [h('div',{class:'hub'},h('h1',{style:'font-size:28px;text-align:center'},'Front Desk Log'),
+    h('p',{class:'soft',style:'text-align:center;margin:-14px 0 0'},D?'Tap a name to see what she did on the Front Desk app.':msg),
+    D?D.people.map(person):null,
+    D&&D.notSignedIn?h('p',{class:'soft',style:'text-align:center;font-size:13px'},D.notSignedIn+' thing'+(D.notSignedIn===1?' was':'s were')+' done this week with no one signed in (an old copy of the app).'):null,
+    h('p',{class:'soft',style:'text-align:center;font-size:13px'},'Things done = guest requests, consultations, profiles, RX and home care cards, To Do, counts and orders marked on the desk. Time signed in runs from her code until the app locks or she signs out.'))];
+}
 /* The Pretty Report homepage, like the Employee Experience App (Alexandra, Oct 17 2026): the wreath with her photo,
    "Hello," and the reader's name, the date and a joke about running a business, then the menu squares.
    One passcode is shared, so each phone says who is reading (asked once, remembered on the phone). */
@@ -3145,9 +3197,9 @@ function prPhotoKey(){return 'pp-photo:'+ID+':'+prWho()}
 function reportGroups(){
   // always 6 squares (Alexandra, Oct 17 2026): Access sits under Team; without the Color Room, Payroll and Month & Trends share one
   return [['Today',['today']]].concat(S.inv?[['Payroll',['payroll','trends']],['Month & Trends',['month']],['Color Room',['color']]]:[['Payroll & Trends',['payroll','trends','month']]])
-    .concat([['Team',['reqs','cal','todo','off','photos','guide','sendguide','access']],['Marketing Proofs',['mkt']]]);
+    .concat([['Team',['reqs','desklog','cal','todo','off','photos','guide','sendguide','access']],['Marketing Proofs',['mkt']]]);
 }
-const PR_LABEL={reqs:'Requests',cal:'Taffeta Calendar',todo:'To Do List',mkt:'Marketing Proofs',photos:'Team Work',home:'Home',today:'Today',payroll:'Payroll',month:'Month & Trends',trends:'Sunday Trends',color:'Color Room',off:'Time Off',guide:'Culture',sendguide:'Send App Guide',access:'Access'};
+const PR_LABEL={reqs:'Requests',desklog:'Front Desk Log',cal:'Taffeta Calendar',todo:'To Do List',mkt:'Marketing Proofs',photos:'Team Work',home:'Home',today:'Today',payroll:'Payroll',month:'Month & Trends',trends:'Sunday Trends',color:'Color Room',off:'Time Off',guide:'Culture',sendguide:'Send App Guide',access:'Access'};
 let PR_OPEN='',PR_NAV=false;
 function prGo(k,fromHistory){
   if(k==='mkt'){PR_NAV=false;PR_OPEN='';openMkt();render();return}
@@ -3155,6 +3207,7 @@ function prGo(k,fromHistory){
   PR_OPEN='';PR_NAV=false;S.rtab=k;S.open=null;render();window.scrollTo(0,0);
   if(k==='photos'&&!ALB.loading){ALB.err=null;albLoad()}
   if(k==='reqs'&&!RQ.busy){RQ.err=null;rqLoad()}
+  if(k==='desklog'&&!DL.busy){DL.err=null;dlLoad()}
   if(k==='cal'&&window.TCal) TCal.reload();
   if(k==='todo'&&!TDA.busy){TDA.err=null;TDA.msg='';TDA.day=ymd(new Date());tdaLoad()}
 }
