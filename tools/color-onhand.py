@@ -269,6 +269,10 @@ def unused(*t):
             or bool(re.search(r'system cream developer ?20 ?vol', j))
             # Alexandra Nov 28 2026: Colorance Lotion is the 7 vol cream developer (merged in color-refresh.py)
             or 'goldwell developers colorance lotion' in j
+            # Alexandra Nov 28 2026: "the only lightener you need for backbar color stock is the blondor lightening powder
+            # ... the rest we dont need": every other Wella lightener and Goldwell Blonding Cream is off the list
+            or ('wella lighteners' in j and not re.search(r'blondor multi lightening powder', j))
+            or 'topchic canister blonding cream' in j
             # Alexandra Nov 27 2026: the scale's "Generic Developer" button has no volume, and the general developers
             # are counted by volume (10vol, 20vol), so it's never counted or ordered on its own
             or bool(re.search(r'general developers generic developer', j))
